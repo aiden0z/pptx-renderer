@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PPTX Renderer - Basic Preview</title>
+    <link rel="stylesheet" href="./styles/common.css" />
+    <style>
+      #pptx-container {
+        padding: 24px;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+      .stats {
+        font-size: 12px;
+        color: var(--text-muted);
+        margin-left: auto;
+        display: flex;
+        gap: 16px;
+        font-weight: 500;
+      }
+      .stats span {
+        white-space: nowrap;
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="nav-bar">
+      <span class="nav-label">Pages</span>
+      <a href="/test/pages/e2e-compare.html">E2E Evaluation</a>
+      <a href="/test/pages/index.html" class="active">Basic Preview</a>
+      <a href="/test/pages/render-slide.html">Single Slide</a>
+      <a href="/test/pages/export.html">Model Export</a>
+    </nav>
+
+    <div class="header">
+      <h1>PPTX Renderer</h1>
+      <label class="upload-area">
+        Upload PPTX or drag & drop
+        <input type="file" id="file-input" accept=".pptx" />
+      </label>
+      <div class="stats" id="stats">
+        <span id="slide-count"></span>
+        <span id="render-time"></span>
+      </div>
+    </div>
+    <div class="error-banner" id="error-banner"></div>
+    <div id="pptx-container">
+      <div class="empty-state">
+        <p>Upload a .pptx file to preview</p>
+        <small>Supports PowerPoint 2007+ format</small>
+      </div>
+    </div>
+
+    <script type="module">
+      import { PptxRenderer } from '../../src/index.ts';
+
+      const container = document.getElementById('pptx-container');
+      const fileInput = document.getElementById('file-input');
+      const uploadArea = document.querySelector('.upload-area');
+      const errorBanner = document.getElementById('error-banner');
+      const slideCountEl = document.getElementById('slide-count');
+      const renderTimeEl = document.getElementById('render-time');
+
+      let renderer = null;
+      const params = new URLSearchParams(location.search);
+      const listStrategyParam = params.get('listStrategy');
+      const listBatchSizeParam = Number(params.get('listBatchSize'));
+      const windowedInitialSlidesParam = Number(params.get('windowedInitialSlides'));
+      const windowedOverscanParam = Number(params.get('windowedOverscanViewport'));
+
+      async function handleFile(file) {
+        if (!file || !file.name.endsWith('.pptx')) {
+          showError('Please select a valid .pptx file');
+          return;
+        }
+
+        showError('');
+        container.innerHTML = '<div class="empty-state"><p>Loading...</p></div>';
+
+        try {
+          if (renderer) renderer.destroy();
+          const rendererOptions = {
+            mode: 'list',
+            onSlideError: (idx, err) => {
+              console.error(`Slide ${idx + 1} error:`, err);
+            },
+            onNodeError: (nodeId, err) => {
+              console.warn(`Node ${nodeId} error:`, err);
+            },
+          };
+          if (listStrategyParam === 'windowed' || listStrategyParam === 'full') {
+            rendererOptions.listMountStrategy = listStrategyParam;
+          }
+          if (Number.isInteger(listBatchSizeParam) && listBatchSizeParam > 0) {
+            rendererOptions.listRenderBatchSize = listBatchSizeParam;
+          }
+          if (Number.isInteger(windowedInitialSlidesParam) && windowedInitialSlidesParam > 0) {
+            rendererOptions.windowedInitialSlides = windowedInitialSlidesParam;
+          }
+          if (Number.isFinite(windowedOverscanParam) && windowedOverscanParam > 0) {
+            rendererOptions.windowedOverscanViewport = windowedOverscanParam;
+          }
+
+          renderer = new PptxRenderer(container, {
+            ...rendererOptions,
+          });
+
+          const buffer = await file.arrayBuffer();
+          const { slideCount, elapsed } = await renderer.preview(buffer);
+
+          slideCountEl.textContent = `${slideCount} slides`;
+          renderTimeEl.textContent = `${elapsed.toFixed(0)}ms`;
+        } catch (e) {
+          console.error('Render failed:', e);
+          showError(`Render failed: ${e.message || e}`);
+          container.innerHTML = `<div class="empty-state"><p style="color:#e94560">Failed to render PPTX</p><small>${e.message || e}</small></div>`;
+        }
+      }
+
+      function showError(msg) {
+        errorBanner.textContent = msg;
+        errorBanner.style.display = msg ? 'block' : 'none';
+      }
+
+      fileInput.addEventListener('change', (e) => {
+        if (e.target.files[0]) handleFile(e.target.files[0]);
+      });
+
+      // Drag & drop
+      uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadArea.classList.add('dragover');
+      });
+      uploadArea.addEventListener('dragleave', () => {
+        uploadArea.classList.remove('dragover');
+      });
+      uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+        if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+      });
+
+      // Also support dropping on the whole page
+      document.body.addEventListener('dragover', (e) => e.preventDefault());
+      document.body.addEventListener('drop', (e) => {
+        e.preventDefault();
+        if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+      });
+    </script>
+  </body>
+</html>

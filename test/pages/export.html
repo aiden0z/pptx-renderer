@@ -1,0 +1,376 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>PPTX Export — Model JSON</title>
+    <link rel="stylesheet" href="./styles/common.css" />
+    <style>
+      .content {
+        display: flex;
+        height: calc(100vh - 80px);
+      }
+      .main-panel {
+        flex: 1;
+        overflow: auto;
+        display: flex;
+        flex-direction: column;
+      }
+      .btn-plain {
+        border: none;
+        background: none;
+        cursor: pointer;
+        color: var(--text-muted);
+        font-size: 14px;
+        transition: color 0.2s ease;
+      }
+      .btn-plain:hover {
+        color: var(--accent);
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="nav-bar">
+      <span class="nav-label">Pages</span>
+      <a href="/test/pages/e2e-compare.html">E2E Evaluation</a>
+      <a href="/test/pages/index.html">Basic Preview</a>
+      <a href="/test/pages/render-slide.html">Single Slide</a>
+      <a href="/test/pages/export.html" class="active">Model Export</a>
+    </nav>
+
+    <div class="header">
+      <h1>Model Export</h1>
+      <div class="controls">
+        <select id="file-select">
+          <option value="">-- Select File --</option>
+        </select>
+        <button id="btn-parse" class="primary">Parse</button>
+        <label class="upload-btn">
+          Upload PPTX
+          <input type="file" id="file-upload" accept=".pptx" />
+        </label>
+        <button id="btn-copy" style="display: none">Copy JSON</button>
+        <button id="btn-download" style="display: none">Download JSON</button>
+        <span class="status" id="status">Ready</span>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="sidebar" id="sidebar">
+        <div style="padding: 20px; color: #666; text-align: center">
+          Select a file and click Parse
+        </div>
+      </div>
+      <div class="main-panel" id="main-panel">
+        <div class="stat-bar" id="summary" style="display: none"></div>
+        <div class="node-tree" id="node-tree">
+          <div style="padding: 40px; color: #666; text-align: center">No data loaded</div>
+        </div>
+        <div class="json-panel" id="json-panel" style="display: none">
+          <div class="json-header">
+            <span>Node Detail</span>
+            <button id="btn-close-json" class="btn-plain">✕</button>
+          </div>
+          <pre id="json-content"></pre>
+        </div>
+      </div>
+    </div>
+
+    <script type="module">
+      import { parseZip, buildPresentation, serializePresentation } from '../../src/index.ts';
+
+      const fileSelect = document.getElementById('file-select');
+      const statusEl = document.getElementById('status');
+      const sidebar = document.getElementById('sidebar');
+      const nodeTree = document.getElementById('node-tree');
+      const jsonPanel = document.getElementById('json-panel');
+      const jsonContent = document.getElementById('json-content');
+      const summaryEl = document.getElementById('summary');
+      const btnCopy = document.getElementById('btn-copy');
+      const btnDownload = document.getElementById('btn-download');
+
+      let currentResult = null;
+      let currentSlideIdx = 0;
+
+      // URL params
+      const params = new URLSearchParams(location.search);
+
+      // Populate file select from testdata directory
+      async function populateFileSelect() {
+        try {
+          const resp = await fetch('/api/testdata-files');
+          if (!resp.ok) return;
+          const files = await resp.json();
+          for (const name of files) {
+            const opt = document.createElement('option');
+            opt.value = `testdata/cases/${name}/source.pptx`;
+            opt.textContent = name;
+            fileSelect.appendChild(opt);
+          }
+        } catch {}
+        if (params.get('file')) {
+          const f = params.get('file');
+          for (const opt of fileSelect.options) {
+            if (
+              opt.value === f ||
+              opt.value === `testdata/cases/${f}/source.pptx` ||
+              f === opt.value.replace('testdata/cases/', '').replace('/source.pptx', '')
+            ) {
+              fileSelect.value = opt.value;
+              break;
+            }
+          }
+          if (!fileSelect.value && f) {
+            const opt = document.createElement('option');
+            opt.value = f.includes('/') ? f : `testdata/cases/${f}/source.pptx`;
+            opt.textContent = f;
+            fileSelect.appendChild(opt);
+            fileSelect.value = opt.value;
+          }
+        }
+      }
+      await populateFileSelect();
+
+      async function parseFile(buffer, label) {
+        statusEl.textContent = 'Parsing…';
+        try {
+          const files = await parseZip(buffer);
+          const presentation = buildPresentation(files);
+          const result = serializePresentation(presentation);
+          currentResult = result;
+          window.__exportResult = result;
+
+          statusEl.textContent = `${result.slideCount} slides — ${result.width}×${result.height}px`;
+          btnCopy.style.display = '';
+          btnDownload.style.display = '';
+
+          renderSummary(result);
+          renderSidebar(result);
+          selectSlide(0);
+        } catch (e) {
+          statusEl.textContent = `Error: ${e.message}`;
+          window.__exportError = String(e.message || e);
+          console.error(e);
+        }
+      }
+
+      function renderSummary(result) {
+        let totalNodes = 0,
+          totalText = 0,
+          types = {};
+        for (const slide of result.slides) {
+          const count = (nodes) => {
+            for (const n of nodes) {
+              totalNodes++;
+              types[n.nodeType] = (types[n.nodeType] || 0) + 1;
+              if (n.textBody) totalText++;
+              if (n.children) count(n.children);
+            }
+          };
+          count(slide.nodes);
+        }
+        summaryEl.style.display = 'flex';
+        summaryEl.innerHTML = `
+        <div class="stat"><div class="val">${result.slideCount}</div><div class="lbl">Slides</div></div>
+        <div class="stat"><div class="val">${totalNodes}</div><div class="lbl">Total Nodes</div></div>
+        <div class="stat"><div class="val">${totalText}</div><div class="lbl">With Text</div></div>
+        ${Object.entries(types)
+          .sort((a, b) => b[1] - a[1])
+          .map(
+            ([t, c]) =>
+              `<div class="stat"><div class="val">${c}</div><div class="lbl">${t}</div></div>`,
+          )
+          .join('')}
+      `;
+      }
+
+      function renderSidebar(result) {
+        sidebar.innerHTML = '';
+        result.slides.forEach((slide, i) => {
+          const item = document.createElement('div');
+          item.className = 'sidebar-item' + (i === 0 ? ' active' : '');
+          item.innerHTML = `<span>Slide ${i + 1}</span><span class="badge">${slide.nodes.length}</span>`;
+          item.onclick = () => selectSlide(i);
+          sidebar.appendChild(item);
+        });
+      }
+
+      function selectSlide(idx) {
+        currentSlideIdx = idx;
+        sidebar.querySelectorAll('.sidebar-item').forEach((el, i) => {
+          el.className = 'sidebar-item' + (i === idx ? ' active' : '');
+        });
+        const slide = currentResult.slides[idx];
+        if (!slide) return;
+        nodeTree.innerHTML = '';
+        for (const node of slide.nodes) {
+          nodeTree.appendChild(buildTreeNode(node));
+        }
+        jsonPanel.style.display = 'none';
+      }
+
+      function buildTreeNode(node) {
+        const el = document.createElement('div');
+        el.className = 'tree-node';
+
+        const hasChildren = node.children && node.children.length > 0;
+        const hasRows = node.rows && node.rows.length > 0;
+
+        const header = document.createElement('div');
+        header.className = 'tree-node-header';
+
+        const toggle = document.createElement('span');
+        toggle.className = 'toggle';
+        toggle.textContent = hasChildren || hasRows ? '▶' : ' ';
+        header.appendChild(toggle);
+
+        const badge = document.createElement('span');
+        badge.className = `type-badge type-${node.nodeType}`;
+        badge.textContent = node.nodeType;
+        header.appendChild(badge);
+
+        const name = document.createElement('span');
+        name.className = 'node-name';
+        name.textContent = node.name || node.id;
+        header.appendChild(name);
+
+        const dim = document.createElement('span');
+        dim.className = 'node-dim';
+        dim.textContent = `${node.size.w}×${node.size.h} @ (${node.position.x}, ${node.position.y})`;
+        header.appendChild(dim);
+
+        if (node.textBody?.totalText) {
+          const txt = document.createElement('span');
+          txt.className = 'node-text';
+          txt.textContent = node.textBody.totalText.replace(/\n/g, ' ').slice(0, 80);
+          header.appendChild(txt);
+        }
+        if (node.chartPath) {
+          const txt = document.createElement('span');
+          txt.className = 'node-text';
+          txt.textContent = `[chart: ${node.chartPath}]`;
+          header.appendChild(txt);
+        }
+        if (node.blipEmbed) {
+          const txt = document.createElement('span');
+          txt.className = 'node-text';
+          txt.textContent = `[image: ${node.blipEmbed}]`;
+          header.appendChild(txt);
+        }
+        if (hasRows) {
+          const txt = document.createElement('span');
+          txt.className = 'node-text';
+          txt.textContent = `[table: ${node.rows.length} rows × ${node.columns?.length || '?'} cols]`;
+          header.appendChild(txt);
+        }
+
+        el.appendChild(header);
+
+        let childContainer = null;
+        if (hasChildren || hasRows) {
+          childContainer = document.createElement('div');
+          childContainer.className = 'tree-children';
+          childContainer.style.display = 'none';
+
+          if (hasChildren) {
+            for (const child of node.children) {
+              childContainer.appendChild(buildTreeNode(child));
+            }
+          }
+          if (hasRows) {
+            for (let ri = 0; ri < node.rows.length; ri++) {
+              const row = node.rows[ri];
+              for (let ci = 0; ci < row.cells.length; ci++) {
+                const cell = row.cells[ci];
+                const cellNode = document.createElement('div');
+                cellNode.className = 'tree-node';
+                const cellHeader = document.createElement('div');
+                cellHeader.className = 'tree-node-header';
+                cellHeader.innerHTML = `
+                <span class="toggle"> </span>
+                <span class="type-badge type-table">cell</span>
+                <span class="node-name">R${ri}C${ci}</span>
+                <span class="node-text">${cell.text.replace(/\n/g, ' ').slice(0, 60) || '(empty)'}</span>
+              `;
+                cellHeader.onclick = (e) => {
+                  e.stopPropagation();
+                  showJson(cell, `Cell R${ri}C${ci}`);
+                };
+                cellNode.appendChild(cellHeader);
+                childContainer.appendChild(cellNode);
+              }
+            }
+          }
+          el.appendChild(childContainer);
+        }
+
+        header.onclick = (e) => {
+          if (childContainer) {
+            const open = childContainer.style.display !== 'none';
+            childContainer.style.display = open ? 'none' : 'block';
+            toggle.textContent = open ? '▶' : '▼';
+          }
+          showJson(node, node.name || node.id);
+        };
+
+        return el;
+      }
+
+      function showJson(obj, title) {
+        jsonPanel.style.display = '';
+        jsonPanel.querySelector('.json-header span').textContent = title || 'Node Detail';
+        jsonContent.textContent = JSON.stringify(obj, null, 2);
+      }
+
+      document.getElementById('btn-close-json').onclick = () => {
+        jsonPanel.style.display = 'none';
+      };
+
+      document.getElementById('btn-parse').onclick = async () => {
+        const file = fileSelect.value;
+        if (!file) {
+          alert('Select a file first');
+          return;
+        }
+        statusEl.textContent = `Fetching ${file}…`;
+        try {
+          const resp = await fetch(`/${file}`);
+          if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+          await parseFile(await resp.arrayBuffer(), file);
+        } catch (e) {
+          statusEl.textContent = `Error: ${e.message}`;
+        }
+      };
+
+      document.getElementById('file-upload').onchange = async (e) => {
+        const f = e.target.files[0];
+        if (!f) return;
+        await parseFile(await f.arrayBuffer(), f.name);
+      };
+
+      btnCopy.onclick = () => {
+        if (!currentResult) return;
+        navigator.clipboard.writeText(JSON.stringify(currentResult, null, 2));
+        statusEl.textContent = 'Copied to clipboard!';
+        setTimeout(() => {
+          statusEl.textContent = `${currentResult.slideCount} slides`;
+        }, 1500);
+      };
+
+      btnDownload.onclick = () => {
+        if (!currentResult) return;
+        const blob = new Blob([JSON.stringify(currentResult, null, 2)], {
+          type: 'application/json',
+        });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'pptx-model.json';
+        a.click();
+        URL.revokeObjectURL(a.href);
+      };
+
+      if (fileSelect.value) {
+        document.getElementById('btn-parse').click();
+      }
+    </script>
+  </body>
+</html>

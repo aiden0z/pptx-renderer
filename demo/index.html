@@ -1,0 +1,1141 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PPTX Renderer — Live Demo</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg-base: #0b0b14;
+        --bg-surface: #111122;
+        --bg-raised: #171730;
+        --bg-overlay: #1c1c3a;
+        --border: rgba(99, 102, 241, 0.15);
+        --border-strong: rgba(99, 102, 241, 0.3);
+        --accent: #e94560;
+        --accent-glow: rgba(233, 69, 96, 0.15);
+        --blue: #6c8cff;
+        --blue-dim: rgba(108, 140, 255, 0.12);
+        --text: #d4d4e4;
+        --text-dim: #8a8aa6;
+        --text-muted: #6e6e88;
+        --radius: 8px;
+        --font: 'Outfit', -apple-system, BlinkMacSystemFont, 'Noto Sans SC', sans-serif;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: var(--font);
+        background: var(--bg-base);
+        color: var(--text);
+        font-size: 14px;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* ── Header ── */
+      .top-bar {
+        background: var(--bg-surface);
+        border-bottom: 1px solid var(--border);
+        padding: 14px 28px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+      }
+      .top-bar-left {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+      .top-bar h1 {
+        font-size: 17px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        color: var(--accent);
+        background: linear-gradient(135deg, #e94560 0%, #ff6b81 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+      .badge {
+        font-size: 10px;
+        font-weight: 600;
+        background: var(--blue-dim);
+        color: var(--blue);
+        padding: 3px 9px;
+        border-radius: 20px;
+        letter-spacing: 0.03em;
+      }
+      .version-badge-link {
+        font-size: 11px;
+        font-weight: 600;
+        color: #4ade80;
+        text-decoration: none;
+        letter-spacing: 0.02em;
+      }
+      .version-badge-link:hover {
+        color: #86efac;
+      }
+      .github-link {
+        color: var(--text-dim);
+        text-decoration: none;
+        font-size: 13px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        padding: 6px 14px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        transition: all 0.2s ease;
+      }
+      .github-link:hover {
+        color: var(--text);
+        background: var(--bg-raised);
+        border-color: var(--border-strong);
+      }
+      .github-link:focus-visible {
+        outline: 2px solid var(--blue);
+        outline-offset: 2px;
+      }
+      .github-link svg {
+        width: 17px;
+        height: 17px;
+        fill: currentColor;
+      }
+
+      /* ── Toolbar ── */
+      .toolbar {
+        background: var(--bg-surface);
+        border-bottom: 1px solid var(--border);
+        padding: 10px 28px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        flex-wrap: wrap;
+      }
+      @supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+        .toolbar {
+          background: linear-gradient(180deg, var(--bg-surface) 0%, rgba(17, 17, 34, 0.85) 100%);
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
+        }
+      }
+
+      .upload-area {
+        border: 1.5px dashed var(--border-strong);
+        border-radius: var(--radius);
+        padding: 8px 18px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--text-dim);
+        transition: all 0.25s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .upload-area:hover,
+      .upload-area.dragover {
+        border-color: var(--accent);
+        color: var(--text);
+        background: var(--accent-glow);
+        box-shadow: 0 0 20px var(--accent-glow);
+      }
+      .upload-area:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      .upload-area:active {
+        transform: scale(0.99);
+      }
+      .upload-area input[type='file'] {
+        display: none;
+      }
+      .upload-icon {
+        opacity: 0.5;
+        font-size: 15px;
+      }
+      .shortcut-hint {
+        font-size: 10px;
+        font-weight: 600;
+        color: var(--text-muted);
+        background: rgba(255, 255, 255, 0.04);
+        padding: 2px 6px;
+        border-radius: 4px;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        letter-spacing: 0.02em;
+      }
+
+      .divider {
+        width: 1px;
+        height: 22px;
+        background: var(--border);
+      }
+
+      .sample-label {
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+
+      .sample-btn {
+        background: var(--bg-raised);
+        color: var(--blue);
+        border: 1px solid var(--border);
+        padding: 6px 14px;
+        border-radius: var(--radius);
+        cursor: pointer;
+        font-family: var(--font);
+        font-size: 12px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+      }
+      .sample-btn:hover {
+        background: var(--blue-dim);
+        border-color: var(--blue);
+        color: #fff;
+      }
+      .sample-btn:focus-visible {
+        outline: 2px solid var(--blue);
+        outline-offset: 2px;
+      }
+      .sample-btn:active {
+        transform: scale(0.98);
+      }
+      .sample-btn.loading {
+        opacity: 0.5;
+        pointer-events: none;
+      }
+
+      .clear-btn {
+        background: transparent;
+        color: var(--text-muted);
+        border: 1px solid var(--border);
+        padding: 6px 12px;
+        border-radius: var(--radius);
+        cursor: pointer;
+        font-family: var(--font);
+        font-size: 12px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        display: none;
+      }
+      .clear-btn:hover {
+        color: var(--accent);
+        border-color: var(--accent);
+        background: var(--accent-glow);
+      }
+      .clear-btn:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      .clear-btn:active {
+        transform: scale(0.98);
+      }
+
+      .mode-toggle {
+        display: none;
+        gap: 0;
+        border-radius: var(--radius);
+        overflow: hidden;
+        border: 1px solid var(--border);
+      }
+      .mode-toggle button {
+        background: var(--bg-raised);
+        color: var(--text-muted);
+        border: none;
+        padding: 5px 14px;
+        cursor: pointer;
+        font-family: var(--font);
+        font-size: 12px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+      }
+      .mode-toggle button.active {
+        background: var(--blue-dim);
+        color: var(--blue);
+      }
+      .mode-toggle button:hover:not(.active) {
+        color: var(--text-dim);
+        background: var(--bg-overlay);
+      }
+      .mode-toggle button:focus-visible {
+        outline: 2px solid var(--blue);
+        outline-offset: -2px;
+      }
+      .mode-toggle button:active {
+        transform: scale(0.98);
+      }
+
+      .stats {
+        font-size: 12px;
+        color: var(--text-muted);
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+      .stats span:empty {
+        display: none;
+      }
+      .stat-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        white-space: nowrap;
+      }
+      .stat-item .value {
+        color: var(--text);
+        font-weight: 600;
+      }
+      .stat-sep {
+        color: var(--border-strong);
+        font-size: 10px;
+        user-select: none;
+      }
+
+      /* ── Error ── */
+      .error-banner {
+        background: var(--accent-glow);
+        color: var(--accent);
+        padding: 10px 28px;
+        font-size: 13px;
+        font-weight: 500;
+        display: none;
+        border-bottom: 1px solid var(--border);
+      }
+
+      /* ── Container ── */
+      #pptx-container {
+        padding: 28px;
+        max-width: 1200px;
+        margin: 0 auto;
+        flex: 1;
+        width: 100%;
+      }
+
+      /* ── Slide Navigation Strip ── */
+      .slide-nav-strip {
+        display: none;
+        justify-content: center;
+        align-items: center;
+        gap: 4px;
+        padding: 12px 28px;
+        background: var(--bg-raised);
+        border-top: 1px solid rgba(99, 102, 241, 0.35);
+        box-shadow: 0 -1px 0 rgba(0, 0, 0, 0.2);
+        position: sticky;
+        bottom: 0;
+        z-index: 99;
+        flex-wrap: wrap;
+      }
+      .slide-nav-strip.visible {
+        display: flex;
+      }
+      .slide-nav-dot {
+        width: 28px;
+        height: 6px;
+        border-radius: 3px;
+        background: rgba(108, 140, 255, 0.4);
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        padding: 0;
+        position: relative;
+      }
+      .slide-nav-dot:hover {
+        background: rgba(108, 140, 255, 0.7);
+        transform: scaleY(1.5);
+      }
+      .slide-nav-dot:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      .slide-nav-dot:active {
+        transform: scaleY(1.2) scaleX(0.98);
+      }
+      .slide-nav-dot.active {
+        background: var(--accent);
+        width: 36px;
+        box-shadow: 0 0 8px var(--accent-glow);
+      }
+      .slide-nav-dot::after {
+        content: attr(data-label);
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--bg-overlay);
+        color: var(--text);
+        font-size: 11px;
+        font-weight: 500;
+        padding: 3px 8px;
+        border-radius: 4px;
+        white-space: nowrap;
+        margin-bottom: 6px;
+        pointer-events: none;
+        border: 1px solid var(--border);
+        opacity: 0;
+        transition: opacity 0.12s ease;
+      }
+      .slide-nav-dot:hover::after,
+      .slide-nav-dot:focus-visible::after {
+        opacity: 1;
+      }
+
+      /* ── Toolbar slide nav controls ── */
+      .slide-nav-controls {
+        display: none;
+        align-items: center;
+        gap: 6px;
+      }
+      .slide-nav-controls.visible {
+        display: inline-flex;
+      }
+      .slide-nav-controls button {
+        background: var(--bg-raised);
+        color: var(--text);
+        border: 1px solid var(--border);
+        width: 30px;
+        height: 30px;
+        border-radius: var(--radius);
+        cursor: pointer;
+        font-size: 14px;
+        font-family: var(--font);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+        padding: 0;
+      }
+      .slide-nav-controls button:hover:not(:disabled) {
+        background: var(--blue-dim);
+        border-color: var(--blue);
+        color: #fff;
+      }
+      .slide-nav-controls button:focus-visible {
+        outline: 2px solid var(--blue);
+        outline-offset: 2px;
+      }
+      .slide-nav-controls button:active:not(:disabled) {
+        transform: scale(0.95);
+      }
+      .slide-nav-controls button:disabled {
+        opacity: 0.25;
+        cursor: not-allowed;
+      }
+      #slide-indicator {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-dim);
+        min-width: 50px;
+        text-align: center;
+        font-variant-numeric: tabular-nums;
+      }
+
+      /* ── Hide Renderer.ts built-in nav (slide mode) ── */
+      .hide-builtin-nav > div:last-child {
+        display: none !important;
+      }
+
+      /* ── Empty State ── */
+      .empty-state {
+        text-align: center;
+        padding: 80px 20px;
+        color: var(--text-dim);
+      }
+      .empty-hero {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 28px;
+        border-radius: 20px;
+        background: linear-gradient(135deg, var(--bg-raised) 0%, var(--bg-overlay) 100%);
+        border: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 36px;
+        animation: float 4s ease-in-out infinite;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .empty-hero {
+          animation: none;
+        }
+      }
+      @keyframes float {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-6px);
+        }
+      }
+      .empty-state h2 {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--text);
+        margin-bottom: 8px;
+        letter-spacing: -0.01em;
+      }
+      .empty-state p {
+        font-size: 14px;
+        color: var(--text-dim);
+        max-width: 380px;
+        margin: 0 auto 32px;
+        line-height: 1.6;
+      }
+      .empty-features {
+        display: flex;
+        justify-content: center;
+        gap: 32px;
+        flex-wrap: wrap;
+      }
+      .empty-feature {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--text-dim);
+      }
+      .empty-feature-icon {
+        width: 28px;
+        height: 28px;
+        border-radius: 6px;
+        background: var(--bg-raised);
+        border: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 13px;
+        transition: border-color 0.2s ease;
+      }
+      .empty-feature {
+        transition: color 0.2s ease;
+      }
+      .empty-feature:hover {
+        color: var(--text);
+      }
+      .empty-feature:hover .empty-feature-icon {
+        border-color: var(--border-strong);
+      }
+
+      /* ── Loading ── */
+      .loading-state {
+        text-align: center;
+        padding: 100px 20px;
+      }
+      .spinner {
+        display: inline-block;
+        width: 28px;
+        height: 28px;
+        border: 2.5px solid var(--border);
+        border-top: 2.5px solid var(--accent);
+        border-radius: 50%;
+        animation: spin 0.7s linear infinite;
+        margin-bottom: 14px;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .spinner {
+          animation: spin-reduced 1.2s ease-in-out infinite;
+        }
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      @keyframes spin-reduced {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.4;
+        }
+      }
+      .loading-state p {
+        color: var(--text-muted);
+        font-size: 13px;
+        font-weight: 500;
+      }
+
+      /* ── Drop Overlay ── */
+      .drop-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(11, 11, 20, 0.88);
+        backdrop-filter: blur(8px);
+        z-index: 999;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 12px;
+        pointer-events: none;
+      }
+      .drop-overlay.active {
+        display: flex;
+      }
+      .drop-overlay-ring {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        border: 3px dashed var(--accent);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 32px;
+        animation: pulse-ring 1.5s ease-in-out infinite;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .drop-overlay-ring {
+          animation: none;
+        }
+      }
+      @keyframes pulse-ring {
+        0%,
+        100% {
+          transform: scale(1);
+          opacity: 0.8;
+        }
+        50% {
+          transform: scale(1.08);
+          opacity: 1;
+        }
+      }
+      .drop-overlay span {
+        color: var(--accent);
+        font-size: 16px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+      }
+
+      /* ── Footer ── */
+      .footer {
+        text-align: center;
+        padding: 24px 28px 20px;
+        color: var(--text-muted);
+        font-size: 12px;
+        border-top: 1px solid var(--border);
+        margin-top: auto;
+        line-height: 1.7;
+      }
+      .footer a {
+        color: var(--blue);
+        text-decoration: none;
+        font-weight: 500;
+      }
+      .footer a:hover {
+        text-decoration: underline;
+      }
+
+      /* ── Content fade-in ── */
+      @keyframes fadeUp {
+        from {
+          opacity: 0;
+          transform: translateY(12px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .fade-in {
+        animation: fadeUp 0.35s ease-out;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .fade-in {
+          animation: none;
+        }
+      }
+
+      /* ── Mobile ── */
+      @media (max-width: 640px) {
+        .top-bar {
+          padding: 12px 16px;
+        }
+        .toolbar {
+          padding: 8px 16px;
+          gap: 8px;
+        }
+        .upload-area {
+          width: 100%;
+          justify-content: center;
+          padding: 12px;
+        }
+        .stats {
+          width: 100%;
+          margin-left: 0;
+          gap: 4px;
+          font-size: 11px;
+        }
+        #pptx-container {
+          padding: 14px;
+        }
+        .github-link span {
+          display: none;
+        }
+        .empty-features {
+          gap: 16px;
+        }
+        .slide-nav-strip {
+          padding: 8px 16px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="top-bar">
+      <div class="top-bar-left">
+        <h1>PPTX Renderer</h1>
+        <a
+          class="version-badge-link"
+          href="https://www.npmjs.com/package/@aiden0z/pptx-renderer"
+          target="_blank"
+          rel="noopener"
+          title="View on npm"
+          id="version-badge"
+          >Version —</a
+        >
+      </div>
+      <a
+        class="github-link"
+        href="https://github.com/aiden0z/pptx-renderer"
+        target="_blank"
+        rel="noopener"
+      >
+        <svg viewBox="0 0 16 16">
+          <path
+            d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"
+          />
+        </svg>
+        <span>GitHub</span>
+      </a>
+    </div>
+
+    <div class="toolbar">
+      <label class="upload-area" id="upload-area">
+        <span class="upload-icon">&#8682;</span>
+        Upload .pptx
+        <span class="shortcut-hint" id="shortcut-hint"></span>
+        <input type="file" id="file-input" accept=".pptx" />
+      </label>
+      <span class="divider"></span>
+      <span class="sample-label">Try</span>
+      <button class="sample-btn" data-file="samples/chart-and-complex.pptx">Charts & Shapes</button>
+      <button class="clear-btn" id="clear-btn">Clear</button>
+      <div class="mode-toggle" id="mode-toggle">
+        <button class="active" data-mode="list">List</button>
+        <button data-mode="slide">Slide</button>
+      </div>
+      <div class="slide-nav-controls" id="slide-nav-controls">
+        <button id="btn-prev" title="Previous slide (←)">&#8592;</button>
+        <span id="slide-indicator">1 / 1</span>
+        <button id="btn-next" title="Next slide (→)">&#8594;</button>
+      </div>
+      <div class="stats" id="stats">
+        <span id="file-name" class="stat-item"></span>
+        <span id="stat-sep-1" class="stat-sep" style="display: none">/</span>
+        <span id="file-size" class="stat-item"></span>
+        <span id="stat-sep-2" class="stat-sep" style="display: none">/</span>
+        <span id="slide-count" class="stat-item"></span>
+        <span id="stat-sep-3" class="stat-sep" style="display: none">/</span>
+        <span id="render-time" class="stat-item"></span>
+      </div>
+    </div>
+
+    <div class="error-banner" id="error-banner"></div>
+
+    <div class="drop-overlay" id="drop-overlay">
+      <div class="drop-overlay-ring">&#8682;</div>
+      <span>Drop .pptx file</span>
+    </div>
+
+    <div id="pptx-container">
+      <div class="empty-state fade-in">
+        <div class="empty-hero">&#128202;</div>
+        <h2>Upload a .pptx file or try an example</h2>
+        <p>
+          Renders PowerPoint 2007+ files entirely in the browser. No server, no upload — everything
+          stays local.
+        </p>
+        <div class="empty-features">
+          <div class="empty-feature">
+            <div class="empty-feature-icon">&#9638;</div>
+            Shapes & SmartArt
+          </div>
+          <div class="empty-feature">
+            <div class="empty-feature-icon">&#128200;</div>
+            Charts
+          </div>
+          <div class="empty-feature">
+            <div class="empty-feature-icon">&#128196;</div>
+            Tables
+          </div>
+          <div class="empty-feature">
+            <div class="empty-feature-icon">&#127912;</div>
+            Themes
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slide-nav-strip" id="slide-nav-strip"></div>
+
+    <div class="footer">
+      <a href="https://github.com/aiden0z/pptx-renderer">@aiden0z/pptx-renderer</a>
+      &mdash; TypeScript library that parses and renders PPTX as HTML/SVG.
+      <br />
+      Apache-2.0 License
+    </div>
+
+    <script type="module">
+      import { PptxRenderer } from '../src/index.ts';
+
+      const container = document.getElementById('pptx-container');
+      const fileInput = document.getElementById('file-input');
+      const uploadArea = document.getElementById('upload-area');
+      const errorBanner = document.getElementById('error-banner');
+      const slideCountEl = document.getElementById('slide-count');
+      const renderTimeEl = document.getElementById('render-time');
+      const fileNameEl = document.getElementById('file-name');
+      const fileSizeEl = document.getElementById('file-size');
+      const dropOverlay = document.getElementById('drop-overlay');
+      const clearBtn = document.getElementById('clear-btn');
+      const modeToggle = document.getElementById('mode-toggle');
+      const shortcutHint = document.getElementById('shortcut-hint');
+      const slideNavStrip = document.getElementById('slide-nav-strip');
+      const slideNavControls = document.getElementById('slide-nav-controls');
+      const slideIndicator = document.getElementById('slide-indicator');
+      const btnPrev = document.getElementById('btn-prev');
+      const btnNext = document.getElementById('btn-next');
+      const statSeps = [
+        document.getElementById('stat-sep-1'),
+        document.getElementById('stat-sep-2'),
+        document.getElementById('stat-sep-3'),
+      ];
+
+      let renderer = null;
+      let cachedBuffer = null;
+      let currentMode = 'list';
+      let totalSlides = 0;
+
+      // Keyboard shortcut hint
+      const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+      shortcutHint.textContent = isMac ? '\u2318O' : 'Ctrl+O';
+
+      // Version from npm registry (no background, green text)
+      const versionBadge = document.getElementById('version-badge');
+      fetch('https://registry.npmjs.org/@aiden0z/pptx-renderer/latest')
+        .then((r) => r.json())
+        .then((d) => {
+          if (d.version) versionBadge.textContent = 'Version ' + d.version;
+        })
+        .catch(() => {});
+
+      function formatFileSize(bytes) {
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+        return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+      }
+
+      function escapeHtml(s) {
+        const div = document.createElement('div');
+        div.textContent = s == null ? '' : String(s);
+        return div.innerHTML;
+      }
+
+      function clearStats() {
+        slideCountEl.innerHTML = '';
+        renderTimeEl.innerHTML = '';
+        fileNameEl.innerHTML = '';
+        fileSizeEl.innerHTML = '';
+        statSeps.forEach((s) => (s.style.display = 'none'));
+      }
+
+      function showStats(name, size, count, time) {
+        fileNameEl.innerHTML = `<span class="value">${escapeHtml(name)}</span>`;
+        fileSizeEl.innerHTML = `<span class="value">${escapeHtml(size)}</span>`;
+        slideCountEl.innerHTML = `<span class="value">${escapeHtml(String(count))}</span> slides`;
+        renderTimeEl.innerHTML = `<span class="value">${escapeHtml(String(time))}</span> ms`;
+        statSeps.forEach((s) => (s.style.display = ''));
+      }
+
+      function showLoaded(show) {
+        clearBtn.style.display = show ? 'inline-block' : 'none';
+        modeToggle.style.display = show ? 'inline-flex' : 'none';
+        updateSlideControls();
+      }
+
+      function updateSlideControls() {
+        const isSlide = currentMode === 'slide' && totalSlides > 0 && cachedBuffer;
+        slideNavControls.classList.toggle('visible', !!isSlide);
+        container.classList.toggle('hide-builtin-nav', !!isSlide);
+        if (isSlide) {
+          const idx = renderer ? renderer.currentSlideIndex : 0;
+          slideIndicator.textContent = `${idx + 1} / ${totalSlides}`;
+          btnPrev.disabled = idx <= 0;
+          btnNext.disabled = idx >= totalSlides - 1;
+        }
+      }
+
+      function goToSlideIdx(idx) {
+        if (!renderer || idx < 0 || idx >= totalSlides) return;
+        renderer.goToSlide(idx);
+        updateNavStrip(idx);
+        updateSlideControls();
+      }
+
+      function buildNavStrip(count, activeIndex) {
+        slideNavStrip.innerHTML = '';
+        totalSlides = count;
+        if (count <= 0) {
+          slideNavStrip.classList.remove('visible');
+          return;
+        }
+        slideNavStrip.classList.add('visible');
+        for (let i = 0; i < count; i++) {
+          const dot = document.createElement('button');
+          dot.className = 'slide-nav-dot' + (i === activeIndex ? ' active' : '');
+          dot.dataset.label = 'Slide ' + (i + 1);
+          dot.addEventListener('click', () => {
+            if (currentMode === 'slide' && renderer) {
+              goToSlideIdx(i);
+            } else {
+              const target = container.querySelector(`[data-slide-index="${i}"]`);
+              if (target) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              updateNavStrip(i);
+            }
+          });
+          slideNavStrip.appendChild(dot);
+        }
+      }
+
+      function updateNavStrip(activeIndex) {
+        const dots = slideNavStrip.querySelectorAll('.slide-nav-dot');
+        dots.forEach((d, i) => d.classList.toggle('active', i === activeIndex));
+      }
+
+      const emptyHTML = `
+        <div class="empty-state fade-in">
+          <div class="empty-hero">&#128202;</div>
+          <h2>Upload a .pptx file or try an example</h2>
+          <p>Renders PowerPoint 2007+ files entirely in the browser. No server, no upload — everything stays local.</p>
+          <div class="empty-features">
+            <div class="empty-feature"><div class="empty-feature-icon">&#9638;</div>Shapes & SmartArt</div>
+            <div class="empty-feature"><div class="empty-feature-icon">&#128200;</div>Charts</div>
+            <div class="empty-feature"><div class="empty-feature-icon">&#128196;</div>Tables</div>
+            <div class="empty-feature"><div class="empty-feature-icon">&#127912;</div>Themes</div>
+          </div>
+        </div>`;
+
+      function resetToEmpty() {
+        if (renderer) renderer.destroy();
+        renderer = null;
+        cachedBuffer = null;
+        totalSlides = 0;
+        clearStats();
+        showLoaded(false);
+        showError('');
+        slideNavStrip.classList.remove('visible');
+        slideNavStrip.innerHTML = '';
+        slideNavControls.classList.remove('visible');
+        container.innerHTML = emptyHTML;
+      }
+
+      async function renderBuffer(buffer, label, fileBytes) {
+        showError('');
+        clearStats();
+        container.innerHTML =
+          '<div class="loading-state fade-in"><div class="spinner"></div><p>Rendering\u2026</p></div>';
+
+        try {
+          if (renderer) renderer.destroy();
+          renderer = new PptxRenderer(container, {
+            mode: currentMode,
+            onSlideError: (idx, err) => console.error(`Slide ${idx + 1} error:`, err),
+            onNodeError: (nodeId, err) => console.warn(`Node ${nodeId} error:`, err),
+          });
+
+          cachedBuffer = buffer;
+          const { slideCount, elapsed } = await renderer.preview(buffer);
+
+          showStats(
+            label,
+            fileBytes !== undefined ? formatFileSize(fileBytes) : '?',
+            slideCount,
+            elapsed.toFixed(0),
+          );
+          showLoaded(true);
+          buildNavStrip(slideCount, 0);
+        } catch (e) {
+          console.error('Render failed:', e);
+          const errMsg = e instanceof Error ? e.message : String(e);
+          showError(`Render failed: ${errMsg}`);
+          container.innerHTML = `<div class="empty-state fade-in"><h2 style="color:var(--accent)">Failed to render</h2><p>${escapeHtml(errMsg)}</p></div>`;
+          showLoaded(false);
+          slideNavStrip.classList.remove('visible');
+        }
+      }
+
+      async function handleFile(file) {
+        if (!file || !file.name.endsWith('.pptx')) {
+          showError('Please select a valid .pptx file');
+          return;
+        }
+        showError('');
+        const buffer = await file.arrayBuffer();
+        await renderBuffer(buffer, file.name, file.size);
+      }
+
+      async function loadSample(url) {
+        const btn = document.querySelector(`[data-file="${url}"]`);
+        if (btn) btn.classList.add('loading');
+        container.innerHTML =
+          '<div class="loading-state fade-in"><div class="spinner"></div><p>Fetching\u2026</p></div>';
+        try {
+          const resp = await fetch(url);
+          if (!resp.ok) throw new Error(`Failed to fetch sample: ${resp.status}`);
+          const buffer = await resp.arrayBuffer();
+          const label = url.split('/').pop();
+          await renderBuffer(buffer, label, buffer.byteLength);
+        } catch (e) {
+          const errMsg = e instanceof Error ? e.message : String(e);
+          showError(`Failed to load sample: ${errMsg}`);
+          container.innerHTML = `<div class="empty-state fade-in"><h2 style="color:var(--accent)">Failed to load sample</h2><p>${escapeHtml(errMsg)}</p></div>`;
+        } finally {
+          if (btn) btn.classList.remove('loading');
+        }
+      }
+
+      function showError(msg) {
+        errorBanner.textContent = msg;
+        errorBanner.style.display = msg ? 'block' : 'none';
+      }
+
+      async function switchMode(mode) {
+        if (mode === currentMode || !cachedBuffer) return;
+        currentMode = mode;
+        modeToggle.querySelectorAll('button').forEach((b) => {
+          b.classList.toggle('active', b.dataset.mode === mode);
+        });
+        if (renderer) renderer.destroy();
+        renderer = new PptxRenderer(container, {
+          mode: currentMode,
+          onSlideError: (idx, err) => console.error(`Slide ${idx + 1} error:`, err),
+          onNodeError: (nodeId, err) => console.warn(`Node ${nodeId} error:`, err),
+        });
+        await renderer.preview(cachedBuffer);
+        buildNavStrip(totalSlides, 0);
+        updateSlideControls();
+      }
+
+      // ── Events ──
+
+      fileInput.addEventListener('change', (e) => {
+        if (e.target.files[0]) handleFile(e.target.files[0]);
+        fileInput.value = '';
+      });
+
+      document.querySelectorAll('.sample-btn').forEach((btn) => {
+        btn.addEventListener('click', () => loadSample(btn.dataset.file));
+      });
+
+      clearBtn.addEventListener('click', resetToEmpty);
+
+      modeToggle.querySelectorAll('button').forEach((btn) => {
+        btn.addEventListener('click', () => switchMode(btn.dataset.mode));
+      });
+
+      btnPrev.addEventListener('click', () =>
+        goToSlideIdx(renderer ? renderer.currentSlideIndex - 1 : 0),
+      );
+      btnNext.addEventListener('click', () =>
+        goToSlideIdx(renderer ? renderer.currentSlideIndex + 1 : 0),
+      );
+
+      // Keyboard: Ctrl+O / Cmd+O to open, Arrow keys for slide navigation
+      document.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'o') {
+          e.preventDefault();
+          fileInput.click();
+          return;
+        }
+        if (!renderer || !cachedBuffer) return;
+
+        if (currentMode === 'slide') {
+          if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+            e.preventDefault();
+            goToSlideIdx(renderer.currentSlideIndex - 1);
+          } else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+            e.preventDefault();
+            goToSlideIdx(renderer.currentSlideIndex + 1);
+          }
+        }
+      });
+
+      // Drag & drop on upload area
+      uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadArea.classList.add('dragover');
+      });
+      uploadArea.addEventListener('dragleave', () => {
+        uploadArea.classList.remove('dragover');
+      });
+      uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+        if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+      });
+
+      // Drag & drop on whole page
+      let dragCounter = 0;
+      document.addEventListener('dragenter', (e) => {
+        e.preventDefault();
+        dragCounter++;
+        dropOverlay.classList.add('active');
+      });
+      document.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        dragCounter--;
+        if (dragCounter <= 0) {
+          dragCounter = 0;
+          dropOverlay.classList.remove('active');
+        }
+      });
+      document.addEventListener('dragover', (e) => e.preventDefault());
+      document.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dragCounter = 0;
+        dropOverlay.classList.remove('active');
+        if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+      });
+    </script>
+  </body>
+</html>

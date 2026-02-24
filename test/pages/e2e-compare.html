@@ -1,0 +1,1773 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PPTX Renderer - E2E Evaluation Dashboard</title>
+    <link rel="stylesheet" href="./styles/common.css" />
+    <style>
+      #main {
+        padding: 12px;
+      }
+      .summary-bar {
+        padding: 7px 20px;
+        gap: 12px;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+      }
+      .summary-bar .summary-stat .value {
+        font-size: 18px;
+      }
+      .summary-bar .summary-stat {
+        min-width: auto;
+      }
+      .summary-bar .summary-divider {
+        height: 28px;
+      }
+      .manual-review {
+        margin-top: 10px;
+        border-top: 1px dashed var(--border);
+        padding-top: 10px;
+      }
+      .manual-review-row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .manual-review select,
+      .manual-review input {
+        background: var(--bg-raised);
+        color: var(--text);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 6px 8px;
+        font-family: var(--font);
+        font-size: 12px;
+      }
+      .manual-review input {
+        min-width: 240px;
+      }
+      .manual-review button {
+        background: var(--blue-dim);
+        color: var(--blue);
+        border: 1px solid var(--blue);
+        border-radius: var(--radius);
+        padding: 6px 10px;
+        font-family: var(--font);
+        font-size: 12px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+      .manual-review button:hover {
+        background: rgba(108, 140, 255, 0.2);
+      }
+      .manual-review button:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+      .manual-review-status {
+        font-size: 11px;
+        color: var(--text-muted);
+      }
+      .manual-review-graphic {
+        font-size: 11px;
+        color: var(--blue);
+        padding: 2px 6px;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        background: var(--blue-dim);
+      }
+      .summary-legend {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        margin-left: auto;
+        flex-shrink: 0;
+      }
+      .metric-guide-pill {
+        font-size: 11px;
+        padding: 3px 8px;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        background: var(--bg-raised);
+        color: var(--text-dim);
+      }
+      .metric-guide-pill.up {
+        color: #8fd4a0;
+        border-color: rgba(76, 175, 80, 0.3);
+      }
+      .metric-guide-pill.down {
+        color: #f1c38f;
+        border-color: rgba(255, 152, 0, 0.3);
+      }
+      .metric-guide-threshold {
+        font-size: 11px;
+        color: var(--text-muted);
+      }
+      .controls input[type='search'] {
+        background: var(--bg-raised);
+        color: var(--text);
+        border: 1px solid var(--border);
+        padding: 6px 12px;
+        border-radius: var(--radius);
+        font-family: var(--font);
+        font-size: 12px;
+        min-width: 220px;
+        transition: all 0.2s ease;
+      }
+      .controls input[type='search']:focus {
+        outline: none;
+        border-color: var(--blue);
+        background: var(--bg-overlay);
+      }
+      .controls input[type='search']::placeholder {
+        color: var(--text-muted);
+      }
+      .gt-toggle-wrap {
+        display: flex;
+        gap: 2px;
+      }
+      .gt-toggle-btn {
+        background: var(--bg-base);
+        color: var(--text-muted);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 1px 8px;
+        font-family: var(--font);
+        font-size: 10px;
+        cursor: pointer;
+        line-height: 1.4;
+        transition: all 0.2s ease;
+      }
+      .gt-toggle-btn.active {
+        background: var(--blue-dim);
+        color: var(--blue);
+        border-color: var(--blue);
+      }
+      .gt-toggle-btn:hover:not(.active) {
+        color: var(--text-dim);
+      }
+      /* ---- Collapsible log section ---- */
+      .log-section {
+        border-bottom: 1px solid var(--border);
+        display: none;
+      }
+      .log-section.has-content {
+        display: block;
+      }
+      .log-header {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 20px;
+        background: var(--bg-surface);
+        cursor: pointer;
+        user-select: none;
+        transition: background 0.15s ease;
+      }
+      .log-header:hover {
+        background: var(--bg-raised);
+      }
+      .log-toggle-icon {
+        font-size: 9px;
+        color: var(--text-muted);
+        transition: transform 0.2s ease;
+        width: 12px;
+        text-align: center;
+      }
+      .log-section.expanded .log-toggle-icon {
+        transform: rotate(90deg);
+      }
+      .log-header-title {
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+      .log-count {
+        font-size: 10px;
+        color: var(--text-muted);
+        background: var(--bg-base);
+        padding: 1px 6px;
+        border-radius: 8px;
+        font-weight: 600;
+      }
+      .log-section .log-panel {
+        display: none;
+        border-bottom: none;
+      }
+      .log-section.expanded .log-panel {
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="drop-overlay" id="drop-overlay">Drop PPTX + PDF files here</div>
+
+    <nav class="nav-bar">
+      <span class="nav-label">Pages</span>
+      <a href="/test/pages/e2e-compare.html" class="active">E2E Evaluation</a>
+      <a href="/test/pages/index.html">Basic Preview</a>
+      <a href="/test/pages/render-slide.html">Single Slide</a>
+      <a href="/test/pages/export.html">Model Export</a>
+    </nav>
+
+    <div class="header">
+      <h1>E2E Evaluation</h1>
+      <div class="controls">
+        <input
+          id="file-search"
+          type="search"
+          placeholder="Search test file..."
+          aria-label="Search test files"
+        />
+        <select id="file-select">
+          <option value="">-- Test File --</option>
+        </select>
+        <button id="btn-evaluate" class="active">Evaluate</button>
+        <button id="btn-eval-all" class="primary">Evaluate All Files</button>
+        <select id="view-mode">
+          <option value="side-by-side">Side by Side</option>
+          <option value="triple">Triple (+Diff)</option>
+        </select>
+        <select id="page-select">
+          <option value="all">All Slides</option>
+        </select>
+        <label class="upload-btn">
+          Upload
+          <input type="file" id="file-upload" accept=".pptx,.pdf" multiple />
+        </label>
+        <div class="server-status">
+          <div class="dot" id="server-dot"></div>
+          <span id="server-label">Checking...</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="summary-bar" id="summary-bar">
+      <div class="summary-stat info">
+        <div class="value" id="sum-slides">-</div>
+        <div class="label">Slides</div>
+      </div>
+      <div class="summary-divider"></div>
+      <div class="summary-stat" id="sum-ssim-wrap" style="border-bottom: 2px solid #4fc3f7">
+        <div class="value" id="sum-ssim">-</div>
+        <div class="label">SSIM ↑ <small style="color: #4fc3f7">P/F</small></div>
+      </div>
+      <div class="summary-stat" id="sum-color-hist-wrap" style="border-bottom: 2px solid #4fc3f7">
+        <div class="value" id="sum-color-hist">-</div>
+        <div class="label">Color ↑ <small style="color: #4fc3f7">P/F</small></div>
+      </div>
+      <div class="summary-stat" id="sum-text-cov-wrap" style="border-bottom: 2px solid #4fc3f7">
+        <div class="value" id="sum-text-cov">-</div>
+        <div class="label">Text ↑ <small style="color: #4fc3f7">P/F</small></div>
+      </div>
+      <div class="summary-divider"></div>
+      <div class="summary-stat" id="sum-fg-iou-wrap">
+        <div class="value" id="sum-fg-iou">-</div>
+        <div class="label">FG IoU (±1px)</div>
+      </div>
+      <div class="summary-stat" id="sum-fg-iou-raw-wrap">
+        <div class="value" id="sum-fg-iou-raw">-</div>
+        <div class="label">FG IoU (raw)</div>
+      </div>
+      <div class="summary-stat" id="sum-mae-wrap">
+        <div class="value" id="sum-mae">-</div>
+        <div class="label">MAE ↓</div>
+      </div>
+      <div class="summary-divider"></div>
+      <div class="summary-stat" id="sum-verdict-wrap">
+        <div class="value" id="sum-verdict">-</div>
+        <div class="label">Visual Verdict</div>
+      </div>
+      <div class="summary-stat info">
+        <div class="value" id="sum-shape-count">-</div>
+        <div class="label">Shapes</div>
+      </div>
+      <div class="summary-stat info">
+        <div class="value" id="sum-time">-</div>
+        <div class="label">Render ms</div>
+      </div>
+      <div class="summary-legend" id="metric-guide">
+        <span class="metric-guide-pill up">↑ Higher</span>
+        <span class="metric-guide-pill down">↓ Lower: MAE</span>
+        <span class="metric-guide-threshold" id="metric-thresholds">Pass: SSIM≥95% Color≥80%</span>
+      </div>
+    </div>
+
+    <div class="log-section" id="log-section">
+      <div class="log-header" id="log-header">
+        <span class="log-toggle-icon" id="log-toggle-icon">&#9654;</span>
+        <span class="log-header-title">Log</span>
+        <span class="log-count" id="log-count"></span>
+      </div>
+      <div id="log-panel" class="log-panel"></div>
+    </div>
+    <div id="main">
+      <div class="loading"><p>Select a test file and click Evaluate</p></div>
+    </div>
+
+    <script type="module">
+      import {
+        PptxRenderer,
+        parseZip,
+        buildPresentation,
+        serializePresentation,
+      } from '../../src/index.ts';
+      import { renderSlide } from '../../src/renderer/SlideRenderer.ts';
+      import { computePanelScale } from '../../src/utils/previewScale.ts';
+      import {
+        mergeServerMetricsIntoSlides,
+        resolveCompareSlideCounts,
+      } from '../../src/utils/e2eCompare.ts';
+      import * as pdfjsLib from 'pdfjs-dist';
+
+      pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+        'pdfjs-dist/build/pdf.worker.mjs',
+        import.meta.url,
+      ).toString();
+
+      // -----------------------------------------------------------------------
+      // State
+      // -----------------------------------------------------------------------
+      const main = document.getElementById('main');
+      const logPanel = document.getElementById('log-panel');
+      const logSection = document.getElementById('log-section');
+      const logToggleIcon = document.getElementById('log-toggle-icon');
+      const logCountEl = document.getElementById('log-count');
+      let logLineCount = 0;
+      const fileSearch = document.getElementById('file-search');
+      const fileSelect = document.getElementById('file-select');
+      const viewMode = document.getElementById('view-mode');
+      const pageSelect = document.getElementById('page-select');
+
+      let serverAvailable = false;
+      let currentSlideResults = null;
+      const manualReviewEntries = new Map(); // key: `${testFile}#${slideIdx}`
+      let allTestFiles = [];
+      let filteredTestFiles = [];
+      const renderWidth = 960;
+      let renderHeight = 540; // updated during evaluate()
+      let latestEvaluationId = 0;
+
+      // URL params
+      const params = new URLSearchParams(location.search);
+      const listStrategyParam = params.get('listStrategy');
+      const listBatchSizeParam = Number(params.get('listBatchSize'));
+      const windowedInitialSlidesParam = Number(params.get('windowedInitialSlides'));
+      const windowedOverscanParam = Number(params.get('windowedOverscanViewport'));
+
+      function buildRendererOptions() {
+        // E2E comparison needs all slides mounted for extraction from hidden temp container.
+        // Force full list mounting even if URL asks for windowed mode.
+        // Keep fitMode fixed so hidden container resize observers won't trigger
+        // a second in-flight list re-render and race our DOM extraction.
+        const opts = { mode: 'list', listMountStrategy: 'full', fitMode: 'none' };
+        if (Number.isInteger(listBatchSizeParam) && listBatchSizeParam > 0) {
+          opts.listRenderBatchSize = listBatchSizeParam;
+        }
+        if (Number.isInteger(windowedInitialSlidesParam) && windowedInitialSlidesParam > 0) {
+          opts.windowedInitialSlides = windowedInitialSlidesParam;
+        }
+        if (Number.isFinite(windowedOverscanParam) && windowedOverscanParam > 0) {
+          opts.windowedOverscanViewport = windowedOverscanParam;
+        }
+        return opts;
+      }
+
+      function renderFileOptions(filterText = '') {
+        const query = String(filterText || '')
+          .trim()
+          .toLowerCase();
+        const previousSelection = fileSelect.value;
+        filteredTestFiles = allTestFiles.filter(
+          (name) => !query || name.toLowerCase().includes(query),
+        );
+
+        fileSelect.innerHTML = '<option value="">-- Test File --</option>';
+        for (const name of filteredTestFiles) {
+          const opt = document.createElement('option');
+          opt.value = name;
+          opt.textContent = name;
+          fileSelect.appendChild(opt);
+        }
+
+        if (previousSelection && filteredTestFiles.includes(previousSelection)) {
+          fileSelect.value = previousSelection;
+        } else if (filteredTestFiles.length === 1) {
+          fileSelect.value = filteredTestFiles[0];
+        } else {
+          fileSelect.value = '';
+        }
+
+        const total = allTestFiles.length;
+        const matched = filteredTestFiles.length;
+        fileSearch.title = query ? `${matched}/${total} matched` : `${total} files`;
+      }
+
+      // Populate file select from testdata directory
+      async function populateFileSelect() {
+        try {
+          const resp = await fetch('/api/testdata-files');
+          if (!resp.ok) return;
+          const files = await resp.json();
+          allTestFiles = Array.isArray(files) ? files : [];
+        } catch {
+          allTestFiles = [];
+        }
+
+        renderFileOptions(fileSearch.value);
+
+        // Restore from URL param
+        const f = params.get('file');
+        if (f && allTestFiles.includes(f)) {
+          if (!filteredTestFiles.includes(f)) {
+            fileSearch.value = '';
+            renderFileOptions('');
+          }
+          fileSelect.value = f;
+        }
+      }
+      await populateFileSelect();
+
+      // -----------------------------------------------------------------------
+      // Server check
+      // -----------------------------------------------------------------------
+      async function checkServer() {
+        try {
+          const resp = await fetch('/api/test-files');
+          if (resp.ok) {
+            const payload = await resp.json().catch(() => null);
+            if (payload && Array.isArray(payload.files)) {
+              serverAvailable = true;
+              document.getElementById('server-dot').classList.add('connected');
+              document.getElementById('server-label').textContent = 'SSIM Server';
+              return;
+            }
+          }
+        } catch {}
+        serverAvailable = false;
+        document.getElementById('server-dot').classList.remove('connected');
+        document.getElementById('server-label').textContent = 'No SSIM server';
+      }
+      checkServer();
+
+      async function loadManualReviewForFile(testFile) {
+        manualReviewEntries.clear();
+        if (!testFile || !serverAvailable) return;
+        try {
+          const resp = await fetch(`/api/manual-review/${encodeURIComponent(testFile)}`);
+          if (!resp.ok) return;
+          const data = await resp.json();
+          for (const entry of data.entries || []) {
+            const key = `${entry.test_file}#${entry.slide_idx}`;
+            manualReviewEntries.set(key, entry);
+          }
+        } catch {}
+      }
+
+      // -----------------------------------------------------------------------
+      // Logging
+      // -----------------------------------------------------------------------
+      function clearLog() {
+        logPanel.innerHTML = '';
+        logLineCount = 0;
+        logCountEl.textContent = '';
+        logSection.classList.remove('has-content', 'expanded');
+      }
+      function log(type, msg) {
+        const icons = { pass: '\u2713', fail: '\u2717', warn: '\u26A0', info: '\u2139' };
+        const div = document.createElement('div');
+        div.className = `log-line log-${type}`;
+        div.innerHTML = `<span class="icon">${icons[type] || ''}</span><span>${msg}</span>`;
+        logPanel.appendChild(div);
+        logPanel.scrollTop = logPanel.scrollHeight;
+        logLineCount++;
+        logCountEl.textContent = logLineCount;
+        logSection.classList.add('has-content');
+      }
+
+      function toTitleCaseFromSlug(slug) {
+        return String(slug || '')
+          .split('-')
+          .filter(Boolean)
+          .map((part) =>
+            part.length <= 3 ? part.toUpperCase() : part[0].toUpperCase() + part.slice(1),
+          )
+          .join(' ');
+      }
+
+      function getGraphicInfoFromTestFile(testFile) {
+        const value = String(testFile || '');
+        const patterns = [
+          { prefix: 'oracle-seed-shape-', kind: 'shape' },
+          { prefix: 'oracle-shape-', kind: 'shape' },
+          { prefix: 'oracle-seed-smartart-', kind: 'smartart' },
+          { prefix: 'oracle-smartart-', kind: 'smartart' },
+        ];
+        for (const p of patterns) {
+          if (!value.startsWith(p.prefix)) continue;
+          const rawName = value.slice(p.prefix.length);
+          if (!rawName) return null;
+          if (p.kind === 'shape') {
+            return {
+              kind: p.kind,
+              rawName,
+              label: `shape:${rawName.replace(/-/g, '_').toUpperCase()}`,
+            };
+          }
+          return {
+            kind: p.kind,
+            rawName,
+            label: `smartart:${toTitleCaseFromSlug(rawName)}`,
+          };
+        }
+        return null;
+      }
+
+      async function readErrorDetail(resp) {
+        const code = `HTTP ${resp.status}${resp.statusText ? ` ${resp.statusText}` : ''}`;
+        const contentType = (resp.headers.get('content-type') || '').toLowerCase();
+        let detail = '';
+        try {
+          if (contentType.includes('application/json')) {
+            const body = await resp.json();
+            detail = String(body?.detail || body?.error || body?.message || JSON.stringify(body));
+          } else {
+            detail = (await resp.text()).trim();
+          }
+        } catch {}
+        return detail ? `${code}: ${detail}` : code;
+      }
+
+      // -----------------------------------------------------------------------
+      // Score helpers
+      // -----------------------------------------------------------------------
+      function scoreBadge(value, thresholds = [90, 75, 50]) {
+        const cls =
+          value >= thresholds[0]
+            ? 'good'
+            : value >= thresholds[1]
+              ? 'ok'
+              : value >= thresholds[2]
+                ? 'warn'
+                : 'bad';
+        return `<span class="score-badge ${cls}">${typeof value === 'number' ? value.toFixed(1) : value}%</span>`;
+      }
+      function scoreBadgeLow(value, thresholds = [5, 10, 18]) {
+        const cls =
+          value <= thresholds[0]
+            ? 'good'
+            : value <= thresholds[1]
+              ? 'ok'
+              : value <= thresholds[2]
+                ? 'warn'
+                : 'bad';
+        return `<span class="score-badge ${cls}">${typeof value === 'number' ? value.toFixed(1) : value}%</span>`;
+      }
+      function summaryClass(value, thresholds = [90, 75, 50]) {
+        return value >= thresholds[0]
+          ? 'good'
+          : value >= thresholds[1]
+            ? 'ok'
+            : value >= thresholds[2]
+              ? 'warn'
+              : 'bad';
+      }
+      function summaryClassLow(value, thresholds = [5, 10, 18]) {
+        return value <= thresholds[0]
+          ? 'good'
+          : value <= thresholds[1]
+            ? 'ok'
+            : value <= thresholds[2]
+              ? 'warn'
+              : 'bad';
+      }
+      function setSummary(id, wrapId, value, thresholds) {
+        const el = document.getElementById(id);
+        const wrap = document.getElementById(wrapId);
+        el.textContent = typeof value === 'number' ? value.toFixed(1) + '%' : value;
+        if (wrap && typeof value === 'number') {
+          wrap.className = 'summary-stat ' + summaryClass(value, thresholds);
+        }
+      }
+      function setSummaryLow(id, wrapId, value, thresholds) {
+        const el = document.getElementById(id);
+        const wrap = document.getElementById(wrapId);
+        el.textContent = typeof value === 'number' ? value.toFixed(1) + '%' : value;
+        if (wrap && typeof value === 'number') {
+          wrap.className = 'summary-stat ' + summaryClassLow(value, thresholds);
+        }
+      }
+      function setSummaryInfo(id, wrapId, text) {
+        const el = document.getElementById(id);
+        const wrap = document.getElementById(wrapId);
+        el.textContent = text;
+        if (wrap) wrap.className = 'summary-stat info';
+      }
+      function pct(v) {
+        return typeof v === 'number' ? v * 100 : null;
+      }
+      function fmtPct(v) {
+        return typeof v === 'number' ? `${(v * 100).toFixed(1)}%` : 'N/A';
+      }
+      function fmtNum(v, digits = 4) {
+        return typeof v === 'number' ? v.toFixed(digits) : 'N/A';
+      }
+      function updateMetricThresholdGuide(quality) {
+        const el = document.getElementById('metric-thresholds');
+        if (!el) return;
+        const t = quality?.thresholds || {};
+        const ssim = typeof t.ssim === 'number' ? `${(t.ssim * 100).toFixed(1)}%` : '95.0%';
+        const colorHist =
+          typeof t.color_hist_corr === 'number'
+            ? `${(t.color_hist_corr * 100).toFixed(1)}%`
+            : '80.0%';
+        el.textContent = `Pass/Fail: SSIM ≥ ${ssim}, Color ≥ ${colorHist}. Warning: SSIM < 99.0% → needs review.`;
+      }
+
+      function updateSummaryBar({
+        slideCount,
+        avgTextCov,
+        totalShapes,
+        avgSsim,
+        avgFgIou,
+        avgFgIouTolerant,
+        avgColorHistCorr,
+        avgMae,
+        quality,
+        renderMs,
+        metricsPending,
+      }) {
+        document.getElementById('sum-slides').textContent = slideCount;
+        setSummary('sum-text-cov', 'sum-text-cov-wrap', avgTextCov, [90, 75, 50]);
+        document.getElementById('sum-shape-count').textContent = totalShapes;
+
+        const pendingText = '...';
+        const noneText = 'N/A';
+
+        if (avgSsim !== null) setSummary('sum-ssim', 'sum-ssim-wrap', avgSsim, [95, 85, 70]);
+        else setSummaryInfo('sum-ssim', 'sum-ssim-wrap', metricsPending ? pendingText : noneText);
+
+        if (avgFgIouTolerant !== null)
+          setSummary('sum-fg-iou', 'sum-fg-iou-wrap', avgFgIouTolerant, [85, 65, 45]);
+        else
+          setSummaryInfo('sum-fg-iou', 'sum-fg-iou-wrap', metricsPending ? pendingText : noneText);
+
+        if (avgFgIou !== null)
+          setSummary('sum-fg-iou-raw', 'sum-fg-iou-raw-wrap', avgFgIou, [85, 65, 45]);
+        else
+          setSummaryInfo(
+            'sum-fg-iou-raw',
+            'sum-fg-iou-raw-wrap',
+            metricsPending ? pendingText : noneText,
+          );
+
+        if (avgColorHistCorr !== null)
+          setSummary('sum-color-hist', 'sum-color-hist-wrap', avgColorHistCorr, [85, 60, 40]);
+        else
+          setSummaryInfo(
+            'sum-color-hist',
+            'sum-color-hist-wrap',
+            metricsPending ? pendingText : noneText,
+          );
+
+        if (avgMae !== null) setSummaryLow('sum-mae', 'sum-mae-wrap', avgMae, [5, 10, 18]);
+        else setSummaryInfo('sum-mae', 'sum-mae-wrap', metricsPending ? pendingText : noneText);
+
+        const verdictEl = document.getElementById('sum-verdict');
+        const verdictWrap = document.getElementById('sum-verdict-wrap');
+        if (quality) {
+          let verdict = quality.passed ? 'SUPPORTED' : 'UNSUPPORTED';
+          let cls = quality.passed ? 'good' : 'bad';
+          if (quality.passed && (quality.needsReview || (quality.warnings || []).length > 0)) {
+            verdict = 'REVIEW';
+            cls = 'warn';
+          }
+          verdictEl.textContent = verdict;
+          verdictWrap.className = `summary-stat ${cls}`;
+        } else if (metricsPending) {
+          verdictEl.textContent = 'PENDING';
+          verdictWrap.className = 'summary-stat info';
+        } else {
+          verdictEl.textContent = 'N/A';
+          verdictWrap.className = 'summary-stat info';
+        }
+
+        document.getElementById('sum-time').textContent = renderMs.toFixed(0);
+        updateMetricThresholdGuide(quality);
+      }
+
+      // -----------------------------------------------------------------------
+      // Structural analysis (in-browser, no Python needed)
+      // -----------------------------------------------------------------------
+      function analyzeStructural(serialized, pdfTextsBySlide) {
+        const results = [];
+        for (let i = 0; i < serialized.slides.length; i++) {
+          const slide = serialized.slides[i];
+          const pdfTexts = pdfTextsBySlide[i] || [];
+
+          // Text coverage: compare words from serialized model vs PDF
+          const modelWords = new Set();
+          const collectText = (nodes) => {
+            for (const n of nodes) {
+              if (n.textBody?.totalText) {
+                for (const w of n.textBody.totalText.split(/\s+/)) {
+                  if (w.length > 1) modelWords.add(w);
+                }
+              }
+              if (n.rows) {
+                for (const r of n.rows)
+                  for (const c of r.cells) {
+                    for (const w of c.text.split(/\s+/)) {
+                      if (w.length > 1) modelWords.add(w);
+                    }
+                  }
+              }
+              if (n.children) collectText(n.children);
+            }
+          };
+          collectText(slide.nodes);
+
+          const pdfWords = new Set();
+          for (const t of pdfTexts) {
+            for (const w of t.str.split(/\s+/)) {
+              if (w.length > 1) pdfWords.add(w);
+            }
+          }
+
+          let textCoverage = 100;
+          if (pdfWords.size > 0) {
+            let matched = 0;
+            for (const w of pdfWords) {
+              if (modelWords.has(w)) matched++;
+            }
+            textCoverage = (matched / pdfWords.size) * 100;
+          }
+
+          // Shape count
+          const shapeCount = slide.nodes.length;
+
+          results.push({
+            slideIndex: i,
+            textCoverage,
+            modelWordCount: modelWords.size,
+            pdfWordCount: pdfWords.size,
+            shapeCount,
+          });
+        }
+        return results;
+      }
+
+      // -----------------------------------------------------------------------
+      // PDF helpers
+      // -----------------------------------------------------------------------
+      async function renderPdfToCanvas(pdfPage, targetWidth) {
+        const vp = pdfPage.getViewport({ scale: 1.0 });
+        const scale = targetWidth / vp.width;
+        const viewport = pdfPage.getViewport({ scale });
+        const canvas = document.createElement('canvas');
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        await pdfPage.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+        return canvas;
+      }
+
+      // -----------------------------------------------------------------------
+      // Server-side SSIM (replaces canvas-based pixel comparison)
+      // -----------------------------------------------------------------------
+      async function fetchServerSSIM(testFile) {
+        if (!serverAvailable) return null;
+        try {
+          const resp = await fetch(`/api/evaluate/${testFile}`, { method: 'POST' });
+          if (!resp.ok) return null;
+          return await resp.json();
+        } catch {
+          return null;
+        }
+      }
+
+      // -----------------------------------------------------------------------
+      // Main Evaluate
+      // -----------------------------------------------------------------------
+      async function evaluate(pdfBuffer, pptxBuffer, label) {
+        clearLog();
+        // log section auto-shows via has-content class when log() is called
+        main.innerHTML = '<div class="loading"><div class="spinner"></div><p>Evaluating…</p></div>';
+
+        const evaluationId = ++latestEvaluationId;
+        const isStale = () => evaluationId !== latestEvaluationId;
+        const t0 = performance.now();
+        log('info', `Starting evaluation: ${label}`);
+
+        try {
+          // Parse PPTX
+          log('info', 'Parsing PPTX…');
+          const files = await parseZip(pptxBuffer);
+          const presentation = buildPresentation(files);
+          const serialized = serializePresentation(presentation);
+          log(
+            'pass',
+            `PPTX parsed: ${serialized.slideCount} slides, ${presentation.width}x${presentation.height}px`,
+          );
+
+          // Start fetching PNG ground truth in parallel with PDF processing
+          let pngUrlsPromise = Promise.resolve(new Array(serialized.slideCount).fill(null));
+          if (allTestFiles.includes(label)) {
+            pngUrlsPromise = fetchPngSlides(label, serialized.slideCount);
+          }
+
+          // Parse PDF — do ALL pdfjs work (getDocument + every getPage) BEFORE
+          // rendering the PPTX.  Our EMF renderer also uses pdfjs; pdfjs v5's
+          // PagesMapper.#pagesNumber is static and shared across all documents,
+          // so a concurrent getDocument from EMF rendering would clobber the
+          // page count and break subsequent getPage calls on this document.
+          log('info', 'Parsing PDF…');
+          const pdfDoc = await pdfjsLib.getDocument({ data: pdfBuffer }).promise;
+          const pdfNumPages = pdfDoc.numPages;
+          log('pass', `PDF parsed: ${pdfNumPages} pages`);
+
+          if (serialized.slideCount !== pdfNumPages) {
+            log('warn', `Slide count mismatch: PPTX=${serialized.slideCount}, PDF=${pdfNumPages}`);
+          }
+
+          const { displaySlideCount: slideCount, comparableSlideCount } = resolveCompareSlideCounts(
+            serialized.slideCount,
+            pdfNumPages,
+          );
+          if (comparableSlideCount < slideCount) {
+            log(
+              'warn',
+              `Only first ${comparableSlideCount} slide(s) have matching PDF pages; remaining slides render as PPTX-only.`,
+            );
+          }
+
+          // Pre-fetch ALL PDF pages and render to canvas BEFORE PPTX rendering
+          // to avoid PagesMapper conflict with EMF PDF rendering.
+          log('info', 'Rendering PDF pages…');
+          const scale = renderWidth / presentation.width;
+          renderHeight = Math.round(presentation.height * scale);
+
+          const pdfTextsBySlide = [];
+          const pdfCanvases = [];
+          for (let i = 0; i < pdfNumPages; i++) {
+            const page = await pdfDoc.getPage(i + 1);
+            const tc = await page.getTextContent();
+            pdfTextsBySlide.push(tc.items);
+            if (i < comparableSlideCount) {
+              pdfCanvases.push(await renderPdfToCanvas(page, renderWidth));
+            }
+          }
+
+          // Await PNG ground truth (started in parallel with PDF processing)
+          const pngUrls = await pngUrlsPromise;
+          const pngCount = pngUrls.filter((u) => u !== null).length;
+          if (pngCount > 0) {
+            log('pass', `PNG ground truth: ${pngCount}/${serialized.slideCount} slides`);
+          }
+
+          // Structural analysis
+          log('info', 'Running structural analysis…');
+          const structural = analyzeStructural(serialized, pdfTextsBySlide);
+
+          // Render PPTX slides — this triggers async EMF PDF rendering, which
+          // will clobber PagesMapper.#pagesNumber, but we no longer need getPage.
+          log('info', 'Rendering slides…');
+
+          const tempContainer = document.createElement('div');
+          tempContainer.style.cssText = 'position:absolute;left:-9999px;top:-9999px;';
+          document.body.appendChild(tempContainer);
+
+          const renderer = new PptxRenderer(tempContainer, buildRendererOptions());
+          const renderResult = await renderer.preview(pptxBuffer);
+          const renderMs = renderResult.elapsed;
+
+          const slideEls = [];
+          for (const child of tempContainer.children) {
+            // Preferred extraction path (new list item structure):
+            // item[data-slide-index] -> first child is the fixed-size slide viewport wrapper.
+            if (child instanceof HTMLElement && child.dataset.slideIndex !== undefined) {
+              const viewport = child.firstElementChild;
+              if (viewport instanceof HTMLElement) {
+                slideEls.push(viewport);
+                continue;
+              }
+            }
+            // Backward-compatible fallback for older renderer output.
+            const slideDiv = child.querySelector?.('div[style*="position: relative"]');
+            if (slideDiv) slideEls.push(slideDiv);
+          }
+
+          // Update page selector
+          pageSelect.innerHTML = '<option value="all">All Slides</option>';
+          for (let i = 0; i < slideCount; i++) {
+            const opt = document.createElement('option');
+            opt.value = String(i);
+            opt.textContent = `Slide ${i + 1}`;
+            pageSelect.appendChild(opt);
+          }
+
+          // Server-side visual metrics (start in background, do not block first render)
+          let ssimPromise = Promise.resolve(null);
+          const isTestFile = Array.from(fileSelect.options).some((o) => o.value === label);
+          if (isTestFile) {
+            await loadManualReviewForFile(label);
+          } else {
+            manualReviewEntries.clear();
+          }
+          const shouldFetchServerMetrics = serverAvailable && isTestFile;
+          if (shouldFetchServerMetrics) {
+            log(
+              'info',
+              'Requesting server-side visual metrics in background (Playwright + scikit-image)…',
+            );
+            ssimPromise = fetchServerSSIM(label);
+          }
+
+          // Build per-slide results — use pre-rendered PDF canvases
+          let slideResults = [];
+          for (let i = 0; i < slideCount; i++) {
+            const hasComparablePdf = i < comparableSlideCount;
+            const pdfCanvas = hasComparablePdf ? pdfCanvases[i] || null : null;
+            const struct = structural[i] || {
+              textCoverage: 0,
+              shapeCount: 0,
+              modelWordCount: 0,
+              pdfWordCount: 0,
+            };
+            const textCoverage = hasComparablePdf ? struct.textCoverage : 0;
+
+            slideResults.push({
+              index: i,
+              pdfCanvas,
+              pngUrl: pngUrls[i] || null,
+              pptxEl: i < slideEls.length ? slideEls[i] : null,
+              ssim: null,
+              colorHistCorr: null,
+              mae: null,
+              fgIou: null,
+              fgIouTolerant: null,
+              needsReview: null,
+              hasDiff: false,
+              hasComparablePdf,
+              textCoverage,
+              shapeCount: struct.shapeCount,
+              modelWordCount: struct.modelWordCount,
+              pdfWordCount: hasComparablePdf ? struct.pdfWordCount : 0,
+              testFile: isTestFile ? label : null,
+            });
+
+            log(
+              textCoverage >= 75 ? 'pass' : textCoverage >= 50 ? 'warn' : 'fail',
+              `Slide ${i + 1}: text=${textCoverage.toFixed(1)}% shapes=${struct.shapeCount}`,
+            );
+          }
+
+          // Keep tempContainer in DOM (hidden) — slide elements reference blob URLs
+          // and styles that break if detached. Will be removed on next evaluate.
+          tempContainer.id = '__pptx-render-temp';
+          const oldTemp = document.getElementById('__pptx-render-temp');
+          if (oldTemp && oldTemp !== tempContainer) oldTemp.remove();
+
+          // Compute averages
+          const comparableSlides = slideResults.filter((r) => r.hasComparablePdf);
+          const summarySlides = comparableSlides.length > 0 ? comparableSlides : slideResults;
+          const avgTextCov =
+            summarySlides.reduce((s, r) => s + r.textCoverage, 0) / summarySlides.length;
+          const totalShapes = slideResults.reduce((s, r) => s + r.shapeCount, 0);
+          let avgSsim = null;
+          let avgMae = null;
+          let avgFgIou = null;
+          let avgFgIouTolerant = null;
+          let avgChamferScore = null;
+          let avgColorHistCorr = null;
+          let quality = null;
+          updateSummaryBar({
+            slideCount,
+            avgTextCov,
+            totalShapes,
+            avgSsim,
+            avgFgIou,
+            avgFgIouTolerant,
+            avgColorHistCorr,
+            avgMae,
+            quality,
+            renderMs,
+            metricsPending: shouldFetchServerMetrics,
+          });
+          if (isStale()) return null;
+
+          // Store for page filtering
+          currentSlideResults = slideResults;
+
+          // Render UI
+          renderSlideCards(slideResults);
+          const renderReadyMs = performance.now() - t0;
+          log('pass', `Slides rendered in ${renderReadyMs.toFixed(0)}ms`);
+
+          if (shouldFetchServerMetrics) {
+            const ssimData = await ssimPromise;
+            if (isStale()) return null;
+            if (ssimData) {
+              slideResults = mergeServerMetricsIntoSlides(slideResults, ssimData.perSlide || []);
+              avgSsim = pct(ssimData.avgSsim);
+              avgMae = pct(ssimData.avgMae);
+              avgFgIou = pct(ssimData.avgFgIou);
+              avgFgIouTolerant = pct(ssimData.avgFgIouTolerant);
+              avgChamferScore = pct(ssimData.avgChamferScore);
+              avgColorHistCorr = pct(ssimData.avgColorHistCorr);
+              quality = ssimData.quality || null;
+
+              const q = quality || {};
+              const verdict = q.status || (q.passed ? 'supported' : 'unsupported');
+              log(
+                'pass',
+                `Server metrics: ssim=${fmtNum(ssimData.avgSsim)} fg_iou=${fmtNum(ssimData.avgFgIou)} fg_iou_tolerant=${fmtNum(ssimData.avgFgIouTolerant)} color=${fmtNum(ssimData.avgColorHistCorr)} verdict=${verdict}`,
+              );
+              if (Array.isArray(q.reasons) && q.reasons.length > 0) {
+                log('warn', `Server hard reasons: ${q.reasons.join(', ')}`);
+              }
+              if (Array.isArray(q.warnings) && q.warnings.length > 0) {
+                log('warn', `Server warnings: ${q.warnings.join(', ')}`);
+              }
+            } else {
+              log('warn', 'Server visual metrics unavailable, skipping pixel comparison');
+            }
+
+            updateSummaryBar({
+              slideCount,
+              avgTextCov,
+              totalShapes,
+              avgSsim,
+              avgFgIou,
+              avgFgIouTolerant,
+              avgColorHistCorr,
+              avgMae,
+              quality,
+              renderMs,
+              metricsPending: false,
+            });
+            currentSlideResults = slideResults;
+            renderSlideCards(slideResults);
+          }
+
+          const elapsed = performance.now() - t0;
+          log('pass', `Evaluation complete in ${elapsed.toFixed(0)}ms`);
+
+          return {
+            label,
+            slideCount,
+            avgTextCov,
+            avgSsim,
+            avgMae,
+            avgFgIou,
+            avgFgIouTolerant,
+            avgChamferScore,
+            avgColorHistCorr,
+            quality,
+            renderMs,
+            slideResults,
+          };
+        } catch (e) {
+          log('fail', `Error: ${e.message || e}`);
+          main.innerHTML = `<div class="loading" style="color:#e94560"><p>${e.message}</p></div>`;
+          console.error(e);
+          return null;
+        }
+      }
+
+      // -----------------------------------------------------------------------
+      // Render slide cards
+      // -----------------------------------------------------------------------
+      // Cache built card elements so we don't rebuild DOM on view/page changes
+      let builtCards = null; // Map<index, {card, panels, diffPanel, pptxWrapper, pptxEl}>
+
+      function getElementSize(el) {
+        const styleW = Number.parseFloat(el.style.width || '');
+        const styleH = Number.parseFloat(el.style.height || '');
+        const width =
+          Number.isFinite(styleW) && styleW > 0
+            ? styleW
+            : el.scrollWidth || el.offsetWidth || renderWidth;
+        const height =
+          Number.isFinite(styleH) && styleH > 0
+            ? styleH
+            : el.scrollHeight || el.offsetHeight || renderHeight;
+        return { elementWidth: width, elementHeight: height };
+      }
+
+      function applyPptxScale(wrapper, el) {
+        const panelScale = computePanelScale({
+          panelWidth: wrapper.clientWidth,
+          ...getElementSize(el),
+          fallbackWidth: renderWidth,
+          fallbackHeight: renderHeight,
+        });
+        if (!panelScale) return;
+        el.style.transform = `scale(${panelScale.scale})`;
+        wrapper.style.height = `${panelScale.scaledHeight}px`;
+      }
+
+      function rescaleVisiblePptxPanels() {
+        if (!builtCards) return;
+        for (const { card, pptxWrapper, pptxEl } of builtCards.values()) {
+          if (!pptxWrapper || !pptxEl || card.style.display === 'none') continue;
+          applyPptxScale(pptxWrapper, pptxEl);
+        }
+      }
+
+      function buildSlideCards(slideResults) {
+        builtCards = new Map();
+        main.innerHTML = '';
+
+        for (const r of slideResults) {
+          const card = document.createElement('div');
+          card.className = 'slide-card';
+          card.dataset.slideIndex = String(r.index);
+
+          // Header
+          const ssimPct = r.ssim !== null ? r.ssim * 100 : null;
+          const fgIouTolerantPct = pct(r.fgIouTolerant);
+          const colorPct = pct(r.colorHistCorr);
+          const ssimBadge =
+            ssimPct !== null
+              ? scoreBadge(ssimPct, [95, 85, 70])
+              : '<span class="score-badge bad">N/A</span>';
+          const fgBadge =
+            fgIouTolerantPct !== null
+              ? scoreBadge(fgIouTolerantPct, [85, 65, 45])
+              : '<span class="score-badge bad">N/A</span>';
+          const colorBadge =
+            colorPct !== null
+              ? scoreBadge(colorPct, [85, 60, 40])
+              : '<span class="score-badge bad">N/A</span>';
+          const hdr = document.createElement('div');
+          hdr.className = 'slide-card-header';
+          const renderLink = r.testFile
+            ? `/test/pages/render-slide.html?file=testdata/cases/${r.testFile}/source.pptx&slide=${r.index}`
+            : '';
+          const openBtn = renderLink
+            ? `<a href="${renderLink}" target="_blank" style="color:#8ab4f8;font-size:11px;text-decoration:none;margin-left:8px;opacity:0.7" title="Open in Single Slide view">↗ Open</a>`
+            : '';
+          hdr.innerHTML = `
+          <span class="slide-title">Slide ${r.index + 1}${openBtn}</span>
+          <span class="slide-scores">
+            ${ssimBadge} ssim↑
+            ${fgBadge} fgIoU↑
+            ${colorBadge} color↑
+            ${scoreBadge(r.textCoverage)} text↑
+            <span style="color:#888">${r.shapeCount} shapes</span>
+          </span>`;
+          card.appendChild(hdr);
+
+          // Panels — always build both 2-panel and diff panel; toggle visibility
+          const panels = document.createElement('div');
+          panels.className = 'slide-panels';
+
+          // Ground truth panel (PNG preferred, with PDF toggle)
+          const gtPanel = document.createElement('div');
+          gtPanel.className = 'panel';
+
+          const hasPng = !!r.pngUrl;
+          const hasPdf = !!r.pdfCanvas;
+
+          const pngContainer = document.createElement('div');
+          const pdfContainer = document.createElement('div');
+
+          if (hasPng) {
+            const img = document.createElement('img');
+            img.src = r.pngUrl;
+            img.style.width = '100%';
+            img.alt = `PNG ground truth slide ${r.index + 1}`;
+            pngContainer.appendChild(img);
+          }
+          if (hasPdf) {
+            r.pdfCanvas.style.width = '100%';
+            pdfContainer.appendChild(r.pdfCanvas);
+          }
+
+          const gtLabel = document.createElement('div');
+          gtLabel.className = 'panel-label';
+
+          if (hasPng && hasPdf) {
+            gtLabel.style.cssText =
+              'display:flex;justify-content:space-between;align-items:center;';
+            const labelText = document.createElement('span');
+            labelText.textContent = 'Ground Truth';
+            gtLabel.appendChild(labelText);
+
+            const toggleWrap = document.createElement('span');
+            toggleWrap.className = 'gt-toggle-wrap';
+            const btnPng = document.createElement('button');
+            btnPng.textContent = 'PNG';
+            btnPng.className = 'gt-toggle-btn active';
+            const btnPdf = document.createElement('button');
+            btnPdf.textContent = 'PDF';
+            btnPdf.className = 'gt-toggle-btn';
+            toggleWrap.appendChild(btnPng);
+            toggleWrap.appendChild(btnPdf);
+            gtLabel.appendChild(toggleWrap);
+
+            pdfContainer.style.display = 'none';
+            btnPng.addEventListener('click', () => {
+              pngContainer.style.display = '';
+              pdfContainer.style.display = 'none';
+              btnPng.classList.add('active');
+              btnPdf.classList.remove('active');
+            });
+            btnPdf.addEventListener('click', () => {
+              pngContainer.style.display = 'none';
+              pdfContainer.style.display = '';
+              btnPdf.classList.add('active');
+              btnPng.classList.remove('active');
+            });
+          } else if (hasPng) {
+            gtLabel.textContent = 'PNG (Ground Truth)';
+            pdfContainer.style.display = 'none';
+          } else if (hasPdf) {
+            // No PNG available — show PDF as default ground truth
+            gtLabel.textContent = 'PDF (Ground Truth)';
+            pngContainer.style.display = 'none';
+          } else {
+            gtLabel.textContent = 'Ground Truth';
+            pngContainer.style.display = 'none';
+            pdfContainer.style.display = 'none';
+            const noGt = document.createElement('div');
+            noGt.style.cssText = 'padding:20px;color:#666';
+            noGt.textContent = 'No ground truth available';
+            gtPanel.appendChild(noGt);
+          }
+
+          gtPanel.appendChild(gtLabel);
+          gtPanel.appendChild(pngContainer);
+          gtPanel.appendChild(pdfContainer);
+          panels.appendChild(gtPanel);
+
+          // PPTX panel (live rendered DOM element)
+          const pptxPanel = document.createElement('div');
+          pptxPanel.className = 'panel';
+          pptxPanel.innerHTML = '<div class="panel-label">PPTX (Rendered)</div>';
+          if (r.pptxEl) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'pptx-scale-wrapper';
+            const el = r.pptxEl;
+            wrapper.appendChild(el);
+            pptxPanel.appendChild(wrapper);
+
+            // After layout, scale the PPTX element to match panel width
+            requestAnimationFrame(() => applyPptxScale(wrapper, el));
+          } else {
+            pptxPanel.innerHTML += '<div style="padding:20px;color:#666">No render</div>';
+          }
+          panels.appendChild(pptxPanel);
+
+          // Diff panel (always built, shown only in triple mode)
+          const diffPanel = document.createElement('div');
+          diffPanel.className = 'panel';
+          diffPanel.innerHTML = '<div class="panel-label">Diff Heatmap</div>';
+          if (r.hasDiff && r.testFile) {
+            const img = document.createElement('img');
+            img.src = `/api/diff/${r.testFile}/${r.index}`;
+            img.style.width = '100%';
+            img.alt = `Diff slide ${r.index + 1}`;
+            img.loading = 'lazy';
+            diffPanel.appendChild(img);
+          } else {
+            diffPanel.innerHTML +=
+              '<div style="padding:20px;color:#666">No diff (server needed)</div>';
+          }
+          panels.appendChild(diffPanel);
+
+          card.appendChild(panels);
+
+          // Detail
+          const detail = document.createElement('div');
+          detail.className = 'slide-detail';
+          const reviewLabel = r.needsReview === null ? 'N/A' : r.needsReview ? 'yes' : 'no';
+          detail.innerHTML = `
+          <h4 style="margin:4px 0 2px;font-size:11px;color:#8899aa;text-transform:uppercase;letter-spacing:0.5px">Pass / Fail</h4>
+          <div class="detail-kv"><span class="k">SSIM ↑</span><span>${fmtPct(r.ssim)}</span></div>
+          <div class="detail-kv"><span class="k">Color Corr ↑</span><span>${fmtPct(r.colorHistCorr)}</span></div>
+          <div class="detail-kv"><span class="k">Needs Review</span><span>${reviewLabel}</span></div>
+          <h4 style="margin:8px 0 2px;font-size:11px;color:#8899aa;text-transform:uppercase;letter-spacing:0.5px">Diagnostic</h4>
+          <div class="detail-kv"><span class="k">FG IoU (±1px) ↑</span><span>${fmtPct(r.fgIouTolerant)}</span></div>
+          <div class="detail-kv"><span class="k">FG IoU (raw) ↑</span><span>${fmtPct(r.fgIou)}</span></div>
+          <div class="detail-kv"><span class="k">Chamfer Score ↑</span><span>${fmtPct(r.chamferScore)}</span></div>
+          <div class="detail-kv"><span class="k">MAE ↓</span><span>${fmtPct(r.mae)}</span></div>
+          <div class="detail-kv"><span class="k">Text Coverage</span><span>${r.textCoverage.toFixed(1)}%</span></div>
+          <div class="detail-kv"><span class="k">Model Words</span><span>${r.modelWordCount}</span></div>
+          <div class="detail-kv"><span class="k">PDF Words</span><span>${r.pdfWordCount}</span></div>
+          <div class="detail-kv"><span class="k">Shape Count</span><span>${r.shapeCount}</span></div>
+        `;
+          card.appendChild(detail);
+
+          if (r.testFile && serverAvailable) {
+            const review = document.createElement('div');
+            review.className = 'manual-review';
+            const key = `${r.testFile}#${r.index}`;
+            const existing = manualReviewEntries.get(key);
+            const existingVerdict = existing?.verdict || 'unsure';
+            const existingNote = existing?.note || '';
+            const existingTs = existing?.updated_at || '';
+
+            const row = document.createElement('div');
+            row.className = 'manual-review-row';
+
+            const label = document.createElement('span');
+            label.style.cssText = 'font-size:12px;color:#bbb;';
+            label.textContent = 'Manual:';
+            row.appendChild(label);
+
+            const graphicInfo = getGraphicInfoFromTestFile(r.testFile);
+            if (graphicInfo) {
+              const graphic = document.createElement('span');
+              graphic.className = 'manual-review-graphic';
+              graphic.textContent = graphicInfo.label;
+              row.appendChild(graphic);
+            }
+
+            const verdict = document.createElement('select');
+            verdict.innerHTML = `
+            <option value="supported">supported</option>
+            <option value="unsupported">unsupported</option>
+            <option value="unsure">unsure</option>
+          `;
+            verdict.value = existingVerdict;
+            row.appendChild(verdict);
+
+            const note = document.createElement('input');
+            note.type = 'text';
+            note.placeholder = 'note (optional)';
+            note.value = existingNote;
+            row.appendChild(note);
+
+            const btn = document.createElement('button');
+            btn.textContent = 'Save Review';
+            row.appendChild(btn);
+
+            const status = document.createElement('span');
+            status.className = 'manual-review-status';
+            status.textContent = existingTs ? `saved @ ${existingTs}` : 'not saved';
+            row.appendChild(status);
+
+            btn.addEventListener('click', async () => {
+              btn.disabled = true;
+              try {
+                const resp = await fetch('/api/manual-review', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    test_file: r.testFile,
+                    slide_idx: r.index,
+                    verdict: verdict.value,
+                    note: note.value || '',
+                  }),
+                });
+                if (!resp.ok) throw new Error(await readErrorDetail(resp));
+                const data = await resp.json();
+                manualReviewEntries.set(key, data.entry);
+                status.textContent = `saved @ ${data.entry.updated_at}`;
+                log(
+                  'pass',
+                  `Manual review saved: ${r.testFile} slide ${r.index + 1} -> ${verdict.value}`,
+                );
+              } catch (e) {
+                const errMsg =
+                  e && typeof e === 'object' && 'message' in e ? e.message || String(e) : String(e);
+                const graphicLabel = graphicInfo?.label ? `, graphic=${graphicInfo.label}` : '';
+                status.textContent = `save failed (${graphicInfo?.label || r.testFile})`;
+                log(
+                  'fail',
+                  `Manual review save failed: file=${r.testFile}, slide=${r.index + 1}${graphicLabel} :: ${errMsg}`,
+                );
+              } finally {
+                btn.disabled = false;
+              }
+            });
+
+            review.appendChild(row);
+            card.appendChild(review);
+          }
+
+          main.appendChild(card);
+          builtCards.set(r.index, {
+            card,
+            panels,
+            diffPanel,
+            pptxWrapper: r.pptxEl ? pptxPanel.querySelector('.pptx-scale-wrapper') : null,
+            pptxEl: r.pptxEl || null,
+          });
+        }
+
+        // Apply current view/page filter
+        applyViewAndFilter();
+      }
+
+      function applyViewAndFilter() {
+        if (!builtCards) return;
+        const mode = viewMode.value;
+        const selectedPage = pageSelect.value;
+
+        for (const [index, { card, panels, diffPanel }] of builtCards) {
+          // Page filter: show/hide cards
+          const visible = selectedPage === 'all' || String(index) === selectedPage;
+          card.style.display = visible ? '' : 'none';
+
+          // View mode: toggle triple vs two-panel layout
+          panels.className = `slide-panels ${mode === 'triple' ? 'three' : 'two'}`;
+          diffPanel.style.display = mode === 'triple' ? '' : 'none';
+        }
+        requestAnimationFrame(rescaleVisiblePptxPanels);
+      }
+
+      // Backwards-compatible wrapper used by evaluate()
+      function renderSlideCards(slideResults) {
+        buildSlideCards(slideResults);
+      }
+
+      // -----------------------------------------------------------------------
+      // Load helpers
+      // -----------------------------------------------------------------------
+      async function fetchPngSlides(name, slideCount) {
+        const promises = [];
+        for (let i = 1; i <= slideCount; i++) {
+          const url = `/testdata/cases/${name}/slides/slide${i}.png`;
+          promises.push(
+            fetch(url)
+              .then((r) => {
+                if (!r.ok) return null;
+                // Vite SPA fallback returns text/html for non-existent files
+                const ct = (r.headers.get('content-type') || '').toLowerCase();
+                if (ct.includes('text/html')) return null;
+                return r.blob().then((b) => URL.createObjectURL(b));
+              })
+              .catch(() => null),
+          );
+        }
+        return Promise.all(promises);
+      }
+
+      async function fetchPair(name) {
+        const [pdfResp, pptxResp] = await Promise.all([
+          fetch(`/testdata/cases/${name}/ground-truth.pdf`),
+          fetch(`/testdata/cases/${name}/source.pptx`),
+        ]);
+        if (!pdfResp.ok)
+          throw new Error(`PDF not found: cases/${name}/ground-truth.pdf (${pdfResp.status})`);
+        if (!pptxResp.ok)
+          throw new Error(`PPTX not found: cases/${name}/source.pptx (${pptxResp.status})`);
+        return {
+          pdfBuffer: await pdfResp.arrayBuffer(),
+          pptxBuffer: await pptxResp.arrayBuffer(),
+        };
+      }
+
+      // -----------------------------------------------------------------------
+      // Single file evaluate
+      // -----------------------------------------------------------------------
+      async function evaluateSelected(pdfBuf, pptxBuf) {
+        if (pdfBuf && pptxBuf) {
+          await evaluate(pdfBuf, pptxBuf, 'uploaded');
+          return;
+        }
+        const name = fileSelect.value;
+        if (!name) {
+          alert('Select a test file first');
+          return;
+        }
+        try {
+          const { pdfBuffer, pptxBuffer } = await fetchPair(name);
+          await evaluate(pdfBuffer, pptxBuffer, name);
+        } catch (e) {
+          log('fail', e.message);
+        }
+      }
+
+      // -----------------------------------------------------------------------
+      // Evaluate all files
+      // -----------------------------------------------------------------------
+      async function evaluateAll() {
+        clearLog();
+        // log section auto-shows via has-content class when log() is called
+        const testFiles = Array.from(fileSelect.options)
+          .map((o) => o.value)
+          .filter((v) => v);
+        const allResults = [];
+
+        main.innerHTML =
+          '<div class="loading"><div class="spinner"></div><p>Running full evaluation across all test files…</p></div>';
+
+        for (const name of testFiles) {
+          log('info', `=== ${name} ===`);
+          try {
+            const { pdfBuffer, pptxBuffer } = await fetchPair(name);
+            const result = await evaluate(pdfBuffer, pptxBuffer, name);
+            if (result) allResults.push(result);
+          } catch (e) {
+            log('fail', `${name}: ${e.message}`);
+            allResults.push({ label: name, error: e.message });
+          }
+        }
+
+        // Show summary table
+        main.innerHTML = '';
+        const title = document.createElement('h2');
+        title.style.cssText = 'font-size:16px; margin-bottom:12px; color:#e94560;';
+        title.textContent = 'Full Evaluation Summary';
+        main.appendChild(title);
+
+        const table = document.createElement('table');
+        table.className = 'eval-table';
+        table.innerHTML = `<thead>
+        <tr>
+          <th rowspan="2">File</th><th rowspan="2">Slides</th>
+          <th colspan="3" style="background:#1a2a3a;border-bottom:2px solid #4fc3f7;font-size:10px;letter-spacing:1px">PASS / FAIL</th>
+          <th colspan="4" style="background:#1a2a2a;border-bottom:2px solid #555;font-size:10px;letter-spacing:1px;color:#889">DIAGNOSTIC</th>
+          <th rowspan="2">Verdict</th><th rowspan="2">Render (ms)</th>
+        </tr>
+        <tr>
+          <th style="background:#1a2a3a">SSIM ↑</th><th style="background:#1a2a3a">Color ↑</th><th style="background:#1a2a3a">Text ↑</th>
+          <th style="background:#1a2a2a;color:#889">FG IoU ↑</th><th style="background:#1a2a2a;color:#889">Chamfer ↑</th><th style="background:#1a2a2a;color:#889">FG IoU (raw) ↑</th><th style="background:#1a2a2a;color:#889">MAE ↓</th>
+        </tr>
+      </thead>`;
+        const tbody = document.createElement('tbody');
+
+        let totalText = 0,
+          totalSsim = 0,
+          totalFgIou = 0,
+          totalFgIouTolerant = 0,
+          totalChamfer = 0,
+          totalColorHist = 0,
+          totalMae = 0;
+        let ssimCount = 0,
+          fgIouCount = 0,
+          fgIouTolerantCount = 0,
+          chamferCount = 0,
+          colorHistCount = 0,
+          maeCount = 0,
+          count = 0;
+        let verdictSupported = 0,
+          verdictReview = 0,
+          verdictUnsupported = 0;
+        for (const r of allResults) {
+          if (r.error) {
+            tbody.innerHTML += `<tr><td>${r.label}</td><td colspan="10" style="color:#e94560">${r.error}</td></tr>`;
+            continue;
+          }
+          totalText += r.avgTextCov;
+          count++;
+          if (r.avgSsim !== null) {
+            totalSsim += r.avgSsim;
+            ssimCount++;
+          }
+          if (r.avgFgIou !== null) {
+            totalFgIou += r.avgFgIou;
+            fgIouCount++;
+          }
+          if (r.avgFgIouTolerant !== null) {
+            totalFgIouTolerant += r.avgFgIouTolerant;
+            fgIouTolerantCount++;
+          }
+          if (r.avgChamferScore !== null) {
+            totalChamfer += r.avgChamferScore;
+            chamferCount++;
+          }
+          if (r.avgColorHistCorr !== null) {
+            totalColorHist += r.avgColorHistCorr;
+            colorHistCount++;
+          }
+          if (r.avgMae !== null) {
+            totalMae += r.avgMae;
+            maeCount++;
+          }
+
+          const ssimDisplay = r.avgSsim !== null ? scoreBadge(r.avgSsim, [95, 85, 70]) : 'N/A';
+          const colorHistDisplay =
+            r.avgColorHistCorr !== null ? scoreBadge(r.avgColorHistCorr, [80, 60, 40]) : 'N/A';
+          const fgIouTolerantDisplay =
+            r.avgFgIouTolerant !== null ? scoreBadge(r.avgFgIouTolerant, [85, 65, 45]) : 'N/A';
+          const chamferDisplay =
+            r.avgChamferScore !== null ? scoreBadge(r.avgChamferScore, [90, 70, 50]) : 'N/A';
+          const fgIouRawDisplay =
+            r.avgFgIou !== null ? scoreBadge(r.avgFgIou, [85, 65, 45]) : 'N/A';
+          const maeDisplay = r.avgMae !== null ? scoreBadgeLow(r.avgMae, [5, 10, 18]) : 'N/A';
+          let verdictLabel = 'N/A';
+          let verdictCls = 'warn';
+          if (r.quality) {
+            if (!r.quality.passed) {
+              verdictLabel = 'UNSUPPORTED';
+              verdictCls = 'bad';
+              verdictUnsupported += 1;
+            } else if (r.quality.needsReview || (r.quality.warnings || []).length > 0) {
+              verdictLabel = 'REVIEW';
+              verdictCls = 'warn';
+              verdictReview += 1;
+            } else {
+              verdictLabel = 'SUPPORTED';
+              verdictCls = 'good';
+              verdictSupported += 1;
+            }
+          }
+          const verdictDisplay = `<span class="score-badge ${verdictCls}">${verdictLabel}</span>`;
+          tbody.innerHTML += `<tr>
+          <td>${r.label}</td>
+          <td>${r.slideCount}</td>
+          <td style="background:#0d1a2a">${ssimDisplay}</td>
+          <td style="background:#0d1a2a">${colorHistDisplay}</td>
+          <td style="background:#0d1a2a">${scoreBadge(r.avgTextCov)}</td>
+          <td>${fgIouTolerantDisplay}</td>
+          <td>${chamferDisplay}</td>
+          <td>${fgIouRawDisplay}</td>
+          <td>${maeDisplay}</td>
+          <td>${verdictDisplay}</td>
+          <td>${r.renderMs.toFixed(0)}</td>
+        </tr>`;
+        }
+        if (count > 0) {
+          const avgSsimDisplay =
+            ssimCount > 0 ? scoreBadge(totalSsim / ssimCount, [95, 85, 70]) : 'N/A';
+          const avgColorHistDisplay =
+            colorHistCount > 0 ? scoreBadge(totalColorHist / colorHistCount, [80, 60, 40]) : 'N/A';
+          const avgFgIouTolerantDisplay =
+            fgIouTolerantCount > 0
+              ? scoreBadge(totalFgIouTolerant / fgIouTolerantCount, [85, 65, 45])
+              : 'N/A';
+          const avgChamferDisplay =
+            chamferCount > 0 ? scoreBadge(totalChamfer / chamferCount, [90, 70, 50]) : 'N/A';
+          const avgFgIouRawDisplay =
+            fgIouCount > 0 ? scoreBadge(totalFgIou / fgIouCount, [85, 65, 45]) : 'N/A';
+          const avgMaeDisplay =
+            maeCount > 0 ? scoreBadgeLow(totalMae / maeCount, [5, 10, 18]) : 'N/A';
+          const verdictSummary = `<span class="score-badge good">S:${verdictSupported}</span> <span class="score-badge warn">R:${verdictReview}</span> <span class="score-badge bad">U:${verdictUnsupported}</span>`;
+          tbody.innerHTML += `<tr style="font-weight:700; border-top:2px solid #533483">
+          <td>AVERAGE</td><td>-</td>
+          <td style="background:#0d1a2a">${avgSsimDisplay}</td>
+          <td style="background:#0d1a2a">${avgColorHistDisplay}</td>
+          <td style="background:#0d1a2a">${scoreBadge(totalText / count)}</td>
+          <td>${avgFgIouTolerantDisplay}</td>
+          <td>${avgChamferDisplay}</td>
+          <td>${avgFgIouRawDisplay}</td>
+          <td>${avgMaeDisplay}</td>
+          <td>${verdictSummary}</td>
+          <td>-</td>
+        </tr>`;
+        }
+        table.appendChild(tbody);
+        main.appendChild(table);
+
+        // Show per-slide cards for last evaluated file
+        if (allResults.length > 0) {
+          const last = allResults[allResults.length - 1];
+          if (last.slideResults) {
+            currentSlideResults = last.slideResults;
+            const h3 = document.createElement('h3');
+            h3.style.cssText = 'font-size:14px; margin:20px 0 8px; color:#aaa;';
+            h3.textContent = `Per-Slide Detail: ${last.label}`;
+            main.appendChild(h3);
+            renderSlideCards(last.slideResults);
+          }
+        }
+
+        log('pass', `Full evaluation complete: ${count} files`);
+      }
+
+      // -----------------------------------------------------------------------
+      // Event Handlers
+      // -----------------------------------------------------------------------
+      document.getElementById('btn-evaluate').addEventListener('click', () => evaluateSelected());
+      document.getElementById('btn-eval-all').addEventListener('click', evaluateAll);
+      document.getElementById('log-header').addEventListener('click', () => {
+        logSection.classList.toggle('expanded');
+      });
+
+      fileSearch.addEventListener('input', () => {
+        renderFileOptions(fileSearch.value);
+      });
+
+      fileSelect.addEventListener('change', () => {
+        if (fileSelect.value) {
+          const url = new URL(location);
+          url.searchParams.set('file', fileSelect.value);
+          history.replaceState(null, '', url);
+          evaluateSelected();
+        }
+      });
+
+      viewMode.addEventListener('change', () => {
+        applyViewAndFilter();
+      });
+
+      pageSelect.addEventListener('change', () => {
+        applyViewAndFilter();
+        // Scroll to the selected slide card
+        if (pageSelect.value !== 'all' && builtCards) {
+          const entry = builtCards.get(Number(pageSelect.value));
+          if (entry) entry.card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      });
+
+      window.addEventListener('resize', () => requestAnimationFrame(rescaleVisiblePptxPanels));
+
+      document.getElementById('file-upload').addEventListener('change', (e) => {
+        const files = e.target.files;
+        let pptx = null,
+          pdf = null;
+        for (const f of files) {
+          if (f.name.endsWith('.pptx')) pptx = f;
+          else if (f.name.endsWith('.pdf')) pdf = f;
+        }
+        if (!pptx || !pdf) {
+          alert('Upload both .pptx and .pdf');
+          return;
+        }
+        Promise.all([pdf.arrayBuffer(), pptx.arrayBuffer()]).then(([p, x]) =>
+          evaluateSelected(p, x),
+        );
+      });
+
+      // Drag & drop
+      let dragC = 0;
+      document.body.addEventListener('dragenter', (e) => {
+        e.preventDefault();
+        dragC++;
+        document.getElementById('drop-overlay').classList.add('active');
+      });
+      document.body.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        dragC--;
+        if (dragC <= 0) {
+          dragC = 0;
+          document.getElementById('drop-overlay').classList.remove('active');
+        }
+      });
+      document.body.addEventListener('dragover', (e) => e.preventDefault());
+      document.body.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dragC = 0;
+        document.getElementById('drop-overlay').classList.remove('active');
+        const files = e.dataTransfer.files;
+        let pptx = null,
+          pdf = null;
+        for (const f of files) {
+          if (f.name.endsWith('.pptx')) pptx = f;
+          else if (f.name.endsWith('.pdf')) pdf = f;
+        }
+        if (!pptx || !pdf) {
+          alert('Drop both .pptx and .pdf');
+          return;
+        }
+        Promise.all([pdf.arrayBuffer(), pptx.arrayBuffer()]).then(([p, x]) =>
+          evaluateSelected(p, x),
+        );
+      });
+
+      // Auto-evaluate if file param
+      if (fileSelect.value) {
+        evaluateSelected();
+      }
+    </script>
+  </body>
+</html>

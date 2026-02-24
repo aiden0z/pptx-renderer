@@ -1,0 +1,9 @@
+dist/
+node_modules/
+references/
+test/e2e/
+*.pptx
+*.pdf
+*.png
+*.jpg
+pnpm-lock.yaml

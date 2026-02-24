@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>PPTX Render — Single Slide</title>
+    <link rel="stylesheet" href="./styles/common.css" />
+    <style>
+      #slide-container {
+        display: flex;
+        justify-content: center;
+        padding: 24px;
+        overflow: auto;
+        height: calc(100vh - 80px);
+      }
+      #slide-container .slide-wrapper {
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+        background: #fff;
+        overflow: hidden;
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="nav-bar">
+      <span class="nav-label">Pages</span>
+      <a href="/test/pages/e2e-compare.html">E2E Evaluation</a>
+      <a href="/test/pages/index.html">Basic Preview</a>
+      <a href="/test/pages/render-slide.html" class="active">Single Slide</a>
+      <a href="/test/pages/export.html">Model Export</a>
+    </nav>
+
+    <div class="header">
+      <h1>Single Slide</h1>
+      <div class="controls">
+        <select id="file-select">
+          <option value="">-- Select File --</option>
+        </select>
+        <select id="slide-select" disabled>
+          <option value="0">Slide 1</option>
+        </select>
+        <div class="nav-btns">
+          <button id="btn-prev" disabled title="Previous slide">◀</button>
+          <button id="btn-next" disabled title="Next slide">▶</button>
+        </div>
+        <span class="status" id="status">Select a file to render</span>
+      </div>
+    </div>
+
+    <div id="slide-container"></div>
+
+    <script type="module">
+      import { parseZip, buildPresentation } from '../../src/index.ts';
+      import { renderSlide } from '../../src/renderer/SlideRenderer.ts';
+
+      const fileSelect = document.getElementById('file-select');
+      const slideSelect = document.getElementById('slide-select');
+      const btnPrev = document.getElementById('btn-prev');
+      const btnNext = document.getElementById('btn-next');
+      const statusEl = document.getElementById('status');
+      const container = document.getElementById('slide-container');
+
+      let presentation = null;
+      let currentSlide = 0;
+      let mediaCache = new Map();
+
+      // URL params
+      const params = new URLSearchParams(location.search);
+      const fileParam = params.get('file');
+      const slideParam = params.get('slide');
+
+      // Populate file select from testdata directory
+      async function populateFileSelect() {
+        try {
+          const resp = await fetch('/api/testdata-files');
+          if (!resp.ok) return;
+          const files = await resp.json();
+          for (const name of files) {
+            const opt = document.createElement('option');
+            opt.value = `testdata/cases/${name}/source.pptx`;
+            opt.textContent = name;
+            fileSelect.appendChild(opt);
+          }
+        } catch {}
+        if (fileParam) {
+          let matched = false;
+          for (const opt of fileSelect.options) {
+            if (
+              opt.value === fileParam ||
+              opt.value === `testdata/cases/${fileParam}/source.pptx`
+            ) {
+              fileSelect.value = opt.value;
+              matched = true;
+              break;
+            }
+          }
+          if (!matched) {
+            const opt = document.createElement('option');
+            opt.value = fileParam;
+            opt.textContent = fileParam;
+            fileSelect.appendChild(opt);
+            fileSelect.value = fileParam;
+          }
+        }
+      }
+      await populateFileSelect();
+
+      async function loadFile(filePath) {
+        container.innerHTML =
+          '<div class="loading"><div class="spinner"></div><p>Loading…</p></div>';
+        statusEl.textContent = 'Loading…';
+
+        try {
+          const resp = await fetch(`/${filePath}`);
+          if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+          const buffer = await resp.arrayBuffer();
+
+          const files = await parseZip(buffer);
+          presentation = buildPresentation(files);
+
+          slideSelect.innerHTML = '';
+          slideSelect.disabled = false;
+          for (let i = 0; i < presentation.slides.length; i++) {
+            const opt = document.createElement('option');
+            opt.value = String(i);
+            opt.textContent = `Slide ${i + 1}`;
+            slideSelect.appendChild(opt);
+          }
+
+          const targetSlide = slideParam !== null ? parseInt(slideParam, 10) : 0;
+          const idx = Math.max(0, Math.min(targetSlide, presentation.slides.length - 1));
+          slideSelect.value = String(idx);
+          showSlide(idx);
+        } catch (e) {
+          container.innerHTML = `<div class="loading" style="color:#e94560">${e.message}</div>`;
+          statusEl.textContent = `Error: ${e.message}`;
+          console.error(e);
+        }
+      }
+
+      function showSlide(idx) {
+        if (!presentation) return;
+        currentSlide = idx;
+        slideSelect.value = String(idx);
+
+        // Revoke old blob URLs before re-rendering
+        for (const url of mediaCache.values()) {
+          URL.revokeObjectURL(url);
+        }
+        mediaCache.clear();
+
+        container.innerHTML = '';
+        const slide = presentation.slides[idx];
+        const slideEl = renderSlide(presentation, slide, { mediaUrlCache: mediaCache });
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'slide-wrapper';
+        wrapper.style.width = `${presentation.width}px`;
+        wrapper.style.height = `${presentation.height}px`;
+        wrapper.appendChild(slideEl);
+        container.appendChild(wrapper);
+
+        const url = new URL(location);
+        url.searchParams.set('file', fileSelect.value);
+        url.searchParams.set('slide', String(idx));
+        history.replaceState(null, '', url);
+
+        btnPrev.disabled = idx <= 0;
+        btnNext.disabled = idx >= presentation.slides.length - 1;
+        statusEl.textContent = `Slide ${idx + 1} / ${presentation.slides.length} — ${presentation.width}×${presentation.height}px`;
+
+        window.__renderDone = true;
+        window.__slideWidth = presentation.width;
+        window.__slideHeight = presentation.height;
+      }
+
+      fileSelect.addEventListener('change', () => {
+        if (fileSelect.value) loadFile(fileSelect.value);
+      });
+
+      slideSelect.addEventListener('change', () => {
+        showSlide(parseInt(slideSelect.value, 10));
+      });
+
+      btnPrev.addEventListener('click', () => {
+        if (currentSlide > 0) showSlide(currentSlide - 1);
+      });
+
+      btnNext.addEventListener('click', () => {
+        if (presentation && currentSlide < presentation.slides.length - 1)
+          showSlide(currentSlide + 1);
+      });
+
+      document.addEventListener('keydown', (e) => {
+        if (e.target.tagName === 'SELECT') return;
+        if (e.key === 'ArrowLeft') btnPrev.click();
+        else if (e.key === 'ArrowRight') btnNext.click();
+      });
+
+      if (fileSelect.value) {
+        loadFile(fileSelect.value);
+      }
+    </script>
+  </body>
+</html>

@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security reporting policy
+    url: https://github.com/aiden0z/pptx-renderer/security/advisories/new
+    about: Do not disclose vulnerabilities publicly; follow docs/SECURITY.md for project reporting guidance.
