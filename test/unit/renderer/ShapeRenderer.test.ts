@@ -2001,4 +2001,48 @@ describe('ShapeRenderer', () => {
     expect(textContainer, 'text container should exist').not.toBeNull();
     expect(textContainer.style.justifyContent).toBe('flex-end');
   });
+
+  it('callout1 main path (rectangle) has stroke=none when multiPath[0].stroke is false (oracle 0113-0120)', () => {
+    // callout1/2/3 and accentCallout1/2/3 define their rect body with stroke:false
+    // and leader line as a separate sub-path with stroke:true.
+    // The main <path> element should NOT inherit the shape's line stroke.
+    const xml = `
+      <p:sp xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
+            xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+        <p:nvSpPr>
+          <p:cNvPr id="10" name="Callout 1"/>
+          <p:cNvSpPr/>
+          <p:nvPr/>
+        </p:nvSpPr>
+        <p:spPr>
+          <a:xfrm>
+            <a:off x="1000000" y="500000"/>
+            <a:ext cx="3000000" cy="2000000"/>
+          </a:xfrm>
+          <a:prstGeom prst="callout1"><a:avLst/></a:prstGeom>
+          <a:solidFill><a:srgbClr val="4472C4"/></a:solidFill>
+          <a:ln w="12700">
+            <a:solidFill><a:srgbClr val="2F5597"/></a:solidFill>
+          </a:ln>
+        </p:spPr>
+      </p:sp>
+    `;
+    const shapeNode = parseShapeNode(parseXml(xml));
+    const el = renderShape(shapeNode, createMockRenderContext());
+    const svg = el.querySelector('svg');
+    expect(svg).toBeTruthy();
+
+    const paths = svg!.querySelectorAll('path');
+    // First path = rectangle body (multiPaths[0], stroke: false)
+    // Second path = leader line (multiPaths[1], stroke: true)
+    expect(paths.length).toBeGreaterThanOrEqual(2);
+
+    // Main path (rectangle) should have stroke=none because multiPaths[0].stroke is false
+    const mainPath = paths[0];
+    expect(mainPath.getAttribute('stroke')).toBe('none');
+
+    // Leader line path should have stroke applied
+    const leaderPath = paths[1];
+    expect(leaderPath.getAttribute('stroke')).not.toBe('none');
+  });
 });

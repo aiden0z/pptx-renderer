@@ -22,7 +22,10 @@ vi.mock('../../../src/model/Presentation', () => ({
 }));
 
 vi.mock('../../../src/renderer/SlideRenderer', () => ({
-  renderSlide: vi.fn(() => document.createElement('div')),
+  renderSlide: vi.fn(() => {
+    const el = document.createElement('div');
+    return { element: el, dispose: vi.fn(), [Symbol.dispose]() { this.dispose(); } };
+  }),
 }));
 
 import { parseZip } from '../../../src/parser/ZipParser';

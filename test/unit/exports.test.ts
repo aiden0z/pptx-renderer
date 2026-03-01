@@ -5,6 +5,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  PptxViewer,
   PptxRenderer,
   parseZip,
   buildPresentation,
@@ -14,6 +15,9 @@ import {
 
 // Type-only imports — these just need to compile, not be used at runtime.
 import type {
+  ViewerOptions,
+  ListRenderOptions,
+  PptxViewerEventMap,
   RendererOptions,
   PreviewInput,
   FitMode,
@@ -22,6 +26,7 @@ import type {
   SerializedPresentation,
   SerializedSlide,
   SerializedNode,
+  SlideHandle,
   SlideRendererOptions,
   SlideData,
   SlideNode,
@@ -49,7 +54,12 @@ import type {
 } from '../../src/index';
 
 describe('package exports', () => {
-  it('exports PptxRenderer class', () => {
+  it('exports PptxViewer class', () => {
+    expect(PptxViewer).toBeDefined();
+    expect(typeof PptxViewer).toBe('function');
+  });
+
+  it('exports PptxRenderer class (deprecated)', () => {
     expect(PptxRenderer).toBeDefined();
     expect(typeof PptxRenderer).toBe('function');
   });

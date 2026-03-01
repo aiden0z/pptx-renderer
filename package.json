@@ -1,6 +1,6 @@
 {
   "name": "@aiden0z/pptx-renderer",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Parse and render PPTX files in the browser with a TypeScript-first engine.",
   "license": "Apache-2.0",
   "homepage": "https://github.com/aiden0z/pptx-renderer#readme",
@@ -82,8 +82,15 @@
   },
   "dependencies": {
     "echarts": "^6.0.0",
-    "jszip": "^3.10.1",
-    "pdfjs-dist": "^5.4.624"
+    "jszip": "^3.10.1"
+  },
+  "peerDependencies": {
+    "pdfjs-dist": "^5.0.0"
+  },
+  "peerDependenciesMeta": {
+    "pdfjs-dist": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@commitlint/cli": "^20.4.2",

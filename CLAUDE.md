@@ -13,7 +13,7 @@ TypeScript library that parses Office Open XML (.pptx) files and renders them as
 ## Tech Stack
 
 - **Runtime:** TypeScript + Vite (ESM)
-- **Dependencies:** jszip (zip extraction), echarts (charts), pdfjs-dist (PDF comparison in dev pages)
+- **Dependencies:** jszip (zip extraction), echarts (charts). **Optional peer dep:** pdfjs-dist (SmartArt PDF fallback rendering)
 - **E2E Tests:** Python (pytest + Playwright + scikit-image), not bundled with the library
 - **Build:** `pnpm build` → `dist/aiden0z-pptx-renderer.{es,cjs}.js`
 
@@ -33,8 +33,9 @@ ArrayBuffer (.pptx)
 
 ```
 src/
-  index.ts                    # Public API: PptxRenderer, parseZip, buildPresentation, serializePresentation
-  core/Renderer.ts            # PptxRenderer class (preview, goToSlide, destroy)
+  index.ts                    # Public API: PptxViewer, PptxRenderer (deprecated), parseZip, buildPresentation, renderSlide, serializePresentation
+  core/Viewer.ts              # PptxViewer class (load, renderList, renderSlide, goToSlide, destroy) — extends EventTarget
+  core/Renderer.ts            # PptxRenderer (deprecated v1 compat) — extends PptxViewer, adds preview() + nav buttons
   parser/
     ZipParser.ts              # .pptx → PptxFiles (categorized Maps of XML strings + media bytes)
     XmlParser.ts              # SafeXmlNode: null-safe XML traversal (child/children/attr/text)

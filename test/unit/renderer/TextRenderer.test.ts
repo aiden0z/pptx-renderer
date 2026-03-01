@@ -1015,6 +1015,52 @@ describe('TextRenderer — renderTextBody', () => {
     });
   });
 
+  describe('consecutive space preservation', () => {
+    it('uses non-breaking spaces to preserve consecutive spaces without justify stretching', () => {
+      const body = makeTextBody({
+        paragraphs: [{
+          runs: [
+            { text: '             Lenovo AI Cloud' },
+          ],
+          level: 0,
+        }],
+      });
+      const container = renderToContainer(body);
+      const spans = container.querySelectorAll('span');
+      let spaceSpan: HTMLElement | null = null;
+      spans.forEach((s) => {
+        if (s.textContent?.includes('Lenovo AI Cloud')) {
+          spaceSpan = s;
+        }
+      });
+      expect(spaceSpan, 'should have a span with the text').not.toBeNull();
+      // Consecutive spaces should be converted to alternating space + &nbsp;
+      // so they are not collapsed by HTML but also not stretched by justify
+      expect(spaceSpan!.innerHTML).toContain('&nbsp;');
+      // Should NOT use pre-wrap (which would cause justify stretching)
+      expect(spaceSpan!.style.whiteSpace).not.toBe('pre-wrap');
+    });
+
+    it('does not alter spans with only single spaces', () => {
+      const body = makeTextBody({
+        paragraphs: [{
+          runs: [
+            { text: 'Hello World' },
+          ],
+          level: 0,
+        }],
+      });
+      const container = renderToContainer(body);
+      const spans = container.querySelectorAll('span');
+      spans.forEach((s) => {
+        if (s.textContent === 'Hello World') {
+          // No &nbsp; needed for single spaces
+          expect(s.innerHTML).not.toContain('\u00a0');
+        }
+      });
+    });
+  });
+
   describe('tab character rendering', () => {
     it('preserves tab characters with white-space: pre so browser renders them', () => {
       const body = makeTextBody({

@@ -18,7 +18,6 @@ import { GroupNodeData, parseGroupNode } from '../model/nodes/GroupNode';
 import { ChartNodeData } from '../model/nodes/ChartNode';
 import { BaseNodeData } from '../model/nodes/BaseNode';
 import { SafeXmlNode } from '../parser/XmlParser';
-import { RelEntry } from '../parser/RelParser';
 import type { ECharts } from 'echarts';
 
 // ---------------------------------------------------------------------------
@@ -38,6 +37,20 @@ export interface SlideRendererOptions {
   mediaUrlCache?: Map<string, string>;
   /** Shared set of live ECharts instances for explicit disposal. */
   chartInstances?: Set<ECharts>;
+}
+
+/**
+ * Per-slide resource handle returned by `renderSlide()`.
+ * Allows the caller to dispose of slide-specific resources (chart instances,
+ * blob URLs in standalone mode) without tearing down the whole viewer.
+ */
+export interface SlideHandle {
+  /** The rendered slide DOM element. */
+  readonly element: HTMLElement;
+  /** Dispose slide-specific resources (charts inside this slide, blob URLs if standalone). */
+  dispose(): void;
+  /** Support `using` declarations (TC39 Explicit Resource Management). */
+  [Symbol.dispose](): void;
 }
 
 // ---------------------------------------------------------------------------
@@ -187,7 +200,9 @@ export function renderSlide(
   presentation: PresentationData,
   slide: SlideData,
   options?: SlideRendererOptions,
-): HTMLElement {
+): SlideHandle {
+  const isSharedCache = !!options?.mediaUrlCache;
+
   // Create render context (resolves slide -> layout -> master -> theme chain)
   const ctx = createRenderContext(
     presentation,
@@ -228,7 +243,7 @@ export function renderSlide(
       try {
         const el = renderNode(node, masterCtx);
         container.appendChild(el);
-      } catch (e) {
+      } catch {
         // Master shape errors are non-fatal
       }
     }
@@ -245,7 +260,7 @@ export function renderSlide(
       try {
         const el = renderNode(node, layoutCtx);
         container.appendChild(el);
-      } catch (e) {
+      } catch {
         // Layout shape errors are non-fatal
       }
     }
@@ -262,5 +277,39 @@ export function renderSlide(
     }
   }
 
-  return container;
+  // Build SlideHandle
+  let disposed = false;
+  const chartInstances = options?.chartInstances;
+  const mediaUrlCache = ctx.mediaUrlCache;
+
+  const dispose = (): void => {
+    if (disposed) return;
+    disposed = true;
+
+    // Dispose chart instances whose DOM is inside this slide container
+    if (chartInstances) {
+      for (const chart of chartInstances) {
+        if (!chart.isDisposed() && container.contains(chart.getDom())) {
+          chart.dispose();
+          chartInstances.delete(chart);
+        }
+      }
+    }
+
+    // Revoke blob URLs only in standalone mode (caller doesn't own a shared cache)
+    if (!isSharedCache) {
+      for (const url of mediaUrlCache.values()) {
+        URL.revokeObjectURL(url);
+      }
+      mediaUrlCache.clear();
+    }
+  };
+
+  return {
+    element: container,
+    dispose,
+    [Symbol.dispose](): void {
+      dispose();
+    },
+  };
 }

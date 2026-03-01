@@ -43,6 +43,7 @@ export function createRenderContext(
 
   const layout: LayoutData = presentation.layouts.get(layoutPath) || {
     placeholders: [],
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     spTree: {} as any,
     rels: new Map(),
     showMasterSp: true,
@@ -52,6 +53,7 @@ export function createRenderContext(
     colorMap: new Map(),
     textStyles: {},
     placeholders: [],
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     spTree: {} as any,
     rels: new Map(),
   };

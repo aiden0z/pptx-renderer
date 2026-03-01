@@ -1,17 +1,18 @@
 /**
  * PDF-to-image renderer for embedded EMF PDFs.
  *
- * pdfjs-dist v5 uses a static PagesMapper.#pagesNumber field shared across ALL
- * PDFDocument instances. When a host SPA renders both PDF (via pdfjs) and PPTX
- * (containing EMF with embedded PDF), concurrent getDocument calls clobber each
- * other's page count, causing "Invalid page request" errors.
+ * pdfjs-dist v5 has process-level shared state (PagesMapper.#pagesNumber,
+ * GlobalWorkerOptions.workerSrc, PDFWorker.#isWorkerDisabled) that a library
+ * must never touch on the main thread — doing so clobbers the host app's pdfjs
+ * configuration.
  *
- * Solution: render EMF PDFs inside a dedicated Web Worker. The worker has its
- * own JS context with a separate PagesMapper instance, so no static state
- * conflict with the main thread's pdfjs usage.
+ * Solution: render EMF PDFs exclusively inside a dedicated Web Worker. The
+ * worker loads its OWN pdfjs instance via dynamic import, so all static state
+ * is fully isolated from the main thread.
  *
- * Fallback: if OffscreenCanvas or Worker is unavailable, render on the main
- * thread with error handling (works when the host doesn't use pdfjs).
+ * If Worker + OffscreenCanvas are unavailable (extremely rare in 2025+
+ * browsers), rendering is skipped and the caller gets null — no main-thread
+ * fallback, no global state pollution.
  */
 
 // ---------------------------------------------------------------------------
@@ -32,7 +33,7 @@ function getPdfjsUrl(): string | null {
 }
 
 // ---------------------------------------------------------------------------
-// Worker-based renderer (primary — fully isolated from main thread pdfjs)
+// Worker-based renderer (fully isolated from main thread pdfjs)
 // ---------------------------------------------------------------------------
 
 /**
@@ -91,7 +92,7 @@ const _pending = new Map<
   { resolve: (b: Blob | null) => void; reject: (e: Error) => void }
 >();
 
-function getWorker(pdfjsUrl: string): Worker | null {
+function getWorker(_pdfjsUrl: string): Worker | null {
   if (_workerFailed) return null;
   if (_worker) return _worker;
 
@@ -116,9 +117,8 @@ function getWorker(pdfjsUrl: string): Worker | null {
       // Worker failed to initialize (e.g. module import blocked by CSP)
       _workerFailed = true;
       _worker = null;
-      // Reject all pending requests so they fall through to main-thread fallback
       for (const [, entry] of _pending) {
-        entry.reject(new Error('Worker failed'));
+        entry.resolve(null);
       }
       _pending.clear();
     };
@@ -136,15 +136,18 @@ function renderInWorker(
   height: number,
   pdfjsUrl: string,
 ): Promise<Blob | null> {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     const worker = getWorker(pdfjsUrl);
     if (!worker) {
-      reject(new Error('No worker'));
+      resolve(null);
       return;
     }
 
     const id = ++_msgId;
-    _pending.set(id, { resolve, reject });
+    _pending.set(id, {
+      resolve,
+      reject: () => resolve(null),
+    });
 
     // Transfer the buffer to avoid copying
     const copy = pdfData.slice(); // copy so caller retains original
@@ -161,85 +164,17 @@ function renderInWorker(
 }
 
 // ---------------------------------------------------------------------------
-// Main-thread fallback (for browsers without OffscreenCanvas/module workers)
-// ---------------------------------------------------------------------------
-
-let _mainThreadConfigured = false;
-
-async function renderOnMainThread(
-  pdfData: Uint8Array,
-  width: number,
-  height: number,
-): Promise<string | null> {
-  let pdfDoc: any = null;
-  try {
-    const pdfjsLib = await import('pdfjs-dist');
-
-    if (!_mainThreadConfigured) {
-      try {
-        pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-          'pdfjs-dist/build/pdf.worker.mjs',
-          import.meta.url,
-        ).toString();
-      } catch {
-        /* ignore */
-      }
-      _mainThreadConfigured = true;
-    }
-
-    pdfDoc = await pdfjsLib.getDocument({ data: pdfData }).promise;
-    if (pdfDoc.numPages < 1) return null;
-
-    let page;
-    try {
-      page = await pdfDoc.getPage(1);
-    } catch {
-      // PagesMapper conflict — can't get page
-      return null;
-    }
-
-    const viewport = page.getViewport({ scale: 1 });
-    const scale = Math.max(width / viewport.width, height / viewport.height);
-    const scaledViewport = page.getViewport({ scale });
-
-    const canvas = document.createElement('canvas');
-    canvas.width = Math.ceil(scaledViewport.width);
-    canvas.height = Math.ceil(scaledViewport.height);
-    const canvasCtx = canvas.getContext('2d', { alpha: true })!;
-
-    await page.render({
-      canvasContext: canvasCtx,
-      viewport: scaledViewport,
-      background: 'rgba(0,0,0,0)',
-    }).promise;
-
-    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'));
-    if (!blob) return null;
-    return URL.createObjectURL(blob);
-  } catch {
-    return null;
-  } finally {
-    if (pdfDoc) {
-      try {
-        pdfDoc.destroy();
-      } catch {
-        /* ignore */
-      }
-    }
-  }
-}
-
-// ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
 
 /**
  * Render page 1 of a PDF to a blob URL image.
  *
- * Primary path: Web Worker + OffscreenCanvas (isolated pdfjs instance).
- * Fallback: main-thread pdfjs (when Worker/OffscreenCanvas unavailable).
+ * Uses a dedicated Web Worker with its own pdfjs instance, fully isolated
+ * from the main thread. Never touches GlobalWorkerOptions or any other
+ * pdfjs global state on the main thread.
  *
- * @returns blob URL string, or null if rendering fails
+ * @returns blob URL string, or null if rendering fails or Worker is unavailable
  */
 export async function renderPdfToImage(
   pdfData: Uint8Array,
@@ -248,16 +183,16 @@ export async function renderPdfToImage(
 ): Promise<string | null> {
   const pdfjsUrl = getPdfjsUrl();
 
-  // Try worker-based rendering first (fully isolated from main-thread pdfjs)
-  if (pdfjsUrl && typeof OffscreenCanvas !== 'undefined' && typeof Worker !== 'undefined') {
-    try {
-      const blob = await renderInWorker(pdfData, width, height, pdfjsUrl);
-      if (blob) return URL.createObjectURL(blob);
-    } catch {
-      // Worker failed — fall through to main-thread rendering
-    }
+  if (!pdfjsUrl || typeof OffscreenCanvas === 'undefined' || typeof Worker === 'undefined') {
+    return null;
   }
 
-  // Fallback: main-thread rendering
-  return renderOnMainThread(pdfData, width, height);
+  try {
+    const blob = await renderInWorker(pdfData, width, height, pdfjsUrl);
+    if (blob) return URL.createObjectURL(blob);
+  } catch {
+    // Worker failed — no fallback, return null
+  }
+
+  return null;
 }

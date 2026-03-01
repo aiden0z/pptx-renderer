@@ -86,7 +86,8 @@ describe('renderSlide', () => {
       rels: new Map(),
       showMasterSp: true,
     };
-    const el = renderSlide(pres, slide);
+    const handle = renderSlide(pres, slide);
+    const el = handle.element;
     expect(el.style.width).toBe('960px');
     expect(el.style.height).toBe('540px');
     expect(el.style.position).toBe('relative');
@@ -101,9 +102,9 @@ describe('renderSlide', () => {
       rels: new Map(),
       showMasterSp: true,
     };
-    const el = renderSlide(pres, slide);
+    const handle = renderSlide(pres, slide);
     // Should have at least background + shape elements
-    expect(el.children.length).toBeGreaterThanOrEqual(1);
+    expect(handle.element.children.length).toBeGreaterThanOrEqual(1);
   });
 
   it('calls onNodeError for failing nodes and renders error placeholder', () => {
@@ -131,7 +132,7 @@ describe('renderSlide', () => {
       rels: new Map(),
       showMasterSp: true,
     };
-    const el = renderSlide(pres, slide, { onNodeError });
+    const { element: el } = renderSlide(pres, slide, { onNodeError });
     // Either error placeholder is rendered or onNodeError is called
     if (onNodeError.mock.calls.length > 0) {
       expect(onNodeError).toHaveBeenCalledWith('bad', expect.anything());
@@ -166,7 +167,7 @@ describe('renderSlide', () => {
       rels: new Map(),
       showMasterSp: false, // Should skip master shapes
     };
-    const el = renderSlide(pres, slide);
+    const { element: el } = renderSlide(pres, slide);
     // Container should only have background, no master shapes
     // With showMasterSp=false, both master and layout shapes are skipped
     expect(el.children.length).toBeLessThanOrEqual(1);
@@ -194,7 +195,7 @@ describe('renderSlide', () => {
       rels: new Map(),
       showMasterSp: true,
     };
-    const el = renderSlide(pres, slide);
+    const { element: el } = renderSlide(pres, slide);
     // Should have master shape rendered
     expect(el.children.length).toBeGreaterThanOrEqual(1);
   });
@@ -221,7 +222,7 @@ describe('renderSlide', () => {
       rels: new Map(),
       showMasterSp: true,
     };
-    const el = renderSlide(pres, slide);
+    const { element: el } = renderSlide(pres, slide);
     // Placeholder shapes from master should NOT be rendered
     expect(el.children.length).toBeLessThanOrEqual(1);
   });
@@ -251,7 +252,7 @@ describe('renderSlide', () => {
       rels: new Map(),
       showMasterSp: true, // slide shows master, but layout doesn't
     };
-    const el = renderSlide(pres, slide);
+    const { element: el } = renderSlide(pres, slide);
     // Master shapes should be skipped because layout.showMasterSp = false
     // But layout shapes are still rendered
     expect(el.children.length).toBeLessThanOrEqual(2);
@@ -266,7 +267,7 @@ describe('renderSlide', () => {
       rels: new Map(),
       showMasterSp: true,
     };
-    const el = renderSlide(pres, slide, { onNavigate });
+    const { element: el } = renderSlide(pres, slide, { onNavigate });
     expect(el).toBeDefined();
   });
 
@@ -303,7 +304,7 @@ describe('renderSlide', () => {
       rels: new Map(),
       showMasterSp: true,
     };
-    const el = renderSlide(pres, slide);
+    const { element: el } = renderSlide(pres, slide);
     // Should have at least one child (the unknown node rendered as empty div)
     expect(el.children.length).toBeGreaterThanOrEqual(1);
   });
@@ -332,7 +333,7 @@ describe('renderSlide', () => {
     // Even if renderBackground doesn't throw for this input, we test the mechanism.
     // A surefire approach: mock the module. Instead, let's verify the catch path
     // by providing a layout with background that will throw.
-    const el = renderSlide(pres, slide, { onNodeError });
+    const { element: el } = renderSlide(pres, slide, { onNodeError });
     // The slide should still render (background error is non-fatal)
     expect(el).toBeDefined();
     expect(el.style.width).toBe('960px');
@@ -361,7 +362,7 @@ describe('renderSlide', () => {
       showMasterSp: true,
     };
     // Should not throw even though master shape parsing/rendering fails
-    const el = renderSlide(pres, slide, { onNodeError });
+    const { element: el } = renderSlide(pres, slide, { onNodeError });
     expect(el).toBeDefined();
     // Master shape errors are silently caught, onNodeError is NOT called for master shapes
     // (the catch block is empty in the source code)
@@ -389,7 +390,7 @@ describe('renderSlide', () => {
       rels: new Map(),
       showMasterSp: true,
     };
-    const el = renderSlide(pres, slide);
+    const { element: el } = renderSlide(pres, slide);
     // Should have at least the layout shape rendered as a child
     expect(el.children.length).toBeGreaterThanOrEqual(1);
   });
@@ -416,7 +417,7 @@ describe('renderSlide', () => {
       showMasterSp: true,
     };
     // Should not throw even though layout shape rendering fails
-    const el = renderSlide(pres, slide);
+    const { element: el } = renderSlide(pres, slide);
     expect(el).toBeDefined();
     expect(el.style.width).toBe('960px');
   });
@@ -455,7 +456,7 @@ describe('renderSlide', () => {
       rels: new Map(),
       showMasterSp: true,
     };
-    const el = renderSlide(pres, slide);
+    const { element: el } = renderSlide(pres, slide);
     // Should have: master shape + layout shape + slide shape (+ possibly background)
     expect(el.children.length).toBeGreaterThanOrEqual(3);
   });

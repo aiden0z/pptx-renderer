@@ -25,7 +25,7 @@ import type { ShapeNodeData } from '../model/nodes/ShapeNode';
 export function renderGroup(
   node: GroupNodeData,
   ctx: RenderContext,
-  renderNode: (childNode: any, ctx: RenderContext) => HTMLElement,
+  renderNode: (childNode: BaseNodeData, ctx: RenderContext) => HTMLElement,
 ): HTMLElement {
   const wrapper = document.createElement('div');
   wrapper.style.position = 'absolute';
@@ -114,7 +114,6 @@ export function renderGroup(
   const indices = order ?? node.children.map((_, i) => i);
 
   for (const index of indices) {
-    const childXml = node.children[index];
     try {
       const childNode = parseByIndex(index);
       if (!childNode) continue;
@@ -152,7 +151,7 @@ export function renderGroup(
 
       const el = renderNode(childNode, childCtx);
       wrapper.appendChild(el);
-    } catch (e) {
+    } catch {
       // Per-child error handling — create error placeholder
       const errDiv = document.createElement('div');
       errDiv.style.position = 'absolute';

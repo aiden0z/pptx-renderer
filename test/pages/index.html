@@ -53,7 +53,7 @@
     </div>
 
     <script type="module">
-      import { PptxRenderer } from '../../src/index.ts';
+      import { PptxViewer } from '../../src/index.ts';
 
       const container = document.getElementById('pptx-container');
       const fileInput = document.getElementById('file-input');
@@ -62,7 +62,7 @@
       const slideCountEl = document.getElementById('slide-count');
       const renderTimeEl = document.getElementById('render-time');
 
-      let renderer = null;
+      let viewer = null;
       const params = new URLSearchParams(location.search);
       const listStrategyParam = params.get('listStrategy');
       const listBatchSizeParam = Number(params.get('listBatchSize'));
@@ -79,37 +79,37 @@
         container.innerHTML = '<div class="empty-state"><p>Loading...</p></div>';
 
         try {
-          if (renderer) renderer.destroy();
-          const rendererOptions = {
-            mode: 'list',
+          if (viewer) viewer.destroy();
+          const listOptions = {};
+          if (listStrategyParam === 'windowed') {
+            listOptions.windowed = true;
+          }
+          if (Number.isInteger(listBatchSizeParam) && listBatchSizeParam > 0) {
+            listOptions.batchSize = listBatchSizeParam;
+          }
+          if (Number.isInteger(windowedInitialSlidesParam) && windowedInitialSlidesParam > 0) {
+            listOptions.initialSlides = windowedInitialSlidesParam;
+          }
+          if (Number.isFinite(windowedOverscanParam) && windowedOverscanParam > 0) {
+            listOptions.overscanViewport = windowedOverscanParam;
+          }
+
+          const buffer = await file.arrayBuffer();
+          const start = performance.now();
+
+          viewer = await PptxViewer.open(buffer, container, {
+            renderMode: 'list',
+            listOptions,
             onSlideError: (idx, err) => {
               console.error(`Slide ${idx + 1} error:`, err);
             },
             onNodeError: (nodeId, err) => {
               console.warn(`Node ${nodeId} error:`, err);
             },
-          };
-          if (listStrategyParam === 'windowed' || listStrategyParam === 'full') {
-            rendererOptions.listMountStrategy = listStrategyParam;
-          }
-          if (Number.isInteger(listBatchSizeParam) && listBatchSizeParam > 0) {
-            rendererOptions.listRenderBatchSize = listBatchSizeParam;
-          }
-          if (Number.isInteger(windowedInitialSlidesParam) && windowedInitialSlidesParam > 0) {
-            rendererOptions.windowedInitialSlides = windowedInitialSlidesParam;
-          }
-          if (Number.isFinite(windowedOverscanParam) && windowedOverscanParam > 0) {
-            rendererOptions.windowedOverscanViewport = windowedOverscanParam;
-          }
-
-          renderer = new PptxRenderer(container, {
-            ...rendererOptions,
           });
 
-          const buffer = await file.arrayBuffer();
-          const { slideCount, elapsed } = await renderer.preview(buffer);
-
-          slideCountEl.textContent = `${slideCount} slides`;
+          const elapsed = performance.now() - start;
+          slideCountEl.textContent = `${viewer.slideCount} slides`;
           renderTimeEl.textContent = `${elapsed.toFixed(0)}ms`;
         } catch (e) {
           console.error('Render failed:', e);

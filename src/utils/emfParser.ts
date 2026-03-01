@@ -134,7 +134,7 @@ function parseMultiformats(
   data: Uint8Array,
   view: DataView,
   offset: number,
-  recordSize: number,
+  _recordSize: number,
 ): EmfContent | null {
   // Layout from record start:
   // +12: commentIdentifier(4), +16: publicCommentIdentifier(4)
@@ -196,7 +196,7 @@ function parseStretchDibits(
   data: Uint8Array,
   view: DataView,
   offset: number,
-  recordSize: number,
+  _recordSize: number,
 ): EmfContent | null {
   // STRETCHDIBITS record layout (offsets from record start):
   //   0: type(4), 4: size(4)

@@ -31,7 +31,7 @@ vi.mock('../../../src/renderer/SlideRenderer', () => ({
   renderSlide: vi.fn(() => {
     const el = document.createElement('div');
     el.className = 'mock-slide';
-    return el;
+    return { element: el, dispose: vi.fn(), [Symbol.dispose]() { this.dispose(); } };
   }),
 }));
 
@@ -94,10 +94,10 @@ describe('PptxRenderer.renderSlideToContainer', () => {
     await renderer.preview(new ArrayBuffer(4));
     const container = document.createElement('div');
 
-    const el = renderer.renderSlideToContainer(0, container);
-    expect(el).not.toBeNull();
+    const handle = renderer.renderSlideToContainer(0, container);
+    expect(handle).not.toBeNull();
     expect(container.children.length).toBe(1);
-    expect(container.children[0]).toBe(el);
+    expect(container.children[0]).toBe(handle!.element);
   });
 
   it('applies scale transform when scale !== 1', async () => {
@@ -105,9 +105,9 @@ describe('PptxRenderer.renderSlideToContainer', () => {
     await renderer.preview(new ArrayBuffer(4));
     const container = document.createElement('div');
 
-    const el = renderer.renderSlideToContainer(0, container, 0.5);
-    expect(el!.style.transform).toBe('scale(0.5)');
-    expect(el!.style.transformOrigin).toBe('top left');
+    const handle = renderer.renderSlideToContainer(0, container, 0.5);
+    expect(handle!.element.style.transform).toBe('scale(0.5)');
+    expect(handle!.element.style.transformOrigin).toBe('top left');
   });
 
   it('does not apply transform when scale is 1', async () => {
@@ -115,8 +115,8 @@ describe('PptxRenderer.renderSlideToContainer', () => {
     await renderer.preview(new ArrayBuffer(4));
     const container = document.createElement('div');
 
-    const el = renderer.renderSlideToContainer(0, container, 1);
-    expect(el!.style.transform).toBe('');
+    const handle = renderer.renderSlideToContainer(0, container, 1);
+    expect(handle!.element.style.transform).toBe('');
   });
 });
 
@@ -161,8 +161,8 @@ describe('PptxRenderer callbacks', () => {
     await renderer.preview(new ArrayBuffer(4));
 
     const container = document.createElement('div');
-    const el = renderer.renderSlideToContainer(1, container);
-    expect(onSlideRendered).toHaveBeenCalledWith(1, el);
+    const handle = renderer.renderSlideToContainer(1, container);
+    expect(onSlideRendered).toHaveBeenCalledWith(1, handle!.element);
   });
 
   it('fires onSlideChange from goToSlide()', async () => {
@@ -177,13 +177,16 @@ describe('PptxRenderer callbacks', () => {
     expect(onSlideChange).toHaveBeenCalledWith(2);
   });
 
-  it('does not fire onSlideChange when index is same', async () => {
+  it('does not fire onSlideChange when index is same after goToSlide', async () => {
     const onSlideChange = vi.fn();
     const renderer = new PptxRenderer(document.createElement('div'), {
       mode: 'slide',
       onSlideChange,
     });
     await renderer.preview(new ArrayBuffer(4));
+
+    // Clear calls from initial render slidechange
+    onSlideChange.mockClear();
 
     renderer.goToSlide(0); // already at 0
     expect(onSlideChange).not.toHaveBeenCalled();
@@ -428,7 +431,7 @@ describe('PptxRenderer.goToSlide in list mode', () => {
     const scrollSpy = vi.fn();
     target!.scrollIntoView = scrollSpy;
 
-    renderer.goToSlide(1);
+    await renderer.goToSlide(1);
 
     expect(scrollSpy).toHaveBeenCalledWith({ behavior: 'smooth', block: 'center' });
   });
@@ -450,7 +453,7 @@ describe('PptxRenderer.goToSlide in list mode', () => {
     // Clear the container to remove slide elements, simulating an absent target.
     container.innerHTML = '';
 
-    expect(() => renderer.goToSlide(1)).not.toThrow();
+    await expect(renderer.goToSlide(1)).resolves.toBeUndefined();
     expect(renderer.currentSlideIndex).toBe(1);
   });
 
@@ -602,7 +605,7 @@ describe('PptxRenderer.mountListSlide error path', () => {
       .mockImplementation(() => {
         const el = document.createElement('div');
         el.className = 'mock-slide';
-        return el;
+        return { element: el, dispose: vi.fn(), [Symbol.dispose]() { this.dispose(); } };
       });
 
     const container = document.createElement('div');
@@ -634,7 +637,7 @@ describe('PptxRenderer.unmountListSlide', () => {
 
     // Access internal unmountListSlide via the private method
     const unmountFn = (renderer as unknown as {
-      unmountListSlide: (wrapper: HTMLDivElement, displayHeight: number) => void;
+      unmountListSlide: (index: number, wrapper: HTMLDivElement, displayHeight: number) => void;
     }).unmountListSlide.bind(renderer);
 
     // Find a mounted wrapper
@@ -652,7 +655,7 @@ describe('PptxRenderer.unmountListSlide', () => {
     wrapper.style.color = '#cc0000';
     wrapper.style.fontSize = '14px';
 
-    unmountFn(wrapper, 540);
+    unmountFn(0, wrapper, 540);
 
     expect(wrapper.dataset.mounted).toBe('0');
     expect(wrapper.innerHTML).toBe('');
@@ -671,14 +674,14 @@ describe('PptxRenderer.unmountListSlide', () => {
     await renderer.preview(new ArrayBuffer(4));
 
     const unmountFn = (renderer as unknown as {
-      unmountListSlide: (wrapper: HTMLDivElement, displayHeight: number) => void;
+      unmountListSlide: (index: number, wrapper: HTMLDivElement, displayHeight: number) => void;
     }).unmountListSlide.bind(renderer);
 
     const wrapper = document.createElement('div');
     wrapper.dataset.mounted = '0';
     wrapper.innerHTML = '<div>keep</div>';
 
-    unmountFn(wrapper, 540);
+    unmountFn(0, wrapper, 540);
 
     // Should not have been cleared since mounted !== '1'
     expect(wrapper.innerHTML).toBe('<div>keep</div>');
@@ -739,9 +742,9 @@ describe('PptxRenderer IntersectionObserver fallback', () => {
       });
       await renderer.preview(new ArrayBuffer(4));
 
-      // IO should have been created and observe called for each wrapper
+      // IO should have been created and observe called for each wrapper (3 windowed + 3 scroll tracking)
       expect(MockIO).toHaveBeenCalled();
-      expect(observeSpy).toHaveBeenCalledTimes(3);
+      expect(observeSpy).toHaveBeenCalledTimes(6);
 
       renderer.destroy();
       expect(disconnectSpy).toHaveBeenCalled();
@@ -820,5 +823,281 @@ describe('PptxRenderer chart instance lifecycle', () => {
     const calls = (mockRenderSlide as any).mock.calls;
     const lastCallOptions = calls[calls.length - 1][2];
     expect(lastCallOptions.chartInstances).toBe(chartSet);
+  });
+
+  it('passes chartInstances in slide mode renderSingleSlide', async () => {
+    const { renderSlide: mockRenderSlide } = await import(
+      '../../../src/renderer/SlideRenderer'
+    );
+    const container = document.createElement('div');
+    const renderer = new PptxRenderer(container, { mode: 'slide' });
+    await renderer.preview(new ArrayBuffer(4));
+
+    const chartSet = (renderer as any).chartInstances;
+    const calls = (mockRenderSlide as any).mock.calls;
+    const lastCallOptions = calls[calls.length - 1][2];
+    expect(lastCallOptions.chartInstances).toBe(chartSet);
+  });
+
+  it('renderSlideToContainer passes chartInstances through to renderSlide', async () => {
+    const { renderSlide: mockRenderSlide } = await import(
+      '../../../src/renderer/SlideRenderer'
+    );
+    const container = document.createElement('div');
+    const renderer = new PptxRenderer(container);
+    await renderer.preview(new ArrayBuffer(4));
+
+    const externalContainer = document.createElement('div');
+    renderer.renderSlideToContainer(0, externalContainer);
+
+    const chartSet = (renderer as any).chartInstances;
+    const calls = (mockRenderSlide as any).mock.calls;
+    const lastCallOptions = calls[calls.length - 1][2];
+    expect(lastCallOptions.chartInstances).toBe(chartSet);
+  });
+});
+
+describe('PptxRenderer.goToSlide scrollOptions', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+    HTMLElement.prototype.scrollIntoView = vi.fn();
+  });
+
+  it('passes custom scrollOptions to scrollIntoView', async () => {
+    const container = document.createElement('div');
+    const renderer = new PptxRenderer(container, { mode: 'list' });
+    await renderer.preview(new ArrayBuffer(4));
+
+    const target = container.querySelector<HTMLElement>('[data-slide-index="1"]');
+    expect(target).not.toBeNull();
+    const scrollSpy = vi.fn();
+    target!.scrollIntoView = scrollSpy;
+
+    await renderer.goToSlide(1, { behavior: 'instant', block: 'start' });
+    expect(scrollSpy).toHaveBeenCalledWith({ behavior: 'instant', block: 'start' });
+  });
+
+  it('uses default smooth/center when no scrollOptions provided', async () => {
+    const container = document.createElement('div');
+    const renderer = new PptxRenderer(container, { mode: 'list' });
+    await renderer.preview(new ArrayBuffer(4));
+
+    const target = container.querySelector<HTMLElement>('[data-slide-index="1"]');
+    const scrollSpy = vi.fn();
+    target!.scrollIntoView = scrollSpy;
+
+    await renderer.goToSlide(1);
+    expect(scrollSpy).toHaveBeenCalledWith({ behavior: 'smooth', block: 'center' });
+  });
+});
+
+describe('PptxRenderer.onSlideUnmounted callback', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+    HTMLElement.prototype.scrollIntoView = vi.fn();
+  });
+
+  it('fires onSlideUnmounted when a slide is unmounted', async () => {
+    const onSlideUnmounted = vi.fn();
+    const container = document.createElement('div');
+    const renderer = new PptxRenderer(container, {
+      mode: 'list',
+      listMountStrategy: 'windowed',
+      windowedInitialSlides: 3,
+      onSlideUnmounted,
+    });
+    await renderer.preview(new ArrayBuffer(4));
+
+    // Access internal unmountListSlide
+    const unmountFn = (renderer as unknown as {
+      unmountListSlide: (index: number, wrapper: HTMLDivElement, displayHeight: number) => void;
+    }).unmountListSlide.bind(renderer);
+
+    const item = container.querySelector('[data-slide-index="0"]');
+    const wrapper = item?.querySelector('div') as HTMLDivElement;
+    wrapper.dataset.mounted = '1';
+
+    unmountFn(0, wrapper, 540);
+    expect(onSlideUnmounted).toHaveBeenCalledWith(0);
+  });
+
+  it('does not fire onSlideUnmounted when slide is not mounted', async () => {
+    const onSlideUnmounted = vi.fn();
+    const container = document.createElement('div');
+    const renderer = new PptxRenderer(container, {
+      mode: 'list',
+      onSlideUnmounted,
+    });
+    await renderer.preview(new ArrayBuffer(4));
+
+    const unmountFn = (renderer as unknown as {
+      unmountListSlide: (index: number, wrapper: HTMLDivElement, displayHeight: number) => void;
+    }).unmountListSlide.bind(renderer);
+
+    const wrapper = document.createElement('div');
+    wrapper.dataset.mounted = '0';
+
+    unmountFn(0, wrapper, 540);
+    expect(onSlideUnmounted).not.toHaveBeenCalled();
+  });
+});
+
+describe('PptxRenderer preview AbortSignal', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('rejects with AbortError when signal is already aborted', async () => {
+    const container = document.createElement('div');
+    const renderer = new PptxRenderer(container);
+    const controller = new AbortController();
+    controller.abort();
+
+    await expect(
+      renderer.preview(new ArrayBuffer(4), { signal: controller.signal }),
+    ).rejects.toThrow('Preview aborted');
+  });
+
+  it('thrown error is a DOMException with name AbortError', async () => {
+    const container = document.createElement('div');
+    const renderer = new PptxRenderer(container);
+    const controller = new AbortController();
+    controller.abort();
+
+    try {
+      await renderer.preview(new ArrayBuffer(4), { signal: controller.signal });
+      expect.unreachable('should have thrown');
+    } catch (e) {
+      expect(e).toBeInstanceOf(DOMException);
+      expect((e as DOMException).name).toBe('AbortError');
+      expect((e as DOMException).message).toBe('Preview aborted');
+    }
+  });
+
+  it('links external signal via addEventListener when not pre-aborted', async () => {
+    const container = document.createElement('div');
+    const renderer = new PptxRenderer(container);
+    const controller = new AbortController();
+
+    // Spy on addEventListener to verify linking
+    const addListenerSpy = vi.spyOn(controller.signal, 'addEventListener');
+
+    const promise = renderer.preview(new ArrayBuffer(4), { signal: controller.signal });
+    expect(addListenerSpy).toHaveBeenCalledWith('abort', expect.any(Function), { once: true });
+
+    await promise; // completes normally since not aborted
+  });
+
+  it('rejects with AbortError when signal is aborted during preview', async () => {
+    const container = document.createElement('div');
+    const renderer = new PptxRenderer(container);
+    const controller = new AbortController();
+
+    // Abort immediately after starting
+    const promise = renderer.preview(new ArrayBuffer(4), { signal: controller.signal });
+    controller.abort();
+
+    // The preview may or may not have completed by now; if it does throw, it should be AbortError
+    try {
+      await promise;
+      // If it completes before abort takes effect, that's fine
+    } catch (e) {
+      expect(e).toBeInstanceOf(DOMException);
+      expect((e as DOMException).name).toBe('AbortError');
+    }
+  });
+
+  it('auto-aborts previous preview when a new one starts', async () => {
+    const container = document.createElement('div');
+    const renderer = new PptxRenderer(container);
+
+    // Start first preview
+    const promise1 = renderer.preview(new ArrayBuffer(4));
+    // Start second preview immediately
+    const promise2 = renderer.preview(new ArrayBuffer(4));
+
+    // First may reject with AbortError or may have already completed
+    try {
+      await promise1;
+    } catch (e) {
+      expect((e as DOMException).name).toBe('AbortError');
+    }
+
+    // Second should succeed
+    const result = await promise2;
+    expect(result.slideCount).toBe(3);
+  });
+
+  it('destroy() aborts in-flight preview', async () => {
+    const container = document.createElement('div');
+    const renderer = new PptxRenderer(container);
+
+    const promise = renderer.preview(new ArrayBuffer(4));
+    renderer.destroy();
+
+    try {
+      await promise;
+    } catch (e) {
+      expect((e as DOMException).name).toBe('AbortError');
+    }
+  });
+});
+
+describe('PptxRenderer mount state query', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+    HTMLElement.prototype.scrollIntoView = vi.fn();
+  });
+
+  it('returns empty before preview', () => {
+    const renderer = new PptxRenderer(document.createElement('div'));
+    expect(renderer.isSlideMounted(0)).toBe(false);
+    expect(renderer.getMountedSlides()).toEqual([]);
+  });
+
+  it('tracks mounted slides in list mode', async () => {
+    const container = document.createElement('div');
+    const renderer = new PptxRenderer(container, { mode: 'list' });
+    await renderer.preview(new ArrayBuffer(4));
+
+    // All 3 slides should be mounted in full list mode
+    expect(renderer.isSlideMounted(0)).toBe(true);
+    expect(renderer.isSlideMounted(1)).toBe(true);
+    expect(renderer.isSlideMounted(2)).toBe(true);
+    expect(renderer.getMountedSlides()).toEqual([0, 1, 2]);
+  });
+
+  it('tracks mounted slides in slide mode', async () => {
+    const container = document.createElement('div');
+    const renderer = new PptxRenderer(container, { mode: 'slide' });
+    await renderer.preview(new ArrayBuffer(4));
+
+    expect(renderer.isSlideMounted(0)).toBe(true);
+    expect(renderer.isSlideMounted(1)).toBe(false);
+    expect(renderer.getMountedSlides()).toEqual([0]);
+
+    renderer.goToSlide(2);
+    expect(renderer.isSlideMounted(2)).toBe(true);
+    expect(renderer.isSlideMounted(0)).toBe(false);
+    expect(renderer.getMountedSlides()).toEqual([2]);
+  });
+
+  it('clears mounted slides on destroy', async () => {
+    const container = document.createElement('div');
+    const renderer = new PptxRenderer(container, { mode: 'list' });
+    await renderer.preview(new ArrayBuffer(4));
+
+    expect(renderer.getMountedSlides().length).toBe(3);
+    renderer.destroy();
+    expect(renderer.getMountedSlides()).toEqual([]);
+  });
+
+  it('returns false for out-of-range index', async () => {
+    const container = document.createElement('div');
+    const renderer = new PptxRenderer(container, { mode: 'list' });
+    await renderer.preview(new ArrayBuffer(4));
+
+    expect(renderer.isSlideMounted(99)).toBe(false);
+    expect(renderer.isSlideMounted(-1)).toBe(false);
   });
 });

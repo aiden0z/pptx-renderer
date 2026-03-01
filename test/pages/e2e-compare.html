@@ -312,7 +312,7 @@
 
     <script type="module">
       import {
-        PptxRenderer,
+        PptxViewer,
         parseZip,
         buildPresentation,
         serializePresentation,
@@ -360,20 +360,18 @@
       const windowedInitialSlidesParam = Number(params.get('windowedInitialSlides'));
       const windowedOverscanParam = Number(params.get('windowedOverscanViewport'));
 
-      function buildRendererOptions() {
+      function buildListOptions() {
         // E2E comparison needs all slides mounted for extraction from hidden temp container.
-        // Force full list mounting even if URL asks for windowed mode.
-        // Keep fitMode fixed so hidden container resize observers won't trigger
-        // a second in-flight list re-render and race our DOM extraction.
-        const opts = { mode: 'list', listMountStrategy: 'full', fitMode: 'none' };
+        // Force full list mounting (windowed: false).
+        const opts = { windowed: false };
         if (Number.isInteger(listBatchSizeParam) && listBatchSizeParam > 0) {
-          opts.listRenderBatchSize = listBatchSizeParam;
+          opts.batchSize = listBatchSizeParam;
         }
         if (Number.isInteger(windowedInitialSlidesParam) && windowedInitialSlidesParam > 0) {
-          opts.windowedInitialSlides = windowedInitialSlidesParam;
+          opts.initialSlides = windowedInitialSlidesParam;
         }
         if (Number.isFinite(windowedOverscanParam) && windowedOverscanParam > 0) {
-          opts.windowedOverscanViewport = windowedOverscanParam;
+          opts.overscanViewport = windowedOverscanParam;
         }
         return opts;
       }
@@ -881,9 +879,13 @@
           tempContainer.style.cssText = 'position:absolute;left:-9999px;top:-9999px;';
           document.body.appendChild(tempContainer);
 
-          const renderer = new PptxRenderer(tempContainer, buildRendererOptions());
-          const renderResult = await renderer.preview(pptxBuffer);
-          const renderMs = renderResult.elapsed;
+          const renderStart = performance.now();
+          const viewer = await PptxViewer.open(pptxBuffer, tempContainer, {
+            fitMode: 'none',
+            renderMode: 'list',
+            listOptions: buildListOptions(),
+          });
+          const renderMs = performance.now() - renderStart;
 
           const slideEls = [];
           for (const child of tempContainer.children) {

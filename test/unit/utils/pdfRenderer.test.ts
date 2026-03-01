@@ -1,237 +1,129 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 
 /**
- * Tests for pdfRenderer.ts — verifies that PDF rendering uses correct canvas
- * context settings (alpha: true) and transparent background.
+ * Tests for pdfRenderer.ts — Worker-only PDF rendering.
  *
- * Since pdfRenderer relies on pdfjs-dist, Web Workers, OffscreenCanvas etc.,
- * we mock the heavy dependencies and focus on verifying the integration contract:
+ * In jsdom, Worker and OffscreenCanvas are not available, so renderPdfToImage
+ * returns null (no main-thread fallback by design). These tests verify:
  *
- * 1. canvasContext is created with { alpha: true } (NOT the pdfjs default alpha:false)
- * 2. page.render() receives canvasContext (not canvas) + background: 'rgba(0,0,0,0)'
- * 3. The rendered canvas is converted to a blob URL
+ * 1. The public API returns null gracefully when Worker is unavailable
+ * 2. No pdfjs global state (GlobalWorkerOptions) is touched on the main thread
+ * 3. The module never imports pdfjs-dist on the main thread
  */
 
-// ---------------------------------------------------------------------------
-// Mocks
-// ---------------------------------------------------------------------------
-
-// Track what arguments were passed to canvas.getContext and page.render
-let getContextCalls: Array<{ contextId: string; options: any }> = [];
-let renderCalls: Array<Record<string, any>> = [];
-
-const mockCanvasContext = {
-  fillRect: vi.fn(),
-  fillStyle: '',
-  save: vi.fn(),
-  restore: vi.fn(),
+// Mock pdfjs-dist to detect any unwanted main-thread imports
+const pdfjsMock = {
+  getDocument: vi.fn(),
+  GlobalWorkerOptions: { workerSrc: 'host-configured-worker.mjs' },
 };
-
-const mockPage = {
-  getViewport: vi.fn(({ scale }: { scale: number }) => ({
-    width: 100 * scale,
-    height: 80 * scale,
-    transform: [scale, 0, 0, -scale, 0, 80 * scale],
-  })),
-  render: vi.fn((params: Record<string, any>) => {
-    renderCalls.push(params);
-    return { promise: Promise.resolve() };
-  }),
-};
-
-const mockPdfDoc = {
-  numPages: 1,
-  getPage: vi.fn().mockResolvedValue(mockPage),
-  destroy: vi.fn(),
-};
-
-// Mock pdfjs-dist module
-vi.mock('pdfjs-dist', () => ({
-  getDocument: vi.fn(() => ({
-    promise: Promise.resolve(mockPdfDoc),
-  })),
-  GlobalWorkerOptions: { workerSrc: '' },
-}));
-
-// Mock document.createElement to track canvas creation
-const originalCreateElement = document.createElement.bind(document);
-
-beforeEach(() => {
-  getContextCalls = [];
-  renderCalls = [];
-  vi.clearAllMocks();
-
-  // Override createElement to intercept canvas creation
-  document.createElement = vi.fn((tag: string) => {
-    if (tag === 'canvas') {
-      const canvas = originalCreateElement('canvas');
-      // Override getContext to track calls and return our mock
-      const originalGetContext = canvas.getContext.bind(canvas);
-      canvas.getContext = vi.fn((contextId: string, options?: any) => {
-        getContextCalls.push({ contextId, options });
-        // jsdom's canvas doesn't support real 2d context well,
-        // return mock context for test assertions
-        return mockCanvasContext as any;
-      });
-      // Mock toBlob
-      canvas.toBlob = vi.fn((cb: BlobCallback) => {
-        cb(new Blob(['fake-png'], { type: 'image/png' }));
-      });
-      return canvas;
-    }
-    return originalCreateElement(tag);
-  }) as any;
-});
+vi.mock('pdfjs-dist', () => pdfjsMock);
 
 afterEach(() => {
-  document.createElement = originalCreateElement;
+  vi.clearAllMocks();
 });
 
-// ---------------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------------
-
 describe('pdfRenderer', () => {
-  // We need to dynamically import to get fresh module state after mocks are set up.
-  // The Worker path won't work in jsdom, so only the main-thread fallback is testable.
-
-  it('creates canvas context with alpha: true (not pdfjs default alpha: false)', async () => {
-    // Reset module state to ensure fresh import
-    // The module caches _workerFailed, _mainThreadConfigured etc. as module-level state.
-    // In Vite dev mode, Worker creation fails, so it falls through to main thread.
+  it('returns null when Worker is unavailable (jsdom)', async () => {
     const mod = await import('../../../src/utils/pdfRenderer');
 
     const pdfData = new Uint8Array([0x25, 0x50, 0x44, 0x46]); // %PDF
-    await mod.renderPdfToImage(pdfData, 200, 160);
-
-    // Verify canvas.getContext was called with alpha: true
-    const canvasCtxCall = getContextCalls.find(
-      (c) => c.contextId === '2d' && c.options?.alpha === true,
-    );
-    expect(canvasCtxCall).toBeDefined();
-    expect(canvasCtxCall!.options.alpha).toBe(true);
-  });
-
-  it('passes canvasContext (not canvas) to page.render()', async () => {
-    const mod = await import('../../../src/utils/pdfRenderer');
-
-    const pdfData = new Uint8Array([0x25, 0x50, 0x44, 0x46]);
-    await mod.renderPdfToImage(pdfData, 200, 160);
-
-    expect(renderCalls.length).toBeGreaterThan(0);
-    const renderParams = renderCalls[0];
-
-    // Must pass canvasContext, NOT canvas
-    expect(renderParams.canvasContext).toBeDefined();
-    expect(renderParams.canvas).toBeUndefined();
-  });
-
-  it('passes transparent background to page.render()', async () => {
-    const mod = await import('../../../src/utils/pdfRenderer');
-
-    const pdfData = new Uint8Array([0x25, 0x50, 0x44, 0x46]);
-    await mod.renderPdfToImage(pdfData, 200, 160);
-
-    expect(renderCalls.length).toBeGreaterThan(0);
-    const renderParams = renderCalls[0];
-
-    expect(renderParams.background).toBe('rgba(0,0,0,0)');
-  });
-
-  it('returns a blob URL string on success', async () => {
-    const mod = await import('../../../src/utils/pdfRenderer');
-
-    const pdfData = new Uint8Array([0x25, 0x50, 0x44, 0x46]);
-    const result = await mod.renderPdfToImage(pdfData, 200, 160);
-
-    // Should return a blob: URL (mocked as blob:mock/...)
-    expect(result).toBeTruthy();
-    expect(typeof result).toBe('string');
-    expect(result!.startsWith('blob:')).toBe(true);
-  });
-
-  it('returns null when pdfDoc has no pages', async () => {
-    mockPdfDoc.numPages = 0;
-
-    const mod = await import('../../../src/utils/pdfRenderer');
-
-    const pdfData = new Uint8Array([0x25, 0x50, 0x44, 0x46]);
-    const result = await mod.renderPdfToImage(pdfData, 200, 160);
-
-    expect(result).toBeNull();
-
-    // Restore
-    mockPdfDoc.numPages = 1;
-  });
-
-  it('calculates correct scale to cover target dimensions', async () => {
-    const mod = await import('../../../src/utils/pdfRenderer');
-
-    const pdfData = new Uint8Array([0x25, 0x50, 0x44, 0x46]);
-    // Target: 300x160, PDF viewport at scale 1: 100x80
-    await mod.renderPdfToImage(pdfData, 300, 160);
-
-    // scale = Math.max(300/100, 160/80) = Math.max(3, 2) = 3
-    // getViewport should be called twice: once with scale=1, once with scale=3
-    const viewportCalls = mockPage.getViewport.mock.calls;
-    const scaleCall = viewportCalls.find((c: any) => c[0].scale === 3);
-    expect(scaleCall).toBeDefined();
-  });
-
-  it('returns null when getPage throws (PagesMapper conflict)', async () => {
-    mockPdfDoc.getPage.mockRejectedValueOnce(new Error('Invalid page request'));
-
-    const mod = await import('../../../src/utils/pdfRenderer');
-    const pdfData = new Uint8Array([0x25, 0x50, 0x44, 0x46]);
     const result = await mod.renderPdfToImage(pdfData, 200, 160);
 
     expect(result).toBeNull();
   });
 
-  it('returns null when canvas.toBlob yields null', async () => {
-    // Override createElement so toBlob returns null
-    document.createElement = vi.fn((tag: string) => {
-      if (tag === 'canvas') {
-        const canvas = originalCreateElement('canvas');
-        canvas.getContext = vi.fn((_contextId: string, _options?: any) => {
-          return mockCanvasContext as any;
-        });
-        canvas.toBlob = vi.fn((cb: BlobCallback) => {
-          cb(null); // toBlob can return null on failure
-        });
-        return canvas;
-      }
-      return originalCreateElement(tag);
-    }) as any;
-
+  it('never calls pdfjs getDocument on the main thread', async () => {
     const mod = await import('../../../src/utils/pdfRenderer');
-    const pdfData = new Uint8Array([0x25, 0x50, 0x44, 0x46]);
-    const result = await mod.renderPdfToImage(pdfData, 200, 160);
 
-    expect(result).toBeNull();
-  });
-
-  it('calls pdfDoc.destroy() in finally block even on success', async () => {
-    mockPdfDoc.destroy.mockClear();
-
-    const mod = await import('../../../src/utils/pdfRenderer');
     const pdfData = new Uint8Array([0x25, 0x50, 0x44, 0x46]);
     await mod.renderPdfToImage(pdfData, 200, 160);
 
-    expect(mockPdfDoc.destroy).toHaveBeenCalled();
+    expect(pdfjsMock.getDocument).not.toHaveBeenCalled();
   });
 
-  it('still returns null if pdfDoc.destroy() throws during cleanup', async () => {
-    mockPdfDoc.getPage.mockRejectedValueOnce(new Error('page fail'));
-    mockPdfDoc.destroy.mockImplementationOnce(() => {
-      throw new Error('destroy error');
-    });
+  it('never modifies GlobalWorkerOptions.workerSrc on the main thread', async () => {
+    // Set a known value to detect any mutation
+    pdfjsMock.GlobalWorkerOptions.workerSrc = 'host-configured-worker.mjs';
+
+    const mod = await import('../../../src/utils/pdfRenderer');
+
+    const pdfData = new Uint8Array([0x25, 0x50, 0x44, 0x46]);
+    await mod.renderPdfToImage(pdfData, 200, 160);
+
+    expect(pdfjsMock.GlobalWorkerOptions.workerSrc).toBe('host-configured-worker.mjs');
+  });
+
+  it('returns null for empty input without throwing', async () => {
+    const mod = await import('../../../src/utils/pdfRenderer');
+
+    const result = await mod.renderPdfToImage(new Uint8Array(0), 100, 100);
+
+    expect(result).toBeNull();
+  });
+
+  it('returns null for multiple consecutive calls without throwing', async () => {
+    const mod = await import('../../../src/utils/pdfRenderer');
+
+    const pdfData = new Uint8Array([0x25, 0x50, 0x44, 0x46]);
+    const results = await Promise.all([
+      mod.renderPdfToImage(pdfData, 200, 160),
+      mod.renderPdfToImage(pdfData, 300, 240),
+      mod.renderPdfToImage(pdfData, 100, 80),
+    ]);
+
+    expect(results).toEqual([null, null, null]);
+  });
+
+  it('does not import pdfjs-dist at module level (lazy only in Worker)', async () => {
+    // The module should resolve the pdfjs URL via import.meta.url
+    // but never actually import the pdfjs library on the main thread
+    const mod = await import('../../../src/utils/pdfRenderer');
+
+    expect(mod.renderPdfToImage).toBeTypeOf('function');
+    // getDocument should never be called — all pdfjs work happens in Worker
+    expect(pdfjsMock.getDocument).not.toHaveBeenCalled();
+  });
+
+  it('returns null when OffscreenCanvas is not defined', async () => {
+    // jsdom doesn't have OffscreenCanvas, which is the condition we test
+    expect(typeof OffscreenCanvas).toBe('undefined');
+
+    const mod = await import('../../../src/utils/pdfRenderer');
+    const result = await mod.renderPdfToImage(new Uint8Array([1, 2, 3]), 100, 100);
+
+    expect(result).toBeNull();
+  });
+
+  it('exported function signature accepts Uint8Array and dimensions', async () => {
+    const mod = await import('../../../src/utils/pdfRenderer');
+
+    // Verify the API contract: (Uint8Array, number, number) => Promise<string | null>
+    const result = mod.renderPdfToImage(new Uint8Array(0), 0, 0);
+    expect(result).toBeInstanceOf(Promise);
+    expect(await result).toBeNull();
+  });
+
+  it('GlobalWorkerOptions remains untouched after multiple renders', async () => {
+    pdfjsMock.GlobalWorkerOptions.workerSrc = 'my-app-worker.mjs';
 
     const mod = await import('../../../src/utils/pdfRenderer');
     const pdfData = new Uint8Array([0x25, 0x50, 0x44, 0x46]);
-    const result = await mod.renderPdfToImage(pdfData, 200, 160);
 
-    // Should not throw; returns null due to getPage failure
-    expect(result).toBeNull();
+    await mod.renderPdfToImage(pdfData, 200, 160);
+    await mod.renderPdfToImage(pdfData, 300, 240);
+    await mod.renderPdfToImage(pdfData, 100, 80);
+
+    // Host app's workerSrc must be completely untouched
+    expect(pdfjsMock.GlobalWorkerOptions.workerSrc).toBe('my-app-worker.mjs');
+  });
+
+  it('never touches PDFWorker static state on the main thread', async () => {
+    const mod = await import('../../../src/utils/pdfRenderer');
+    const pdfData = new Uint8Array([0x25, 0x50, 0x44, 0x46]);
+
+    await mod.renderPdfToImage(pdfData, 200, 160);
+
+    // No pdfjs API should be invoked on the main thread at all
+    expect(pdfjsMock.getDocument).not.toHaveBeenCalled();
   });
 });

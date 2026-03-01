@@ -38,23 +38,27 @@ Responsibilities:
 
 Core modules:
 
-- `src/core/Renderer.ts`
-- `src/renderer/SlideRenderer.ts`
+- `src/core/Viewer.ts` — `PptxViewer` (primary API, extends `EventTarget`)
+- `src/core/Renderer.ts` — `PptxRenderer` (deprecated v1 wrapper, extends `PptxViewer`)
+- `src/renderer/SlideRenderer.ts` — returns `SlideHandle` with per-slide resource lifecycle
 - `src/renderer/*Renderer.ts`
 
 Responsibilities:
 
 - Convert model into DOM elements per slide.
-- Handle list/single-slide modes.
-- Manage media object URL lifecycle.
+- Handle list/single-slide render modes via `renderList()` / `renderSlide()`.
+- Instance-level `open()` for one-call parse→build→render (static `PptxViewer.open()` delegates to this).
+- Render lifecycle events: `renderstart` / `rendercomplete` bracket every render cycle; `slidechange` fires after render.
+- Typed `on()` / `off()` helpers and state getters (`isRendering`, `zoomPercent`, `fitMode`).
+- Manage media object URL lifecycle (blob URLs tracked per-handle and per-viewer).
 - Handle internal/external navigation (with URL safety checks).
 
 ## Rendering Strategies
 
-List mode supports:
+`renderList()` supports:
 
-- `full`: mount all slide DOM nodes.
-- `windowed`: mount near-viewport slides via `IntersectionObserver`, with fallback to full mode when unavailable.
+- Default (`windowed: false`): mount all slide DOM nodes.
+- Windowed (`windowed: true`): mount near-viewport slides via `IntersectionObserver`, with fallback to full mode when unavailable.
 
 This keeps default behavior backward compatible while enabling lower memory pressure for large decks.
 

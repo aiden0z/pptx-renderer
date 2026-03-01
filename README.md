@@ -44,64 +44,148 @@ Requires Node.js 20+ for development. Runtime is browser-only.
 ## Quick Start
 
 ```ts
-import { PptxRenderer } from '@aiden0z/pptx-renderer';
+import { PptxViewer } from '@aiden0z/pptx-renderer';
 
 const container = document.getElementById('pptx-container')!;
-const renderer = new PptxRenderer(container, {
-  mode: 'list',
-  width: 1200,
-  listMountStrategy: 'windowed',
-});
-
 const resp = await fetch('/slides/demo.pptx');
-await renderer.preview(await resp.arrayBuffer());
+
+// One-liner: parse, build model, and render
+const viewer = await PptxViewer.open(await resp.arrayBuffer(), container, {
+  listOptions: { windowed: true },
+});
+```
+
+Or with more control over each step:
+
+```ts
+import { PptxViewer, parseZip, buildPresentation } from '@aiden0z/pptx-renderer';
+
+const container = document.getElementById('pptx-container')!;
+const viewer = new PptxViewer(container, { fitMode: 'contain' });
+
+const files = await parseZip(arrayBuffer);
+const presentation = buildPresentation(files);
+viewer.load(presentation);
+await viewer.renderList({ windowed: true, batchSize: 8 });
 ```
 
 ## API
 
-### `new PptxRenderer(container, options)`
+### `PptxViewer` (primary, extends `EventTarget`)
 
-| Option                     | Type                       | Default     | Description                                                   |
-| -------------------------- | -------------------------- | ----------- | ------------------------------------------------------------- |
-| `mode`                     | `'list' \| 'slide'`        | `'list'`    | Multi-slide scroll or single-slide navigation                 |
-| `width`                    | `number`                   | --          | Container width hint (omit for auto-detect via `clientWidth`) |
-| `fitMode`                  | `'contain' \| 'none'`      | `'contain'` | Responsive fit or fixed size                                  |
-| `zoomPercent`              | `number`                   | `100`       | Zoom level (10–400)                                           |
-| `listMountStrategy`        | `'full' \| 'windowed'`     | `'full'`    | Windowed for large decks                                      |
-| `listRenderBatchSize`      | `number`                   | `12`        | Slides per render batch                                       |
-| `windowedInitialSlides`    | `number`                   | `4`         | Initial slides to mount in windowed mode                      |
-| `windowedOverscanViewport` | `number`                   | `1.5`       | Viewport overscan multiplier                                  |
-| `zipLimits`                | `ZipParseLimits`           | --          | Security limits for ZIP parsing                               |
-| `onSlideError`             | `(index, error) => void`   | --          | Per-slide error callback                                      |
-| `onNodeError`              | `(nodeId, error) => void`  | --          | Per-node error callback                                       |
-| `onSlideRendered`          | `(index, element) => void` | --          | Called after each slide finishes rendering                    |
-| `onSlideChange`            | `(index) => void`          | --          | Called when the active slide changes in slide mode            |
+#### `PptxViewer.open(input, container, options?)` — Static Factory
 
-### Instance Methods
+Parse, build, and render in one call. Returns a `Promise<PptxViewer>`.
 
 ```ts
-// Load and render a PPTX file. Returns slide count and parse+render time in ms.
-const { slideCount, elapsed } = await renderer.preview(buffer); // ArrayBuffer | Uint8Array | Blob
-
-renderer.goToSlide(index);        // Jump to slide (0-based)
-await renderer.setZoom(150);      // Runtime zoom (10–400)
-await renderer.setFitMode('none'); // Switch fit mode
-
-// Render a single slide into an external container (useful for React/Vue integration, thumbnails).
-// Returns the slide HTMLElement, or null if not loaded / index out of range.
-const slideEl = renderer.renderSlideToContainer(index, container, scale?);
-
-renderer.destroy();               // Cleanup blob URLs, observers, and DOM
+const viewer = await PptxViewer.open(buffer, container, {
+  renderMode: 'list', // 'list' (default) | 'slide'
+  listOptions: { windowed: true, batchSize: 8 },
+  signal: abortController.signal, // optional AbortSignal
+  // ...ViewerOptions
+});
 ```
 
-### Instance Properties (read-only)
+#### `new PptxViewer(container, options?)`
+
+| Option             | Type                       | Default     | Description                                         |
+| ------------------ | -------------------------- | ----------- | --------------------------------------------------- |
+| `width`            | `number`                   | --          | Container width hint (omit for auto-detect)         |
+| `fitMode`          | `'contain' \| 'none'`      | `'contain'` | Responsive fit or fixed size                        |
+| `zoomPercent`      | `number`                   | `100`       | Zoom level (10–400)                                 |
+| `scrollContainer`  | `HTMLElement`              | --          | Scroll container for IntersectionObserver root      |
+| `zipLimits`        | `ZipParseLimits`           | --          | Security limits for ZIP parsing (used by `.open()`) |
+| `onSlideChange`    | `(index) => void`          | --          | Shorthand for `slidechange` event                   |
+| `onSlideRendered`  | `(index, element) => void` | --          | Shorthand for `sliderendered` event                 |
+| `onSlideError`     | `(index, error) => void`   | --          | Shorthand for `slideerror` event                    |
+| `onSlideUnmounted` | `(index) => void`          | --          | Shorthand for `slideunmounted` event                |
+| `onNodeError`      | `(nodeId, error) => void`  | --          | Shorthand for `nodeerror` event                     |
+| `onRenderStart`    | `() => void`               | --          | Shorthand for `renderstart` event                   |
+| `onRenderComplete` | `() => void`               | --          | Shorthand for `rendercomplete` event                |
+
+All shorthand callbacks are also available as `EventTarget` events (e.g. `viewer.addEventListener('slidechange', ...)`).
+
+#### Instance Methods
 
 ```ts
-renderer.presentationData; // PresentationData | null — the parsed model, null before preview()
-renderer.slideCount; // number — total slides (0 if not loaded)
-renderer.slideWidth; // number — intrinsic slide width in px
-renderer.slideHeight; // number — intrinsic slide height in px
-renderer.currentSlideIndex; // number — currently active slide (0-based)
+viewer.load(presentation);                              // Load a PresentationData model (no render)
+await viewer.renderList({ windowed: true });             // Render all slides in scrollable list
+await viewer.renderSlide(0);                             // Render a single slide (no built-in nav UI)
+
+// Load from binary input (parse → build → render). Cleans up previous state on re-open.
+await viewer.open(buffer, { renderMode: 'list', signal: abortController.signal });
+
+await viewer.goToSlide(index);                           // Jump to slide (0-based), returns Promise<void>
+await viewer.goToSlide(index, { behavior: 'instant' }); // Custom ScrollIntoViewOptions (list mode)
+await viewer.setZoom(150);                               // Runtime zoom (10–400)
+await viewer.setFitMode('none');                         // Switch fit mode
+
+// Render a single slide into an external container (React/Vue integration, thumbnails).
+// Returns a SlideHandle; caller owns it and must call handle.dispose() when done.
+const handle = viewer.renderSlideToContainer(index, container, scale?);
+handle.dispose();                                        // Clean up slide-specific resources
+
+// Query which slides are currently mounted in the DOM
+viewer.isSlideMounted(index);   // boolean
+viewer.getMountedSlides();      // number[] (sorted)
+
+// Typed event helpers (return `this` for chaining)
+viewer.on('slidechange', (e) => console.log(e.detail.index));
+viewer.off('slidechange', listener);
+
+viewer.destroy();               // Cleanup blob URLs, observers, and DOM
+viewer[Symbol.dispose]();       // TC39 Explicit Resource Management (calls destroy)
+```
+
+#### `ListRenderOptions`
+
+| Option             | Type      | Default | Description                        |
+| ------------------ | --------- | ------- | ---------------------------------- |
+| `windowed`         | `boolean` | `false` | Use IntersectionObserver windowing |
+| `batchSize`        | `number`  | `12`    | Slides per render batch            |
+| `initialSlides`    | `number`  | `4`     | Initial slides to mount (windowed) |
+| `overscanViewport` | `number`  | `1.5`   | Viewport overscan multiplier       |
+
+#### Events (`PptxViewerEventMap`)
+
+```ts
+viewer.addEventListener('renderstart', () => {
+  /* render cycle began */
+});
+viewer.addEventListener('rendercomplete', () => {
+  /* render cycle finished (fires even on error) */
+});
+viewer.addEventListener('slidechange', (e) => console.log(e.detail.index));
+viewer.addEventListener('sliderendered', (e) => console.log(e.detail.index, e.detail.element));
+viewer.addEventListener('slideerror', (e) => console.error(e.detail.index, e.detail.error));
+viewer.addEventListener('slideunmounted', (e) => console.log(e.detail.index));
+viewer.addEventListener('nodeerror', (e) => console.warn(e.detail.nodeId, e.detail.error));
+```
+
+`slidechange` fires both on `goToSlide()` navigation and after each render cycle (initial render included). `renderstart`/`rendercomplete` bracket every render cycle (renderList, renderSlide, setZoom, setFitMode).
+
+#### Instance Properties (read-only)
+
+```ts
+viewer.presentationData; // PresentationData | null — the parsed model, null before load()
+viewer.slideCount; // number — total slides (0 if not loaded)
+viewer.slideWidth; // number — intrinsic slide width in px
+viewer.slideHeight; // number — intrinsic slide height in px
+viewer.currentSlideIndex; // number — currently active slide (0-based)
+viewer.isRendering; // boolean — true between renderstart and rendercomplete
+viewer.zoomPercent; // number — current zoom level (e.g. 100, 200)
+viewer.fitMode; // FitMode — current fit mode ('contain' | 'none')
+```
+
+### `PptxRenderer` (deprecated v1 compat)
+
+`PptxRenderer` extends `PptxViewer` and provides the legacy `preview(input)` API with built-in nav buttons in slide mode. Migrate to `PptxViewer` for new code.
+
+```ts
+import { PptxRenderer } from '@aiden0z/pptx-renderer';
+
+const renderer = new PptxRenderer(container, { mode: 'list', listMountStrategy: 'windowed' });
+await renderer.preview(buffer); // deprecated — use PptxViewer.open() instead
 ```
 
 ### Utility Exports
@@ -120,13 +204,16 @@ For advanced use cases (server-side screenshot, custom rendering pipeline):
 
 ```ts
 import { renderSlide } from '@aiden0z/pptx-renderer';
-import type { SlideRendererOptions } from '@aiden0z/pptx-renderer';
+import type { SlideHandle } from '@aiden0z/pptx-renderer';
 
-const slideEl = renderSlide(presentation, presentation.slides[0], {
+const handle = renderSlide(presentation, presentation.slides[0], {
   onNodeError: (nodeId, err) => console.warn(nodeId, err),
   mediaUrlCache: new Map(), // optional shared cache for blob URLs
 });
-document.body.appendChild(slideEl);
+document.body.appendChild(handle.element);
+
+// Clean up when done (disposes charts + blob URLs in standalone mode)
+handle.dispose();
 ```
 
 #### Model Types
@@ -158,6 +245,10 @@ import type {
   ZipParseLimits,
   FitMode,
   PreviewInput,
+  ViewerOptions,
+  ListRenderOptions,
+  PptxViewerEventMap,
+  SlideHandle,
 } from '@aiden0z/pptx-renderer';
 ```
 
@@ -228,11 +319,13 @@ Key design decisions:
 For large decks (50+ slides), use windowed mounting:
 
 ```ts
-const renderer = new PptxRenderer(container, {
-  listMountStrategy: 'windowed',
-  listRenderBatchSize: 8,
-  windowedInitialSlides: 4,
-  windowedOverscanViewport: 1.5,
+const viewer = await PptxViewer.open(buffer, container, {
+  listOptions: {
+    windowed: true,
+    batchSize: 8,
+    initialSlides: 4,
+    overscanViewport: 1.5,
+  },
 });
 ```
 
@@ -290,7 +383,7 @@ No. Rendering depends on browser DOM APIs.
 OOXML is a vast spec. Please open a compatibility issue with a minimal PPTX sample — the visual regression pipeline makes it straightforward to add coverage for new cases.
 
 **How do I render 100+ slide decks efficiently?**
-Use `listMountStrategy: 'windowed'` — it only mounts slides near the viewport.
+Use `windowed: true` in `listOptions` — it only mounts slides near the viewport.
 
 ## License
 

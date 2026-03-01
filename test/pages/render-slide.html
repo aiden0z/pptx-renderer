@@ -61,6 +61,7 @@
       let presentation = null;
       let currentSlide = 0;
       let mediaCache = new Map();
+      let currentHandle = null;
 
       // URL params
       const params = new URLSearchParams(location.search);
@@ -141,21 +142,22 @@
         currentSlide = idx;
         slideSelect.value = String(idx);
 
-        // Revoke old blob URLs before re-rendering
-        for (const url of mediaCache.values()) {
-          URL.revokeObjectURL(url);
+        // Dispose previous slide handle (revokes standalone blob URLs + charts)
+        if (currentHandle) {
+          currentHandle.dispose();
+          currentHandle = null;
         }
-        mediaCache.clear();
 
         container.innerHTML = '';
         const slide = presentation.slides[idx];
-        const slideEl = renderSlide(presentation, slide, { mediaUrlCache: mediaCache });
+        const handle = renderSlide(presentation, slide, { mediaUrlCache: mediaCache });
+        currentHandle = handle;
 
         const wrapper = document.createElement('div');
         wrapper.className = 'slide-wrapper';
         wrapper.style.width = `${presentation.width}px`;
         wrapper.style.height = `${presentation.height}px`;
-        wrapper.appendChild(slideEl);
+        wrapper.appendChild(handle.element);
         container.appendChild(wrapper);
 
         const url = new URL(location);

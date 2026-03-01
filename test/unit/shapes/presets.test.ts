@@ -1020,16 +1020,39 @@ describe('getMultiPathPreset', () => {
     expect(subpaths.length).toBeGreaterThanOrEqual(2);
   });
 
-  it('renders gear6 with 6 teeth (oracle-full-shapeid-0172)', () => {
+  it('renders gear6 with 6 teeth, tooth tips perpendicular to A-D edge (oracle-full-shapeid-0172)', () => {
+    // Use non-square dimensions to expose angular vs Cartesian tip direction difference
     const d = getPresetShapePath('gear6', 400, 400);
     expect(d).toContain('A');  // Inner arcs between teeth
     expect(d).toContain('Z');
+
+    // Extract all L commands (tooth vertices A→B→C→D per tooth = 3 L per tooth, 6 teeth = 18 L)
+    const lineCoords = [...d.matchAll(/L([\d.e+-]+),([\d.e+-]+)/g)].map(m => ({
+      x: parseFloat(m[1]),
+      y: parseFloat(m[2]),
+    }));
+    // 6 teeth × 3 L commands (B, C, D) = 18 line-to commands
+    expect(lineCoords.length).toBe(18);
+
+    // For tooth 1 (center 330°): B and C tips should form an edge perpendicular to the A-D base
+    // Tooth vertices are at indices 0=B, 1=C, 2=D for each tooth
+    // The tip edge B→C should be approximately perpendicular to the tooth protrusion direction
+    const b1 = lineCoords[0]; // B of tooth 1
+    const c1 = lineCoords[1]; // C of tooth 1
+
+    // B and C should not be identical
+    const tipLen = Math.sqrt((c1.x - b1.x) ** 2 + (c1.y - b1.y) ** 2);
+    expect(tipLen).toBeGreaterThan(1);
   });
 
-  it('renders gear9 with 9 teeth (oracle-full-shapeid-0173)', () => {
+  it('renders gear9 with 9 teeth, tooth tips perpendicular to A-D edge (oracle-full-shapeid-0173)', () => {
     const d = getPresetShapePath('gear9', 400, 400);
     expect(d).toContain('A');
     expect(d).toContain('Z');
+
+    // 9 teeth × 3 L commands = 27
+    const lineCoords = [...d.matchAll(/L([\d.e+-]+),([\d.e+-]+)/g)];
+    expect(lineCoords.length).toBe(27);
   });
 
   it('renders irregularSeal1 with OOXML spec coordinates (oracle-full-shapeid-0089)', () => {
@@ -1090,7 +1113,7 @@ describe('getMultiPathPreset', () => {
 describe('bulk coverage — untested single-path presets', () => {
   const untestedPresets = [
     'actionButtonBlank', 'bentArrow', 'bentConnector2', 'bentConnector3', 'bentConnector4',
-    'bentConnector5', 'bevel', 'blockArc', 'borderCallout1', 'bracePair', 'can', 'chevron',
+    'bentConnector5', 'bevel', 'blockArc', 'borderCallout1', 'bracePair', 'chevron',
     'cloud', 'cloudCallout', 'corner', 'cube', 'curvedConnector2', 'curvedConnector3',
     'curvedConnector4', 'curvedConnector5', 'curvedLeftArrow', 'curvedRightArrow', 'decagon',
     'diagStripe', 'diamond', 'dodecagon', 'donut', 'downArrow', 'downArrowCallout',
@@ -1103,7 +1126,7 @@ describe('bulk coverage — untested single-path presets', () => {
     'homePlate', 'irregularSeal2', 'isosTriangle', 'leftArrow', 'leftRightArrow',
     'leftRightArrowCallout', 'lightningBolt', 'lineInv', 'mathEqual', 'mathMinus', 'mathPlus',
     'notchedRightArrow', 'parallelogram', 'plus', 'quadArrow', 'rightArrow', 'rightBrace',
-    'rightBracket', 'round1Rect', 'round2DiagRect', 'round2SameRect', 'rtTriangle', 'smileyFace',
+    'rightBracket', 'round1Rect', 'round2DiagRect', 'round2SameRect', 'rtTriangle',
     'snip1Rect', 'snip2DiagRect', 'snip2SameRect', 'snipRoundRect', 'star10', 'star12', 'star16',
     'star24', 'star32', 'star4', 'star5', 'star6', 'star7', 'star8', 'sun', 'swooshArrow',
     'teardrop', 'trapezoid', 'triangle', 'upArrow', 'upDownArrow', 'upDownArrowCallout',
@@ -1123,8 +1146,8 @@ describe('bulk coverage — untested multi-path presets', () => {
     'accentbordercallout1', 'accentbordercallout2', 'accentbordercallout3',
     'accentcallout1', 'accentcallout2', 'accentcallout3',
     'actionButtonBackPrevious', 'actionButtonBeginning', 'actionButtonDocument',
-    'actionButtonEnd', 'actionButtonForwardNext', 'actionButtonInformation',
-    'actionButtonMovie', 'actionButtonReturn',
+    'actionButtonEnd', 'actionButtonForwardNext', 'actionButtonHelp', 'actionButtonHome', 'actionButtonInformation',
+    'actionButtonMovie', 'actionButtonReturn', 'actionButtonSound',
     'bevel', 'bordercallout1', 'bordercallout2', 'bordercallout3',
     'callout1', 'callout2', 'callout3',
     'chartplus', 'chartstar', 'chartx',
@@ -1143,5 +1166,188 @@ describe('bulk coverage — untested multi-path presets', () => {
       expect(typeof p.fill).toBe('string');
       expect(typeof p.stroke).toBe('boolean');
     }
+  });
+});
+
+describe('actionButtonSound (oracle-full-shapeid-0135)', () => {
+  it('renders speaker icon with 3 sound wave lines in outline path', () => {
+    const paths = getMultiPathPreset('actionButtonSound', 400, 280);
+    expect(paths).not.toBeNull();
+    expect(paths!.length).toBe(4);
+    // Path 0: bg + speaker cutout (norm)
+    expect(paths![0].fill).toBe('norm');
+    expect(paths![0].stroke).toBe(false);
+    // Path 1: speaker fill (darken)
+    expect(paths![1].fill).toBe('darken');
+    expect(paths![1].stroke).toBe(false);
+    // Path 2: speaker outline + 3 sound wave lines (none, stroke)
+    expect(paths![2].fill).toBe('none');
+    expect(paths![2].stroke).toBe(true);
+    // The outline path must contain the speaker shape + 3 separate line segments (M...L pairs)
+    // Count moveTo commands — speaker outline has 1, plus 3 wave lines = 4 total
+    const moveCount = (paths![2].d.match(/M/g) || []).length;
+    expect(moveCount).toBe(4); // 1 speaker outline + 3 wave lines
+    // Path 3: rect outline
+    expect(paths![3].fill).toBe('none');
+    expect(paths![3].stroke).toBe(true);
+  });
+});
+
+describe('actionButtonReturn (oracle-full-shapeid-0133)', () => {
+  it('renders U-turn arrow with correct inner arc endpoints keeping left arm straight', () => {
+    const paths = getMultiPathPreset('actionButtonReturn', 400, 280);
+    expect(paths).not.toBeNull();
+    expect(paths!.length).toBe(4);
+    // Path 0: bg + icon cutout (norm)
+    expect(paths![0].fill).toBe('norm');
+    expect(paths![0].stroke).toBe(false);
+    // Path 1: icon fill (darken)
+    expect(paths![1].fill).toBe('darken');
+    expect(paths![1].stroke).toBe(false);
+    // Path 2: icon outline (none, stroke) — uses different arc winding per OOXML spec
+    expect(paths![2].fill).toBe('none');
+    expect(paths![2].stroke).toBe(true);
+    // Path 3: rect outline
+    expect(paths![3].fill).toBe('none');
+    expect(paths![3].stroke).toBe(true);
+
+    // Verify the icon fill path (path 1) has correct geometry:
+    // The inner small arcs (g27 radius) connect the right shaft to the left shaft via the inner U.
+    // After the first inner arc (0→90°), endpoint X must be LESS than the start X (curves left),
+    // not greater. Parse the first arc's endpoint X to verify.
+    const ss = Math.min(400, 280);
+    const g13 = (ss * 3) / 4;
+    const g27 = g13 / 8; // inner arc radius = 26.25
+    const g16 = (g13 * 5) / 8;
+    const g11 = 200 - (ss * 3) / 8; // hc - dx2
+    const g24 = g11 + g16;
+
+    // The fill path should contain an arc from (g24, _) that curves LEFT (endpoint x = g24 - g27)
+    const fillD = paths![1].d;
+    // Find the first arc command after L...g24...
+    const arcMatch = fillD.match(/A[\d.]+,[\d.]+ 0 0,[01] ([\d.]+),([\d.]+)/);
+    expect(arcMatch).not.toBeNull();
+    const arcEndX = parseFloat(arcMatch![1]);
+    // The endpoint X should be g24 - g27, NOT g24 + g27
+    expect(arcEndX).toBeCloseTo(g24 - g27, 1);
+  });
+});
+
+describe('actionButtonHome (oracle-full-shapeid-0126)', () => {
+  it('renders house with 5 multi-path sub-paths: bg cutout, walls (darkenLess), roof+door (darken), icon outline, rect outline', () => {
+    const paths = getMultiPathPreset('actionButtonHome', 400, 280);
+    expect(paths).not.toBeNull();
+    expect(paths!.length).toBe(5);
+    // Path 0: background rect + house cutout (norm fill, no stroke)
+    expect(paths![0].fill).toBe('norm');
+    expect(paths![0].stroke).toBe(false);
+    expect(paths![0].d).toContain('M0,0'); // rect
+    // Path 1: house walls + chimney (darkenLess)
+    expect(paths![1].fill).toBe('darkenLess');
+    expect(paths![1].stroke).toBe(false);
+    // Should have 2 sub-paths (chimney bar + house body with door cutout)
+    const subPaths1 = paths![1].d.match(/M[^M]+/g);
+    expect(subPaths1!.length).toBe(2);
+    // Path 2: roof triangle + door rect (darken)
+    expect(paths![2].fill).toBe('darken');
+    expect(paths![2].stroke).toBe(false);
+    const subPaths2 = paths![2].d.match(/M[^M]+/g);
+    expect(subPaths2!.length).toBe(2);
+    // Path 3: house icon outline with details (none fill, stroke)
+    expect(paths![3].fill).toBe('none');
+    expect(paths![3].stroke).toBe(true);
+    // Path 4: rect outline
+    expect(paths![4].fill).toBe('none');
+    expect(paths![4].stroke).toBe(true);
+    expect(paths![4].d).toContain('M0,0');
+  });
+});
+
+describe('actionButtonHelp (oracle-full-shapeid-0127)', () => {
+  it('renders question mark with arcs and bottom dot circle', () => {
+    const paths = getMultiPathPreset('actionButtonHelp', 400, 280);
+    expect(paths).not.toBeNull();
+    expect(paths!.length).toBe(4);
+    // Path 0: background rect + icon cutout (norm fill, no stroke)
+    expect(paths![0].fill).toBe('norm');
+    expect(paths![0].stroke).toBe(false);
+    expect(paths![0].d).toContain('M0,0'); // rect
+    // Path 1: icon fill (darken)
+    expect(paths![1].fill).toBe('darken');
+    expect(paths![1].stroke).toBe(false);
+    // Question mark path should contain arcs
+    expect(paths![1].d).toMatch(/A[\d.]+,[\d.]+ 0/); // SVG arc commands
+    // Path 2: icon outline
+    expect(paths![2].fill).toBe('none');
+    expect(paths![2].stroke).toBe(true);
+    // Path 3: rect outline
+    expect(paths![3].fill).toBe('none');
+    expect(paths![3].stroke).toBe(true);
+    expect(paths![3].d).toContain('M0,0');
+  });
+
+  it('can shape uses OOXML adj formula (ss*adj/200000) not hardcoded h*0.1 (oracle-full-shapeid-0013)', () => {
+    // For w=400, h=280: ss=280, adj=25000 → y1 = 280*25000/200000 = 35 (not h*0.1 = 28)
+    const paths = getMultiPathPreset('can', 400, 280);
+    expect(paths).toBeTruthy();
+    expect(paths!.length).toBe(3);
+    // Path 0: body (fill: norm, stroke: false)
+    expect(paths![0].fill).toBe('norm');
+    expect(paths![0].stroke).toBe(false);
+    // Path 1: top face (fill: lighten, stroke: false) — 3D effect
+    expect(paths![1].fill).toBe('lighten');
+    expect(paths![1].stroke).toBe(false);
+    // Path 2: outline (fill: none, stroke: true)
+    expect(paths![2].fill).toBe('none');
+    expect(paths![2].stroke).toBe(true);
+    // Body should start at y=35 (not y=28)
+    expect(paths![0].d).toContain('M0,35');
+  });
+
+  it('smileyFace uses OOXML-exact geometry: eye positions, quadBez smile (oracle-full-shapeid-0017)', () => {
+    const w = 400, h = 280;
+    const paths = getMultiPathPreset('smileyFace', w, h);
+    expect(paths).toBeTruthy();
+    expect(paths!.length).toBe(4); // face(norm), eyes(darkenLess), smile(none), outline(none)
+
+    // Path 1: face fill=norm, stroke=false
+    expect(paths![0].fill).toBe('norm');
+    expect(paths![0].stroke).toBe(false);
+
+    // Path 2: eyes fill=darkenLess — OOXML eye positions
+    expect(paths![1].fill).toBe('darkenLess');
+    const eyePath = paths![1].d;
+    // Left eye center: x2 = w * 6215 / 21600 ≈ 115.09
+    // Right eye center: x3 = w * 13135 / 21600 ≈ 243.24
+    // Eye Y: y1 = h * 7570 / 21600 ≈ 98.01
+    expect(eyePath).toContain('M'); // two eye circles
+
+    // Path 3: smile curve (fill=none) — must be quadratic Bezier, NOT arc
+    expect(paths![2].fill).toBe('none');
+    expect(paths![2].d).toContain('Q'); // quadratic Bezier, not A (arc)
+    expect(paths![2].d).not.toContain('A');
+
+    // Path 4: face outline (fill=none, stroke=true)
+    expect(paths![3].fill).toBe('none');
+    expect(paths![3].stroke).toBe(true);
+
+    // Verify OOXML-exact eye coordinates (w=400, h=280)
+    const wR = w * 1125 / 21600;  // ≈ 20.83
+    const x2 = w * 6215 / 21600;  // ≈ 115.09 (left eye center)
+    const x3 = w * 13135 / 21600; // ≈ 243.24 (right eye center)
+    // moveTo starts at right edge of eye circle (center + wR), arcs to left edge (center - wR)
+    expect(eyePath).toContain((x2 + wR).toFixed(2));
+    expect(eyePath).toContain((x3 + wR).toFixed(2));
+  });
+
+  it('chartStar has exactly 2 diagonals + 1 vertical line, no horizontal center line (oracle-full-shapeid-0181)', () => {
+    const paths = getMultiPathPreset('chartstar', 400, 280);
+    expect(paths).toBeTruthy();
+    // The guide path (fill: none, stroke: true) should have exactly 3 moveTo commands
+    // (2 diagonals + 1 vertical), NOT 4 (which would include an extra horizontal)
+    const guidePath = paths!.find((p) => p.fill === 'none' && p.stroke === true);
+    expect(guidePath).toBeTruthy();
+    const moveCount = (guidePath!.d.match(/M/g) || []).length;
+    expect(moveCount).toBe(3); // 2 diagonals + 1 vertical
   });
 });

@@ -820,7 +820,7 @@ function getGridBottomPx(legendInfo: LegendInfo | undefined): number {
   }
   return 8;
 }
-const GRID_BOTTOM_PX = 8; // kept as default for chart types that don't call the function
+const _GRID_BOTTOM_PX = 8; // kept as default for chart types that don't call the function
 
 /** Map OOXML c:marker > c:symbol values to ECharts symbol names. */
 const OOXML_SYMBOL_MAP: Record<string, string> = {
@@ -1113,10 +1113,12 @@ function buildBarChartOption(
       cfg?.showVal
         ? {
             show: true,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             position: mapBarLabelPosition(cfg.position, isStacked) as any,
             fontSize: cfg.fontSize ?? 9,
             ...(cfg.color ? { color: cfg.color } : {}),
             ...(cfg.bold === true ? { fontWeight: 'bold' } : {}),
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             formatter: (params: any) => {
               const rawVal = params?.value;
               const val =
@@ -1148,6 +1150,7 @@ function buildBarChartOption(
       return {
         value: v,
         label: buildLabel(merged),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any;
     });
 
@@ -1381,6 +1384,7 @@ function buildPieChartOption(
   const explosions = firstSer ? parseExplosion(firstSer) : undefined;
 
   const pieData = firstSeries.categories.map((cat, i) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const item: any = {
       name: cat || `Item ${i + 1}`,
       value: firstSeries.values[i] ?? 0,
@@ -1401,9 +1405,11 @@ function buildPieChartOption(
 
   // Build label formatter based on data label config; show value and percent when requested
   const fc = firstSeries.formatCode;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let labelFormatter: string | ((params: any) => string) = '{b}: {c} ({d}%)';
   if (sharedLabels) {
     if (sharedLabels.showVal && fc && fc.includes('%')) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       labelFormatter = (params: any) => {
         const parts: string[] = [];
         if (sharedLabels!.showCatName) parts.push(params.name);
@@ -2006,7 +2012,9 @@ export function parseChartXml(chartXml: SafeXmlNode, ctx: RenderContext): ParseC
     }
     if (plotAreaBg && option.grid) {
       // Apply plot area background via grid (for cartesian charts)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (option.grid as any).backgroundColor = plotAreaBg;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (option.grid as any).show = true;
     }
 

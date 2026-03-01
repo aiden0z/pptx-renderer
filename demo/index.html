@@ -338,6 +338,39 @@
         width: 100%;
       }
 
+      /* ── Slide transition ── */
+      @keyframes slide-in-right {
+        from {
+          transform: translateX(60px);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+      @keyframes slide-in-left {
+        from {
+          transform: translateX(-60px);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+      #pptx-container.slide-transition > * {
+        animation-duration: 0.25s;
+        animation-timing-function: cubic-bezier(0.22, 0.61, 0.36, 1);
+        animation-fill-mode: both;
+      }
+      #pptx-container.slide-transition-next > * {
+        animation-name: slide-in-right;
+      }
+      #pptx-container.slide-transition-prev > * {
+        animation-name: slide-in-left;
+      }
+
       /* ── Slide Navigation Strip ── */
       .slide-nav-strip {
         display: none;
@@ -816,7 +849,7 @@
     </div>
 
     <script type="module">
-      import { PptxRenderer } from '../src/index.ts';
+      import { PptxViewer } from '../src/index.ts';
 
       const container = document.getElementById('pptx-container');
       const fileInput = document.getElementById('file-input');
@@ -841,7 +874,7 @@
         document.getElementById('stat-sep-3'),
       ];
 
-      let renderer = null;
+      let viewer = null;
       let cachedBuffer = null;
       let currentMode = 'list';
       let totalSlides = 0;
@@ -898,7 +931,7 @@
         slideNavControls.classList.toggle('visible', !!isSlide);
         container.classList.toggle('hide-builtin-nav', !!isSlide);
         if (isSlide) {
-          const idx = renderer ? renderer.currentSlideIndex : 0;
+          const idx = viewer ? viewer.currentSlideIndex : 0;
           slideIndicator.textContent = `${idx + 1} / ${totalSlides}`;
           btnPrev.disabled = idx <= 0;
           btnNext.disabled = idx >= totalSlides - 1;
@@ -906,10 +939,34 @@
       }
 
       function goToSlideIdx(idx) {
-        if (!renderer || idx < 0 || idx >= totalSlides) return;
-        renderer.goToSlide(idx);
-        updateNavStrip(idx);
-        updateSlideControls();
+        if (!viewer || idx < 0 || idx >= totalSlides) return;
+        const prev = viewer.currentSlideIndex;
+        if (idx === prev) return;
+        if (currentMode === 'slide') {
+          const dir = idx > prev ? 'next' : 'prev';
+          container.classList.remove(
+            'slide-transition',
+            'slide-transition-next',
+            'slide-transition-prev',
+          );
+          viewer.goToSlide(idx);
+          // Force reflow so the animation restarts cleanly
+          void container.offsetWidth;
+          container.classList.add('slide-transition', `slide-transition-${dir}`);
+          container.addEventListener(
+            'animationend',
+            () =>
+              container.classList.remove(
+                'slide-transition',
+                'slide-transition-next',
+                'slide-transition-prev',
+              ),
+            { once: true },
+          );
+        } else {
+          viewer.goToSlide(idx);
+        }
+        // Nav strip/controls are updated via the slidechange event listener
       }
 
       function buildNavStrip(count, activeIndex) {
@@ -925,7 +982,7 @@
           dot.className = 'slide-nav-dot' + (i === activeIndex ? ' active' : '');
           dot.dataset.label = 'Slide ' + (i + 1);
           dot.addEventListener('click', () => {
-            if (currentMode === 'slide' && renderer) {
+            if (currentMode === 'slide' && viewer) {
               goToSlideIdx(i);
             } else {
               const target = container.querySelector(`[data-slide-index="${i}"]`);
@@ -956,8 +1013,8 @@
         </div>`;
 
       function resetToEmpty() {
-        if (renderer) renderer.destroy();
-        renderer = null;
+        if (viewer) viewer.destroy();
+        viewer = null;
         cachedBuffer = null;
         totalSlides = 0;
         clearStats();
@@ -976,24 +1033,29 @@
           '<div class="loading-state fade-in"><div class="spinner"></div><p>Rendering\u2026</p></div>';
 
         try {
-          if (renderer) renderer.destroy();
-          renderer = new PptxRenderer(container, {
-            mode: currentMode,
+          if (viewer) viewer.destroy();
+          cachedBuffer = buffer;
+          const t0 = performance.now();
+          viewer = await PptxViewer.open(buffer, container, {
+            renderMode: currentMode,
             onSlideError: (idx, err) => console.error(`Slide ${idx + 1} error:`, err),
             onNodeError: (nodeId, err) => console.warn(`Node ${nodeId} error:`, err),
           });
-
-          cachedBuffer = buffer;
-          const { slideCount, elapsed } = await renderer.preview(buffer);
+          // Use typed on() helper: update nav strip/controls on every slidechange
+          viewer.on('slidechange', (e) => {
+            updateNavStrip(e.detail.index);
+            updateSlideControls();
+          });
+          const elapsed = performance.now() - t0;
 
           showStats(
             label,
             fileBytes !== undefined ? formatFileSize(fileBytes) : '?',
-            slideCount,
+            viewer.slideCount,
             elapsed.toFixed(0),
           );
           showLoaded(true);
-          buildNavStrip(slideCount, 0);
+          buildNavStrip(viewer.slideCount, viewer.currentSlideIndex);
         } catch (e) {
           console.error('Render failed:', e);
           const errMsg = e instanceof Error ? e.message : String(e);
@@ -1045,14 +1107,17 @@
         modeToggle.querySelectorAll('button').forEach((b) => {
           b.classList.toggle('active', b.dataset.mode === mode);
         });
-        if (renderer) renderer.destroy();
-        renderer = new PptxRenderer(container, {
-          mode: currentMode,
+        if (viewer) viewer.destroy();
+        viewer = await PptxViewer.open(cachedBuffer, container, {
+          renderMode: currentMode,
           onSlideError: (idx, err) => console.error(`Slide ${idx + 1} error:`, err),
           onNodeError: (nodeId, err) => console.warn(`Node ${nodeId} error:`, err),
         });
-        await renderer.preview(cachedBuffer);
-        buildNavStrip(totalSlides, 0);
+        viewer.on('slidechange', (e) => {
+          updateNavStrip(e.detail.index);
+          updateSlideControls();
+        });
+        buildNavStrip(totalSlides, viewer.currentSlideIndex);
         updateSlideControls();
       }
 
@@ -1074,10 +1139,10 @@
       });
 
       btnPrev.addEventListener('click', () =>
-        goToSlideIdx(renderer ? renderer.currentSlideIndex - 1 : 0),
+        goToSlideIdx(viewer ? viewer.currentSlideIndex - 1 : 0),
       );
       btnNext.addEventListener('click', () =>
-        goToSlideIdx(renderer ? renderer.currentSlideIndex + 1 : 0),
+        goToSlideIdx(viewer ? viewer.currentSlideIndex + 1 : 0),
       );
 
       // Keyboard: Ctrl+O / Cmd+O to open, Arrow keys for slide navigation
@@ -1087,16 +1152,14 @@
           fileInput.click();
           return;
         }
-        if (!renderer || !cachedBuffer) return;
+        if (!viewer || !cachedBuffer) return;
 
-        if (currentMode === 'slide') {
-          if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-            e.preventDefault();
-            goToSlideIdx(renderer.currentSlideIndex - 1);
-          } else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
-            e.preventDefault();
-            goToSlideIdx(renderer.currentSlideIndex + 1);
-          }
+        if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+          e.preventDefault();
+          goToSlideIdx(viewer.currentSlideIndex - 1);
+        } else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+          e.preventDefault();
+          goToSlideIdx(viewer.currentSlideIndex + 1);
         }
       });
 

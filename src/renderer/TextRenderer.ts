@@ -5,7 +5,7 @@
 
 import { SafeXmlNode } from '../parser/XmlParser';
 import { RenderContext } from './RenderContext';
-import { TextBody, TextParagraph, TextRun } from '../model/nodes/ShapeNode';
+import { TextBody } from '../model/nodes/ShapeNode';
 import { PlaceholderInfo } from '../model/nodes/BaseNode';
 import { resolveColor, resolveColorToCss } from './StyleResolver';
 import { emuToPx, pctToDecimal, angleToDeg } from '../parser/units';
@@ -791,11 +791,23 @@ export function renderTextBody(
         element = document.createElement('span');
       }
 
-      element.textContent = run.text;
-
-      // Preserve tab characters so the browser renders them at tab-stop positions
+      // Preserve consecutive spaces by alternating with &nbsp; so they survive
+      // HTML whitespace collapse without being stretched by text-align:justify.
+      // Tabs still need white-space:pre for tab-stop rendering.
       if (run.text && run.text.includes('\t')) {
+        element.textContent = run.text;
         element.style.whiteSpace = 'pre';
+      } else if (run.text && / {2}/.test(run.text)) {
+        // Replace pairs of spaces with " &nbsp;" so browsers cannot collapse them,
+        // while normal spaces between words remain stretchable for justify.
+        const escaped = run.text
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/ {2}/g, ' \u00a0');
+        element.innerHTML = escaped;
+      } else {
+        element.textContent = run.text;
       }
 
       // Apply run styles (with normAutofit fontScale)
@@ -854,7 +866,9 @@ export function renderTextBody(
       // Gradient text fill: use background-clip to paint text with gradient
       if (runStyle.textGradientCss) {
         element.style.background = runStyle.textGradientCss;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (element.style as any).webkitBackgroundClip = 'text';
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (element.style as any).backgroundClip = 'text';
         element.style.color = 'transparent';
       }
@@ -866,26 +880,36 @@ export function renderTextBody(
           // Ghost text: no fill + gradient outline → show outline fading via mask
           const outlineColor = '#ffffff'; // base stroke color (gradient applied via mask)
           element.style.color = 'transparent';
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (element.style as any).webkitTextStrokeWidth = `${strokeW}px`;
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (element.style as any).webkitTextStrokeColor = outlineColor;
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (element.style as any).paintOrder = 'stroke fill';
           // Use mask-image to apply the gradient fade to the entire text element
           const maskGrad = runStyle.textOutlineGradientCss;
           element.style.maskImage = maskGrad;
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (element.style as any).webkitMaskImage = maskGrad;
         } else if (runStyle.textNoFill && runStyle.textOutlineColor) {
           // Ghost text with solid outline
           element.style.color = 'transparent';
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (element.style as any).webkitTextStrokeWidth = `${strokeW}px`;
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (element.style as any).webkitTextStrokeColor = runStyle.textOutlineColor;
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (element.style as any).paintOrder = 'stroke fill';
         } else if (runStyle.textNoFill) {
           // noFill with no outline — invisible text (but keep space)
           element.style.color = 'transparent';
         } else if (runStyle.textOutlineColor) {
           // Outline with normal fill
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (element.style as any).webkitTextStrokeWidth = `${strokeW}px`;
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (element.style as any).webkitTextStrokeColor = runStyle.textOutlineColor;
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (element.style as any).paintOrder = 'stroke fill';
         }
       }

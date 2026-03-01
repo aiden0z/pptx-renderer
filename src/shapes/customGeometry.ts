@@ -3,7 +3,6 @@
  */
 
 import { SafeXmlNode } from '../parser/XmlParser';
-import { shapeArc } from './shapeArc';
 
 function inferPathExtent(pathNode: SafeXmlNode): { w: number; h: number } {
   let maxX = 0;

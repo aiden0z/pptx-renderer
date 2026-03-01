@@ -231,6 +231,7 @@ function createArrowMarker(
       return null;
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (marker as any)._markerId = id;
   return marker;
 }
@@ -632,6 +633,7 @@ export function renderShape(node: ShapeNodeData, ctx: RenderContext): HTMLElemen
             // Mark path as no-fill; the blend group handles it.
             // Tag the blend group so we can insert it before the main path later.
             path.setAttribute('fill', 'none');
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             (path as any).__rectBlendGroup = blendGroup;
           } else if (gradientFillData.type === 'radial') {
             const radialGrad = document.createElementNS(svgNs, 'radialGradient');
@@ -738,7 +740,16 @@ export function renderShape(node: ShapeNodeData, ctx: RenderContext): HTMLElemen
       }
 
       // Stroke — gradient stroke or solid stroke (skip for circularArrow; already set stroke=none above)
-      if (!isCircularArrow && gradientStroke && gradientStroke.stops.length > 0) {
+      // For multi-path presets where the first sub-path specifies stroke:false (e.g. callout1/2/3,
+      // accentCallout1/2/3), suppress stroke on the main path element — the leader line and accent
+      // bar are rendered as separate sub-path elements with their own stroke settings.
+      const mainPathStrokeSuppressed = multiPaths && multiPaths[0]?.stroke === false;
+      if (
+        !isCircularArrow &&
+        !mainPathStrokeSuppressed &&
+        gradientStroke &&
+        gradientStroke.stops.length > 0
+      ) {
         // Create SVG linearGradient for the gradient stroke.
         // Use userSpaceOnUse so the gradient is defined in SVG coordinate space rather
         // than objectBoundingBox. This is critical for straight line paths (zero-width or
@@ -777,7 +788,12 @@ export function renderShape(node: ShapeNodeData, ctx: RenderContext): HTMLElemen
         path.setAttribute('stroke-width', String(strokeW));
         if (strokeLinecap) path.setAttribute('stroke-linecap', strokeLinecap);
         if (strokeLinejoin) path.setAttribute('stroke-linejoin', strokeLinejoin);
-      } else if (!isCircularArrow && effectiveStrokeWidth > 0 && strokeColor !== 'transparent') {
+      } else if (
+        !isCircularArrow &&
+        !mainPathStrokeSuppressed &&
+        effectiveStrokeWidth > 0 &&
+        strokeColor !== 'transparent'
+      ) {
         path.setAttribute('stroke', strokeColor);
         path.setAttribute('stroke-width', String(effectiveStrokeWidth));
         if (strokeLinecap) path.setAttribute('stroke-linecap', strokeLinecap);
@@ -810,6 +826,7 @@ export function renderShape(node: ShapeNodeData, ctx: RenderContext): HTMLElemen
           );
           if (marker) {
             defs.appendChild(marker);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             path.setAttribute('marker-start', `url(#${(marker as any)._markerId})`);
           }
         }
@@ -824,6 +841,7 @@ export function renderShape(node: ShapeNodeData, ctx: RenderContext): HTMLElemen
           );
           if (marker) {
             defs.appendChild(marker);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             path.setAttribute('marker-end', `url(#${(marker as any)._markerId})`);
           }
         }
@@ -835,8 +853,11 @@ export function renderShape(node: ShapeNodeData, ctx: RenderContext): HTMLElemen
       }
 
       // Insert rect blend group (two linear gradients + lighten) before the main path
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       if ((path as any).__rectBlendGroup) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         svg.appendChild((path as any).__rectBlendGroup);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         delete (path as any).__rectBlendGroup;
       }
 
@@ -938,27 +959,7 @@ export function renderShape(node: ShapeNodeData, ctx: RenderContext): HTMLElemen
         }
       }
 
-      // --- Cylinder ("can") top ellipse overlay ---
-      // The can preset generates a compound path (body + top ellipse) with a single fill.
-      // To create the 3D cylinder illusion, render the top ellipse as a separate path
-      // with a semi-transparent white overlay and a subtle border.
-      if (node.presetGeometry === 'can') {
-        const ry = pathH * 0.1;
-        const rx = pathW / 2;
-        const topEllipseD = [
-          `M0,${ry}`,
-          `A${rx},${ry} 0 0,1 ${pathW},${ry}`,
-          `A${rx},${ry} 0 0,1 0,${ry}`,
-          'Z',
-        ].join(' ');
-        // Light overlay to distinguish the top face from the body
-        const topOverlay = document.createElementNS(svgNs, 'path');
-        topOverlay.setAttribute('d', topEllipseD);
-        topOverlay.setAttribute('fill', 'rgba(255,255,255,0.25)');
-        topOverlay.setAttribute('stroke', 'rgba(255,255,255,0.4)');
-        topOverlay.setAttribute('stroke-width', '0.5');
-        svg.appendChild(topOverlay);
-      }
+      // (Can top ellipse overlay removed — now handled by multiPathPresets 'can' lighten sub-path)
 
       wrapper.appendChild(svg);
     }
@@ -1280,6 +1281,7 @@ export function renderShape(node: ShapeNodeData, ctx: RenderContext): HTMLElemen
       const mask = `linear-gradient(to bottom, rgba(255,255,255,${stA.toFixed(3)}) ${stPos.toFixed(1)}%, rgba(255,255,255,${endA.toFixed(3)}) ${endPos.toFixed(1)}%)`;
       const reflectValue = `below ${dist.toFixed(1)}px ${mask}`;
       wrapper.style.setProperty('-webkit-box-reflect', reflectValue);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (wrapper.style as any).webkitBoxReflect = reflectValue;
     }
   }

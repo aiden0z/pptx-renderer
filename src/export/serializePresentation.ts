@@ -4,8 +4,8 @@
  */
 
 import { PresentationData } from '../model/Presentation';
-import { SlideData, SlideNode } from '../model/Slide';
-import { ShapeNodeData, TextBody, TextParagraph } from '../model/nodes/ShapeNode';
+import { SlideNode } from '../model/Slide';
+import { ShapeNodeData, TextBody } from '../model/nodes/ShapeNode';
 import { PicNodeData } from '../model/nodes/PicNode';
 import { TableNodeData, TableRow, TableCell } from '../model/nodes/TableNode';
 import { GroupNodeData } from '../model/nodes/GroupNode';

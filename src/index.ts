@@ -1,5 +1,16 @@
+// New primary exports (v2 API)
+export { PptxViewer } from './core/Viewer';
+export type {
+  ViewerOptions,
+  FitMode,
+  ListRenderOptions,
+  PptxViewerEventMap,
+  PreviewInput,
+} from './core/Viewer';
+
+// Deprecated aliases (v1 compat)
 export { PptxRenderer } from './core/Renderer';
-export type { RendererOptions, PreviewInput, FitMode } from './core/Renderer';
+export type { RendererOptions } from './core/Renderer';
 
 export { parseZip } from './parser/ZipParser';
 export type { ZipParseLimits } from './parser/ZipParser';
@@ -16,7 +27,7 @@ export type {
 
 // Headless single-slide rendering
 export { renderSlide } from './renderer/SlideRenderer';
-export type { SlideRendererOptions } from './renderer/SlideRenderer';
+export type { SlideHandle, SlideRendererOptions } from './renderer/SlideRenderer';
 
 // Model types
 export type { SlideData, SlideNode } from './model/Slide';

@@ -35,7 +35,7 @@ vi.mock('../../../src/renderer/SlideRenderer', () => ({
   renderSlide: vi.fn(() => {
     const el = document.createElement('div');
     el.textContent = 'slide';
-    return el;
+    return { element: el, dispose: vi.fn(), [Symbol.dispose]() { this.dispose(); } };
   }),
 }));
 

@@ -23,7 +23,7 @@ function adj(
 }
 
 /** Helper: generate a regular polygon path (inscribed in bounding box). */
-function regularPolygon(w: number, h: number, sides: number): string {
+function _regularPolygon(w: number, h: number, sides: number): string {
   const cx = w / 2;
   const cy = h / 2;
   const rx = w / 2;
@@ -214,7 +214,7 @@ presetShapes.set('hexagon', (w, h, adjustments) => {
   const shd2 = ((h / 2) * vf) / 100000;
   const x1 = (ss * a) / 100000;
   const x2 = w - x1;
-  const hc = w / 2;
+  const _hc = w / 2;
   const vc = h / 2;
   // dy1 = sin(shd2, 60°) = shd2 * sin(60°)
   const dy1 = shd2 * Math.sin((60 * Math.PI) / 180);
@@ -1028,8 +1028,8 @@ presetShapes.set('leftRightArrow', (w, h, adjustments) => {
   const y1 = vc - dy;
   const y2 = vc + dy;
   const dx1 = hd2 > 0 ? (y1 * x2) / hd2 : 0;
-  const x1 = x2 - dx1;
-  const x4 = x3 + dx1;
+  const _x1 = x2 - dx1;
+  const _x4 = x3 + dx1;
   return [
     `M0,${vc}`,
     `L${x2},0`,
@@ -1965,7 +1965,7 @@ presetShapes.set('leftCircularArrow', (w, h, adjustments) => {
   return buildCircularArrowPath(w, h, adjustments, false, 'leftCircularArrow');
 });
 
-presetShapes.set('leftRightCircularArrow', (w, h, adjustments) => {
+presetShapes.set('leftRightCircularArrow', (w, h, _adjustments) => {
   // Build from the actual oracle PDF vector path (shape id 0177),
   // normalized to a 400x280 reference box.
   const sx = w / 400;
@@ -2509,7 +2509,6 @@ presetShapes.set('flowChartOnlineStorage', (w, h) => {
   // OOXML: Rounded left side rectangle with concave right cap.
   // Normalized: left arc (convex) at x=w/6, right arc (concave) at x=w
   const x1 = w / 6;
-  const x2 = (w * 5) / 6;
   return [
     `M${x1},0`,
     `L${w},0`,
@@ -2721,10 +2720,10 @@ presetShapes.set('wedgeEllipseCallout', (w, h, adjustments) => {
   // Approximate: ellipse with a pointer
   const angle = Math.atan2(tipY - ry, tipX - rx);
   const gapAngle = 0.15;
-  const x1 = rx + rx * Math.cos(angle - gapAngle);
-  const y1 = ry + ry * Math.sin(angle - gapAngle);
-  const x2 = rx + rx * Math.cos(angle + gapAngle);
-  const y2 = ry + ry * Math.sin(angle + gapAngle);
+  const _x1 = rx + rx * Math.cos(angle - gapAngle);
+  const _y1 = ry + ry * Math.sin(angle - gapAngle);
+  const _x2 = rx + rx * Math.cos(angle + gapAngle);
+  const _y2 = ry + ry * Math.sin(angle + gapAngle);
   return [
     shapeArc(
       rx,
@@ -2789,19 +2788,7 @@ presetShapes.set('cube', (w, h, adjustments) => {
   ].join(' ');
 });
 
-presetShapes.set('can', (w, h) => {
-  const ry = h * 0.1;
-  const rx = w / 2;
-  return [
-    // Body (side + bottom arc + top arc as single closed path)
-    `M0,${ry}`,
-    `L0,${h - ry}`,
-    `A${rx},${ry} 0 0,0 ${w},${h - ry}`,
-    `L${w},${ry}`,
-    `A${rx},${ry} 0 0,0 0,${ry}`,
-    'Z',
-  ].join(' ');
-});
+// can is implemented as multiPathPreset (see multiPathPresets below)
 
 // ribbon2 is implemented as multiPathPreset (see multiPathPresets below)
 
@@ -3069,7 +3056,7 @@ presetShapes.set('gear9', (w, h, adjustments) => {
 
 function gearShape(w: number, h: number, teeth: number, adj1Raw: number, adj2Raw: number): string {
   // Gear shape: teeth protrude from inner ellipse by th, narrowed by lFD at tips.
-  // Follows OOXML ECMA-376 presetShapeDefinitions.xml with perpendicular offset approach.
+  // Uses per-tooth edge-perpendicular computation for B/C tip direction.
   const cx = w / 2;
   const cy = h / 2;
   const ss = Math.min(w, h);
@@ -3084,7 +3071,6 @@ function gearShape(w: number, h: number, teeth: number, adj1Raw: number, adj2Raw
   if (rw <= 0 || rh <= 0) return `M0,0 L${w},0 L${w},${h} L0,${h} Z`;
 
   // OOXML: ha = at2(maxr, l3) where maxr=min(rw,rh), l3=th/2+lFD/2
-  // at2(x, y) = atan2(y, x), so ha = atan2(l3, maxr)
   const l3 = th / 2 + lFD / 2;
   const maxr = Math.min(rw, rh);
   const ha = Math.atan2(l3, maxr); // half-angle of each tooth on the inner ellipse
@@ -3105,27 +3091,37 @@ function gearShape(w: number, h: number, teeth: number, adj1Raw: number, adj2Raw
     const dx = cx + rw * Math.cos(aEnd);
     const dy = cy + rh * Math.sin(aEnd);
 
-    // Outer tip angles: narrowed by lFD. Compute angular narrowing from lFD.
-    // The tooth tip flat has half-width = th/2 (= l3 - lFD/2), so the angular
-    // half-width for the tip is: outerHa = atan2(th/2, maxr + th)
-    // But to match OOXML's Cartesian narrowing, we linearly interpolate:
-    // the tip is narrower by lFD on each side, which subtends an angular
-    // offset of approximately lFD / (outerR) where outerR is the outer radius.
-    const outerRw = rw + th;
-    const outerRh = rh + th;
-    // Angular narrowing: use the smaller outer radius for consistent narrowing
-    const outerMinR = Math.min(outerRw, outerRh);
-    const narrowAngle = outerMinR > 0 ? Math.atan2(lFD, outerMinR) : 0;
-    const outerHa = ha - narrowAngle;
+    // Per-tooth edge-perpendicular tip computation:
+    // Edge direction A→D
+    const edgeX = dx - ax;
+    const edgeY = dy - ay;
+    const edgeLen = Math.sqrt(edgeX * edgeX + edgeY * edgeY);
 
-    // Points on outer ellipse at narrowed angles
-    const aOuterStart = baseAngle - Math.max(outerHa, ha * 0.1);
-    const aOuterEnd = baseAngle + Math.max(outerHa, ha * 0.1);
+    // Unit normal perpendicular to edge, pointing outward
+    // For clockwise winding (our standard), outward normal is (-edgeY, edgeX) / len
+    // Verify with radial dot product and flip if needed
+    let nx = -edgeY / edgeLen;
+    let ny = edgeX / edgeLen;
+    const radX = Math.cos(baseAngle);
+    const radY = Math.sin(baseAngle);
+    if (nx * radX + ny * radY < 0) {
+      nx = -nx;
+      ny = -ny;
+    }
 
-    const bx = cx + outerRw * Math.cos(aOuterStart);
-    const by = cy + outerRh * Math.sin(aOuterStart);
-    const _cx = cx + outerRw * Math.cos(aOuterEnd);
-    const _cy = cy + outerRh * Math.sin(aOuterEnd);
+    // Narrowing: slide A and D inward along edge by lFD
+    const ex = edgeLen > 0 ? edgeX / edgeLen : 0;
+    const ey = edgeLen > 0 ? edgeY / edgeLen : 0;
+    const axN = ax + ex * lFD; // A narrowed (moved toward D)
+    const ayN = ay + ey * lFD;
+    const dxN = dx - ex * lFD; // D narrowed (moved toward A)
+    const dyN = dy - ey * lFD;
+
+    // B and C: tip points = narrowed base + th * outward normal
+    const bx = axN + nx * th;
+    const by = ayN + ny * th;
+    const _cx = dxN + nx * th;
+    const _cy = dyN + ny * th;
 
     if (i === 0) {
       // Start at the valley before first tooth
@@ -3144,9 +3140,9 @@ function gearShape(w: number, h: number, teeth: number, adj1Raw: number, adj2Raw
     // Arc along inner ring to next tooth
     if (i < centerDegs.length - 1) {
       const nextStart = (centerDegs[i + 1] * Math.PI) / 180 - ha;
-      const nx = cx + rw * Math.cos(nextStart);
-      const ny = cy + rh * Math.sin(nextStart);
-      parts.push(`A${rw},${rh} 0 0,1 ${nx},${ny}`);
+      const nx2 = cx + rw * Math.cos(nextStart);
+      const ny2 = cy + rh * Math.sin(nextStart);
+      parts.push(`A${rw},${rh} 0 0,1 ${nx2},${ny2}`);
     }
   }
   parts.push('Z');
@@ -3524,24 +3520,7 @@ presetShapes.set('foldedCorner', (w, h, adjustments) => {
   ].join(' ');
 });
 
-presetShapes.set('smileyFace', (w, h) => {
-  const rx = w / 2;
-  const ry = h / 2;
-  const cx = w / 2;
-  const cy = h / 2;
-  const eyeR = Math.min(w, h) * 0.05;
-  const eyeY = cy * 0.7;
-  return [
-    // Face circle
-    `M${w},${ry} A${rx},${ry} 0 1,1 0,${ry} A${rx},${ry} 0 1,1 ${w},${ry} Z`,
-    // Left eye
-    `M${cx * 0.65 + eyeR},${eyeY} A${eyeR},${eyeR} 0 1,1 ${cx * 0.65 - eyeR},${eyeY} A${eyeR},${eyeR} 0 1,1 ${cx * 0.65 + eyeR},${eyeY} Z`,
-    // Right eye
-    `M${cx * 1.35 + eyeR},${eyeY} A${eyeR},${eyeR} 0 1,1 ${cx * 1.35 - eyeR},${eyeY} A${eyeR},${eyeR} 0 1,1 ${cx * 1.35 + eyeR},${eyeY} Z`,
-    // Smile
-    shapeArc(cx, cy * 0.9, rx * 0.5, ry * 0.35, 20, 160, false),
-  ].join(' ');
-});
+// smileyFace is implemented as multiPathPreset (see multiPathPresets below)
 
 presetShapes.set('sun', (w, h, adjustments) => {
   // OOXML spec: adj default=25000, pinned 12500..46875
@@ -3551,8 +3530,8 @@ presetShapes.set('sun', (w, h, adjustments) => {
   // OOXML guide formulas
   const g1 = (g0 * 30274) / 32768;
   const g2 = (g0 * 12540) / 32768;
-  const g3 = g1 + 50000;
-  const g4 = g2 + 50000;
+  const _g3 = g1 + 50000;
+  const _g4 = g2 + 50000;
   const g5 = 50000 - g1;
   const g6 = 50000 - g2;
   const g7 = (g0 * 23170) / 32768;
@@ -3575,8 +3554,8 @@ presetShapes.set('sun', (w, h, adjustments) => {
   const ox2 = (w * 3163) / 21600;
   const oy2 = (h * 18436) / 21600;
   const s = (pct: number, dim: number) => (dim * pct) / 100000;
-  const x8 = s(g8, w);
-  const x9 = s(g9, w);
+  const _x8 = s(g8, w);
+  const _x9 = s(g9, w);
   const x10 = s(g10, w);
   const x12 = s(g12, w);
   const x13 = s(g13, w);
@@ -3587,8 +3566,8 @@ presetShapes.set('sun', (w, h, adjustments) => {
   const x18 = s(g18, w);
   const wR = s(g0, w);
   const hR = s(g0, h);
-  const y8 = s(g8, h);
-  const y9 = s(g9, h);
+  const _y8 = s(g8, h);
+  const _y9 = s(g9, h);
   const y10 = s(g10, h);
   const y12 = s(g12, h);
   const y13 = s(g13, h);
@@ -3877,9 +3856,7 @@ presetShapes.set('rightBrace', (w, h, adjustments) => {
 presetShapes.set('actionButtonBlank', (w, h) => `M0,0 L${w},0 L${w},${h} L0,${h} Z`);
 
 // Fallback rectangle for action buttons without multiPathPresets entry yet
-for (const name of ['actionButtonHome', 'actionButtonHelp', 'actionButtonSound']) {
-  presetShapes.set(name, (w, h) => `M0,0 L${w},0 L${w},${h} L0,${h} Z`);
-}
+// actionButtonSound fallback removed — uses multiPathPresets entry below
 
 // Multi-path action button presets are registered after the multiPathPresets Map
 // declaration (see below in the multiPathPresets section).
@@ -3889,16 +3866,7 @@ for (const name of ['actionButtonHome', 'actionButtonHelp', 'actionButtonSound']
 // ---------------------------------------------------------------------------
 const actionButtonIcons = new Map<string, (w: number, h: number) => string>();
 
-actionButtonIcons.set('actionButtonHome', (w, h) => {
-  const cx = w / 2,
-    cy = h / 2,
-    s = Math.min(w, h) * 0.25;
-  return [
-    `M${cx},${cy - s} L${cx + s},${cy} L${cx + s * 0.7},${cy}`,
-    `L${cx + s * 0.7},${cy + s} L${cx - s * 0.7},${cy + s}`,
-    `L${cx - s * 0.7},${cy} L${cx - s},${cy} Z`,
-  ].join(' ');
-});
+// actionButtonHome icon removed — uses multiPathPresets entry below
 
 actionButtonIcons.set('actionButtonForwardNext', (w, h) => {
   // Right-pointing triangle (▶)
@@ -3974,20 +3942,7 @@ actionButtonIcons.set('actionButtonEnd', (w, h) => {
   ].join(' ');
 });
 
-actionButtonIcons.set('actionButtonHelp', (w, h) => {
-  // Question mark (?)
-  const cx = w / 2,
-    cy = h / 2,
-    s = Math.min(w, h) * 0.28,
-    r = s * 0.55;
-  return [
-    `M${cx - r * 0.4},${cy - s * 0.5}`,
-    `A${r},${r} 0 1,1 ${cx + r * 0.1},${cy}`,
-    `L${cx},${cy} L${cx},${cy + s * 0.15}`,
-    // Dot
-    `M${cx - s * 0.08},${cy + s * 0.55} L${cx + s * 0.08},${cy + s * 0.55} L${cx + s * 0.08},${cy + s * 0.7} L${cx - s * 0.08},${cy + s * 0.7} Z`,
-  ].join(' ');
-});
+// actionButtonHelp icon removed — uses multiPathPresets entry below
 
 actionButtonIcons.set('actionButtonInformation', (w, h) => {
   // Info icon (i)
@@ -4018,13 +3973,7 @@ actionButtonIcons.set('actionButtonDocument', (w, h) => {
   ].join(' ');
 });
 
-actionButtonIcons.set('actionButtonSound', (w, h) => {
-  // Speaker icon
-  const cx = w / 2,
-    cy = h / 2,
-    s = Math.min(w, h) * 0.25;
-  return `M${cx - s},${cy - s * 0.4} L${cx - s * 0.3},${cy - s * 0.4} L${cx + s * 0.3},${cy - s} L${cx + s * 0.3},${cy + s} L${cx - s * 0.3},${cy + s * 0.4} L${cx - s},${cy + s * 0.4} Z`;
-});
+// actionButtonSound icon removed — uses multiPathPresets entry below
 
 // actionButtonMovie icon is now rendered via multiPathPresets (see below).
 
@@ -4565,51 +4514,163 @@ multiPathPresets.set('actionButtonEnd', (w, h) => {
 });
 
 // actionButtonReturn (VBA 0133): curved return arrow ↩
+// OOXML spec: 4 paths – bg+icon cutout (norm), icon fill (darken), icon outline (stroke), rect outline (stroke)
+// Fill paths use inner arcs curving inward; outline path traces the full shape with reversed arc winding.
 multiPathPresets.set('actionButtonReturn', (w, h) => {
-  const { g9, g10, g11, g12, g13, hc, vc } = _abGuides(w, h);
+  const { g9, g10, g11, g12, g13, hc, vc: _vcR } = _abGuides(w, h);
   const g14 = (g13 * 7) / 8;
   const g15 = (g13 * 3) / 4;
   const g16 = (g13 * 5) / 8;
-  const g17 = (g13 * 3) / 8;
+  const g17 = (g13 * 3) / 8; // outer arc radius
   const g18 = g13 / 4;
-  const g27 = g13 / 8; // small corner arc radius
-  const g19 = g9 + g15; // bottom shaft y
-  const g20 = g9 + g16; // inner bottom y
-  const g21 = g9 + g18; // arrow junction y
+  const g27 = g13 / 8; // inner arc radius
+  const g19 = g9 + g15;
+  const g20 = g9 + g16;
+  const g21 = g9 + g18;
   const g22 = g11 + g14;
   const g23 = g11 + g15;
   const g24 = g11 + g16;
   const g25 = g11 + g17;
   const g26 = g11 + g18;
-  const icon = [
+
+  // Fill icon path (paths 0 & 1 in OOXML spec — identical geometry)
+  // Arc 1: from (g24, g20), wR=g27 hR=g27 stAng=0° swAng=90°
+  //   center = (g24-g27, g20), endpoint = (g24-g27, g20+g27) = (g24-g27, g19)
+  // Arc 2: from (g25, g19), wR=g27 hR=g27 stAng=90° swAng=90°
+  //   center = (g25, g19-g27), endpoint = (g25-g27, g19-g27) = (g26, g20)
+  // Arc 3: from (g11, g20), wR=g17 hR=g17 stAng=180° swAng=-90°
+  //   center = (g11+g17, g20) = (g25, g20), endpoint = (g25, g20+g17) = (g25, g10)
+  // Arc 4: from (hc, g10), wR=g17 hR=g17 stAng=90° swAng=-90°
+  //   center = (hc, g10-g17), endpoint = (hc+g17, g10-g17)
+  const fillIcon = [
     `M${g12},${g21}`,
     `L${g23},${g9}`,
     `L${hc},${g21}`,
     `L${g24},${g21}`,
     `L${g24},${g20}`,
-    `A${g27},${g27} 0 0,1 ${g24 + g27},${g20 + g27}`,
-    `L${g25 + g27},${g19}`,
-    `A${g27},${g27} 0 0,1 ${g25},${g19 + g27}`,
+    `A${g27},${g27} 0 0,1 ${g24 - g27},${g19}`, // arc 1: inner bottom-right corner
+    `L${g25},${g19}`, // across inner bottom
+    `A${g27},${g27} 0 0,1 ${g26},${g20}`, // arc 2: inner bottom-left corner
     `L${g26},${g21}`,
     `L${g11},${g21}`,
     `L${g11},${g20}`,
-    `A${g17},${g17} 0 0,0 ${g11 + g17},${g20 + g17}`,
-    `L${hc},${g10}`,
-    `A${g17},${g17} 0 0,0 ${hc + g17},${g10 - g17}`,
+    `A${g17},${g17} 0 0,0 ${g25},${g10}`, // arc 3: outer bottom-left curve
+    `L${hc},${g10}`, // across outer bottom
+    `A${g17},${g17} 0 0,0 ${hc + g17},${g10 - g17}`, // arc 4: outer bottom-right curve
     `L${g22},${g21}`,
     `Z`,
   ].join(' ');
+
+  // Outline path (path 2 in OOXML spec — traces shape with different arc winding)
+  // Starts from right outer edge, traces clockwise: outer right → outer bottom → outer left → inner left → inner bottom → inner right → arrow
+  // Arc A: from (g22, g20), wR=g17 hR=g17 stAng=0° swAng=90°
+  //   center = (g22-g17, g20) = (g22-g17, g20), endpoint = (g22-g17, g20+g17)
+  //   g22-g17 = g11+g14-g17 = g11 + g13*7/8 - g13*3/8 = g11 + g13/2 = g25 + g13/8 = hc? No.
+  //   Actually: g22 = g11+g14, g14 = g13*7/8, g17 = g13*3/8
+  //   g22 - g17 = g11 + g13*7/8 - g13*3/8 = g11 + g13*4/8 = g11 + g13/2 = hc (since hc = g11 + dx2 = g11 + g13/2)
+  //   Hmm wait, dx2 = ss*3/8 and g13 = ss*3/4. So g13/2 = ss*3/8 = dx2. So hc = g11 + dx2 = g11 + g13/2. Yes!
+  //   endpoint = (hc, g20+g17) = (hc, g10)? g20+g17 = (g9+g16)+g17 = g9+g13*5/8+g13*3/8 = g9+g13 = g9+ss*3/4
+  //   g10 = vc+dx2. g9+g13 = (vc-dx2) + 2*dx2 = vc+dx2 = g10. Yes! endpoint = (hc, g10) ✓ but wait...
+  //   Actually stAng=0° means start angle is 0°. center = (g22 - g17*cos(0), g20 - g17*sin(0)) = (g22-g17, g20).
+  //   endAng = 0+90 = 90°. endX = center.x + g17*cos(90°) = g22-g17. endY = center.y + g17*sin(90°) = g20+g17.
+  //   So endpoint = (g22-g17, g20+g17). Let's verify: g22-g17 = g11+g14-g17 = g11+g13*(7/8-3/8) = g11+g13/2 = g25+g13/8
+  //   Hmm, g25 = g11+g17 = g11+g13*3/8. g11+g13/2 = g11+g13*4/8. That's not g25, it's g25 + g13/8.
+  //   Actually let me just compute: g11+g13/2. g13/2 is not one of the named guides.
+  //   OK, the spec says after this arc: lnTo (g25, g10). So endpoint.x must be something, then line to g25.
+  //   endpoint.x = g22-g17 = g11+g14-g17 = g11+g13*7/8-g13*3/8 = g11+g13*4/8 = g11+g13/2.
+  //   Then lnTo (g25, g10) where g25 = g11+g13*3/8.
+  //   endpointY = g20+g17 = g10. So endpoint = (g11+g13/2, g10).
+  //   Line from there to (g25, g10) is horizontal. Makes sense.
+  // Arc B: from (g25, g10), wR=g17 hR=g17 stAng=90° swAng=90°
+  //   center = (g25, g10-g17), endAng=180°
+  //   endX = g25+g17*cos(180°) = g25-g17 = g11+g17-g17 = g11
+  //   endY = (g10-g17)+g17*sin(180°) = g10-g17 = g20
+  //   endpoint = (g11, g20). Then lnTo (g11, g21).
+  // Arc C: from (g26, g20), wR=g27 hR=g27 stAng=180° swAng=-90°
+  //   center = (g26+g27, g20) = (g26+g27, g20). g26+g27 = g11+g18+g13/8 = g11+g13/4+g13/8 = g11+g13*3/8 = g25
+  //   endAng = 180-90 = 90°. endX = g25+g27*cos(90°) = g25. endY = g20+g27*sin(90°) = g20+g27 = g19.
+  //   endpoint = (g25, g19). Hmm, but spec says lnTo(hc, g19) after this arc.
+  //   Wait: lnTo before spec says `<lnTo><pt x="hc" y="g19"/></lnTo>`. So endpoint is (g25, g19), then line to (hc, g19).
+  //   Hmm actually spec says: `<lnTo><pt x="hc" y="g19" /></lnTo>`.
+  //   Wait no: `L(hc, g19)` in the spec.
+  // Arc D: from (hc, g19), wR=g27 hR=g27 stAng=90° swAng=-90°
+  //   center = (hc, g19-g27), endAng = 0°.
+  //   endX = hc+g27*cos(0°) = hc+g27. g19-g27 = g20. endY = g20+g27*sin(0°) = g20.
+  //   endpoint = (hc+g27, g20). Hmm, but g24 = g11+g16 = g11+g13*5/8.
+  //   hc+g27 = g11+g13/2+g13/8 = g11+g13*5/8 = g24. So endpoint = (g24, g20).
+  //   Then lnTo (g24, g21). Then lnTo (hc, g21). Then lnTo (g23, g9). Close.
+
+  const outline = [
+    `M${g12},${g21}`,
+    `L${g22},${g21}`,
+    `L${g22},${g20}`,
+    `A${g17},${g17} 0 0,1 ${g11 + g13 / 2},${g10}`, // arc A: outer bottom-right (0°→90°)
+    `L${g25},${g10}`, // across outer bottom
+    `A${g17},${g17} 0 0,1 ${g11},${g20}`, // arc B: outer bottom-left (90°→180°)
+    `L${g11},${g21}`,
+    `L${g26},${g21}`,
+    `L${g26},${g20}`,
+    `A${g27},${g27} 0 0,0 ${g25},${g19}`, // arc C: inner bottom-left (180°→90°, CCW)
+    `L${hc},${g19}`, // across inner bottom
+    `A${g27},${g27} 0 0,0 ${g24},${g20}`, // arc D: inner bottom-right (90°→0°, CCW)
+    `L${g24},${g21}`,
+    `L${hc},${g21}`,
+    `L${g23},${g9}`,
+    `Z`,
+  ].join(' ');
+
   return [
-    { d: `${_rect(w, h)} ${icon}`, fill: 'norm', stroke: false },
-    { d: icon, fill: 'darken', stroke: false },
-    { d: icon, fill: 'none', stroke: true },
+    { d: `${_rect(w, h)} ${fillIcon}`, fill: 'norm', stroke: false },
+    { d: fillIcon, fill: 'darken', stroke: false },
+    { d: outline, fill: 'none', stroke: true },
+    { d: _rect(w, h), fill: 'none', stroke: true },
+  ];
+});
+
+// actionButtonSound (VBA 0135): speaker icon with 3 sound wave lines
+// OOXML spec: 4 paths – bg+speaker cutout (norm), speaker fill (darken), speaker outline+waves (stroke), rect outline (stroke)
+multiPathPresets.set('actionButtonSound', (w, h) => {
+  const { g9, g10, g11, g12, g13, hc: _hcS, vc } = _abGuides(w, h);
+  // Guide calculations from OOXML presetShapeDefinitions.xml
+  const g14 = g13 / 8;
+  const g15 = (g13 * 5) / 16;
+  const g16 = (g13 * 5) / 8;
+  const g17 = (g13 * 11) / 16;
+  const g18 = (g13 * 3) / 4;
+  const g19 = (g13 * 7) / 8;
+
+  // Absolute positions
+  const g20 = g9 + g14;
+  const g21 = g9 + g15;
+  const g22 = g9 + g17;
+  const g23 = g9 + g19;
+  const g24 = g11 + g15;
+  const g25 = g11 + g16;
+  const g26 = g11 + g18;
+
+  // Speaker shape (pentagon-like)
+  const speaker = `M${g11},${g21} L${g11},${g22} L${g24},${g22} L${g25},${g10} L${g25},${g9} L${g24},${g21} Z`;
+
+  // Outline path: speaker outline (different winding) + 3 sound wave lines
+  const speakerOutline = `M${g11},${g21} L${g24},${g21} L${g25},${g9} L${g25},${g10} L${g24},${g22} L${g11},${g22} Z`;
+
+  const waveLine1 = `M${g26},${g21} L${g12},${g20}`; // top-right diagonal
+  const waveLine2 = `M${g26},${vc} L${g12},${vc}`; // middle horizontal
+  const waveLine3 = `M${g26},${g22} L${g12},${g23}`; // bottom-right diagonal
+
+  const outlineWithWaves = `${speakerOutline} ${waveLine1} ${waveLine2} ${waveLine3}`;
+
+  return [
+    { d: `${_rect(w, h)} ${speaker}`, fill: 'norm', stroke: false },
+    { d: speaker, fill: 'darken', stroke: false },
+    { d: outlineWithWaves, fill: 'none', stroke: true },
     { d: _rect(w, h), fill: 'none', stroke: true },
   ];
 });
 
 // actionButtonInformation (VBA 0128): circle with "i" inside
 multiPathPresets.set('actionButtonInformation', (w, h) => {
-  const { g9, g10, g11, g13, hc, vc, dx2 } = _abGuides(w, h);
+  const { g9, g10, g11, g13, hc, vc: _vcI, dx2 } = _abGuides(w, h);
   const g14 = g13 / 32;
   const g17v = (g13 * 5) / 16;
   const g18v = (g13 * 3) / 8;
@@ -4638,6 +4699,173 @@ multiPathPresets.set('actionButtonInformation', (w, h) => {
     { d: iconInner, fill: 'lighten', stroke: false },
     { d: `${circle} ${iconInner}`, fill: 'none', stroke: true },
     { d: _rect(w, h), fill: 'none', stroke: true },
+  ];
+});
+
+// actionButtonHome (VBA 0126): house icon with chimney and door
+// OOXML spec: 5 paths – bg+house cutout (norm), walls+chimney (darkenLess), roof+door (darken),
+// icon outline (stroke), rect outline (stroke)
+multiPathPresets.set('actionButtonHome', (w, h) => {
+  const { g9, g10, g11, g12, g13, hc, vc } = _abGuides(w, h);
+  // Guide calculations from OOXML presetShapeDefinitions.xml
+  const g14 = g13 / 16;
+  const g15 = g13 / 8;
+  const g16 = (g13 * 3) / 16;
+  const g17 = (g13 * 5) / 16;
+  const g18 = (g13 * 7) / 16;
+  const g19 = (g13 * 9) / 16;
+  const g20 = (g13 * 11) / 16;
+  const g21 = (g13 * 3) / 4;
+  const g22 = (g13 * 13) / 16;
+  const g23 = (g13 * 7) / 8;
+
+  // Absolute positions
+  const g24 = g9 + g14;
+  const g25 = g9 + g16;
+  const g26 = g9 + g17;
+  const g27 = g9 + g21;
+  const g28 = g11 + g15;
+  const g29 = g11 + g18;
+  const g30 = g11 + g19;
+  const g31 = g11 + g20;
+  const g32 = g11 + g22;
+  const g33 = g11 + g23;
+
+  // Path 0: background rect + full house outline cutout (norm, no stroke)
+  // House outline: roof triangle → right side → chimney → left side → base
+  const houseOutline =
+    `M${hc},${g9} ` +
+    `L${g11},${vc} L${g28},${vc} L${g28},${g10} L${g33},${g10} L${g33},${vc} L${g12},${vc} ` +
+    `L${g32},${g26} L${g32},${g24} L${g31},${g24} L${g31},${g25} Z`;
+
+  // Path 1: walls + chimney (darkenLess, no stroke)
+  // Sub-path 1: chimney bar
+  const chimney = `M${g32},${g26} L${g32},${g24} L${g31},${g24} L${g31},${g25} Z`;
+  // Sub-path 2: house body (walls) with door cutout
+  const walls = `M${g28},${vc} L${g28},${g10} L${g29},${g10} L${g29},${g27} L${g30},${g27} L${g30},${g10} L${g33},${g10} L${g33},${vc} Z`;
+
+  // Path 2: roof triangle + door (darken, no stroke)
+  const roof = `M${hc},${g9} L${g11},${vc} L${g12},${vc} Z`;
+  const door = `M${g29},${g27} L${g30},${g27} L${g30},${g10} L${g29},${g10} Z`;
+
+  // Path 3: icon outline with all detail lines (none fill, stroke)
+  const iconOutline =
+    `M${hc},${g9} ` +
+    `L${g31},${g25} L${g31},${g24} L${g32},${g24} L${g32},${g26} L${g12},${vc} ` +
+    `L${g33},${vc} L${g33},${g10} L${g28},${g10} L${g28},${vc} L${g11},${vc} Z ` +
+    // Chimney diagonal line
+    `M${g31},${g25} L${g32},${g26} ` +
+    // Horizontal eave line
+    `M${g33},${vc} L${g28},${vc} ` +
+    // Door outline
+    `M${g29},${g10} L${g29},${g27} L${g30},${g27} L${g30},${g10}`;
+
+  return [
+    { d: `${_rect(w, h)} ${houseOutline}`, fill: 'norm', stroke: false },
+    { d: `${chimney} ${walls}`, fill: 'darkenLess', stroke: false },
+    { d: `${roof} ${door}`, fill: 'darken', stroke: false },
+    { d: iconOutline, fill: 'none', stroke: true },
+    { d: _rect(w, h), fill: 'none', stroke: true },
+  ];
+});
+
+// actionButtonHelp (VBA 0127): question mark "?" inside rectangle
+// OOXML spec: 4 paths – bg+icon cutout (norm), icon fill (darken), icon outline (stroke), rect outline (stroke)
+multiPathPresets.set('actionButtonHelp', (w, h) => {
+  const { g9, g11, g13, hc, vc: _vcH } = _abGuides(w, h);
+  // Guide calculations from OOXML presetShapeDefinitions.xml
+  const g14 = g13 / 7;
+  const g15 = (g13 * 3) / 14;
+  const g16 = (g13 * 2) / 7;
+  const g19 = (g13 * 3) / 7;
+  const g20 = (g13 * 4) / 7;
+  const g21 = (g13 * 17) / 28;
+  const g23 = (g13 * 21) / 28;
+  const g24 = (g13 * 11) / 14;
+  const g41 = g13 / 14;
+  const g42 = (g13 * 3) / 28;
+
+  // Absolute positions
+  const g27 = g9 + g16;
+  const g29 = g9 + g21;
+  const g30 = g9 + g23;
+  const g31 = g9 + g24;
+  const g33 = g11 + g15;
+  const g36 = g11 + g19;
+  const g37 = g11 + g20;
+
+  // Helper: OOXML arcTo → SVG arc segment
+  // Computes endpoint from center (derived from current point + start angle) and returns SVG A command
+  const arcSeg = (
+    curX: number,
+    curY: number,
+    wR: number,
+    hR: number,
+    stDeg: number,
+    swDeg: number,
+  ) => {
+    const stRad = (stDeg * Math.PI) / 180;
+    const endRad = ((stDeg + swDeg) * Math.PI) / 180;
+    const cx = curX - wR * Math.cos(stRad);
+    const cy = curY - hR * Math.sin(stRad);
+    const endX = cx + wR * Math.cos(endRad);
+    const endY = cy + hR * Math.sin(endRad);
+    const largeArc = Math.abs(swDeg) > 180 ? 1 : 0;
+    const sweep = swDeg > 0 ? 1 : 0;
+    return { endX, endY, svg: `A${wR},${hR} 0 ${largeArc},${sweep} ${endX},${endY}` };
+  };
+
+  // Build question mark path following OOXML arcTo sequence exactly
+  // Start at (g33, g27)
+  let cx = g33,
+    cy = g27;
+
+  // Arc 1: wR=g16 hR=g16 stAng=180° swAng=180° (top semicircle, clockwise)
+  const a1 = arcSeg(cx, cy, g16, g16, 180, 180);
+  cx = a1.endX;
+  cy = a1.endY;
+
+  // Arc 2: wR=g14 hR=g15 stAng=0° swAng=90° (curve down right)
+  const a2 = arcSeg(cx, cy, g14, g15, 0, 90);
+  cx = a2.endX;
+  cy = a2.endY;
+
+  // Arc 3: wR=g41 hR=g42 stAng=270° swAng=-90° (small reverse curve)
+  const a3 = arcSeg(cx, cy, g41, g42, 270, -90);
+  // After arc 3, lines to stem
+  // lnTo (g37, g30), (g36, g30), (g36, g29)
+  // then more arcs back up
+
+  // Arc 4: wR=g14 hR=g15 stAng=180° swAng=90° (inner curve going up)
+  const a4 = arcSeg(g36, g29, g14, g15, 180, 90);
+
+  // Arc 5: wR=g41 hR=g42 stAng=90° swAng=-90° (small inner reverse curve)
+  const a5 = arcSeg(a4.endX, a4.endY, g41, g42, 90, -90);
+
+  // Arc 6: wR=g14 hR=g14 stAng=0° swAng=-180° (inner top semicircle, counter-clockwise)
+  const a6 = arcSeg(a5.endX, a5.endY, g14, g14, 0, -180);
+
+  // Bottom dot circle at (hc, g31) with radius g42
+  const dot = `M${hc},${g31} A${g42},${g42} 0 1,1 ${hc},${g31 + g42 * 2} A${g42},${g42} 0 1,1 ${hc},${g31} Z`;
+
+  // Question mark path (outer shape with arcs + stem + inner cutout arcs)
+  const qMark =
+    `M${g33},${g27} ` +
+    `${a1.svg} ` +
+    `${a2.svg} ` +
+    `${a3.svg} ` +
+    `L${g37},${g30} L${g36},${g30} L${g36},${g29} ` +
+    `${a4.svg} ` +
+    `${a5.svg} ` +
+    `${a6.svg} Z`;
+
+  const icon = `${qMark} ${dot}`;
+
+  return [
+    { d: `${_rect(w, h)} ${icon}`, fill: 'norm', stroke: false }, // Background with icon cutout
+    { d: icon, fill: 'darken', stroke: false }, // Darkened icon fill
+    { d: icon, fill: 'none', stroke: true }, // Icon outline
+    { d: _rect(w, h), fill: 'none', stroke: true }, // Rect outline
   ];
 });
 
@@ -4797,7 +5025,6 @@ multiPathPresets.set('leftRightRibbon', (w, h, adjustments) => {
   // adj1=50000 (band height), adj2=50000 (notch width), adj3=16667 (wave amplitude).
   const ss = Math.min(w, h);
   const wd2 = w / 2;
-  const hd2 = h / 2;
   const wd32 = w / 32;
   const hc = w / 2;
   const vc = h / 2;
@@ -5157,6 +5384,101 @@ multiPathPresets.set('ellipseRibbon2', (w, h, adjustments) => {
   ];
 });
 
+multiPathPresets.set('smileyFace', (w, h, adjustments) => {
+  // OOXML smileyFace: 4 paths — face(norm), eyes(darkenLess), smile(none), outline(none+stroke)
+  const wd2 = w / 2;
+  const hd2 = h / 2;
+  const hc = w / 2;
+  const vc = h / 2;
+
+  // Adjustment: smile amplitude (default 4653, range -4653..4653)
+  const rawAdj = adjustments?.get('adj') ?? 4653;
+  const a = Math.max(-4653, Math.min(rawAdj, 4653));
+
+  // Eye positions (OOXML exact)
+  const x2 = (w * 6215) / 21600;
+  const x3 = (w * 13135) / 21600;
+  const y1 = (h * 7570) / 21600;
+  const wR = (w * 1125) / 21600;
+  const hR = (h * 1125) / 21600;
+
+  // Smile curve positions (OOXML exact)
+  const x1 = (w * 4969) / 21699;
+  const x4 = (w * 16640) / 21600;
+  const y3 = (h * 16515) / 21600;
+  const dy2 = (h * a) / 100000;
+  const y2 = y3 - dy2;
+  const y4 = y3 + dy2;
+  const dy3 = (h * a) / 50000;
+  const y5 = y4 + dy3;
+
+  // Path 1: face ellipse (fill=norm, stroke=false) — two half-arcs for full circle
+  const face = `M${w},${vc} A${wd2},${hd2} 0 1,1 0,${vc} A${wd2},${hd2} 0 1,1 ${w},${vc} Z`;
+
+  // Path 2: eyes (fill=darkenLess) — two small ellipses at OOXML positions (two half-arcs each)
+  const leftEye = `M${(x2 + wR).toFixed(2)},${y1.toFixed(2)} A${wR.toFixed(2)},${hR.toFixed(2)} 0 1,1 ${(x2 - wR).toFixed(2)},${y1.toFixed(2)} A${wR.toFixed(2)},${hR.toFixed(2)} 0 1,1 ${(x2 + wR).toFixed(2)},${y1.toFixed(2)} Z`;
+  const rightEye = `M${(x3 + wR).toFixed(2)},${y1.toFixed(2)} A${wR.toFixed(2)},${hR.toFixed(2)} 0 1,1 ${(x3 - wR).toFixed(2)},${y1.toFixed(2)} A${wR.toFixed(2)},${hR.toFixed(2)} 0 1,1 ${(x3 + wR).toFixed(2)},${y1.toFixed(2)} Z`;
+
+  // Path 3: smile (fill=none) — quadratic Bezier (OOXML quadBezTo)
+  const smile = `M${x1.toFixed(2)},${y2.toFixed(2)} Q${hc.toFixed(2)},${y5.toFixed(2)} ${x4.toFixed(2)},${y2.toFixed(2)}`;
+
+  // Path 4: face outline (fill=none, stroke=true) — same as path 1
+  const outline = `M${w},${vc} A${wd2},${hd2} 0 1,1 0,${vc} A${wd2},${hd2} 0 1,1 ${w},${vc} Z`;
+
+  return [
+    { d: face, fill: 'norm', stroke: false },
+    { d: `${leftEye} ${rightEye}`, fill: 'darkenLess', stroke: false },
+    { d: smile, fill: 'none', stroke: true },
+    { d: outline, fill: 'none', stroke: true },
+  ];
+});
+
+multiPathPresets.set('can', (w, h, adjustments) => {
+  // OOXML: 3 paths — body (norm), top face (lighten), outline (stroke-only)
+  const ss = Math.min(w, h);
+  const maxAdj = (50000 * h) / ss;
+  const a = Math.min(Math.max(adjustments?.get('adj') ?? 25000, 0), maxAdj);
+  const y1 = (ss * a) / 200000;
+  const y3 = h - y1;
+  const wd2 = w / 2;
+  const arcSeg = (
+    curX: number,
+    curY: number,
+    wR: number,
+    hR: number,
+    stDeg: number,
+    swDeg: number,
+  ) => {
+    const stRad = (stDeg * Math.PI) / 180;
+    const endRad = ((stDeg + swDeg) * Math.PI) / 180;
+    const cx = curX - wR * Math.cos(stRad);
+    const cy = curY - hR * Math.sin(stRad);
+    const endX = cx + wR * Math.cos(endRad);
+    const endY = cy + hR * Math.sin(endRad);
+    const largeArc = Math.abs(swDeg) > 180 ? 1 : 0;
+    const sweep = swDeg > 0 ? 1 : 0;
+    return { endX, endY, svg: `A${wR},${hR} 0 ${largeArc},${sweep} ${endX},${endY}` };
+  };
+  // Path 1: Body (stroke:false, fill:norm)
+  const a1 = arcSeg(0, y1, wd2, y1, 180, -180);
+  const a2 = arcSeg(w, y3, wd2, y1, 0, 180);
+  const body = `M0,${y1} ${a1.svg} L${w},${y3} ${a2.svg} Z`;
+  // Path 2: Top face (stroke:false, fill:lighten)
+  const a3 = arcSeg(0, y1, wd2, y1, 180, 180);
+  const a4 = arcSeg(a3.endX, a3.endY, wd2, y1, 0, 180);
+  const topFace = `M0,${y1} ${a3.svg} ${a4.svg} Z`;
+  // Path 3: Outline (fill:none, stroke:true)
+  const a5 = arcSeg(w, y1, wd2, y1, 0, 180);
+  const a6 = arcSeg(a5.endX, a5.endY, wd2, y1, 180, 180);
+  const a7 = arcSeg(w, y3, wd2, y1, 0, 180);
+  const outline = `M${w},${y1} ${a5.svg} ${a6.svg} L${w},${y3} ${a7.svg} L0,${y1}`;
+  return [
+    { d: body, fill: 'norm', stroke: false },
+    { d: topFace, fill: 'lighten', stroke: false },
+    { d: outline, fill: 'none', stroke: true },
+  ];
+});
+
 multiPathPresets.set('bordercallout1', (w, h, adjustments) => {
   // OOXML: filled+stroked rectangle body + separate leader line (stroke-only).
   const y1 = (h * (adjustments?.get('adj1') ?? 18750)) / 100000;
@@ -5345,12 +5667,12 @@ multiPathPresets.set('chartplus', (w, h) => {
 });
 
 multiPathPresets.set('chartstar', (w, h) => {
+  // OOXML: 3 guide paths — 2 diagonals + 1 vertical (no horizontal center line)
   const cx = w / 2;
-  const cy = h / 2;
   return [
     { d: `M0,0 L${w},0 L${w},${h} L0,${h} Z`, fill: 'norm', stroke: false },
     {
-      d: `M0,0 L${w},${h} M${w},0 L0,${h} M${cx},0 L${cx},${h} M0,${cy} L${w},${cy}`,
+      d: `M0,0 L${w},${h} M${w},0 L0,${h} M${cx},0 L${cx},${h}`,
       fill: 'none',
       stroke: true,
     },
@@ -5960,7 +6282,7 @@ multiPathPresets.set('verticalscroll', (w, h, adjustments) => {
   const x4 = ch + ch;
   const x6 = w - ch;
   const x7 = w - ch2;
-  const x5 = x6 - ch2;
+  const _x5 = x6 - ch2;
   const y3 = h - ch;
   const y4 = h - ch2;
 

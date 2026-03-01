@@ -11,7 +11,7 @@ import { ThemeData, parseTheme } from './Theme';
 import { MasterData, parseMaster } from './Master';
 import { LayoutData, parseLayout, PlaceholderEntry } from './Layout';
 import { SlideData, SlideNode, parseSlide } from './Slide';
-import { BaseNodeData, Position, Size } from './nodes/BaseNode';
+import { Position, Size } from './nodes/BaseNode';
 
 export interface PresentationData {
   width: number;
@@ -52,7 +52,7 @@ function relsPathFor(filePath: string): string {
  * Extract ordered slide rId list from presentation.xml.
  * Reads `p:sldIdLst > p:sldId` elements and returns their r:id attributes in order.
  */
-function getSlideOrder(presRoot: SafeXmlNode): string[] {
+function _getSlideOrder(presRoot: SafeXmlNode): string[] {
   const sldIdLst = presRoot.child('sldIdLst');
   const rIds: string[] = [];
   for (const sldId of sldIdLst.children('sldId')) {

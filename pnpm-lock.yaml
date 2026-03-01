@@ -15,7 +15,7 @@ importers:
         specifier: ^3.10.1
         version: 3.10.1
       pdfjs-dist:
-        specifier: ^5.4.624
+        specifier: ^5.0.0
         version: 5.4.624
     devDependencies:
       '@commitlint/cli':

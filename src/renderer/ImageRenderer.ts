@@ -4,7 +4,7 @@
 
 import { PicNodeData } from '../model/nodes/PicNode';
 import { RenderContext } from './RenderContext';
-import { getMimeType, resolveMediaPath, getOrCreateBlobUrl } from '../utils/media';
+import { resolveMediaPath, getOrCreateBlobUrl } from '../utils/media';
 import { resolveColor } from './StyleResolver';
 import { hexToRgb } from '../utils/color';
 import { parseEmfContent } from '../utils/emfParser';
