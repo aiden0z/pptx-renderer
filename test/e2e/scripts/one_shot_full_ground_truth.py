@@ -535,83 +535,74 @@ def main() -> int:
     include_fillstroke = not args.skip_fillstroke
     do_probe = args.probe_first and not args.no_probe
 
-    # Helper: run all PowerPoint phases with optional batch session callables.
-    def _run_powerpoint_phases(
-        *,
-        run_only_fn: Callable[..., object] | None = None,
-        run_export_fn: Callable[..., object] | None = None,
-    ):
-        nonlocal include_smartart
+    # On Windows, Phase 1 (probe) and Phase 2 (smartart export) each make a
+    # single VBA call — wrap them in one batch COM session to avoid two extra
+    # PowerPoint restarts.  Phase 4 (case generation, 182+ calls) uses the
+    # default per-case independent session for fault isolation.
+    run_only_fn: Callable[..., object] | None = None
+    _batch_ctx = None
+    if sys.platform == "win32":
+        _batch_ctx = powerpoint_batch_session_win()
+        _batch_session = _batch_ctx.__enter__()
+        run_only_fn = _batch_session.run_only
 
+    try:
         # --- Phase 1: Probe valid shape IDs (single PowerPoint session, fast) ---
-        _valid_shape_ids: dict[int, str] | None = None
-        _probe_error: str | None = None
+        valid_shape_ids: dict[int, str] | None = None
+        probe_error: str | None = None
         if include_shapes and do_probe:
             try:
-                _valid_shape_ids = _probe_valid_shape_ids(
+                valid_shape_ids = _probe_valid_shape_ids(
                     macro_host, runtime_dir, args.shape_id_min, args.shape_id_max,
                     run_only_fn=run_only_fn,
                 )
             except Exception as exc:
-                _probe_error = str(exc)
-                print(f"  Probe failed ({_probe_error}), falling back to brute-force mode")
-                _valid_shape_ids = None
+                probe_error = str(exc)
+                print(f"  Probe failed ({probe_error}), falling back to brute-force mode")
+                valid_shape_ids = None
 
         # --- Phase 2: Export SmartArt layout catalog ---
-        _smartart_rows: list[SmartArtLayoutRow] = []
-        _smartart_export_error: str | None = None
+        smartart_rows: list[SmartArtLayoutRow] = []
+        smartart_export_error: str | None = None
         if include_smartart:
             try:
-                _smartart_rows = _export_smartart_layouts(
+                smartart_rows = _export_smartart_layouts(
                     macro_host, layout_catalog_path, run_only_fn=run_only_fn,
                 )
             except PowerPointExportError as exc:
-                _smartart_export_error = str(exc)
+                smartart_export_error = str(exc)
                 include_smartart = False
+    finally:
+        # Close the batch session after phases 1-2 so Phase 4 gets fresh sessions.
+        if _batch_ctx is not None:
+            _batch_ctx.__exit__(None, None, None)
 
-        # --- Phase 3: Build case JSONs (only for valid IDs) ---
-        _counts = _build_case_set(
-            cases_dir=cases_dir,
-            include_shapes=include_shapes,
-            shape_id_min=args.shape_id_min,
-            shape_id_max=args.shape_id_max,
-            valid_shape_ids=_valid_shape_ids,
-            include_smartart=include_smartart,
-            smartart_rows=_smartart_rows,
-            include_charts=include_charts,
-            include_tables=include_tables,
-            include_connectors=include_connectors,
-            include_fillstroke=include_fillstroke,
-        )
+    # --- Phase 3: Build case JSONs (only for valid IDs) ---
+    counts = _build_case_set(
+        cases_dir=cases_dir,
+        include_shapes=include_shapes,
+        shape_id_min=args.shape_id_min,
+        shape_id_max=args.shape_id_max,
+        valid_shape_ids=valid_shape_ids,
+        include_smartart=include_smartart,
+        smartart_rows=smartart_rows,
+        include_charts=include_charts,
+        include_tables=include_tables,
+        include_connectors=include_connectors,
+        include_fillstroke=include_fillstroke,
+    )
 
-        # --- Phase 4: Generate PPTX/PDF pairs (reuse cache by default) ---
-        gen_kwargs: dict = dict(
-            macro_host=macro_host,
-            cases_dir=cases_dir,
-            testdata_dir=testdata_dir,
-            reuse_existing=not args.no_reuse,
-            export_png=args.export_png and not args.no_export_png,
-            png_width=args.png_width,
-            png_height=args.png_height,
-        )
-        if run_export_fn is not None:
-            gen_kwargs["run_macro_fn"] = run_export_fn
-        _generated, _failures = generate_all_cases_resilient(**gen_kwargs)
-
-        return _valid_shape_ids, _probe_error, _smartart_rows, _smartart_export_error, _counts, _generated, _failures
-
-    # On Windows, wrap all PowerPoint phases in a single COM session to avoid
-    # restarting PowerPoint hundreds of times.
-    if sys.platform == "win32":
-        with powerpoint_batch_session_win() as session:
-            (valid_shape_ids, probe_error, smartart_rows, smartart_export_error,
-             counts, generated, failures) = _run_powerpoint_phases(
-                run_only_fn=session.run_only,
-                run_export_fn=session.run_export,
-            )
-    else:
-        (valid_shape_ids, probe_error, smartart_rows, smartart_export_error,
-         counts, generated, failures) = _run_powerpoint_phases()
+    # --- Phase 4: Generate PPTX/PDF pairs (reuse cache by default) ---
+    # Each case uses its own independent PowerPoint session for fault isolation.
+    generated, failures = generate_all_cases_resilient(
+        macro_host=macro_host,
+        cases_dir=cases_dir,
+        testdata_dir=testdata_dir,
+        reuse_existing=not args.no_reuse,
+        export_png=args.export_png and not args.no_export_png,
+        png_width=args.png_width,
+        png_height=args.png_height,
+    )
 
     generated_names = sorted(path.parent.name for path in generated)
     failure_cases = sorted(failures, key=lambda row: row.get("case", ""))
