@@ -17,8 +17,6 @@ if str(E2E_DIR) not in sys.path:
 from oracle.generate_cases import generate_all_cases_resilient
 from oracle.powerpoint_oracle import PowerPointExportError, run_macro_only
 
-if sys.platform == "win32":
-    from oracle.powerpoint_oracle import powerpoint_batch_session_win
 
 
 @dataclass
@@ -535,47 +533,32 @@ def main() -> int:
     include_fillstroke = not args.skip_fillstroke
     do_probe = args.probe_first and not args.no_probe
 
-    # On Windows, Phase 1 (probe) and Phase 2 (smartart export) each make a
-    # single VBA call — wrap them in one batch COM session to avoid two extra
-    # PowerPoint restarts.  Phase 4 (case generation, 182+ calls) uses the
-    # default per-case independent session for fault isolation.
-    run_only_fn: Callable[..., object] | None = None
-    _batch_ctx = None
-    if sys.platform == "win32":
-        _batch_ctx = powerpoint_batch_session_win()
-        _batch_session = _batch_ctx.__enter__()
-        run_only_fn = _batch_session.run_only
+    # All phases use independent PowerPoint sessions for maximum stability.
+    # Each VBA call starts/quits its own PowerPoint process — slower but
+    # ensures one failure never cascades to subsequent phases or cases.
 
-    try:
-        # --- Phase 1: Probe valid shape IDs (single PowerPoint session, fast) ---
-        valid_shape_ids: dict[int, str] | None = None
-        probe_error: str | None = None
-        if include_shapes and do_probe:
-            try:
-                valid_shape_ids = _probe_valid_shape_ids(
-                    macro_host, runtime_dir, args.shape_id_min, args.shape_id_max,
-                    run_only_fn=run_only_fn,
-                )
-            except Exception as exc:
-                probe_error = str(exc)
-                print(f"  Probe failed ({probe_error}), falling back to brute-force mode")
-                valid_shape_ids = None
+    # --- Phase 1: Probe valid shape IDs (single PowerPoint session, fast) ---
+    valid_shape_ids: dict[int, str] | None = None
+    probe_error: str | None = None
+    if include_shapes and do_probe:
+        try:
+            valid_shape_ids = _probe_valid_shape_ids(
+                macro_host, runtime_dir, args.shape_id_min, args.shape_id_max,
+            )
+        except Exception as exc:
+            probe_error = str(exc)
+            print(f"  Probe failed ({probe_error}), falling back to brute-force mode")
+            valid_shape_ids = None
 
-        # --- Phase 2: Export SmartArt layout catalog ---
-        smartart_rows: list[SmartArtLayoutRow] = []
-        smartart_export_error: str | None = None
-        if include_smartart:
-            try:
-                smartart_rows = _export_smartart_layouts(
-                    macro_host, layout_catalog_path, run_only_fn=run_only_fn,
-                )
-            except PowerPointExportError as exc:
-                smartart_export_error = str(exc)
-                include_smartart = False
-    finally:
-        # Close the batch session after phases 1-2 so Phase 4 gets fresh sessions.
-        if _batch_ctx is not None:
-            _batch_ctx.__exit__(None, None, None)
+    # --- Phase 2: Export SmartArt layout catalog ---
+    smartart_rows: list[SmartArtLayoutRow] = []
+    smartart_export_error: str | None = None
+    if include_smartart:
+        try:
+            smartart_rows = _export_smartart_layouts(macro_host, layout_catalog_path)
+        except PowerPointExportError as exc:
+            smartart_export_error = str(exc)
+            include_smartart = False
 
     # --- Phase 3: Build case JSONs (only for valid IDs) ---
     counts = _build_case_set(
