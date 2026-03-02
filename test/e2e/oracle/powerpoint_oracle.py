@@ -221,7 +221,7 @@ def run_macro_export_mac(
         )
     _run_with_parse_fallback(runner=runner, primary_cmd=primary_cmd, fallback_cmd=fallback_cmd)
 
-    if not out.exists() or out.stat().st_size == 0:
+    if export_after_macro and (not out.exists() or out.stat().st_size == 0):
         raise PowerPointExportError(f"Macro run finished but output PDF missing/empty: {out}")
 
     return out
@@ -277,7 +277,13 @@ def powerpoint_session_win() -> Generator:
     app = None
     try:
         app = win32com.client.DispatchEx("PowerPoint.Application")
-        app.Visible = False
+        try:
+            app.Visible = False
+        except Exception:
+            # Some Windows PowerPoint builds disallow hiding the application window.
+            # Fall back to minimized to keep it out of the way.
+            app.Visible = True
+            app.WindowState = 2  # ppWindowMinimized
         app.DisplayAlerts = False
         app.AutomationSecurity = _MSO_AUTOMATION_SECURITY_LOW
         yield app
@@ -306,8 +312,10 @@ def _run_macro_win(
         raise FileNotFoundError(f"Macro host PPTM not found: {host}")
 
     pptm_abs = str(host.resolve())
+    # WithWindow=True is required: some PowerPoint builds fail to load VBA
+    # projects when opening without a window (-2147188720 "object not exist").
     pres = app.Presentations.Open(
-        FileName=pptm_abs, ReadOnly=False, Untitled=False, WithWindow=False,
+        FileName=pptm_abs, ReadOnly=False, Untitled=False, WithWindow=True,
     )
     try:
         macro_ref = f"{pres.Name}!{macro_name}"
@@ -320,6 +328,8 @@ def _run_macro_win(
             pres.SaveAs(str(out.resolve()), _PP_SAVE_AS_PDF)
     finally:
         try:
+            # Mark as saved to suppress "Do you want to save?" dialog.
+            pres.Saved = True
             pres.Close()
         except Exception:
             pass
@@ -348,7 +358,7 @@ def run_macro_export_win(
             export_after_macro=export_after_macro,
         )
 
-    if not out.exists() or out.stat().st_size == 0:
+    if export_after_macro and (not out.exists() or out.stat().st_size == 0):
         raise PowerPointExportError(f"Macro run finished but output PDF missing/empty: {out}")
 
     return out
@@ -370,6 +380,59 @@ def run_macro_only_win(
             output_pdf=None,
             export_after_macro=False,
         )
+
+
+@contextmanager
+def powerpoint_batch_session_win() -> Generator:
+    """Context manager yielding a session object with ``run_export()`` and ``run_only()``
+    methods that share a single PowerPoint COM process for batch use on Windows.
+
+    Using one COM session avoids restarting PowerPoint for every case (hundreds of
+    times for full oracle generation).
+    """
+    with powerpoint_session_win() as app:
+        class _Session:
+            def run_export(
+                self,
+                *,
+                macro_host_pptm: Path,
+                macro_name: str,
+                output_pdf: Path,
+                macro_params: list[str] | None = None,
+                export_after_macro: bool = True,
+            ):
+                _run_macro_win(
+                    app,
+                    macro_host_pptm=macro_host_pptm,
+                    macro_name=macro_name,
+                    macro_params=macro_params,
+                    output_pdf=output_pdf,
+                    export_after_macro=export_after_macro,
+                )
+                if export_after_macro and output_pdf is not None:
+                    out = Path(output_pdf)
+                    if not out.exists() or out.stat().st_size == 0:
+                        raise PowerPointExportError(
+                            f"Macro run finished but output PDF missing/empty: {out}"
+                        )
+
+            def run_only(
+                self,
+                *,
+                macro_host_pptm: Path,
+                macro_name: str,
+                macro_params: list[str] | None = None,
+            ):
+                _run_macro_win(
+                    app,
+                    macro_host_pptm=macro_host_pptm,
+                    macro_name=macro_name,
+                    macro_params=macro_params,
+                    output_pdf=None,
+                    export_after_macro=False,
+                )
+
+        yield _Session()
 
 
 # ---------------------------------------------------------------------------

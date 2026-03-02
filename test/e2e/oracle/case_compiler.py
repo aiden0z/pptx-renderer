@@ -40,11 +40,11 @@ def compile_case_to_spec(
         raise ValueError("case json must contain a non-empty 'slides' array")
 
     lines: list[str] = [
-        f"OUT_PPTX|{Path(output_pptx_path)}",
-        f"OUT_PDF|{Path(output_pdf_path)}",
+        f"OUT_PPTX|{Path(output_pptx_path).resolve()}",
+        f"OUT_PDF|{Path(output_pdf_path).resolve()}",
     ]
     if output_png_prefix is not None:
-        png_parts = [str(Path(output_png_prefix))]
+        png_parts = [str(Path(output_png_prefix).resolve())]
         if png_width > 0:
             png_parts.append(str(png_width))
         if png_height > 0:

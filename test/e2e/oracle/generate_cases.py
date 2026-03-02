@@ -2,11 +2,36 @@ from __future__ import annotations
 
 import subprocess
 import shutil
+import time
 from pathlib import Path
 from typing import Callable
 
 from oracle.case_compiler import compile_case_to_spec
 from oracle.powerpoint_oracle import run_macro_export
+
+
+def _robust_unlink(path: Path, retries: int = 3, delay: float = 0.5) -> None:
+    """Unlink with retries for Windows file handle races."""
+    for attempt in range(retries):
+        try:
+            path.unlink()
+            return
+        except PermissionError:
+            if attempt == retries - 1:
+                raise
+            time.sleep(delay)
+
+
+def _robust_copy(src: Path, dst: Path, retries: int = 3, delay: float = 0.5) -> None:
+    """Copy with retries for Windows file handle races."""
+    for attempt in range(retries):
+        try:
+            shutil.copy2(src, dst)
+            return
+        except PermissionError:
+            if attempt == retries - 1:
+                raise
+            time.sleep(delay)
 
 
 def _default_macro_runner(**kwargs):
@@ -60,12 +85,12 @@ def _run_case_generation(
     sink_pdf = runtime_dir / "_macro-output.pdf"
     sink_png_prefix = runtime_dir / "_macro-output"
     if sink_pptx.exists():
-        sink_pptx.unlink()
+        _robust_unlink(sink_pptx)
     if sink_pdf.exists():
-        sink_pdf.unlink()
+        _robust_unlink(sink_pdf)
     # Clean up any leftover PNG sinks
     for old_png in runtime_dir.glob("_macro-output_slide*.png"):
-        old_png.unlink()
+        _robust_unlink(old_png)
 
     compile_case_to_spec(
         case_json,
@@ -88,8 +113,8 @@ def _run_case_generation(
     if not sink_pptx.exists() or not sink_pdf.exists():
         raise RuntimeError(f"Failed to generate macro sink output for {stem}")
 
-    shutil.copy2(sink_pptx, pptx_path)
-    shutil.copy2(sink_pdf, pdf_path)
+    _robust_copy(sink_pptx, pptx_path)
+    _robust_copy(sink_pdf, pdf_path)
 
     # Copy PNG ground-truth files if generated
     for sink_png in sorted(runtime_dir.glob("_macro-output_slide*.png")):
@@ -97,7 +122,7 @@ def _run_case_generation(
         # _macro-output_slide1.png → slide1.png
         num = sink_png.stem.split("_slide")[1]
         dest_png = slides_d / f"slide{num}.png"
-        shutil.copy2(sink_png, dest_png)
+        _robust_copy(sink_png, dest_png)
 
     if not pptx_path.exists() or not pdf_path.exists():
         raise RuntimeError(f"Failed to materialize pair for {stem}")

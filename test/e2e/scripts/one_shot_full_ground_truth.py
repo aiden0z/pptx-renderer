@@ -7,6 +7,7 @@ import re
 import sys
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Callable
 
 # Ensure `oracle.*` imports resolve when this script is run via file path.
 E2E_DIR = Path(__file__).resolve().parents[1]
@@ -15,6 +16,9 @@ if str(E2E_DIR) not in sys.path:
 
 from oracle.generate_cases import generate_all_cases_resilient
 from oracle.powerpoint_oracle import PowerPointExportError, run_macro_only
+
+if sys.platform == "win32":
+    from oracle.powerpoint_oracle import powerpoint_batch_session_win
 
 
 @dataclass
@@ -85,18 +89,23 @@ def _probe_valid_shape_ids(
     runtime_dir: Path,
     shape_id_min: int,
     shape_id_max: int,
+    run_only_fn: Callable[..., object] | None = None,
 ) -> dict[int, str]:
     """Call VBA ProbeValidShapeIds to discover which MsoAutoShapeType IDs are valid.
 
     Runs in a single PowerPoint session — fast even for 500 IDs.
     Returns a dict mapping valid numeric ID → shape name (e.g. {1: "Rectangle"}).
     VBA outputs lines as "ID|ShapeName" (new format) or plain "ID" (legacy).
+
+    If *run_only_fn* is provided it is called instead of the default
+    ``run_macro_only`` — used on Windows to share a batch COM session.
     """
     runtime_dir.mkdir(parents=True, exist_ok=True)
     probe_output = runtime_dir / "_valid-shape-ids.txt"
 
     print(f"Probing valid shape IDs {shape_id_min}-{shape_id_max} via PowerPoint ...")
-    run_macro_only(
+    _run = run_only_fn or run_macro_only
+    _run(
         macro_host_pptm=macro_host,
         macro_name="ProbeValidShapeIds",
         macro_params=[str(probe_output), str(shape_id_min), str(shape_id_max)],
@@ -104,7 +113,7 @@ def _probe_valid_shape_ids(
 
     valid: dict[int, str] = {}
     if probe_output.exists():
-        for line in probe_output.read_text(encoding="utf-8").splitlines():
+        for line in probe_output.read_text(encoding="utf-8", errors="replace").splitlines():
             text = line.strip()
             if not text:
                 continue
@@ -260,16 +269,21 @@ def _fillstroke_case_payload(case_name: str, fill_kind: str, stroke_kind: str) -
     }
 
 
-def _export_smartart_layouts(macro_host: Path, catalog_path: Path) -> list[SmartArtLayoutRow]:
+def _export_smartart_layouts(
+    macro_host: Path,
+    catalog_path: Path,
+    run_only_fn: Callable[..., object] | None = None,
+) -> list[SmartArtLayoutRow]:
     catalog_path.parent.mkdir(parents=True, exist_ok=True)
-    run_macro_only(
+    _run = run_only_fn or run_macro_only
+    _run(
         macro_host_pptm=macro_host,
         macro_name="ExportSmartArtLayouts_ToFile",
         macro_params=[str(catalog_path)],
     )
 
     rows: list[SmartArtLayoutRow] = []
-    for line in catalog_path.read_text(encoding="utf-8").splitlines():
+    for line in catalog_path.read_text(encoding="utf-8", errors="replace").splitlines():
         text = line.strip()
         if not text:
             continue
@@ -478,7 +492,13 @@ def main() -> int:
     parser.add_argument(
         "--export-png",
         action="store_true",
-        help="Also export each slide as PNG via VBA Slide.Export (higher quality ground truth).",
+        default=True,
+        help="Export each slide as PNG via VBA Slide.Export (default: enabled).",
+    )
+    parser.add_argument(
+        "--no-export-png",
+        action="store_true",
+        help="Disable PNG export.",
     )
     parser.add_argument(
         "--png-width",
@@ -515,54 +535,83 @@ def main() -> int:
     include_fillstroke = not args.skip_fillstroke
     do_probe = args.probe_first and not args.no_probe
 
-    # --- Phase 1: Probe valid shape IDs (single PowerPoint session, fast) ---
-    valid_shape_ids: dict[int, str] | None = None
-    probe_error: str | None = None
-    if include_shapes and do_probe:
-        try:
-            valid_shape_ids = _probe_valid_shape_ids(
-                macro_host, runtime_dir, args.shape_id_min, args.shape_id_max,
+    # Helper: run all PowerPoint phases with optional batch session callables.
+    def _run_powerpoint_phases(
+        *,
+        run_only_fn: Callable[..., object] | None = None,
+        run_export_fn: Callable[..., object] | None = None,
+    ):
+        nonlocal include_smartart
+
+        # --- Phase 1: Probe valid shape IDs (single PowerPoint session, fast) ---
+        _valid_shape_ids: dict[int, str] | None = None
+        _probe_error: str | None = None
+        if include_shapes and do_probe:
+            try:
+                _valid_shape_ids = _probe_valid_shape_ids(
+                    macro_host, runtime_dir, args.shape_id_min, args.shape_id_max,
+                    run_only_fn=run_only_fn,
+                )
+            except Exception as exc:
+                _probe_error = str(exc)
+                print(f"  Probe failed ({_probe_error}), falling back to brute-force mode")
+                _valid_shape_ids = None
+
+        # --- Phase 2: Export SmartArt layout catalog ---
+        _smartart_rows: list[SmartArtLayoutRow] = []
+        _smartart_export_error: str | None = None
+        if include_smartart:
+            try:
+                _smartart_rows = _export_smartart_layouts(
+                    macro_host, layout_catalog_path, run_only_fn=run_only_fn,
+                )
+            except PowerPointExportError as exc:
+                _smartart_export_error = str(exc)
+                include_smartart = False
+
+        # --- Phase 3: Build case JSONs (only for valid IDs) ---
+        _counts = _build_case_set(
+            cases_dir=cases_dir,
+            include_shapes=include_shapes,
+            shape_id_min=args.shape_id_min,
+            shape_id_max=args.shape_id_max,
+            valid_shape_ids=_valid_shape_ids,
+            include_smartart=include_smartart,
+            smartart_rows=_smartart_rows,
+            include_charts=include_charts,
+            include_tables=include_tables,
+            include_connectors=include_connectors,
+            include_fillstroke=include_fillstroke,
+        )
+
+        # --- Phase 4: Generate PPTX/PDF pairs (reuse cache by default) ---
+        gen_kwargs: dict = dict(
+            macro_host=macro_host,
+            cases_dir=cases_dir,
+            testdata_dir=testdata_dir,
+            reuse_existing=not args.no_reuse,
+            export_png=args.export_png and not args.no_export_png,
+            png_width=args.png_width,
+            png_height=args.png_height,
+        )
+        if run_export_fn is not None:
+            gen_kwargs["run_macro_fn"] = run_export_fn
+        _generated, _failures = generate_all_cases_resilient(**gen_kwargs)
+
+        return _valid_shape_ids, _probe_error, _smartart_rows, _smartart_export_error, _counts, _generated, _failures
+
+    # On Windows, wrap all PowerPoint phases in a single COM session to avoid
+    # restarting PowerPoint hundreds of times.
+    if sys.platform == "win32":
+        with powerpoint_batch_session_win() as session:
+            (valid_shape_ids, probe_error, smartart_rows, smartart_export_error,
+             counts, generated, failures) = _run_powerpoint_phases(
+                run_only_fn=session.run_only,
+                run_export_fn=session.run_export,
             )
-        except (PowerPointExportError, Exception) as exc:
-            probe_error = str(exc)
-            print(f"  Probe failed ({probe_error}), falling back to brute-force mode")
-            valid_shape_ids = None
-
-    # --- Phase 2: Export SmartArt layout catalog ---
-    smartart_rows: list[SmartArtLayoutRow] = []
-    smartart_export_error: str | None = None
-    if include_smartart:
-        try:
-            smartart_rows = _export_smartart_layouts(macro_host, layout_catalog_path)
-        except PowerPointExportError as exc:
-            smartart_export_error = str(exc)
-            include_smartart = False
-
-    # --- Phase 3: Build case JSONs (only for valid IDs) ---
-    counts = _build_case_set(
-        cases_dir=cases_dir,
-        include_shapes=include_shapes,
-        shape_id_min=args.shape_id_min,
-        shape_id_max=args.shape_id_max,
-        valid_shape_ids=valid_shape_ids,
-        include_smartart=include_smartart,
-        smartart_rows=smartart_rows,
-        include_charts=include_charts,
-        include_tables=include_tables,
-        include_connectors=include_connectors,
-        include_fillstroke=include_fillstroke,
-    )
-
-    # --- Phase 4: Generate PPTX/PDF pairs (reuse cache by default) ---
-    generated, failures = generate_all_cases_resilient(
-        macro_host=macro_host,
-        cases_dir=cases_dir,
-        testdata_dir=testdata_dir,
-        reuse_existing=not args.no_reuse,
-        export_png=args.export_png,
-        png_width=args.png_width,
-        png_height=args.png_height,
-    )
+    else:
+        (valid_shape_ids, probe_error, smartart_rows, smartart_export_error,
+         counts, generated, failures) = _run_powerpoint_phases()
 
     generated_names = sorted(path.parent.name for path in generated)
     failure_cases = sorted(failures, key=lambda row: row.get("case", ""))
