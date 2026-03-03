@@ -14,9 +14,10 @@ E2E_DIR = Path(__file__).resolve().parents[1]
 if str(E2E_DIR) not in sys.path:
     sys.path.insert(0, str(E2E_DIR))
 
+import platform
+
 from oracle.generate_cases import generate_all_cases_resilient
 from oracle.powerpoint_oracle import PowerPointExportError, run_macro_only
-
 
 
 @dataclass
@@ -27,24 +28,129 @@ class SmartArtLayoutRow:
 
 # --- Static catalogs for new element types ---
 
-# Charts: representative XlChartType IDs covering major chart families.
-# Negative IDs are legacy XlChartType constants used by PowerPoint/Excel VBA.
-CHART_TYPE_CATALOG: list[tuple[int, str]] = [
-    (51, "clustered-bar"),
-    (57, "stacked-bar"),
-    (4, "line"),
-    (5, "pie"),
-    (-4169, "scatter"),
-    (65, "area"),
-    (-4120, "xl-line-classic"),
-    (80, "radar"),
-    (-4102, "doughnut"),
-    (109, "bubble"),
-    (88, "stock-hlc"),
-    (73, "surface-3d"),
-    (112, "treemap"),
-    (116, "sunburst"),
-]
+# Complete XlChartType fallback catalog: ID → slug name.
+# Used on macOS (where chart VBA probe can't run) and as fallback on probe failure.
+# Source: https://learn.microsoft.com/en-us/office/vba/api/excel.xlcharttype
+CHART_TYPE_FALLBACK: dict[int, str] = {
+    # Column / Bar
+    51: "clustered-column",
+    52: "stacked-column",
+    53: "100-stacked-column",
+    54: "3d-clustered-column",
+    55: "3d-stacked-column",
+    56: "3d-100-stacked-column",
+    57: "clustered-bar",
+    58: "stacked-bar",
+    59: "100-stacked-bar",
+    60: "3d-clustered-bar",
+    61: "3d-stacked-bar",
+    62: "3d-100-stacked-bar",
+    -4100: "3d-column",
+    # Line
+    4: "line",
+    63: "stacked-line",
+    64: "100-stacked-line",
+    65: "line-with-markers",
+    66: "stacked-line-with-markers",
+    67: "100-stacked-line-with-markers",
+    -4101: "3d-line",
+    -4120: "xl-line-classic",
+    # Pie
+    5: "pie",
+    68: "pie-of-pie",
+    69: "exploded-pie",
+    70: "3d-pie",
+    71: "3d-exploded-pie",
+    -4102: "doughnut",
+    80: "exploded-doughnut",
+    # Area
+    1: "area",
+    76: "stacked-area",
+    77: "100-stacked-area",
+    78: "3d-area",
+    79: "3d-stacked-area",
+    -4098: "3d-100-stacked-area",
+    # Scatter
+    -4169: "scatter",
+    72: "scatter-with-lines",
+    73: "scatter-with-lines-no-markers",
+    74: "scatter-with-smooth-lines",
+    75: "scatter-with-smooth-lines-no-markers",
+    # Radar
+    -4151: "radar",
+    81: "radar-with-markers",
+    82: "filled-radar",
+    # Bubble
+    15: "bubble",
+    87: "bubble-3d",
+    # Stock
+    88: "stock-hlc",
+    89: "stock-ohlc",
+    90: "stock-vhlc",
+    91: "stock-vohlc",
+    # Surface
+    83: "surface-3d",
+    84: "surface-wireframe-3d",
+    85: "surface-contour",
+    86: "surface-wireframe-contour",
+    -4163: "surface-top-view",
+    # Cone
+    92: "cone-clustered-column",
+    93: "cone-stacked-column",
+    94: "cone-100-stacked-column",
+    95: "cone-clustered-bar",
+    96: "cone-stacked-bar",
+    97: "cone-100-stacked-bar",
+    98: "cone-3d-column",
+    # Cylinder
+    99: "cylinder-clustered-column",
+    100: "cylinder-stacked-column",
+    101: "cylinder-100-stacked-column",
+    102: "cylinder-clustered-bar",
+    103: "cylinder-stacked-bar",
+    104: "cylinder-100-stacked-bar",
+    105: "cylinder-3d-column",
+    # Pyramid
+    106: "pyramid-clustered-column",
+    107: "pyramid-stacked-column",
+    108: "pyramid-100-stacked-column",
+    109: "pyramid-clustered-bar",
+    110: "pyramid-stacked-bar",
+    111: "pyramid-100-stacked-bar",
+    112: "pyramid-3d-column",
+    # Combo
+    113: "combo-column-line",
+    114: "combo-column-line-secondary-axis",
+    115: "combo-stacked-area-column",
+    -4152: "combo-custom",
+    # Modern (Office 2016+)
+    116: "treemap",
+    117: "sunburst",
+    118: "histogram",
+    119: "pareto",
+    120: "box-and-whisker",
+    121: "waterfall",
+    122: "funnel",
+    123: "map",
+    140: "region-map",
+    # Microsoft 365 exclusive types
+    124: "ex-linked-treemap",
+    125: "ex-linked-sunburst",
+    126: "ex-linked-histogram",
+    127: "ex-linked-pareto",
+    128: "ex-linked-box-whisker",
+    129: "ex-linked-waterfall",
+    130: "ex-linked-funnel",
+    131: "ex-linked-map",
+    132: "ex-linked-scatter",
+    133: "ex-linked-line",
+    134: "ex-linked-area",
+    135: "ex-linked-bar",
+    136: "ex-linked-column",
+    137: "ex-linked-pie",
+    138: "ex-linked-surface",
+    139: "ex-linked-radar",
+}
 
 # Tables: (rows, cols, slug)
 TABLE_CONFIGS: list[tuple[int, int, str]] = [
@@ -55,6 +161,14 @@ TABLE_CONFIGS: list[tuple[int, int, str]] = [
     (1, 4, "1x4-header"),
     (5, 1, "5x1-col"),
     (8, 8, "8x8-large"),
+    (1, 1, "1x1"),
+    (2, 2, "2x2"),
+    (10, 3, "10x3"),
+    (3, 10, "3x10"),
+    (1, 10, "1x10"),
+    (10, 1, "10x1"),
+    (1, 2, "1x2"),
+    (2, 1, "2x1"),
 ]
 
 # Connectors: (msoConnectorType, slug, beginX, beginY, endX, endY)
@@ -65,10 +179,15 @@ CONNECTOR_CONFIGS: list[tuple[int, str, float, float, float, float]] = [
     (2, "elbow-v", 300, 100, 300, 400),
     (3, "curve-h", 100, 200, 500, 200),
     (3, "curve-diag", 100, 100, 500, 400),
+    (1, "straight-v", 300, 100, 300, 400),
+    (2, "elbow-diag", 100, 100, 500, 400),
+    (3, "curve-v", 300, 100, 300, 400),
 ]
 
 # Fill/Stroke: (fillKind, strokeKind)
+# First 10 entries preserved for backward compat (0001-0010 case names unchanged).
 FILLSTROKE_CONFIGS: list[tuple[str, str]] = [
+    # --- Original 10 ---
     ("solid-red", "solid-thin"),
     ("solid-blue", "solid-thick"),
     ("gradient-linear", "solid-thin"),
@@ -79,6 +198,37 @@ FILLSTROKE_CONFIGS: list[tuple[str, str]] = [
     ("solid-red", "dash-dot"),
     ("gradient-linear", "no-line"),
     ("no-fill", "dash"),
+    # --- New solids × strokes ---
+    ("solid-green", "solid-thin"),
+    ("solid-green", "solid-thick"),
+    ("solid-yellow", "solid-thin"),
+    ("solid-yellow", "dash"),
+    ("solid-black", "solid-thin"),
+    ("solid-black", "solid-red-thin"),
+    ("solid-white", "solid-thick"),
+    ("solid-white", "solid-blue-thick"),
+    # --- New gradients × strokes ---
+    ("gradient-diagonal", "solid-thin"),
+    ("gradient-diagonal", "dash"),
+    ("gradient-diagonal", "no-line"),
+    ("gradient-vertical", "solid-thin"),
+    ("gradient-vertical", "solid-thick"),
+    ("gradient-vertical", "round-dot"),
+    # --- New patterns × strokes ---
+    ("pattern-horizontal", "solid-thin"),
+    ("pattern-horizontal", "dash"),
+    ("pattern-diagonal-up", "solid-thin"),
+    ("pattern-diagonal-up", "long-dash"),
+    ("pattern-dots", "solid-thin"),
+    ("pattern-dots", "square-dot"),
+    ("pattern-checker", "solid-thin"),
+    ("pattern-checker", "long-dash-dot"),
+    # --- Color strokes ---
+    ("solid-red", "solid-red-thin"),
+    ("solid-blue", "solid-blue-thick"),
+    # --- No-fill × new strokes ---
+    ("no-fill", "round-dot"),
+    ("no-fill", "solid-medium"),
 ]
 
 
@@ -125,6 +275,65 @@ def _probe_valid_shape_ids(
                 # Legacy format: plain ID without name
                 valid[int(text)] = ""
     print(f"  Found {len(valid)} valid IDs out of {shape_id_max - shape_id_min + 1}")
+    return valid
+
+
+def _probe_valid_chart_types(
+    macro_host: Path,
+    runtime_dir: Path,
+    chart_id_min: int,
+    chart_id_max: int,
+    run_only_fn: Callable[..., object] | None = None,
+) -> dict[int, str]:
+    """Call VBA ProbeValidChartTypes to discover which XlChartType IDs are valid.
+
+    On macOS, returns the static CHART_TYPE_FALLBACK immediately (Excel engine
+    is unavailable so chart creation is #If Mac Then skipped).
+
+    On Windows: runs ProbeValidChartTypes VBA macro, parses ID|name output.
+    Falls back to static dict on probe failure.
+    """
+    if platform.system() == "Darwin":
+        print("macOS detected — using static chart type fallback (no Excel engine)")
+        return {
+            k: v
+            for k, v in CHART_TYPE_FALLBACK.items()
+            if chart_id_min <= k <= chart_id_max
+        }
+
+    runtime_dir.mkdir(parents=True, exist_ok=True)
+    probe_output = runtime_dir / "_valid-chart-types.txt"
+
+    print(f"Probing valid chart types {chart_id_min}-{chart_id_max} via PowerPoint ...")
+    _run = run_only_fn or run_macro_only
+    _run(
+        macro_host_pptm=macro_host,
+        macro_name="ProbeValidChartTypes",
+        macro_params=[str(probe_output), str(chart_id_min), str(chart_id_max)],
+    )
+
+    valid: dict[int, str] = {}
+    if probe_output.exists():
+        for line in probe_output.read_text(encoding="utf-8", errors="replace").splitlines():
+            text = line.strip()
+            if not text:
+                continue
+            if "|" in text:
+                id_str, _, name = text.partition("|")
+                id_str = id_str.strip()
+                name = name.strip()
+                try:
+                    valid[int(id_str)] = name
+                except ValueError:
+                    pass
+            else:
+                # Legacy format: plain ID without name
+                try:
+                    chart_id = int(text)
+                    valid[chart_id] = CHART_TYPE_FALLBACK.get(chart_id, f"chart-type-{chart_id}")
+                except ValueError:
+                    pass
+    print(f"  Found {len(valid)} valid chart types out of {chart_id_max - chart_id_min + 1}")
     return valid
 
 
@@ -303,6 +512,7 @@ def _build_case_set(
     include_smartart: bool,
     smartart_rows: list[SmartArtLayoutRow],
     include_charts: bool = False,
+    valid_chart_types: dict[int, str] | None = None,
     include_tables: bool = False,
     include_connectors: bool = False,
     include_fillstroke: bool = False,
@@ -359,9 +569,16 @@ def _build_case_set(
             smartart_case_count += 1
 
     if include_charts:
-        for idx, (chart_type_id, slug) in enumerate(CHART_TYPE_CATALOG, start=1):
+        # Clean stale chart case JSONs before rebuilding (renumbering is inevitable
+        # when switching from static catalog to probe-discovered types).
+        for stale in cases_dir.glob("oracle-full-chart-*.json"):
+            stale.unlink()
+
+        chart_types = valid_chart_types if valid_chart_types is not None else CHART_TYPE_FALLBACK
+        for idx, chart_id in enumerate(sorted(chart_types.keys()), start=1):
+            slug = _slugify(chart_types[chart_id], default=f"chart-type-{chart_id}")
             case_name = f"oracle-full-chart-{idx:04d}-{slug}"
-            payload = _chart_case_payload(case_name, chart_type_id)
+            payload = _chart_case_payload(case_name, chart_id)
             _write_json(cases_dir / f"{case_name}.json", payload)
             chart_case_count += 1
 
@@ -433,6 +650,23 @@ def main() -> int:
         type=int,
         default=500,
         help="Maximum MsoAutoShapeType numeric ID to probe.",
+    )
+    parser.add_argument(
+        "--chart-id-min",
+        type=int,
+        default=-4200,
+        help="Minimum XlChartType numeric ID to probe (default: -4200).",
+    )
+    parser.add_argument(
+        "--chart-id-max",
+        type=int,
+        default=150,
+        help="Maximum XlChartType numeric ID to probe (default: 150).",
+    )
+    parser.add_argument(
+        "--no-probe-charts",
+        action="store_true",
+        help="Skip chart probe step; use static fallback catalog.",
     )
     parser.add_argument(
         "--skip-shapes",
@@ -532,12 +766,13 @@ def main() -> int:
     include_connectors = not args.skip_connectors
     include_fillstroke = not args.skip_fillstroke
     do_probe = args.probe_first and not args.no_probe
+    do_probe_charts = not args.no_probe_charts
 
     # All phases use independent PowerPoint sessions for maximum stability.
     # Each VBA call starts/quits its own PowerPoint process — slower but
     # ensures one failure never cascades to subsequent phases or cases.
 
-    # --- Phase 1: Probe valid shape IDs (single PowerPoint session, fast) ---
+    # --- Phase 1A: Probe valid shape IDs (single PowerPoint session, fast) ---
     valid_shape_ids: dict[int, str] | None = None
     probe_error: str | None = None
     if include_shapes and do_probe:
@@ -549,6 +784,19 @@ def main() -> int:
             probe_error = str(exc)
             print(f"  Probe failed ({probe_error}), falling back to brute-force mode")
             valid_shape_ids = None
+
+    # --- Phase 1B: Probe valid chart types ---
+    valid_chart_types: dict[int, str] | None = None
+    chart_probe_error: str | None = None
+    if include_charts and do_probe_charts:
+        try:
+            valid_chart_types = _probe_valid_chart_types(
+                macro_host, runtime_dir, args.chart_id_min, args.chart_id_max,
+            )
+        except Exception as exc:
+            chart_probe_error = str(exc)
+            print(f"  Chart probe failed ({chart_probe_error}), using static fallback")
+            valid_chart_types = None
 
     # --- Phase 2: Export SmartArt layout catalog ---
     smartart_rows: list[SmartArtLayoutRow] = []
@@ -570,6 +818,7 @@ def main() -> int:
         include_smartart=include_smartart,
         smartart_rows=smartart_rows,
         include_charts=include_charts,
+        valid_chart_types=valid_chart_types,
         include_tables=include_tables,
         include_connectors=include_connectors,
         include_fillstroke=include_fillstroke,
@@ -595,6 +844,7 @@ def main() -> int:
         "testdata_dir": str(testdata_dir),
         "cases_dir": str(cases_dir),
         "shape_id_range": [args.shape_id_min, args.shape_id_max],
+        "chart_id_range": [args.chart_id_min, args.chart_id_max],
         "include_shapes": include_shapes,
         "include_smartart": include_smartart,
         "include_charts": include_charts,
@@ -605,6 +855,10 @@ def main() -> int:
         "probe_error": probe_error,
         "valid_shape_id_count": len(valid_shape_ids) if valid_shape_ids is not None else None,
         "valid_shape_ids": {k: v for k, v in sorted(valid_shape_ids.items())} if valid_shape_ids is not None else None,
+        "chart_probe_enabled": do_probe_charts,
+        "chart_probe_error": chart_probe_error,
+        "valid_chart_type_count": len(valid_chart_types) if valid_chart_types is not None else None,
+        "valid_chart_types": {k: v for k, v in sorted(valid_chart_types.items())} if valid_chart_types is not None else None,
         "smartart_layout_count": len(smartart_rows),
         "smartart_export_error": smartart_export_error,
         "reuse_existing": not args.no_reuse,

@@ -388,6 +388,42 @@ Private Sub ApplyFillVariant(ByVal shp As Shape, ByVal fillKind As String)
             shp.Fill.Patterned msoPatternCross
             shp.Fill.ForeColor.RGB = RGB(0, 0, 0)
             shp.Fill.BackColor.RGB = RGB(255, 255, 255)
+        Case "solid-green"
+            shp.Fill.Solid
+            shp.Fill.ForeColor.RGB = RGB(0, 176, 80)
+        Case "solid-yellow"
+            shp.Fill.Solid
+            shp.Fill.ForeColor.RGB = RGB(255, 192, 0)
+        Case "solid-black"
+            shp.Fill.Solid
+            shp.Fill.ForeColor.RGB = RGB(0, 0, 0)
+        Case "solid-white"
+            shp.Fill.Solid
+            shp.Fill.ForeColor.RGB = RGB(255, 255, 255)
+        Case "gradient-diagonal"
+            shp.Fill.TwoColorGradient msoGradientDiagonalDown, 1
+            shp.Fill.ForeColor.RGB = RGB(0, 120, 215)
+            shp.Fill.BackColor.RGB = RGB(255, 255, 255)
+        Case "gradient-vertical"
+            shp.Fill.TwoColorGradient msoGradientVertical, 1
+            shp.Fill.ForeColor.RGB = RGB(0, 176, 80)
+            shp.Fill.BackColor.RGB = RGB(255, 255, 255)
+        Case "pattern-horizontal"
+            shp.Fill.Patterned msoPatternHorizontal
+            shp.Fill.ForeColor.RGB = RGB(0, 0, 0)
+            shp.Fill.BackColor.RGB = RGB(255, 255, 255)
+        Case "pattern-diagonal-up"
+            shp.Fill.Patterned msoPatternDiagonalBrick
+            shp.Fill.ForeColor.RGB = RGB(0, 0, 0)
+            shp.Fill.BackColor.RGB = RGB(255, 255, 255)
+        Case "pattern-dots"
+            shp.Fill.Patterned msoPatternSmallGrid
+            shp.Fill.ForeColor.RGB = RGB(0, 0, 0)
+            shp.Fill.BackColor.RGB = RGB(255, 255, 255)
+        Case "pattern-checker"
+            shp.Fill.Patterned msoPatternSmallCheckerBoard
+            shp.Fill.ForeColor.RGB = RGB(0, 0, 0)
+            shp.Fill.BackColor.RGB = RGB(255, 255, 255)
         Case "no-fill"
             shp.Fill.Visible = msoFalse
         Case Else
@@ -422,6 +458,41 @@ Private Sub ApplyStrokeVariant(ByVal shp As Shape, ByVal strokeKind As String)
             shp.Line.Weight = 2
             shp.Line.DashStyle = msoLineDashDotDot
             shp.Line.ForeColor.RGB = RGB(0, 0, 0)
+        Case "round-dot"
+            shp.Line.Visible = msoTrue
+            shp.Line.Weight = 2
+            shp.Line.DashStyle = msoLineRoundDot
+            shp.Line.ForeColor.RGB = RGB(0, 0, 0)
+        Case "long-dash"
+            shp.Line.Visible = msoTrue
+            shp.Line.Weight = 2
+            shp.Line.DashStyle = msoLineLongDash
+            shp.Line.ForeColor.RGB = RGB(0, 0, 0)
+        Case "long-dash-dot"
+            shp.Line.Visible = msoTrue
+            shp.Line.Weight = 2
+            shp.Line.DashStyle = msoLineLongDashDot
+            shp.Line.ForeColor.RGB = RGB(0, 0, 0)
+        Case "square-dot"
+            shp.Line.Visible = msoTrue
+            shp.Line.Weight = 2
+            shp.Line.DashStyle = msoLineSquareDot
+            shp.Line.ForeColor.RGB = RGB(0, 0, 0)
+        Case "solid-medium"
+            shp.Line.Visible = msoTrue
+            shp.Line.Weight = 2
+            shp.Line.DashStyle = msoLineSolid
+            shp.Line.ForeColor.RGB = RGB(0, 0, 0)
+        Case "solid-red-thin"
+            shp.Line.Visible = msoTrue
+            shp.Line.Weight = 1
+            shp.Line.DashStyle = msoLineSolid
+            shp.Line.ForeColor.RGB = RGB(255, 0, 0)
+        Case "solid-blue-thick"
+            shp.Line.Visible = msoTrue
+            shp.Line.Weight = 4
+            shp.Line.DashStyle = msoLineSolid
+            shp.Line.ForeColor.RGB = RGB(0, 0, 255)
         Case "no-line"
             shp.Line.Visible = msoFalse
         Case Else
@@ -431,7 +502,7 @@ End Sub
 
 ' Probe which XlChartType numeric IDs are valid on this PowerPoint build.
 ' XlChartType includes negative values (e.g. -4120 = xlLine), so range should span negative to positive.
-' Output format (one per line): numeric ID
+' Output format (one per line): ID|name  (e.g. "51|clustered-column")
 Public Sub ProbeValidChartTypes(outputPath As String, minId As String, maxId As String)
     Dim pres As Presentation
     Dim sld As Slide
@@ -440,6 +511,7 @@ Public Sub ProbeValidChartTypes(outputPath As String, minId As String, maxId As 
     Dim shp As Shape
     Dim lo As Long
     Dim hi As Long
+    Dim chartName As String
 
     lo = CLng(minId)
     hi = CLng(maxId)
@@ -454,7 +526,8 @@ Public Sub ProbeValidChartTypes(outputPath As String, minId As String, maxId As 
         On Error Resume Next
         Set shp = sld.Shapes.AddChart(i, 100, 100, 300, 200)
         If Err.Number = 0 Then
-            Print #fnum, CStr(i)
+            chartName = XlChartTypeName(i)
+            Print #fnum, CStr(i) & "|" & chartName
             shp.Delete
         Else
             Err.Clear
@@ -467,6 +540,133 @@ Public Sub ProbeValidChartTypes(outputPath As String, minId As String, maxId As 
     pres.Close
     Set pres = Nothing
 End Sub
+
+' Map XlChartType numeric ID to a human-readable slug name.
+' Covers all documented chart types from Microsoft Office VBA reference.
+Private Function XlChartTypeName(ByVal chartId As Long) As String
+    Select Case chartId
+        ' Column / Bar
+        Case 51: XlChartTypeName = "clustered-column"
+        Case 52: XlChartTypeName = "stacked-column"
+        Case 53: XlChartTypeName = "100-stacked-column"
+        Case 54: XlChartTypeName = "3d-clustered-column"
+        Case 55: XlChartTypeName = "3d-stacked-column"
+        Case 56: XlChartTypeName = "3d-100-stacked-column"
+        Case 57: XlChartTypeName = "clustered-bar"
+        Case 58: XlChartTypeName = "stacked-bar"
+        Case 59: XlChartTypeName = "100-stacked-bar"
+        Case 60: XlChartTypeName = "3d-clustered-bar"
+        Case 61: XlChartTypeName = "3d-stacked-bar"
+        Case 62: XlChartTypeName = "3d-100-stacked-bar"
+        Case -4100: XlChartTypeName = "3d-column"
+        ' Line
+        Case 4: XlChartTypeName = "line"
+        Case 63: XlChartTypeName = "stacked-line"
+        Case 64: XlChartTypeName = "100-stacked-line"
+        Case 65: XlChartTypeName = "line-with-markers"
+        Case 66: XlChartTypeName = "stacked-line-with-markers"
+        Case 67: XlChartTypeName = "100-stacked-line-with-markers"
+        Case -4101: XlChartTypeName = "3d-line"
+        Case -4120: XlChartTypeName = "xl-line-classic"
+        ' Pie
+        Case 5: XlChartTypeName = "pie"
+        Case 68: XlChartTypeName = "pie-of-pie"
+        Case 69: XlChartTypeName = "exploded-pie"
+        Case 70: XlChartTypeName = "3d-pie"
+        Case 71: XlChartTypeName = "3d-exploded-pie"
+        Case -4102: XlChartTypeName = "doughnut"
+        Case 80: XlChartTypeName = "exploded-doughnut"
+        ' Area
+        Case 1: XlChartTypeName = "area"
+        Case 76: XlChartTypeName = "stacked-area"
+        Case 77: XlChartTypeName = "100-stacked-area"
+        Case 78: XlChartTypeName = "3d-area"
+        Case 79: XlChartTypeName = "3d-stacked-area"
+        Case -4098: XlChartTypeName = "3d-100-stacked-area"
+        ' Scatter
+        Case -4169: XlChartTypeName = "scatter"
+        Case 72: XlChartTypeName = "scatter-with-lines"
+        Case 73: XlChartTypeName = "scatter-with-lines-no-markers"
+        Case 74: XlChartTypeName = "scatter-with-smooth-lines"
+        Case 75: XlChartTypeName = "scatter-with-smooth-lines-no-markers"
+        ' Radar
+        Case -4151: XlChartTypeName = "radar"
+        Case 81: XlChartTypeName = "radar-with-markers"
+        Case 82: XlChartTypeName = "filled-radar"
+        ' Bubble
+        Case 15: XlChartTypeName = "bubble"
+        Case 87: XlChartTypeName = "bubble-3d"
+        ' Stock
+        Case 88: XlChartTypeName = "stock-hlc"
+        Case 89: XlChartTypeName = "stock-ohlc"
+        Case 90: XlChartTypeName = "stock-vhlc"
+        Case 91: XlChartTypeName = "stock-vohlc"
+        ' Surface
+        Case 83: XlChartTypeName = "surface-3d"
+        Case 84: XlChartTypeName = "surface-wireframe-3d"
+        Case 85: XlChartTypeName = "surface-contour"
+        Case 86: XlChartTypeName = "surface-wireframe-contour"
+        Case -4163: XlChartTypeName = "surface-top-view"
+        ' Cone
+        Case 92: XlChartTypeName = "cone-clustered-column"
+        Case 93: XlChartTypeName = "cone-stacked-column"
+        Case 94: XlChartTypeName = "cone-100-stacked-column"
+        Case 95: XlChartTypeName = "cone-clustered-bar"
+        Case 96: XlChartTypeName = "cone-stacked-bar"
+        Case 97: XlChartTypeName = "cone-100-stacked-bar"
+        Case 98: XlChartTypeName = "cone-3d-column"
+        ' Cylinder
+        Case 99: XlChartTypeName = "cylinder-clustered-column"
+        Case 100: XlChartTypeName = "cylinder-stacked-column"
+        Case 101: XlChartTypeName = "cylinder-100-stacked-column"
+        Case 102: XlChartTypeName = "cylinder-clustered-bar"
+        Case 103: XlChartTypeName = "cylinder-stacked-bar"
+        Case 104: XlChartTypeName = "cylinder-100-stacked-bar"
+        Case 105: XlChartTypeName = "cylinder-3d-column"
+        ' Pyramid
+        Case 106: XlChartTypeName = "pyramid-clustered-column"
+        Case 107: XlChartTypeName = "pyramid-stacked-column"
+        Case 108: XlChartTypeName = "pyramid-100-stacked-column"
+        Case 109: XlChartTypeName = "pyramid-clustered-bar"
+        Case 110: XlChartTypeName = "pyramid-stacked-bar"
+        Case 111: XlChartTypeName = "pyramid-100-stacked-bar"
+        Case 112: XlChartTypeName = "pyramid-3d-column"
+        ' Combo
+        Case 113: XlChartTypeName = "combo-column-line"
+        Case 114: XlChartTypeName = "combo-column-line-secondary-axis"
+        Case 115: XlChartTypeName = "combo-stacked-area-column"
+        Case -4152: XlChartTypeName = "combo-custom"
+        ' Modern (Office 2016+)
+        Case 116: XlChartTypeName = "treemap"
+        Case 117: XlChartTypeName = "sunburst"
+        Case 118: XlChartTypeName = "histogram"
+        Case 119: XlChartTypeName = "pareto"
+        Case 120: XlChartTypeName = "box-and-whisker"
+        Case 121: XlChartTypeName = "waterfall"
+        Case 122: XlChartTypeName = "funnel"
+        Case 123: XlChartTypeName = "map"
+        Case 140: XlChartTypeName = "region-map"
+        ' Microsoft 365 exclusive types
+        Case 124: XlChartTypeName = "ex-linked-treemap"
+        Case 125: XlChartTypeName = "ex-linked-sunburst"
+        Case 126: XlChartTypeName = "ex-linked-histogram"
+        Case 127: XlChartTypeName = "ex-linked-pareto"
+        Case 128: XlChartTypeName = "ex-linked-box-whisker"
+        Case 129: XlChartTypeName = "ex-linked-waterfall"
+        Case 130: XlChartTypeName = "ex-linked-funnel"
+        Case 131: XlChartTypeName = "ex-linked-map"
+        Case 132: XlChartTypeName = "ex-linked-scatter"
+        Case 133: XlChartTypeName = "ex-linked-line"
+        Case 134: XlChartTypeName = "ex-linked-area"
+        Case 135: XlChartTypeName = "ex-linked-bar"
+        Case 136: XlChartTypeName = "ex-linked-column"
+        Case 137: XlChartTypeName = "ex-linked-pie"
+        Case 138: XlChartTypeName = "ex-linked-surface"
+        Case 139: XlChartTypeName = "ex-linked-radar"
+        Case Else
+            XlChartTypeName = "chart-type-" & CStr(chartId)
+    End Select
+End Function
 
 Private Function ResolveShapeType(ByVal name As String) As MsoAutoShapeType
     Select Case UCase$(name)
