@@ -23,9 +23,12 @@ export default defineConfig({
     {
       name: 'serve-testdata',
       configureServer(server) {
-        // List test files: scan cases/ subdirectories that have source.pptx
-        server.middlewares.use('/api/testdata-files', (_req, res) => {
-          const casesDir = resolve(__dirname, 'test/e2e/testdata/cases');
+        // List test files: scan cases/ or windows-cases/ subdirectories that have source.pptx
+        server.middlewares.use('/api/testdata-files', (req, res) => {
+          const url = new URL(req.url || '/', 'http://localhost');
+          const source = url.searchParams.get('source');
+          const subdir = source === 'windows' ? 'windows-cases' : 'cases';
+          const casesDir = resolve(__dirname, 'test/e2e/testdata', subdir);
           if (!fs.existsSync(casesDir)) {
             res.setHeader('Content-Type', 'application/json');
             res.end('[]');

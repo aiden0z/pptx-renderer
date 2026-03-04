@@ -255,43 +255,20 @@ function buildDiagramGroup(
     hasBounds && (maxRight - minX > base.size.w * 2 || maxBottom - minY > base.size.h * 2);
   const useFrameCoords = bboxSpansNegative || bboxMuchLargerThanFrame;
 
-  // For non-circular SmartArt, keep the original drawing coordinate system origin (0,0).
-  // Many org-chart connectors are authored relative to that space and shift/stretch if we crop to tight bbox.
-  let extentW =
-    hasCircularPreset && !useFrameCoords ? Math.max(1, maxRight - minX) : Math.max(1, base.size.w);
-  let extentH =
-    hasCircularPreset && !useFrameCoords ? Math.max(1, maxBottom - minY) : Math.max(1, base.size.h);
-  let offX = hasCircularPreset && !useFrameCoords ? (minX === Infinity ? 0 : minX) : 0;
-  let offY = hasCircularPreset && !useFrameCoords ? (minY === Infinity ? 0 : minY) : 0;
+  // Use the graphicFrame's own dimensions as the child coordinate space.
+  // Diagram shapes are positioned in the frame's coordinate space (EMU converted to px).
+  // Using frame dimensions gives a 1:1 scale, preserving original positions and sizes.
+  // This avoids enlarging shapes when the bounding box is smaller than the frame.
+  let extentW = Math.max(1, base.size.w);
+  let extentH = Math.max(1, base.size.h);
+  let offX = 0;
+  let offY = 0;
 
   if (!hasBounds) {
     extentW = Math.max(1, base.size.w);
     extentH = Math.max(1, base.size.h);
     offX = 0;
     offY = 0;
-  }
-
-  // Preserve aspect ratio: adjust childExtent to match the graphicFrame's aspect
-  // ratio so that group coordinate remapping uses uniform scaling.  Without this,
-  // diagram circles get squished into ellipses when the frame is non-square.
-  if (
-    hasCircularPreset &&
-    !useFrameCoords &&
-    base.size.w > 0 &&
-    base.size.h > 0 &&
-    extentW > 0 &&
-    extentH > 0
-  ) {
-    const scaleX = base.size.w / extentW;
-    const scaleY = base.size.h / extentH;
-    const uniformScale = Math.min(scaleX, scaleY);
-    const newExtW = base.size.w / uniformScale;
-    const newExtH = base.size.h / uniformScale;
-    // Center the content in the expanded dimension
-    offX -= (newExtW - extentW) / 2;
-    offY -= (newExtH - extentH) / 2;
-    extentW = newExtW;
-    extentH = newExtH;
   }
 
   return {

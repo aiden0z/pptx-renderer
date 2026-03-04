@@ -224,6 +224,10 @@
           placeholder="Search test file..."
           aria-label="Search test files"
         />
+        <select id="source-select">
+          <option value="">cases</option>
+          <option value="windows">windows-cases</option>
+        </select>
         <select id="file-select">
           <option value="">-- Test File --</option>
         </select>
@@ -341,6 +345,7 @@
       let logLineCount = 0;
       const fileSearch = document.getElementById('file-search');
       const fileSelect = document.getElementById('file-select');
+      const sourceSelect = document.getElementById('source-select');
       const viewMode = document.getElementById('view-mode');
       const pageSelect = document.getElementById('page-select');
 
@@ -355,10 +360,21 @@
 
       // URL params
       const params = new URLSearchParams(location.search);
+      let currentSource = params.get('source') || '';
+      if (currentSource) sourceSelect.value = currentSource;
       const listStrategyParam = params.get('listStrategy');
       const listBatchSizeParam = Number(params.get('listBatchSize'));
       const windowedInitialSlidesParam = Number(params.get('windowedInitialSlides'));
       const windowedOverscanParam = Number(params.get('windowedOverscanViewport'));
+
+      /** Return '?source=windows' or '' depending on current source selection. */
+      function sourceQuery(prefix = '?') {
+        return currentSource ? `${prefix}source=${currentSource}` : '';
+      }
+      /** Return the testdata subdirectory name for the current source. */
+      function testdataSubdir() {
+        return currentSource === 'windows' ? 'windows-cases' : 'cases';
+      }
 
       function buildListOptions() {
         // E2E comparison needs all slides mounted for extraction from hidden temp container.
@@ -409,7 +425,7 @@
       // Populate file select from testdata directory
       async function populateFileSelect() {
         try {
-          const resp = await fetch('/api/testdata-files');
+          const resp = await fetch('/api/testdata-files' + sourceQuery());
           if (!resp.ok) return;
           const files = await resp.json();
           allTestFiles = Array.isArray(files) ? files : [];
@@ -436,7 +452,7 @@
       // -----------------------------------------------------------------------
       async function checkServer() {
         try {
-          const resp = await fetch('/api/test-files');
+          const resp = await fetch('/api/test-files' + sourceQuery());
           if (resp.ok) {
             const payload = await resp.json().catch(() => null);
             if (payload && Array.isArray(payload.files)) {
@@ -780,7 +796,7 @@
       async function fetchServerSSIM(testFile) {
         if (!serverAvailable) return null;
         try {
-          const resp = await fetch(`/api/evaluate/${testFile}`, { method: 'POST' });
+          const resp = await fetch(`/api/evaluate/${testFile}${sourceQuery()}`, { method: 'POST' });
           if (!resp.ok) return null;
           return await resp.json();
         } catch {
@@ -1149,7 +1165,7 @@
           const hdr = document.createElement('div');
           hdr.className = 'slide-card-header';
           const renderLink = r.testFile
-            ? `/test/pages/render-slide.html?file=testdata/cases/${r.testFile}/source.pptx&slide=${r.index}`
+            ? `/test/pages/render-slide.html?file=testdata/${testdataSubdir()}/${r.testFile}/source.pptx&slide=${r.index}`
             : '';
           const openBtn = renderLink
             ? `<a href="${renderLink}" target="_blank" style="color:#8ab4f8;font-size:11px;text-decoration:none;margin-left:8px;opacity:0.7" title="Open in Single Slide view">↗ Open</a>`
@@ -1272,7 +1288,7 @@
           diffPanel.innerHTML = '<div class="panel-label">Diff Heatmap</div>';
           if (r.hasDiff && r.testFile) {
             const img = document.createElement('img');
-            img.src = `/api/diff/${r.testFile}/${r.index}`;
+            img.src = `/api/diff/${r.testFile}/${r.index}${sourceQuery()}`;
             img.style.width = '100%';
             img.alt = `Diff slide ${r.index + 1}`;
             img.loading = 'lazy';
@@ -1436,7 +1452,7 @@
       async function fetchPngSlides(name, slideCount) {
         const promises = [];
         for (let i = 1; i <= slideCount; i++) {
-          const url = `/testdata/cases/${name}/slides/slide${i}.png`;
+          const url = `/testdata/${testdataSubdir()}/${name}/slides/slide${i}.png`;
           promises.push(
             fetch(url)
               .then((r) => {
@@ -1454,13 +1470,17 @@
 
       async function fetchPair(name) {
         const [pdfResp, pptxResp] = await Promise.all([
-          fetch(`/testdata/cases/${name}/ground-truth.pdf`),
-          fetch(`/testdata/cases/${name}/source.pptx`),
+          fetch(`/testdata/${testdataSubdir()}/${name}/ground-truth.pdf`),
+          fetch(`/testdata/${testdataSubdir()}/${name}/source.pptx`),
         ]);
         if (!pdfResp.ok)
-          throw new Error(`PDF not found: cases/${name}/ground-truth.pdf (${pdfResp.status})`);
+          throw new Error(
+            `PDF not found: ${testdataSubdir()}/${name}/ground-truth.pdf (${pdfResp.status})`,
+          );
         if (!pptxResp.ok)
-          throw new Error(`PPTX not found: cases/${name}/source.pptx (${pptxResp.status})`);
+          throw new Error(
+            `PPTX not found: ${testdataSubdir()}/${name}/source.pptx (${pptxResp.status})`,
+          );
         return {
           pdfBuffer: await pdfResp.arrayBuffer(),
           pptxBuffer: await pptxResp.arrayBuffer(),
@@ -1683,6 +1703,22 @@
       document.getElementById('btn-eval-all').addEventListener('click', evaluateAll);
       document.getElementById('log-header').addEventListener('click', () => {
         logSection.classList.toggle('expanded');
+      });
+
+      sourceSelect.addEventListener('change', () => {
+        currentSource = sourceSelect.value;
+        const url = new URL(location);
+        if (currentSource) {
+          url.searchParams.set('source', currentSource);
+        } else {
+          url.searchParams.delete('source');
+        }
+        history.replaceState(null, '', url);
+        // Re-fetch file list for the new source
+        main.innerHTML = '';
+        currentSlideResults = null;
+        populateFileSelect();
+        checkServer();
       });
 
       fileSearch.addEventListener('input', () => {

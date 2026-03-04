@@ -568,6 +568,7 @@ export function renderShape(node: ShapeNodeData, ctx: RenderContext): HTMLElemen
             const hGradId = `${fillGradId}-h`;
             const hGrad = document.createElementNS(svgNs, 'linearGradient');
             hGrad.setAttribute('id', hGradId);
+            hGrad.setAttribute('color-interpolation', 'linearRGB');
             hGrad.setAttribute('x1', '0%');
             hGrad.setAttribute('y1', '0%');
             hGrad.setAttribute('x2', '100%');
@@ -584,6 +585,7 @@ export function renderShape(node: ShapeNodeData, ctx: RenderContext): HTMLElemen
             const vGradId = `${fillGradId}-v`;
             const vGrad = document.createElementNS(svgNs, 'linearGradient');
             vGrad.setAttribute('id', vGradId);
+            vGrad.setAttribute('color-interpolation', 'linearRGB');
             vGrad.setAttribute('x1', '0%');
             vGrad.setAttribute('y1', '0%');
             vGrad.setAttribute('x2', '0%');
@@ -638,6 +640,7 @@ export function renderShape(node: ShapeNodeData, ctx: RenderContext): HTMLElemen
           } else if (gradientFillData.type === 'radial') {
             const radialGrad = document.createElementNS(svgNs, 'radialGradient');
             radialGrad.setAttribute('id', fillGradId);
+            radialGrad.setAttribute('color-interpolation', 'linearRGB');
             const gcx = gradientFillData.cx ?? 0.5;
             const gcy = gradientFillData.cy ?? 0.5;
             radialGrad.setAttribute('cx', `${gcx * 100}%`);
@@ -658,6 +661,7 @@ export function renderShape(node: ShapeNodeData, ctx: RenderContext): HTMLElemen
             // Linear gradient
             const linearGrad = document.createElementNS(svgNs, 'linearGradient');
             linearGrad.setAttribute('id', fillGradId);
+            linearGrad.setAttribute('color-interpolation', 'linearRGB');
             const coords = angleToSvgGradientCoords(gradientFillData.angle);
             linearGrad.setAttribute('x1', coords.x1);
             linearGrad.setAttribute('y1', coords.y1);
@@ -758,6 +762,7 @@ export function renderShape(node: ShapeNodeData, ctx: RenderContext): HTMLElemen
         const gradId = `grad-stroke-${++gradientIdCounter}`;
         const linearGrad = document.createElementNS(svgNs, 'linearGradient');
         linearGrad.setAttribute('id', gradId);
+        linearGrad.setAttribute('color-interpolation', 'linearRGB');
         linearGrad.setAttribute('gradientUnits', 'userSpaceOnUse');
 
         // Convert gradient angle to absolute coordinates in SVG user space

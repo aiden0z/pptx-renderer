@@ -641,8 +641,8 @@ describe('ChartRenderer', () => {
       const palette = option.color as string[] | undefined;
       expect(Array.isArray(palette)).toBe(true);
       expect(palette?.length).toBeGreaterThan(0);
-      // style id 102 rotates the palette in our mapping (accent2 first).
-      expect((palette?.[0] || '').toUpperCase()).toContain('ED7D31');
+      // Chart palette uses accent colors in order (accent1 first = #4472C4).
+      expect((palette?.[0] || '').toUpperCase()).toContain('4472C4');
     });
   });
 
@@ -3414,6 +3414,186 @@ describe('ChartRenderer', () => {
       expect(formatter({ value: 0 })).toBe('');
       // Null value → empty string
       expect(formatter({ value: null })).toBe('');
+    });
+  });
+
+  // ==========================================================================
+  // Bubble Chart
+  // ==========================================================================
+
+  describe('bubble chart', () => {
+    it('should parse bubbleChart as scatter with symbolSize', () => {
+      const xml = `
+        <c:chartSpace xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart"
+                      xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+          <c:chart>
+            <c:plotArea>
+              <c:bubbleChart>
+                <c:ser>
+                  <c:idx val="0"/><c:order val="0"/>
+                  <c:tx>
+                    <c:strRef><c:strCache><c:ptCount val="1"/><c:pt idx="0"><c:v>Bubbles</c:v></c:pt></c:strCache></c:strRef>
+                  </c:tx>
+                  <c:xVal>
+                    <c:numRef><c:numCache><c:ptCount val="3"/>
+                      <c:pt idx="0"><c:v>1</c:v></c:pt>
+                      <c:pt idx="1"><c:v>2</c:v></c:pt>
+                      <c:pt idx="2"><c:v>3</c:v></c:pt>
+                    </c:numCache></c:numRef>
+                  </c:xVal>
+                  <c:yVal>
+                    <c:numRef><c:numCache><c:ptCount val="3"/>
+                      <c:pt idx="0"><c:v>10</c:v></c:pt>
+                      <c:pt idx="1"><c:v>20</c:v></c:pt>
+                      <c:pt idx="2"><c:v>30</c:v></c:pt>
+                    </c:numCache></c:numRef>
+                  </c:yVal>
+                  <c:bubbleSize>
+                    <c:numRef><c:numCache><c:ptCount val="3"/>
+                      <c:pt idx="0"><c:v>5</c:v></c:pt>
+                      <c:pt idx="1"><c:v>15</c:v></c:pt>
+                      <c:pt idx="2"><c:v>25</c:v></c:pt>
+                    </c:numCache></c:numRef>
+                  </c:bubbleSize>
+                </c:ser>
+              </c:bubbleChart>
+            </c:plotArea>
+          </c:chart>
+        </c:chartSpace>`;
+
+      const { option } = parseChartOption(xml);
+      const series = option.series as any[];
+      expect(series.length).toBe(1);
+      expect(series[0].type).toBe('scatter');
+      expect(series[0].name).toBe('Bubbles');
+      // Data should be [x, y, bubbleSize] tuples
+      expect(series[0].data[0]).toEqual([1, 10, 5]);
+      expect(series[0].data[1]).toEqual([2, 20, 15]);
+      expect(series[0].data[2]).toEqual([3, 30, 25]);
+      // symbolSize should be a function
+      expect(typeof series[0].symbolSize).toBe('function');
+      // Min bubble (5) → 10px, max bubble (25) → 60px
+      expect(series[0].symbolSize([0, 0, 5])).toBe(10);
+      expect(series[0].symbolSize([0, 0, 25])).toBe(60);
+    });
+  });
+
+  // ==========================================================================
+  // Stock Chart (Candlestick)
+  // ==========================================================================
+
+  describe('stock chart', () => {
+    it('should parse stockChart with 4 series (OHLC) as candlestick', () => {
+      const xml = `
+        <c:chartSpace xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart"
+                      xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+          <c:chart>
+            <c:plotArea>
+              <c:stockChart>
+                <c:ser>
+                  <c:idx val="0"/><c:order val="0"/>
+                  <c:tx><c:strRef><c:strCache><c:ptCount val="1"/><c:pt idx="0"><c:v>Open</c:v></c:pt></c:strCache></c:strRef></c:tx>
+                  <c:cat><c:strRef><c:strCache><c:ptCount val="2"/>
+                    <c:pt idx="0"><c:v>Day1</c:v></c:pt><c:pt idx="1"><c:v>Day2</c:v></c:pt>
+                  </c:strCache></c:strRef></c:cat>
+                  <c:val><c:numRef><c:numCache><c:ptCount val="2"/>
+                    <c:pt idx="0"><c:v>100</c:v></c:pt><c:pt idx="1"><c:v>110</c:v></c:pt>
+                  </c:numCache></c:numRef></c:val>
+                </c:ser>
+                <c:ser>
+                  <c:idx val="1"/><c:order val="1"/>
+                  <c:tx><c:strRef><c:strCache><c:ptCount val="1"/><c:pt idx="0"><c:v>High</c:v></c:pt></c:strCache></c:strRef></c:tx>
+                  <c:val><c:numRef><c:numCache><c:ptCount val="2"/>
+                    <c:pt idx="0"><c:v>120</c:v></c:pt><c:pt idx="1"><c:v>130</c:v></c:pt>
+                  </c:numCache></c:numRef></c:val>
+                </c:ser>
+                <c:ser>
+                  <c:idx val="2"/><c:order val="2"/>
+                  <c:tx><c:strRef><c:strCache><c:ptCount val="1"/><c:pt idx="0"><c:v>Low</c:v></c:pt></c:strCache></c:strRef></c:tx>
+                  <c:val><c:numRef><c:numCache><c:ptCount val="2"/>
+                    <c:pt idx="0"><c:v>90</c:v></c:pt><c:pt idx="1"><c:v>95</c:v></c:pt>
+                  </c:numCache></c:numRef></c:val>
+                </c:ser>
+                <c:ser>
+                  <c:idx val="3"/><c:order val="3"/>
+                  <c:tx><c:strRef><c:strCache><c:ptCount val="1"/><c:pt idx="0"><c:v>Close</c:v></c:pt></c:strCache></c:strRef></c:tx>
+                  <c:val><c:numRef><c:numCache><c:ptCount val="2"/>
+                    <c:pt idx="0"><c:v>105</c:v></c:pt><c:pt idx="1"><c:v>125</c:v></c:pt>
+                  </c:numCache></c:numRef></c:val>
+                </c:ser>
+                <c:axId val="1"/><c:axId val="2"/>
+              </c:stockChart>
+              <c:catAx>
+                <c:axId val="1"/><c:scaling><c:orientation val="minMax"/></c:scaling>
+                <c:delete val="0"/><c:axPos val="b"/><c:tickLblPos val="nextTo"/><c:crossAx val="2"/>
+              </c:catAx>
+              <c:valAx>
+                <c:axId val="2"/><c:scaling><c:orientation val="minMax"/></c:scaling>
+                <c:delete val="0"/><c:axPos val="l"/><c:tickLblPos val="nextTo"/><c:crossAx val="1"/>
+              </c:valAx>
+            </c:plotArea>
+          </c:chart>
+        </c:chartSpace>`;
+
+      const { option } = parseChartOption(xml);
+      const series = option.series as any[];
+      expect(series.length).toBe(1);
+      expect(series[0].type).toBe('candlestick');
+      // ECharts candlestick format: [open, close, low, high]
+      expect(series[0].data[0]).toEqual([100, 105, 90, 120]);
+      expect(series[0].data[1]).toEqual([110, 125, 95, 130]);
+    });
+
+    it('should handle HLC (3 series) stock chart with collapsed body', () => {
+      const xml = `
+        <c:chartSpace xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart"
+                      xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+          <c:chart>
+            <c:plotArea>
+              <c:stockChart>
+                <c:ser>
+                  <c:idx val="0"/><c:order val="0"/>
+                  <c:tx><c:strRef><c:strCache><c:ptCount val="1"/><c:pt idx="0"><c:v>High</c:v></c:pt></c:strCache></c:strRef></c:tx>
+                  <c:cat><c:strRef><c:strCache><c:ptCount val="1"/>
+                    <c:pt idx="0"><c:v>Day1</c:v></c:pt>
+                  </c:strCache></c:strRef></c:cat>
+                  <c:val><c:numRef><c:numCache><c:ptCount val="1"/>
+                    <c:pt idx="0"><c:v>50</c:v></c:pt>
+                  </c:numCache></c:numRef></c:val>
+                </c:ser>
+                <c:ser>
+                  <c:idx val="1"/><c:order val="1"/>
+                  <c:tx><c:strRef><c:strCache><c:ptCount val="1"/><c:pt idx="0"><c:v>Low</c:v></c:pt></c:strCache></c:strRef></c:tx>
+                  <c:val><c:numRef><c:numCache><c:ptCount val="1"/>
+                    <c:pt idx="0"><c:v>20</c:v></c:pt>
+                  </c:numCache></c:numRef></c:val>
+                </c:ser>
+                <c:ser>
+                  <c:idx val="2"/><c:order val="2"/>
+                  <c:tx><c:strRef><c:strCache><c:ptCount val="1"/><c:pt idx="0"><c:v>Close</c:v></c:pt></c:strCache></c:strRef></c:tx>
+                  <c:val><c:numRef><c:numCache><c:ptCount val="1"/>
+                    <c:pt idx="0"><c:v>35</c:v></c:pt>
+                  </c:numCache></c:numRef></c:val>
+                </c:ser>
+                <c:axId val="1"/><c:axId val="2"/>
+              </c:stockChart>
+              <c:catAx>
+                <c:axId val="1"/><c:scaling><c:orientation val="minMax"/></c:scaling>
+                <c:delete val="0"/><c:axPos val="b"/><c:tickLblPos val="nextTo"/><c:crossAx val="2"/>
+              </c:catAx>
+              <c:valAx>
+                <c:axId val="2"/><c:scaling><c:orientation val="minMax"/></c:scaling>
+                <c:delete val="0"/><c:axPos val="l"/><c:tickLblPos val="nextTo"/><c:crossAx val="1"/>
+              </c:valAx>
+            </c:plotArea>
+          </c:chart>
+        </c:chartSpace>`;
+
+      const { option } = parseChartOption(xml);
+      const series = option.series as any[];
+      expect(series[0].type).toBe('candlestick');
+      // HLC: open=close (collapsed body), [open, close, low, high]
+      expect(series[0].data[0]).toEqual([35, 35, 20, 50]);
     });
   });
 

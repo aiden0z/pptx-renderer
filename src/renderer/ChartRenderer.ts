@@ -18,6 +18,7 @@ interface SeriesData {
   categories: string[];
   values: number[];
   xValues?: number[]; // scatter chart x values from c:xVal
+  bubbleSizes?: number[]; // bubble chart sizes from c:bubbleSize
   colorHex?: string | object; // optional explicit series color (hex string or ECharts gradient)
   dataPointColors?: (string | undefined)[]; // per-point colors (for pie charts)
   formatCode?: string; // numCache formatCode (e.g. "0%", "0.0%", "General")
@@ -62,6 +63,8 @@ type OoxmlChartType =
   | 'doughnutChart'
   | 'radarChart'
   | 'scatterChart'
+  | 'bubbleChart'
+  | 'stockChart'
   | 'surface3DChart';
 
 // ---------------------------------------------------------------------------
@@ -80,20 +83,9 @@ const CHART_TYPE_ELEMENTS: OoxmlChartType[] = [
   'doughnutChart',
   'radarChart',
   'scatterChart',
+  'bubbleChart',
+  'stockChart',
   'surface3DChart',
-];
-
-/** Fallback series colors when OOXML does not specify (e.g. radar line colors). */
-const DEFAULT_SERIES_COLORS = [
-  '#5470c6',
-  '#91cc75',
-  '#fac858',
-  '#ee6666',
-  '#73c0de',
-  '#3ba272',
-  '#fc8452',
-  '#9a60b4',
-  '#ea7ccc',
 ];
 
 // ---------------------------------------------------------------------------
@@ -221,14 +213,40 @@ function extractNumericValuesAsStrings(cache: SafeXmlNode): string[] {
   const ptCount = cache.child('ptCount').numAttr('val') ?? 0;
   const values: string[] = new Array(ptCount).fill('');
 
+  // Check if this is a date format — format date serial numbers to human-readable strings
+  const fc = cache.child('formatCode').text();
+  const isDateFmt = fc && /[yYmMdD]/.test(fc) && !/[#0]/.test(fc);
+
   for (const pt of cache.children('pt')) {
     const idx = pt.numAttr('idx');
     if (idx !== undefined) {
-      values[idx] = pt.child('v').text();
+      const raw = pt.child('v').text();
+      if (isDateFmt && raw) {
+        values[idx] = excelSerialToDateString(parseFloat(raw));
+      } else {
+        values[idx] = raw;
+      }
     }
   }
 
   return values;
+}
+
+/**
+ * Convert Excel date serial number to a locale-formatted date string.
+ * Excel epoch: 1899-12-30 (accounting for the Lotus 1-2-3 leap year bug).
+ */
+function excelSerialToDateString(serial: number): string {
+  if (!Number.isFinite(serial) || serial < 1) return String(serial);
+  // Excel serial date: 1 = 1900-01-01.
+  // Excel has a Lotus 1-2-3 bug where serial 60 = Feb 29, 1900 (which doesn't exist).
+  // For serials > 59, subtract 1 to correct for this phantom leap day.
+  const adjusted = serial > 59 ? serial - 1 : serial;
+  // Epoch: serial 1 = 1900-01-01, so base is 1899-12-31
+  const epoch = new Date(1899, 11, 31);
+  const date = new Date(epoch.getTime() + adjusted * 86400000);
+  // Format as YYYY/M/D (matches CJK locale conventions used in the test data)
+  return `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`;
 }
 
 /**
@@ -571,6 +589,10 @@ function parseSeries(chartTypeNode: SafeXmlNode, ctx: RenderContext): SeriesData
       }
     }
 
+    // Bubble chart sizes from c:bubbleSize
+    const bubbleSizeNode = ser.child('bubbleSize');
+    const bubbleSizes = bubbleSizeNode.exists() ? extractNumericValues(bubbleSizeNode) : undefined;
+
     const colorHex = extractSeriesColor(ser, ctx);
     const dataPointColors = extractDataPointColors(ser, ctx);
 
@@ -585,6 +607,7 @@ function parseSeries(chartTypeNode: SafeXmlNode, ctx: RenderContext): SeriesData
       categories,
       values,
       xValues,
+      bubbleSizes,
       colorHex,
       dataPointColors,
       formatCode,
@@ -607,7 +630,7 @@ function parseSeries(chartTypeNode: SafeXmlNode, ctx: RenderContext): SeriesData
  * Extract chart title from chartSpace > chart > title.
  * Returns undefined when autoTitleDeleted val="1" (title was intentionally removed).
  */
-function extractChartTitle(chartNode: SafeXmlNode): string | undefined {
+function extractChartTitle(chartNode: SafeXmlNode, seriesArr?: SeriesData[]): string | undefined {
   // Respect autoTitleDeleted: if set, the title should not be shown
   const autoTitleDeleted = chartNode.child('autoTitleDeleted');
   if (autoTitleDeleted.exists() && autoTitleDeleted.attr('val') === '1') {
@@ -615,7 +638,15 @@ function extractChartTitle(chartNode: SafeXmlNode): string | undefined {
   }
 
   const title = chartNode.child('title');
-  if (!title.exists()) return undefined;
+  if (!title.exists()) {
+    // OOXML spec: when autoTitleDeleted is NOT "1" and there is no explicit
+    // <c:title>, the chart auto-generates a title from the first series name.
+    // This applies mainly to single-series charts like pie/doughnut.
+    if (seriesArr && seriesArr.length === 1 && seriesArr[0].name) {
+      return seriesArr[0].name;
+    }
+    return undefined;
+  }
 
   const tx = title.child('tx');
   if (!tx.exists()) return undefined;
@@ -736,16 +767,16 @@ function extractLegendInfo(chartNode: SafeXmlNode, ctx: RenderContext): LegendIn
       option = { ...base, top: topBelowTitle, orient: 'horizontal' as const };
       break;
     case 'l':
-      option = { ...base, left: '2%', orient: 'vertical' as const };
+      option = { ...base, left: '2%', top: 'middle', orient: 'vertical' as const };
       break;
     case 'r':
-      option = { ...base, right: '2%', orient: 'vertical' as const };
+      option = { ...base, right: '2%', top: 'middle', orient: 'vertical' as const };
       break;
     case 'tr':
       option = { ...base, top: topBelowTitle, right: '2%', orient: 'vertical' as const };
       break;
     default:
-      option = { ...base, right: '2%', orient: 'vertical' as const };
+      option = { ...base, right: '2%', top: 'middle', orient: 'vertical' as const };
       break;
   }
   return {
@@ -788,7 +819,8 @@ function extractLegendManualLayout(
 function legendIsAtTop(legendInfo: LegendInfo | undefined): boolean {
   if (!legendInfo || !legendInfo.option || typeof legendInfo.option !== 'object') return false;
   const o = legendInfo.option as Record<string, unknown>;
-  return o.top !== undefined && o.top !== null;
+  // top: 'middle' is used by right/left legends (vertically centered), not "at top"
+  return o.top !== undefined && o.top !== null && o.top !== 'middle';
 }
 
 /**
@@ -857,10 +889,19 @@ function buildLegendOption(
   const manual = legendInfo?.manualLayout ?? {};
   const top =
     manual.top !== undefined ? manual.top : legendTopPx !== undefined ? legendTopPx : undefined;
+  // PowerPoint legend icons are sharp-cornered squares; ECharts default is 25×14 roundRect.
+  // Set icon to 'rect' (no rounded corners) and both dimensions equal for square icons.
+  // However, if individual data items carry their own icon (e.g. line/radar marker symbols),
+  // respect those per-item icons instead of forcing 'rect' globally.
+  const iconSize = textStyle.fontSize ?? 10;
+  const hasPerItemIcons = data.some((d) => typeof d === 'object' && d.icon);
   return {
     ...legendOpt,
     ...manual,
     ...(top !== undefined ? { top } : {}),
+    ...(hasPerItemIcons ? {} : { icon: 'rect' }),
+    itemWidth: iconSize,
+    itemHeight: iconSize,
     data,
     textStyle,
   };
@@ -966,6 +1007,33 @@ function parseAxes(
     valueAxis: parseAxisNode(valAx, ctx),
     categoryAxis: catAx.exists() ? parseAxisNode(catAx, ctx) : parseAxisNode(dateAx, ctx),
   };
+}
+
+/**
+ * Parse scatter/bubble axes: two valAx nodes differentiated by axPos.
+ * Returns X axis (bottom/top) and Y axis (left/right) separately.
+ */
+function parseScatterAxes(
+  plotArea: SafeXmlNode,
+  ctx: RenderContext,
+): { xAxis: AxisInfo; yAxis: AxisInfo } {
+  const allValAx = plotArea.children('valAx');
+  let xAxis: AxisInfo = { ...DEFAULT_AXIS_INFO };
+  let yAxis: AxisInfo = { ...DEFAULT_AXIS_INFO };
+  for (const ax of allValAx) {
+    const axPos = ax.child('axPos').attr('val') ?? '';
+    const info = parseAxisNode(ax, ctx);
+    if (axPos === 'b' || axPos === 't') {
+      xAxis = info;
+    } else if (axPos === 'l' || axPos === 'r') {
+      yAxis = info;
+    }
+  }
+  // Fallback: if only one valAx found, use first as Y axis (value)
+  if (allValAx.length === 1) {
+    yAxis = parseAxisNode(allValAx[0], ctx);
+  }
+  return { xAxis, yAxis };
 }
 
 /**
@@ -1080,7 +1148,7 @@ function buildBarChartOption(
   // Use categories from the first series that has them
   const categories = seriesArr.find((s) => s.categories.length > 0)?.categories || [];
 
-  const title = extractChartTitle(chartNode);
+  const title = extractChartTitle(chartNode, seriesArr);
   const titleStyle = extractTxPrStyle(chartNode.child('title'), ctx);
   const titleLayout = extractTitleManualLayout(chartNode);
   const legendInfo = extractLegendInfo(chartNode, ctx);
@@ -1162,11 +1230,14 @@ function buildBarChartOption(
       itemStyle: s.colorHex ? { color: s.colorHex } : undefined,
       label,
       barGap: overlap !== undefined ? `${-overlap}%` : undefined,
-      // OOXML gapWidth = gap-between-groups / bar-width × 100.
-      // ECharts barCategoryGap = gap / category-band × 100 where band = bar + gap.
-      // So barCategoryGap = gapWidth / (100 + gapWidth) × 100.
+      // OOXML gapWidth = gap-between-groups / single-bar-width × 100.
+      // For N clustered bars: categoryBand = N × barWidth + gap, gap = gapWidth/100 × barWidth.
+      // ECharts barCategoryGap = gap / categoryBand = gapWidth / (100×N + gapWidth).
+      // For stacked bars N=1 since all series share one bar slot.
       barCategoryGap:
-        gapWidth !== undefined ? `${Math.round((gapWidth * 100) / (100 + gapWidth))}%` : undefined,
+        gapWidth !== undefined
+          ? `${Math.round((gapWidth * 100) / (100 * (isStacked ? 1 : seriesArr.length) + gapWidth))}%`
+          : undefined,
     };
   });
 
@@ -1256,7 +1327,7 @@ function buildLineChartOption(
   isArea: boolean,
 ): echarts.EChartsOption {
   const categories = seriesArr.find((s) => s.categories.length > 0)?.categories || [];
-  const title = extractChartTitle(chartNode);
+  const title = extractChartTitle(chartNode, seriesArr);
   const titleStyle = extractTxPrStyle(chartNode.child('title'), ctx);
   const titleLayout = extractTitleManualLayout(chartNode);
   const legendInfo = extractLegendInfo(chartNode, ctx);
@@ -1362,7 +1433,7 @@ function buildPieChartOption(
   isDoughnut: boolean,
   ctx: RenderContext,
 ): echarts.EChartsOption {
-  const title = extractChartTitle(chartNode);
+  const title = extractChartTitle(chartNode, seriesArr);
   const titleStyle = extractTxPrStyle(chartNode.child('title'), ctx);
   const titleLayout = extractTitleManualLayout(chartNode);
   const legendInfo = extractLegendInfo(chartNode, ctx);
@@ -1379,6 +1450,13 @@ function buildPieChartOption(
   const firstSer = chartTypeNode.children('ser')[0];
   let sharedLabels = firstSer?.exists() ? parseDataLabels(firstSer, ctx) : undefined;
   if (!sharedLabels) sharedLabels = parseDataLabels(chartTypeNode, ctx);
+
+  // Check if dLbls explicitly exists — if it does but parseDataLabels returned undefined,
+  // that means all show flags are explicitly false → labels should be hidden.
+  const hasDLblsNode =
+    (firstSer?.exists() && firstSer.child('dLbls').exists()) ||
+    chartTypeNode.child('dLbls').exists();
+  const dLblsExplicitlyOff = hasDLblsNode && !sharedLabels;
 
   // Parse explosion from the first c:ser element
   const explosions = firstSer ? parseExplosion(firstSer) : undefined;
@@ -1422,9 +1500,26 @@ function buildPieChartOption(
       if (sharedLabels.showCatName) parts.push('{b}');
       if (sharedLabels.showVal) parts.push('{c}');
       if (sharedLabels.showPercent) parts.push('{d}%');
-      labelFormatter = parts.length > 0 ? parts.join(' ') : '{b}: {c} ({d}%)';
+      if (parts.length > 0) {
+        labelFormatter = parts.join(' ');
+      } else {
+        // All show* flags are false — hide labels entirely
+        labelFormatter = '';
+      }
     }
   }
+
+  // Determine whether labels should be shown:
+  // - If dLbls exists with all show flags=false → labels explicitly disabled
+  // - If no dLbls at all → default pie behavior (show labels)
+  // - If sharedLabels has any show flag true → show labels
+  const showLabel =
+    !dLblsExplicitlyOff &&
+    (!sharedLabels ||
+      sharedLabels.showVal ||
+      sharedLabels.showCatName ||
+      sharedLabels.showSerName ||
+      sharedLabels.showPercent);
 
   const series: echarts.PieSeriesOption[] = [
     {
@@ -1434,7 +1529,7 @@ function buildPieChartOption(
       data: pieData,
       selectedMode: explosions ? 'single' : false,
       label: {
-        show: true,
+        show: showLabel,
         formatter: labelFormatter,
         fontSize: sharedLabels?.fontSize ?? 10,
         ...(sharedLabels?.bold === true ? { fontWeight: 'bold' as const } : {}),
@@ -1488,7 +1583,7 @@ function buildRadarChartOption(
   seriesArr: SeriesData[],
   ctx: RenderContext,
 ): echarts.EChartsOption {
-  const title = extractChartTitle(chartNode);
+  const title = extractChartTitle(chartNode, seriesArr);
   const titleStyle = extractTxPrStyle(chartNode.child('title'), ctx);
   const titleLayout = extractTitleManualLayout(chartNode);
   const legendInfo = extractLegendInfo(chartNode, ctx);
@@ -1530,19 +1625,22 @@ function buildRadarChartOption(
   // Read radar style to determine default marker behavior
   const radarStyle = chartTypeNode.child('radarStyle').attr('val'); // 'marker' | 'filled' | undefined
 
-  const radarData = seriesArr.map((s, idx) => {
-    const color = s.colorHex ?? DEFAULT_SERIES_COLORS[idx % DEFAULT_SERIES_COLORS.length];
+  const radarData = seriesArr.map((s) => {
     // Reorder values to match the reversed category order
     const cwValues = s.values.length > 1 ? [s.values[0], ...s.values.slice(1).reverse()] : s.values;
     const echartsSymbol = mapOoxmlSymbol(s.markerSymbol);
     // Show symbols if radarStyle is 'marker' or series has explicit marker
     const showSymbol =
       radarStyle === 'marker' || (echartsSymbol !== undefined && echartsSymbol !== 'none');
+    // PowerPoint radar charts fill the area with a semi-transparent version of the line color
+    const isFilled = radarStyle === 'filled';
     return {
       name: s.name,
       value: cwValues,
-      lineStyle: { color },
-      itemStyle: { color },
+      ...(s.colorHex ? { lineStyle: { color: s.colorHex }, itemStyle: { color: s.colorHex } } : {}),
+      areaStyle: isFilled
+        ? { ...(s.colorHex ? { color: s.colorHex } : {}), opacity: 0.5 }
+        : { ...(s.colorHex ? { color: s.colorHex } : {}), opacity: 0.15 },
       ...(echartsSymbol && echartsSymbol !== 'none' ? { symbol: echartsSymbol } : {}),
       ...(s.markerSize ? { symbolSize: s.markerSize } : {}),
       ...(showSymbol ? { symbolSize: s.markerSize ?? 6 } : {}),
@@ -1586,12 +1684,18 @@ function buildScatterChartOption(
   seriesArr: SeriesData[],
   ctx: RenderContext,
 ): echarts.EChartsOption {
-  const title = extractChartTitle(chartNode);
+  const title = extractChartTitle(chartNode, seriesArr);
   const titleStyle = extractTxPrStyle(chartNode.child('title'), ctx);
   const titleLayout = extractTitleManualLayout(chartNode);
   const legendInfo = extractLegendInfo(chartNode, ctx);
   const legendOpt = legendInfo?.option;
   const legendTextStyle = { fontSize: 10, ...(legendInfo?.textStyle ?? {}) };
+
+  // Parse scatter-specific marker defaults from scatterStyle
+  const scatterStyle = chartTypeNode.child('scatterStyle').attr('val') ?? 'lineMarker';
+  // Default scatter marker symbol per OOXML: lineMarker → diamond, smoothMarker → diamond
+  const defaultScatterSymbol =
+    scatterStyle === 'lineMarker' || scatterStyle === 'smoothMarker' ? 'diamond' : 'circle';
 
   const series: echarts.ScatterSeriesOption[] = seriesArr.map((s) => {
     // Use xValues if available (parsed from c:xVal), otherwise fall back to index
@@ -1599,16 +1703,19 @@ function buildScatterChartOption(
       const x = s.xValues && i < s.xValues.length ? s.xValues[i] : i;
       return [x, v];
     });
+    const echartsSymbol = mapOoxmlSymbol(s.markerSymbol) ?? defaultScatterSymbol;
     return {
       type: 'scatter' as const,
       name: s.name,
       data,
+      symbol: echartsSymbol,
+      symbolSize: s.markerSize ?? 8,
       itemStyle: s.colorHex ? { color: s.colorHex } : undefined,
     };
   });
 
   const plotArea = chartNode.child('plotArea');
-  const { valueAxis } = parseAxes(plotArea, ctx);
+  const { xAxis: xAxisInfo, yAxis: yAxisInfo } = parseScatterAxes(plotArea, ctx);
 
   const gridTop = getGridTopPx(!!title, legendInfo);
   const legendTopPx = getLegendTopPx(!!title, legendInfo);
@@ -1617,7 +1724,8 @@ function buildScatterChartOption(
 
   const xAxisDef: Record<string, unknown> = { type: 'value' };
   const yAxisDef: Record<string, unknown> = { type: 'value' };
-  applyAxisInfo(yAxisDef, valueAxis, 'value');
+  applyAxisInfo(xAxisDef, xAxisInfo, 'value');
+  applyAxisInfo(yAxisDef, yAxisInfo, 'value');
 
   return {
     title: title
@@ -1647,6 +1755,222 @@ function buildScatterChartOption(
     xAxis: xAxisDef,
     yAxis: yAxisDef,
     series,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Bubble Chart
+// ---------------------------------------------------------------------------
+
+function buildBubbleChartOption(
+  chartTypeNode: SafeXmlNode,
+  chartNode: SafeXmlNode,
+  seriesArr: SeriesData[],
+  ctx: RenderContext,
+): echarts.EChartsOption {
+  const title = extractChartTitle(chartNode, seriesArr);
+  const titleStyle = extractTxPrStyle(chartNode.child('title'), ctx);
+  const titleLayout = extractTitleManualLayout(chartNode);
+  const legendInfo = extractLegendInfo(chartNode, ctx);
+  const legendOpt = legendInfo?.option;
+  const legendTextStyle = { fontSize: 10, ...(legendInfo?.textStyle ?? {}) };
+
+  // Compute global min/max bubble size for normalization
+  let minSize = Infinity;
+  let maxSize = -Infinity;
+  for (const s of seriesArr) {
+    if (s.bubbleSizes) {
+      for (const sz of s.bubbleSizes) {
+        if (sz < minSize) minSize = sz;
+        if (sz > maxSize) maxSize = sz;
+      }
+    }
+  }
+  const sizeRange = maxSize - minSize || 1;
+
+  const series: echarts.ScatterSeriesOption[] = seriesArr.map((s) => {
+    const data = s.values.map((v, i) => {
+      const x = s.xValues && i < s.xValues.length ? s.xValues[i] : i;
+      const bub = s.bubbleSizes && i < s.bubbleSizes.length ? s.bubbleSizes[i] : 0;
+      return [x, v, bub];
+    });
+    return {
+      type: 'scatter' as const,
+      name: s.name,
+      data,
+      symbolSize: (val: number[]) => {
+        const normalized = (val[2] - minSize) / sizeRange;
+        return 10 + normalized * 50; // 10–60px range
+      },
+      itemStyle: s.colorHex ? { color: s.colorHex } : undefined,
+    };
+  });
+
+  const plotArea = chartNode.child('plotArea');
+  const { xAxis: xAxisInfo, yAxis: yAxisInfo } = parseScatterAxes(plotArea, ctx);
+
+  const gridTop = getGridTopPx(!!title, legendInfo);
+  const legendTopPx = getLegendTopPx(!!title, legendInfo);
+  const manualGrid = extractManualLayoutGrid(chartNode);
+  const containLabel = !hasManualGrid(manualGrid);
+
+  const xAxisDef: Record<string, unknown> = { type: 'value' };
+  const yAxisDef: Record<string, unknown> = { type: 'value' };
+  applyAxisInfo(xAxisDef, xAxisInfo, 'value');
+  applyAxisInfo(yAxisDef, yAxisInfo, 'value');
+
+  return {
+    title: title
+      ? {
+          text: title,
+          left: 'center',
+          ...titleLayout,
+          textStyle: { fontSize: 14, ...(titleStyle ?? {}) },
+        }
+      : undefined,
+    tooltip: {
+      trigger: 'item',
+      formatter: (params: unknown) => {
+        const p = params as { seriesName: string; value: number[] };
+        return `${p.seriesName}<br/>x: ${p.value[0]}, y: ${p.value[1]}, size: ${p.value[2]}`;
+      },
+    },
+    legend: buildLegendOption(
+      legendOpt,
+      legendInfo,
+      legendTopPx,
+      seriesArr.map((s) => s.name),
+      legendTextStyle,
+    ),
+    grid: {
+      containLabel,
+      left: 10,
+      right: 10,
+      top: gridTop,
+      bottom: getGridBottomPx(legendInfo),
+      ...manualGrid,
+    },
+    xAxis: xAxisDef,
+    yAxis: yAxisDef,
+    series,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Stock Chart (Candlestick)
+// ---------------------------------------------------------------------------
+
+function buildStockChartOption(
+  _chartTypeNode: SafeXmlNode,
+  chartNode: SafeXmlNode,
+  seriesArr: SeriesData[],
+  ctx: RenderContext,
+): echarts.EChartsOption {
+  const title = extractChartTitle(chartNode, seriesArr);
+  const titleStyle = extractTxPrStyle(chartNode.child('title'), ctx);
+  const titleLayout = extractTitleManualLayout(chartNode);
+  const legendInfo = extractLegendInfo(chartNode, ctx);
+
+  // Stock charts have 3 (HLC) or 4 (OHLC) series:
+  // OHLC order: open, high, low, close
+  // HLC order: high, low, close (open defaults to close → collapsed body)
+  const categories = seriesArr.find((s) => s.categories.length > 0)?.categories || [];
+
+  // ECharts candlestick expects [open, close, low, high] per data point
+  const dataLen = categories.length || Math.max(...seriesArr.map((s) => s.values.length), 0);
+  const candleData: number[][] = [];
+
+  if (seriesArr.length >= 4) {
+    // OHLC: series 0=open, 1=high, 2=low, 3=close
+    for (let i = 0; i < dataLen; i++) {
+      candleData.push([
+        seriesArr[0].values[i] ?? 0, // open
+        seriesArr[3].values[i] ?? 0, // close
+        seriesArr[2].values[i] ?? 0, // low
+        seriesArr[1].values[i] ?? 0, // high
+      ]);
+    }
+  } else if (seriesArr.length >= 3) {
+    // HLC: series 0=high, 1=low, 2=close; open=close (collapsed body)
+    for (let i = 0; i < dataLen; i++) {
+      const close = seriesArr[2].values[i] ?? 0;
+      candleData.push([
+        close, // open = close
+        close, // close
+        seriesArr[1].values[i] ?? 0, // low
+        seriesArr[0].values[i] ?? 0, // high
+      ]);
+    }
+  } else {
+    // Fallback: single series treated as close values with zero open
+    for (let i = 0; i < dataLen; i++) {
+      const val = seriesArr[0]?.values[i] ?? 0;
+      candleData.push([0, val, 0, val]);
+    }
+  }
+
+  const plotArea = chartNode.child('plotArea');
+  const { valueAxis, categoryAxis } = parseAxes(plotArea, ctx);
+
+  const gridTop = getGridTopPx(!!title, legendInfo);
+  const manualGrid = extractManualLayoutGrid(chartNode);
+  const containLabel = !hasManualGrid(manualGrid);
+
+  const xAxisDef: Record<string, unknown> = {
+    type: 'category',
+    data: categories,
+    axisLabel: { interval: 0, rotate: categories.length > 4 ? 30 : 0, fontSize: 10 },
+  };
+  applyAxisInfo(xAxisDef, categoryAxis, 'category');
+
+  const yAxisDef: Record<string, unknown> = { type: 'value' };
+  applyAxisInfo(yAxisDef, valueAxis, 'value');
+
+  const legendOpt = legendInfo?.option;
+  const legendTextStyle = { fontSize: 10, ...(legendInfo?.textStyle ?? {}) };
+  const legendTopPx = getLegendTopPx(!!title, legendInfo);
+
+  return {
+    title: title
+      ? {
+          text: title,
+          left: 'center',
+          ...titleLayout,
+          textStyle: { fontSize: 14, ...(titleStyle ?? {}) },
+        }
+      : undefined,
+    tooltip: { trigger: 'axis', axisPointer: { type: 'cross' } },
+    legend: buildLegendOption(
+      legendOpt,
+      legendInfo,
+      legendTopPx,
+      seriesArr.map((s) => s.name),
+      legendTextStyle,
+    ),
+    grid: {
+      containLabel,
+      left: 10,
+      right: 10,
+      top: gridTop,
+      bottom: getGridBottomPx(legendInfo),
+      ...manualGrid,
+    },
+    xAxis: xAxisDef,
+    yAxis: yAxisDef,
+    series: [
+      {
+        type: 'candlestick' as const,
+        name: seriesArr.length >= 3 ? seriesArr[2].name : seriesArr[0]?.name,
+        data: candleData,
+        itemStyle: {
+          // OOXML up/down colors from series spPr; fallback to standard financial convention
+          color: seriesArr[seriesArr.length >= 4 ? 3 : 2]?.colorHex ?? '#ec0000', // bullish (close > open)
+          color0: seriesArr[seriesArr.length >= 4 ? 0 : 0]?.colorHex ?? '#00da3c', // bearish (close < open)
+          borderColor: seriesArr[seriesArr.length >= 4 ? 3 : 2]?.colorHex ?? '#ec0000',
+          borderColor0: seriesArr[seriesArr.length >= 4 ? 0 : 0]?.colorHex ?? '#00da3c',
+        },
+      },
+    ],
   };
 }
 
@@ -1890,19 +2214,292 @@ function buildChartPalette(chartXml: SafeXmlNode, ctx: RenderContext): string[] 
   const styleId = parseChartStyleId(chartXml);
   if (styleId === undefined) return accents;
 
-  // Keep this conservative:
-  // - style ids >= 100 tend to use stronger contrast; brighten the latter half.
-  // - even style ids rotate palette to better match Office's style cycles.
-  const palette = accents.slice();
-  if (styleId % 2 === 0) {
-    palette.push(...palette.splice(0, 1));
-  }
-  if (styleId >= 100) {
-    for (let i = Math.floor(palette.length / 2); i < palette.length; i++) {
-      palette[i] = tintHex(palette[i], 0.18);
+  // Style ids 100+ use the same accent order as the base palette.
+  // No rotation needed — OOXML chart styles control visual appearance
+  // (e.g. 3D, transparency) but don't reorder series colors.
+  return accents;
+}
+
+// ---------------------------------------------------------------------------
+// Chart-Space Default Font Size + Legend Grid Adjustment
+// ---------------------------------------------------------------------------
+
+/**
+ * Apply chart-space default font size to all text elements in the ECharts option
+ * that still use hardcoded small defaults. Only overrides when no explicit OOXML
+ * font size was set on that element (i.e., value matches our hardcoded defaults).
+ */
+function applyDefaultFontSizes(option: echarts.EChartsOption, defaultFs: number): void {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const opt = option as any;
+
+  // Title: our defaults are 12 or 14 — replace with the chart-space default
+  if (opt.title?.textStyle?.fontSize) {
+    const cur = opt.title.textStyle.fontSize;
+    if (cur <= 14) {
+      opt.title.textStyle.fontSize = defaultFs;
     }
   }
-  return palette;
+
+  // Legend textStyle: our default is 10
+  if (opt.legend?.textStyle?.fontSize) {
+    const cur = opt.legend.textStyle.fontSize;
+    if (cur <= 10) {
+      opt.legend.textStyle.fontSize = defaultFs;
+    }
+  }
+
+  // Axis labels: apply default font size
+  const applyAxis = (axis: unknown) => {
+    if (!axis || typeof axis !== 'object') return;
+    const a = axis as Record<string, unknown>;
+    const label = a.axisLabel as Record<string, unknown> | undefined;
+    if (label && label.show !== false) {
+      if (!label.fontSize || (label.fontSize as number) <= 10) {
+        label.fontSize = defaultFs;
+      }
+    }
+  };
+
+  // Handle single or array axes
+  const processAxis = (axis: unknown) => {
+    if (Array.isArray(axis)) axis.forEach(applyAxis);
+    else applyAxis(axis);
+  };
+  processAxis(opt.xAxis);
+  processAxis(opt.yAxis);
+
+  // Radar indicator font size
+  if (opt.radar) {
+    const radar = Array.isArray(opt.radar) ? opt.radar[0] : opt.radar;
+    if (radar?.name?.textStyle) {
+      if (!radar.name.textStyle.fontSize || radar.name.textStyle.fontSize <= 10) {
+        radar.name.textStyle.fontSize = defaultFs;
+      }
+    }
+  }
+
+  // Series data label font sizes: apply default when no explicit OOXML font was set
+  const seriesArr = Array.isArray(opt.series) ? opt.series : opt.series ? [opt.series] : [];
+  for (const s of seriesArr) {
+    if (s?.label?.fontSize && (s.label.fontSize as number) <= 10) {
+      s.label.fontSize = defaultFs;
+    }
+  }
+}
+
+/**
+ * Adjust grid margins to prevent legend/chart overlap.
+ * When legend is at right or left with overlay=false, the grid needs a larger
+ * margin so that chart bars/lines don't extend into the legend area.
+ */
+function applyLegendGridMargins(
+  option: echarts.EChartsOption,
+  chartNode: SafeXmlNode,
+  defaultFs: number | undefined,
+): void {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const opt = option as any;
+  if (!opt.grid || !opt.legend) return;
+  if (opt.legend.show === false) return;
+
+  const legend = chartNode.child('legend');
+  if (!legend.exists()) return;
+  const overlay = legend.child('overlay').attr('val') === '1';
+  if (overlay) return;
+
+  const posVal = legend.child('legendPos').attr('val') || 'r';
+
+  // Only adjust for side-positioned legends
+  if (posVal === 'r' || posVal === 'l') {
+    // Estimate legend width based on legend names and font size
+    const legendData = opt.legend.data as (string | { name: string })[] | undefined;
+    if (!legendData || legendData.length === 0) return;
+
+    const names = legendData.map((d: string | { name: string }) =>
+      typeof d === 'string' ? d : d.name,
+    );
+    const fs = opt.legend?.textStyle?.fontSize ?? defaultFs ?? 12;
+    // Estimate legend width: icon (~fontSize) + gap + text + padding
+    // Measure max text width considering CJK (wider) vs Latin (narrower) chars
+    let maxTextPx = 0;
+    for (const n of names) {
+      let w = 0;
+      for (const ch of n) {
+        w += ch.charCodeAt(0) > 0x2e80 ? fs : fs * 0.55;
+      }
+      if (w > maxTextPx) maxTextPx = w;
+    }
+    // icon (≈ fontSize) + gap (4px) + text + right padding (8px)
+    const estimatedLegendPx = fs + 4 + maxTextPx + 8;
+    const gridMarginPx = Math.max(50, Math.round(estimatedLegendPx));
+
+    // Check if manual grid layout was applied — don't override
+    if (typeof opt.grid.left === 'string' && opt.grid.left.includes('%')) return;
+    if (typeof opt.grid.right === 'string' && opt.grid.right.includes('%')) return;
+
+    if (posVal === 'r') {
+      opt.grid.right = gridMarginPx;
+    } else {
+      opt.grid.left = gridMarginPx;
+    }
+  }
+}
+
+/**
+ * Compute a "nice" axis max/min that PowerPoint would auto-calculate.
+ * PowerPoint rounds the value axis range to tidy tick marks (e.g., data max 5 → axis max 6).
+ * This post-processes the ECharts option to set axis max when not explicitly provided.
+ */
+function applyNiceAxisRange(option: echarts.EChartsOption): void {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const opt = option as any;
+
+  // Only applies to cartesian charts with axes
+  if (!opt.xAxis && !opt.yAxis) return;
+
+  // Collect all numeric data values from series, accounting for stacking
+  const allValues: number[] = [];
+  const seriesArr = Array.isArray(opt.series) ? opt.series : opt.series ? [opt.series] : [];
+
+  // Group series by stack key to compute stacked totals
+  const stackGroups = new Map<string, number[][]>();
+  const unstackedValues: number[] = [];
+
+  for (const s of seriesArr) {
+    if (!s.data) continue;
+    const vals: number[] = [];
+    for (const d of s.data) {
+      if (typeof d === 'number') {
+        vals.push(d);
+      } else if (d && typeof d === 'object' && 'value' in d && typeof d.value === 'number') {
+        vals.push(d.value);
+      } else if (Array.isArray(d)) {
+        for (const v of d) {
+          if (typeof v === 'number') vals.push(v);
+        }
+      } else {
+        vals.push(0);
+      }
+    }
+    if (s.stack) {
+      const key = String(s.stack);
+      if (!stackGroups.has(key)) stackGroups.set(key, []);
+      stackGroups.get(key)!.push(vals);
+    } else {
+      unstackedValues.push(...vals);
+    }
+  }
+
+  // For stacked series, compute per-category sums
+  for (const group of stackGroups.values()) {
+    const maxLen = Math.max(...group.map((v) => v.length));
+    for (let i = 0; i < maxLen; i++) {
+      let sum = 0;
+      for (const vals of group) {
+        sum += vals[i] ?? 0;
+      }
+      allValues.push(sum);
+    }
+  }
+  allValues.push(...unstackedValues);
+
+  if (allValues.length === 0) return;
+
+  // Find the value axes (could be xAxis or yAxis depending on bar direction)
+  const processAxis = (axis: unknown) => {
+    if (!axis) return;
+    const axes = Array.isArray(axis) ? axis : [axis];
+    for (const ax of axes) {
+      if (!ax || ax.type !== 'value') continue;
+      // Skip if explicit min/max already set
+      if (ax.min !== undefined && ax.max !== undefined) continue;
+
+      const dataMin = Math.min(...allValues);
+      const dataMax = Math.max(...allValues);
+
+      // Only set max when not already specified
+      if (ax.max === undefined) {
+        ax.max = niceAxisMax(dataMax, dataMin);
+      }
+      // Set min to 0 when all values are non-negative and no explicit min
+      if (ax.min === undefined && dataMin >= 0) {
+        ax.min = 0;
+      }
+    }
+  };
+
+  processAxis(opt.xAxis);
+  processAxis(opt.yAxis);
+}
+
+/**
+ * Calculate a "nice" axis maximum, similar to PowerPoint's algorithm.
+ * Given data max, returns a rounded-up value that gives clean tick marks with headroom.
+ * PowerPoint always adds at least one tick interval above the data max.
+ */
+function niceAxisMax(dataMax: number, dataMin: number): number {
+  if (dataMax === 0 && dataMin === 0) return 1;
+  const range = dataMax - Math.min(0, dataMin);
+  if (range === 0) return dataMax > 0 ? dataMax * 1.2 : 1;
+  // Desired ~5 ticks
+  const rawInterval = range / 5;
+  const magnitude = Math.pow(10, Math.floor(Math.log10(rawInterval)));
+  const residual = rawInterval / magnitude;
+  let niceInterval: number;
+  if (residual <= 1) niceInterval = magnitude;
+  else if (residual <= 2) niceInterval = 2 * magnitude;
+  else if (residual <= 5) niceInterval = 5 * magnitude;
+  else niceInterval = 10 * magnitude;
+  // Round max up to the next nice interval; if already on a boundary, add one more interval
+  const niceMax = Math.ceil(dataMax / niceInterval) * niceInterval;
+  return niceMax <= dataMax ? niceMax + niceInterval : niceMax;
+}
+
+/**
+ * Extract chart-space default font size from chartSpace > txPr > defRPr@sz.
+ * Returns size in pixels (OOXML sz is 1/100 pt; we convert to px at 96 DPI: 1pt = 1.333px).
+ * PowerPoint uses this as the default text size for all chart text elements.
+ */
+function extractChartDefaultFontSize(chartSpaceNode: SafeXmlNode): number | undefined {
+  const txPr = chartSpaceNode.child('txPr');
+  if (!txPr.exists()) return undefined;
+  for (const p of txPr.children('p')) {
+    const pPr = p.child('pPr');
+    if (!pPr.exists()) continue;
+    const defRPr = pPr.child('defRPr');
+    if (!defRPr.exists()) continue;
+    const sz = defRPr.numAttr('sz');
+    if (sz !== undefined && sz > 0) {
+      // sz is 1/100 pt → convert to px at 96 DPI (1pt = 96/72 px ≈ 1.333px)
+      return Math.round((sz / 100) * (96 / 72));
+    }
+  }
+  return undefined;
+}
+
+/**
+ * Estimate legend width as a percentage of chart width based on legend text length and font size.
+ * Used to reserve grid space when legend is at right or left (non-overlay).
+ */
+function estimateLegendWidthPct(
+  legendInfo: LegendInfo | undefined,
+  legendNames: string[],
+  baseFontSize: number,
+): string {
+  if (!legendInfo || legendInfo.overlay) return '2%';
+  const opt = legendInfo.option as Record<string, unknown> | undefined;
+  if (!opt) return '2%';
+  const isRight = opt.right !== undefined && opt.top !== undefined && opt.bottom === undefined;
+  const isLeft = opt.left !== undefined && opt.top !== undefined && opt.bottom === undefined;
+  if (!isRight && !isLeft) return '2%';
+  // Estimate based on longest label + icon + padding
+  const maxLen = Math.max(1, ...legendNames.map((n) => n.length));
+  // Approximate: each char ≈ 0.6 * fontSize, plus icon (≈ fontSize) and padding (≈ fontSize)
+  const estimatedPx = maxLen * baseFontSize * 0.6 + baseFontSize * 3;
+  // Convert to percentage of typical chart width (assume ~600px as base)
+  const pct = Math.min(40, Math.max(15, Math.round((estimatedPx / 600) * 100)));
+  return `${pct}%`;
 }
 
 function numToPct(val: number): string {
@@ -1999,9 +2596,29 @@ export function parseChartXml(chartXml: SafeXmlNode, ctx: RenderContext): ParseC
         option = buildScatterChartOption(chartTypeNode, chart, seriesArr, chartCtx);
         break;
 
+      case 'bubbleChart':
+        option = buildBubbleChartOption(chartTypeNode, chart, seriesArr, chartCtx);
+        break;
+
+      case 'stockChart':
+        option = buildStockChartOption(chartTypeNode, chart, seriesArr, chartCtx);
+        break;
+
       default:
         continue;
     }
+
+    // Apply chart-space default font sizes to text elements that use hardcoded defaults
+    const defaultFs = extractChartDefaultFontSize(chartXml);
+    if (defaultFs) {
+      applyDefaultFontSizes(option, defaultFs);
+    }
+
+    // Adjust grid margins for legend placement (non-overlay)
+    applyLegendGridMargins(option, chart, defaultFs);
+
+    // Apply PowerPoint-like nice axis range (adds headroom beyond data max)
+    applyNiceAxisRange(option);
 
     // Apply background colors
     if (chartBg) {

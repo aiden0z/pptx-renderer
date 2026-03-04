@@ -663,7 +663,7 @@ describe('diagram/SmartArt parsing', () => {
   // Test 7: buildDiagramGroup handles circular presets (aspect ratio preservation)
   //         Circular shapes get tight bounding box with isotropic scale adjustment.
   // -------------------------------------------------------------------------
-  it('buildDiagramGroup preserves aspect ratio for circular presets', () => {
+  it('buildDiagramGroup uses frame dimensions for circular presets', () => {
     // A single donut shape — triggers the CIRCULAR_PRESETS path.
     // Shape placed at (0,0), 4572000 x 4572000 EMU (square bounding box).
     const drawingXml = makeDiagramDrawingXml([
@@ -692,10 +692,8 @@ describe('diagram/SmartArt parsing', () => {
     ]);
 
     // Non-square frame: 9144000 x 4572000 EMU → 960 x 480 px
-    // Circular shape bbox (px): tight bbox 0,0..480,480. Frame aspect = 960/480 = 2.
-    // scaleX = 960/480 = 2, scaleY = 480/480 = 1 → uniformScale = 1 (min).
-    // newExtW = 960/1 = 960, newExtH = 480/1 = 480.
-    // offX = 0 - (960-480)/2 = -240, offY = 0 - (480-480)/2 = 0.
+    // Frame dimensions are used directly as the child coordinate space (1:1 mapping).
+    // This avoids enlarging shapes when the bounding box is smaller than the frame.
     const slide = parseSlide(
       makeSlideXml({ shapes: makeDiagramFrameXml({ dmRId: 'rId1', frameCx: 9144000, frameCy: 4572000 }) }),
       0,
@@ -707,11 +705,11 @@ describe('diagram/SmartArt parsing', () => {
     expect(slide.nodes).toHaveLength(1);
     const group = slide.nodes[0] as import('../../../src/model/nodes/GroupNode').GroupNodeData;
     expect(group.nodeType).toBe('group');
-    // For circular presets the extent is expanded to match the frame aspect ratio
+    // Frame dimensions used as child extent (no circular preset scaling)
     expect(group.childExtent.w).toBeCloseTo(960, 1);
     expect(group.childExtent.h).toBeCloseTo(480, 1);
-    // offX is shifted to center the content (negative value)
-    expect(group.childOffset.x).toBeCloseTo(-240, 1);
+    // Offset is (0,0) — shapes positioned in frame's coordinate space
+    expect(group.childOffset.x).toBeCloseTo(0, 1);
     expect(group.childOffset.y).toBeCloseTo(0, 1);
   });
 

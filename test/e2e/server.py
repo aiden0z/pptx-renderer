@@ -22,7 +22,7 @@ import fitz  # PyMuPDF
 import httpx
 import numpy as np
 import uvicorn
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, Response
 from PIL import Image
@@ -211,12 +211,13 @@ def png_slide_to_image(png_path: Path) -> np.ndarray:
     return np.array(img)
 
 
-async def screenshot_slide(browser, test_file: str, slide_idx: int) -> np.ndarray:
+async def screenshot_slide(browser, test_file: str, slide_idx: int, source: str | None = None) -> np.ndarray:
     ctx = await browser.new_context(viewport={"width": 1920, "height": 1080})
     page = await ctx.new_page()
     page.set_default_timeout(PAGE_TIMEOUT_MS)
     try:
-        url = f"{VITE_SERVER_URL}/test/pages/render-slide.html?file=testdata/cases/{test_file}/source.pptx&slide={slide_idx}"
+        subdir = _testdata_subdir(source)
+        url = f"{VITE_SERVER_URL}/test/pages/render-slide.html?file=testdata/{subdir}/{test_file}/source.pptx&slide={slide_idx}"
         await page.goto(url)
         await page.wait_for_function(
             "() => window.__renderDone === true || window.__renderError !== undefined",
@@ -277,8 +278,20 @@ def _save_image(arr: np.ndarray, path: Path):
     Image.fromarray(arr).save(str(path))
 
 
-def get_test_files() -> list[str]:
-    return [s for s in tdp.list_cases() if tdp.ground_truth_pdf(s).exists()]
+def _testdata_subdir(source: str | None) -> str:
+    return "windows-cases" if source == "windows" else "cases"
+
+
+def _report_prefix(test_file: str, source: str | None) -> str:
+    return f"win_{test_file}" if source == "windows" else test_file
+
+
+def _cache_key(test_file: str, source: str | None) -> str:
+    return f"win:{test_file}" if source == "windows" else test_file
+
+
+def get_test_files(source: str | None = None) -> list[str]:
+    return [s for s in tdp.list_cases(source) if tdp.ground_truth_pdf(s, source).exists()]
 
 
 def get_pdf_page_count(pdf_path: Path) -> int:
@@ -346,15 +359,15 @@ async def vite_proxy_middleware(request, call_next):
 # ---------------------------------------------------------------------------
 
 @app.post("/api/evaluate/{test_file}")
-async def evaluate_file(test_file: str):
-    pptx_path = tdp.source_pptx(test_file)
-    pdf_path = tdp.ground_truth_pdf(test_file)
+async def evaluate_file(test_file: str, source: str | None = Query(None)):
+    pptx_path = tdp.source_pptx(test_file, source)
+    pdf_path = tdp.ground_truth_pdf(test_file, source)
 
     if not pptx_path.exists():
         raise HTTPException(404, f"PPTX not found: {test_file}")
 
     # Check for PNG ground truth (preferred over PDF)
-    has_png = tdp.has_png_ground_truth(test_file)
+    has_png = tdp.has_png_ground_truth(test_file, source)
 
     if not has_png and not pdf_path.exists():
         raise HTTPException(404, f"Ground truth not found for {test_file}: need ground-truth.pdf or slides/slide1.png")
@@ -389,12 +402,12 @@ async def evaluate_file(test_file: str):
 
         try:
             # Prefer PNG ground truth (direct PowerPoint export, no PDF intermediate)
-            png_gt_path = tdp.slide_png(test_file, slide_idx + 1)
+            png_gt_path = tdp.slide_png(test_file, slide_idx + 1, source)
             if png_gt_path.exists():
                 gt_img = await asyncio.to_thread(png_slide_to_image, png_gt_path)
             else:
                 gt_img = await asyncio.to_thread(pdf_page_to_image, pdf_path, pdf_page_idx)
-            html_img = await screenshot_slide(browser, test_file, slide_idx)
+            html_img = await screenshot_slide(browser, test_file, slide_idx, source)
             visual = compute_visual_metrics(gt_img, html_img)
             fg = compute_foreground_shape_metrics(gt_img, html_img)
 
@@ -414,12 +427,13 @@ async def evaluate_file(test_file: str):
 
             # Save diff heatmap
             diff_img = make_diff_heatmap(gt_img, html_img)
-            diff_path = REPORTS_DIR / f"{test_file}_slide{slide_idx}_diff.png"
+            prefix = _report_prefix(test_file, source)
+            diff_path = REPORTS_DIR / f"{prefix}_slide{slide_idx}_diff.png"
             _save_image(diff_img, diff_path)
 
             # Save screenshots for serving via API
-            html_path = REPORTS_DIR / f"{test_file}_slide{slide_idx}_html.png"
-            pdf_img_path = REPORTS_DIR / f"{test_file}_slide{slide_idx}_pdf.png"
+            html_path = REPORTS_DIR / f"{prefix}_slide{slide_idx}_html.png"
+            pdf_img_path = REPORTS_DIR / f"{prefix}_slide{slide_idx}_pdf.png"
             _save_image(html_img, html_path)
             _save_image(gt_img, pdf_img_path)
 
@@ -507,17 +521,17 @@ async def evaluate_file(test_file: str):
         },
         "perSlide": per_slide,
     }
-    _eval_cache[test_file] = result
+    _eval_cache[_cache_key(test_file, source)] = result
     return result
 
 
 @app.post("/api/evaluate-all")
-async def evaluate_all():
-    test_files = get_test_files()
+async def evaluate_all(source: str | None = Query(None)):
+    test_files = get_test_files(source)
     results = []
     for name in test_files:
         try:
-            result = await evaluate_file(name)
+            result = await evaluate_file(name, source)
             results.append(result)
         except Exception as e:
             results.append({"testFile": name, "error": str(e)})
@@ -529,13 +543,14 @@ async def evaluate_all():
 # ---------------------------------------------------------------------------
 
 @app.get("/api/screenshot/html/{test_file}/{slide_idx}")
-async def screenshot_html(test_file: str, slide_idx: int):
-    path = REPORTS_DIR / f"{test_file}_slide{slide_idx}_html.png"
+async def screenshot_html(test_file: str, slide_idx: int, source: str | None = Query(None)):
+    prefix = _report_prefix(test_file, source)
+    path = REPORTS_DIR / f"{prefix}_slide{slide_idx}_html.png"
     if not path.exists():
         # Try generating on the fly
         browser = await get_browser()
         try:
-            html_img = await screenshot_slide(browser, test_file, slide_idx)
+            html_img = await screenshot_slide(browser, test_file, slide_idx, source)
             _save_image(html_img, path)
         except Exception as e:
             raise HTTPException(404, f"Screenshot failed: {e}")
@@ -543,16 +558,17 @@ async def screenshot_html(test_file: str, slide_idx: int):
 
 
 @app.get("/api/screenshot/pdf/{test_file}/{slide_idx}")
-async def screenshot_pdf(test_file: str, slide_idx: int):
-    path = REPORTS_DIR / f"{test_file}_slide{slide_idx}_pdf.png"
+async def screenshot_pdf(test_file: str, slide_idx: int, source: str | None = Query(None)):
+    prefix = _report_prefix(test_file, source)
+    path = REPORTS_DIR / f"{prefix}_slide{slide_idx}_pdf.png"
     if not path.exists():
         # Generate on the fly — prefer PNG ground truth over PDF rasterization
-        png_gt_path = tdp.slide_png(test_file, slide_idx + 1)
+        png_gt_path = tdp.slide_png(test_file, slide_idx + 1, source)
         if png_gt_path.exists():
             gt_img = await asyncio.to_thread(png_slide_to_image, png_gt_path)
         else:
-            pptx_path = tdp.source_pptx(test_file)
-            pdf_path = tdp.ground_truth_pdf(test_file)
+            pptx_path = tdp.source_pptx(test_file, source)
+            pdf_path = tdp.ground_truth_pdf(test_file, source)
             if not pdf_path.exists():
                 raise HTTPException(404, f"Ground truth not found: {test_file}")
             slide_to_pdf = await asyncio.to_thread(build_slide_to_pdf_mapping, pptx_path)
@@ -565,8 +581,9 @@ async def screenshot_pdf(test_file: str, slide_idx: int):
 
 
 @app.get("/api/diff/{test_file}/{slide_idx}")
-async def diff_image(test_file: str, slide_idx: int):
-    path = REPORTS_DIR / f"{test_file}_slide{slide_idx}_diff.png"
+async def diff_image(test_file: str, slide_idx: int, source: str | None = Query(None)):
+    prefix = _report_prefix(test_file, source)
+    path = REPORTS_DIR / f"{prefix}_slide{slide_idx}_diff.png"
     if not path.exists():
         raise HTTPException(404, "Run evaluation first to generate diff images")
     return FileResponse(path, media_type="image/png")
@@ -613,14 +630,14 @@ async def update_baselines():
 # ---------------------------------------------------------------------------
 
 @app.get("/api/test-files")
-async def list_test_files():
-    return {"files": get_test_files()}
+async def list_test_files(source: str | None = Query(None)):
+    return {"files": get_test_files(source)}
 
 
 @app.get("/api/testdata-files")
-async def list_testdata_files():
+async def list_testdata_files(source: str | None = Query(None)):
     # Vite dev page expects a plain array response for the select options.
-    return get_test_files()
+    return get_test_files(source)
 
 
 # ---------------------------------------------------------------------------
