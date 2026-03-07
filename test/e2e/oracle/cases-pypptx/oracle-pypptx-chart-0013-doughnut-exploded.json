@@ -1,0 +1,13 @@
+{
+  "name": "oracle-pypptx-chart-0013-doughnut-exploded",
+  "generator": "python-pptx",
+  "slides": [
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    }
+  ]
+}

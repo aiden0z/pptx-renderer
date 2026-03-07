@@ -1,0 +1,13 @@
+{
+  "name": "oracle-pypptx-chart-0021-line-24-month-trend",
+  "generator": "python-pptx",
+  "slides": [
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    }
+  ]
+}

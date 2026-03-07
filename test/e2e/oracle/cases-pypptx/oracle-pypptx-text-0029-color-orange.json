@@ -1,0 +1,13 @@
+{
+  "name": "oracle-pypptx-text-0029-color-orange",
+  "generator": "python-pptx",
+  "slides": [
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    }
+  ]
+}

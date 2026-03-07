@@ -1,0 +1,13 @@
+{
+  "name": "oracle-pypptx-chart-0019-radar-filled-single",
+  "generator": "python-pptx",
+  "slides": [
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    }
+  ]
+}

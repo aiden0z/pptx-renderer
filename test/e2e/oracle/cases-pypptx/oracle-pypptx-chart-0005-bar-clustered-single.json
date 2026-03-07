@@ -1,0 +1,13 @@
+{
+  "name": "oracle-pypptx-chart-0005-bar-clustered-single",
+  "generator": "python-pptx",
+  "slides": [
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    }
+  ]
+}

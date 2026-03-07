@@ -1,0 +1,13 @@
+{
+  "name": "oracle-pypptx-composite-0005-table-with-title",
+  "generator": "python-pptx",
+  "slides": [
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    }
+  ]
+}

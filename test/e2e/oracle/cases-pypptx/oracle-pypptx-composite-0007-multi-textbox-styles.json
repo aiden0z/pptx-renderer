@@ -1,0 +1,13 @@
+{
+  "name": "oracle-pypptx-composite-0007-multi-textbox-styles",
+  "generator": "python-pptx",
+  "slides": [
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    }
+  ]
+}

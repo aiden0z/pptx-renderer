@@ -192,8 +192,20 @@ async def async_main(args: argparse.Namespace) -> int:
                 print(f"Cases dir: not a directory: {cases_dir}", file=sys.stderr)
             else:
                 already_seen = set(shape_cases_to_eval) | set(smartart_cases_to_eval)
-                all_case_jsons = sorted(cases_dir.glob("oracle-full-*.json"))
+                all_case_jsons = sorted(cases_dir.glob("oracle-*.json"))
                 extra_cases_to_eval = [p.stem for p in all_case_jsons if p.stem not in already_seen]
+
+        # --- pypptx cases (separate dir) ---
+        if args.pypptx_cases_dir:
+            pypptx_dir = Path(args.pypptx_cases_dir)
+            if not pypptx_dir.is_absolute():
+                pypptx_dir = (E2E_DIR / pypptx_dir).resolve()
+            if not pypptx_dir.is_dir():
+                print(f"pypptx cases dir: not a directory: {pypptx_dir}", file=sys.stderr)
+            else:
+                already_seen = set(shape_cases_to_eval) | set(smartart_cases_to_eval) | set(extra_cases_to_eval)
+                pypptx_jsons = sorted(pypptx_dir.glob("oracle-pypptx-*.json"))
+                extra_cases_to_eval.extend(p.stem for p in pypptx_jsons if p.stem not in already_seen)
 
         # --- Evaluate all concurrently ---
         all_cases = shape_cases_to_eval + smartart_cases_to_eval + extra_cases_to_eval
@@ -243,7 +255,11 @@ async def async_main(args: argparse.Namespace) -> int:
     table_results = [r for r in results if "table" in r["case"].lower()]
     connector_results = [r for r in results if "connector" in r["case"].lower()]
     fillstroke_results = [r for r in results if "fillstroke" in r["case"].lower()]
-    if not shape_results and not smartart_results and not chart_results and not table_results and not connector_results and not fillstroke_results:
+    text_results = [r for r in results if "-text-" in r["case"].lower()]
+    shape_adj_results = [r for r in results if "shape-adj" in r["case"].lower()]
+    composite_results = [r for r in results if "composite" in r["case"].lower()]
+    pypptx_results = [r for r in results if "oracle-pypptx-" in r["case"].lower()]
+    if not shape_results and not smartart_results and not chart_results and not table_results and not connector_results and not fillstroke_results and not pypptx_results:
         shape_results = results
         smartart_results = []
 
@@ -258,6 +274,10 @@ async def async_main(args: argparse.Namespace) -> int:
         "table_cases": len(table_results),
         "connector_cases": len(connector_results),
         "fillstroke_cases": len(fillstroke_results),
+        "text_cases": len(text_results),
+        "shape_adj_cases": len(shape_adj_results),
+        "composite_cases": len(composite_results),
+        "pypptx_cases": len(pypptx_results),
         "errors": errors,
         "results": results,
     }
@@ -332,6 +352,13 @@ def main() -> int:
         metavar="DIR",
         help="Scan all oracle-full-*.json in DIR and POST /api/evaluate/{stem} for each. "
         "Subsumes --smartart-cases-dir and covers charts, tables, connectors, etc.",
+    )
+    parser.add_argument(
+        "--pypptx-cases-dir",
+        type=str,
+        default=None,
+        metavar="DIR",
+        help="Scan oracle-pypptx-*.json in DIR and POST /api/evaluate/{stem} for each.",
     )
     parser.add_argument(
         "--concurrency",

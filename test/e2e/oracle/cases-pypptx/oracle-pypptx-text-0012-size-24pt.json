@@ -1,0 +1,13 @@
+{
+  "name": "oracle-pypptx-text-0012-size-24pt",
+  "generator": "python-pptx",
+  "slides": [
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    }
+  ]
+}

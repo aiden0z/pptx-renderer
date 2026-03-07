@@ -1,0 +1,13 @@
+{
+  "name": "oracle-pypptx-composite-0010-dashboard-table-chart",
+  "generator": "python-pptx",
+  "slides": [
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "name": "oracle-pypptx-chart-0003-column-stacked-3series",
+  "generator": "python-pptx",
+  "slides": [
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    }
+  ]
+}

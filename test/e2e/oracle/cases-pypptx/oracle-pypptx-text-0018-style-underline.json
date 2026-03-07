@@ -1,0 +1,13 @@
+{
+  "name": "oracle-pypptx-text-0018-style-underline",
+  "generator": "python-pptx",
+  "slides": [
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    }
+  ]
+}

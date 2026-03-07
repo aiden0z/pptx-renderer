@@ -18,6 +18,7 @@ class PowerPointExportError(RuntimeError):
 class ExportResult:
     output_pdf: Path
     attempts: int
+    slide_pngs: list[Path] | None = None
 
 
 def _default_runner(cmd: list[str], **kwargs):
@@ -408,6 +409,114 @@ def run_macro_only_win(
         )
 
 
+def export_pptx_to_pdf_win(
+    pptx_path: Path,
+    pdf_path: Path,
+    retries: int = 2,
+    backoff_sec: float = 1.0,
+) -> ExportResult:
+    """Open an existing PPTX and export to PDF via COM — no VBA macro needed."""
+    src = Path(pptx_path).resolve()
+    out = Path(pdf_path).resolve()
+    if not src.exists():
+        raise FileNotFoundError(f"PPTX not found: {src}")
+    out.parent.mkdir(parents=True, exist_ok=True)
+
+    last_error: Exception | None = None
+    for attempt in range(1, retries + 2):
+        try:
+            with powerpoint_session_win() as app:
+                pres = _com_call_with_retry(
+                    app.Presentations.Open,
+                    FileName=str(src), ReadOnly=True, Untitled=False, WithWindow=True,
+                )
+                try:
+                    _com_call_with_retry(pres.SaveAs, str(out), _PP_SAVE_AS_PDF)
+                finally:
+                    try:
+                        pres.Saved = True
+                        pres.Close()
+                    except Exception:
+                        pass
+                    time.sleep(0.3)
+            if not out.exists() or out.stat().st_size == 0:
+                raise PowerPointExportError(f"PowerPoint reported success but PDF missing/empty: {out}")
+            return ExportResult(output_pdf=out, attempts=attempt)
+        except Exception as exc:
+            last_error = exc
+            if attempt > retries:
+                break
+            if backoff_sec > 0:
+                time.sleep(backoff_sec)
+
+    raise PowerPointExportError(
+        f"Failed to export {src} -> {out} after {retries + 1} attempt(s): {last_error}"
+    )
+
+
+def export_pptx_ground_truth_win(
+    pptx_path: Path,
+    pdf_path: Path,
+    slides_png_dir: Path | None = None,
+    png_width: int = 0,
+    png_height: int = 0,
+    retries: int = 2,
+    backoff_sec: float = 1.0,
+) -> ExportResult:
+    """Open an existing PPTX, export PDF + optional slide PNGs in one COM session."""
+    src = Path(pptx_path).resolve()
+    out = Path(pdf_path).resolve()
+    if not src.exists():
+        raise FileNotFoundError(f"PPTX not found: {src}")
+    out.parent.mkdir(parents=True, exist_ok=True)
+    if slides_png_dir is not None:
+        Path(slides_png_dir).mkdir(parents=True, exist_ok=True)
+
+    last_error: Exception | None = None
+    for attempt in range(1, retries + 2):
+        try:
+            slide_pngs: list[Path] = []
+            with powerpoint_session_win() as app:
+                pres = _com_call_with_retry(
+                    app.Presentations.Open,
+                    FileName=str(src), ReadOnly=True, Untitled=False, WithWindow=True,
+                )
+                try:
+                    _com_call_with_retry(pres.SaveAs, str(out), _PP_SAVE_AS_PDF)
+
+                    if slides_png_dir is not None:
+                        png_dir = Path(slides_png_dir).resolve()
+                        for i in range(1, pres.Slides.Count + 1):
+                            png_path = png_dir / f"slide{i}.png"
+                            export_args = [str(png_path), "PNG"]
+                            if png_width > 0:
+                                export_args.append(png_width)
+                            if png_height > 0:
+                                export_args.append(png_height)
+                            _com_call_with_retry(pres.Slides(i).Export, *export_args)
+                            slide_pngs.append(png_path)
+                finally:
+                    try:
+                        pres.Saved = True
+                        pres.Close()
+                    except Exception:
+                        pass
+                    time.sleep(0.3)
+            if not out.exists() or out.stat().st_size == 0:
+                raise PowerPointExportError(f"PowerPoint reported success but PDF missing/empty: {out}")
+            return ExportResult(output_pdf=out, attempts=attempt, slide_pngs=slide_pngs or None)
+        except Exception as exc:
+            last_error = exc
+            if attempt > retries:
+                break
+            if backoff_sec > 0:
+                time.sleep(backoff_sec)
+
+    raise PowerPointExportError(
+        f"Failed to export {src} -> {out} after {retries + 1} attempt(s): {last_error}"
+    )
+
+
 @contextmanager
 def powerpoint_batch_session_win() -> Generator:
     """Context manager yielding a session object with ``run_export()`` and ``run_only()``
@@ -495,3 +604,39 @@ def run_macro_only(
     if sys.platform == "win32":
         return run_macro_only_win(macro_host_pptm, macro_name, macro_params)
     return run_macro_only_mac(macro_host_pptm, macro_name, macro_params, runner=runner)
+
+
+def export_pptx_to_pdf(
+    pptx_path: Path,
+    pdf_path: Path,
+    retries: int = 2,
+    backoff_sec: float = 1.0,
+) -> ExportResult:
+    """Platform-dispatching wrapper: open existing PPTX and export to PDF."""
+    if sys.platform == "win32":
+        return export_pptx_to_pdf_win(pptx_path, pdf_path, retries=retries, backoff_sec=backoff_sec)
+    return export_pptx_to_pdf_mac(pptx_path, pdf_path, retries=retries, backoff_sec=backoff_sec)
+
+
+def export_pptx_ground_truth(
+    pptx_path: Path,
+    pdf_path: Path,
+    slides_png_dir: Path | None = None,
+    png_width: int = 0,
+    png_height: int = 0,
+    retries: int = 2,
+    backoff_sec: float = 1.0,
+) -> ExportResult:
+    """Platform-dispatching wrapper: export PDF + optional slide PNGs.
+
+    On macOS, falls back to PDF-only export (PNG not supported via AppleScript).
+    """
+    if sys.platform == "win32":
+        return export_pptx_ground_truth_win(
+            pptx_path, pdf_path,
+            slides_png_dir=slides_png_dir,
+            png_width=png_width, png_height=png_height,
+            retries=retries, backoff_sec=backoff_sec,
+        )
+    # macOS: PDF only (Slide.Export not available via AppleScript)
+    return export_pptx_to_pdf_mac(pptx_path, pdf_path, retries=retries, backoff_sec=backoff_sec)

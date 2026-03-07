@@ -1,0 +1,13 @@
+{
+  "name": "oracle-pypptx-shape-adj-0001-round-rect-small-radius",
+  "generator": "python-pptx",
+  "slides": [
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    }
+  ]
+}

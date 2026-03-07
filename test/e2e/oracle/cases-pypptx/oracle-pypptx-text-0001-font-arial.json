@@ -1,0 +1,13 @@
+{
+  "name": "oracle-pypptx-text-0001-font-arial",
+  "generator": "python-pptx",
+  "slides": [
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    }
+  ]
+}

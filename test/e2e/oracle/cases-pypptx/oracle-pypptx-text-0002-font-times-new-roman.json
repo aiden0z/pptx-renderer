@@ -1,0 +1,13 @@
+{
+  "name": "oracle-pypptx-text-0002-font-times-new-roman",
+  "generator": "python-pptx",
+  "slides": [
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    }
+  ]
+}

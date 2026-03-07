@@ -1,0 +1,13 @@
+{
+  "name": "oracle-pypptx-text-0005-font-georgia",
+  "generator": "python-pptx",
+  "slides": [
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    }
+  ]
+}

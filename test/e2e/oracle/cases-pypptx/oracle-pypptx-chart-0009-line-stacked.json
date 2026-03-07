@@ -1,0 +1,13 @@
+{
+  "name": "oracle-pypptx-chart-0009-line-stacked",
+  "generator": "python-pptx",
+  "slides": [
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    }
+  ]
+}

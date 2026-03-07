@@ -1,0 +1,13 @@
+{
+  "name": "oracle-pypptx-chart-0007-line-3series",
+  "generator": "python-pptx",
+  "slides": [
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "name": "oracle-pypptx-composite-0008-two-charts-line-pie",
+  "generator": "python-pptx",
+  "slides": [
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    }
+  ]
+}

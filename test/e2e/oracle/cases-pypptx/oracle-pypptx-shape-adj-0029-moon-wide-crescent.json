@@ -1,0 +1,13 @@
+{
+  "name": "oracle-pypptx-shape-adj-0029-moon-wide-crescent",
+  "generator": "python-pptx",
+  "slides": [
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    }
+  ]
+}

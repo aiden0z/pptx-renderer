@@ -1,0 +1,13 @@
+{
+  "name": "oracle-pypptx-shape-adj-0020-bevel-thick",
+  "generator": "python-pptx",
+  "slides": [
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    }
+  ]
+}

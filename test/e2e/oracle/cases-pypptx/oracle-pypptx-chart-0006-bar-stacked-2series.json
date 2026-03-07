@@ -1,0 +1,13 @@
+{
+  "name": "oracle-pypptx-chart-0006-bar-stacked-2series",
+  "generator": "python-pptx",
+  "slides": [
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    }
+  ]
+}

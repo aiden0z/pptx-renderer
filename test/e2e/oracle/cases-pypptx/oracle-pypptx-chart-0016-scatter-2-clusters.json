@@ -1,0 +1,13 @@
+{
+  "name": "oracle-pypptx-chart-0016-scatter-2-clusters",
+  "generator": "python-pptx",
+  "slides": [
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    }
+  ]
+}

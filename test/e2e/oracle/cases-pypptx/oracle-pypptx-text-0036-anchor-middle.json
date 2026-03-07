@@ -1,0 +1,13 @@
+{
+  "name": "oracle-pypptx-text-0036-anchor-middle",
+  "generator": "python-pptx",
+  "slides": [
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    }
+  ]
+}

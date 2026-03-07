@@ -1,0 +1,13 @@
+{
+  "name": "oracle-pypptx-shape-adj-0016-block-arc-wide",
+  "generator": "python-pptx",
+  "slides": [
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    }
+  ]
+}

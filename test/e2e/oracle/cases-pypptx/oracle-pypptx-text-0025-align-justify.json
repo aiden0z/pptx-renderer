@@ -1,0 +1,13 @@
+{
+  "name": "oracle-pypptx-text-0025-align-justify",
+  "generator": "python-pptx",
+  "slides": [
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    }
+  ]
+}

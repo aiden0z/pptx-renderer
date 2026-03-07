@@ -1,0 +1,13 @@
+{
+  "name": "oracle-pypptx-text-0023-align-center",
+  "generator": "python-pptx",
+  "slides": [
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    }
+  ]
+}

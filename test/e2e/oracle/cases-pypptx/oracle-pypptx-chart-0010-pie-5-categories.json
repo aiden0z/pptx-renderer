@@ -1,0 +1,13 @@
+{
+  "name": "oracle-pypptx-chart-0010-pie-5-categories",
+  "generator": "python-pptx",
+  "slides": [
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "name": "oracle-pypptx-shape-adj-0014-trapezoid-wide-top",
+  "generator": "python-pptx",
+  "slides": [
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    }
+  ]
+}

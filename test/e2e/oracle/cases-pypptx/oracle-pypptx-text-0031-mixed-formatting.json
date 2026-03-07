@@ -1,0 +1,13 @@
+{
+  "name": "oracle-pypptx-text-0031-mixed-formatting",
+  "generator": "python-pptx",
+  "slides": [
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    }
+  ]
+}

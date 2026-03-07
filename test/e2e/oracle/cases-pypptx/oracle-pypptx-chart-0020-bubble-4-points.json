@@ -1,0 +1,13 @@
+{
+  "name": "oracle-pypptx-chart-0020-bubble-4-points",
+  "generator": "python-pptx",
+  "slides": [
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    }
+  ]
+}

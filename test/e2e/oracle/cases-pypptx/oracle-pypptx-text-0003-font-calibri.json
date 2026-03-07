@@ -1,0 +1,13 @@
+{
+  "name": "oracle-pypptx-text-0003-font-calibri",
+  "generator": "python-pptx",
+  "slides": [
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    }
+  ]
+}

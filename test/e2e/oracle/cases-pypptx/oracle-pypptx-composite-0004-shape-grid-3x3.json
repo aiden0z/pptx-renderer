@@ -1,0 +1,13 @@
+{
+  "name": "oracle-pypptx-composite-0004-shape-grid-3x3",
+  "generator": "python-pptx",
+  "slides": [
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    }
+  ]
+}

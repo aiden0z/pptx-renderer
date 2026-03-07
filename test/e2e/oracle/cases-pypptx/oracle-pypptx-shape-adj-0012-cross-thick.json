@@ -1,0 +1,13 @@
+{
+  "name": "oracle-pypptx-shape-adj-0012-cross-thick",
+  "generator": "python-pptx",
+  "slides": [
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    }
+  ]
+}

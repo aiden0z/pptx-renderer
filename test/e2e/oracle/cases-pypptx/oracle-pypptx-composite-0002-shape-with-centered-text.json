@@ -1,0 +1,13 @@
+{
+  "name": "oracle-pypptx-composite-0002-shape-with-centered-text",
+  "generator": "python-pptx",
+  "slides": [
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "name": "oracle-pypptx-text-0032-bullet-list",
+  "generator": "python-pptx",
+  "slides": [
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    }
+  ]
+}

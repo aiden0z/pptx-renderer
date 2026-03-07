@@ -1,0 +1,13 @@
+{
+  "name": "oracle-pypptx-composite-0003-shape-textbox-overlay",
+  "generator": "python-pptx",
+  "slides": [
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    }
+  ]
+}

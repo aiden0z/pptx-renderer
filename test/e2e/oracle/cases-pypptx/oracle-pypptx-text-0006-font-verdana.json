@@ -1,0 +1,13 @@
+{
+  "name": "oracle-pypptx-text-0006-font-verdana",
+  "generator": "python-pptx",
+  "slides": [
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    }
+  ]
+}

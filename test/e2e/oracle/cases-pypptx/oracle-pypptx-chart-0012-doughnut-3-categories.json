@@ -1,0 +1,13 @@
+{
+  "name": "oracle-pypptx-chart-0012-doughnut-3-categories",
+  "generator": "python-pptx",
+  "slides": [
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    }
+  ]
+}

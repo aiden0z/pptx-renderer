@@ -1,0 +1,13 @@
+{
+  "name": "oracle-pypptx-shape-adj-0003-chevron-shallow",
+  "generator": "python-pptx",
+  "slides": [
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    }
+  ]
+}

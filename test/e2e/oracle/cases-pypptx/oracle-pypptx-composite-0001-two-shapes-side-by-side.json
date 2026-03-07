@@ -1,0 +1,13 @@
+{
+  "name": "oracle-pypptx-composite-0001-two-shapes-side-by-side",
+  "generator": "python-pptx",
+  "slides": [
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    }
+  ]
+}

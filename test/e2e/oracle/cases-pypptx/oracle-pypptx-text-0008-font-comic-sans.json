@@ -1,0 +1,13 @@
+{
+  "name": "oracle-pypptx-text-0008-font-comic-sans",
+  "generator": "python-pptx",
+  "slides": [
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    }
+  ]
+}

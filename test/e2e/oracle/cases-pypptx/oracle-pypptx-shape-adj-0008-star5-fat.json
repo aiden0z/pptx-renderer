@@ -1,0 +1,13 @@
+{
+  "name": "oracle-pypptx-shape-adj-0008-star5-fat",
+  "generator": "python-pptx",
+  "slides": [
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    }
+  ]
+}

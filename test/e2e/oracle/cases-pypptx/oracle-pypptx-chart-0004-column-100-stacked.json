@@ -1,0 +1,13 @@
+{
+  "name": "oracle-pypptx-chart-0004-column-100-stacked",
+  "generator": "python-pptx",
+  "slides": [
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    }
+  ]
+}

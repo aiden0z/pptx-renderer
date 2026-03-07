@@ -1,0 +1,13 @@
+{
+  "name": "oracle-pypptx-shape-adj-0027-heart-default",
+  "generator": "python-pptx",
+  "slides": [
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    }
+  ]
+}

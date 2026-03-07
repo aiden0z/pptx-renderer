@@ -1,0 +1,13 @@
+{
+  "name": "oracle-pypptx-text-0016-style-bold",
+  "generator": "python-pptx",
+  "slides": [
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    }
+  ]
+}

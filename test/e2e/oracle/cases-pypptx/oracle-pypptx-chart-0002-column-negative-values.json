@@ -1,0 +1,13 @@
+{
+  "name": "oracle-pypptx-chart-0002-column-negative-values",
+  "generator": "python-pptx",
+  "slides": [
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    }
+  ]
+}

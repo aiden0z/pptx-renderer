@@ -1,0 +1,13 @@
+{
+  "name": "oracle-pypptx-shape-adj-0005-arrow-thin",
+  "generator": "python-pptx",
+  "slides": [
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    }
+  ]
+}

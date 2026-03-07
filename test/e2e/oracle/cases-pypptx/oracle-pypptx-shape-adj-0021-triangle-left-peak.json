@@ -1,0 +1,13 @@
+{
+  "name": "oracle-pypptx-shape-adj-0021-triangle-left-peak",
+  "generator": "python-pptx",
+  "slides": [
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    }
+  ]
+}

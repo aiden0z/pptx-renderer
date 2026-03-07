@@ -1,0 +1,13 @@
+{
+  "name": "oracle-pypptx-chart-0011-pie-exploded",
+  "generator": "python-pptx",
+  "slides": [
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    }
+  ]
+}

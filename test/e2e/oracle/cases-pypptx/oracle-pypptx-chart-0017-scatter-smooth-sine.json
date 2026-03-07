@@ -1,0 +1,13 @@
+{
+  "name": "oracle-pypptx-chart-0017-scatter-smooth-sine",
+  "generator": "python-pptx",
+  "slides": [
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    }
+  ]
+}

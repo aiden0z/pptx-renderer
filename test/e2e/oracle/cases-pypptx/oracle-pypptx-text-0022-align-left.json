@@ -1,0 +1,13 @@
+{
+  "name": "oracle-pypptx-text-0022-align-left",
+  "generator": "python-pptx",
+  "slides": [
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    }
+  ]
+}

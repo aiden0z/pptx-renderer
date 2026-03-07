@@ -1,0 +1,13 @@
+{
+  "name": "oracle-pypptx-composite-0009-colored-shapes-with-text",
+  "generator": "python-pptx",
+  "slides": [
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    }
+  ]
+}
