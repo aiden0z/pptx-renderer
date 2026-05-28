@@ -516,9 +516,12 @@ function extractDataPointColors(
 
 /** In OOXML, boolean elements are true when present unless val="0" or val="false". */
 function parseDlblBool(dLbls: SafeXmlNode, childName: string): boolean {
-  const el = dLbls.child(childName);
-  if (!el.exists()) return false;
-  const val = el.attr('val');
+  return parseOoxmlBoolElement(dLbls.child(childName));
+}
+
+function parseOoxmlBoolElement(node: SafeXmlNode): boolean {
+  if (!node.exists()) return false;
+  const val = node.attr('val');
   return val !== '0' && val !== 'false';
 }
 
@@ -599,8 +602,7 @@ function parseDataLabels(node: SafeXmlNode, ctx: RenderContext): DataLabelConfig
 function parseDlblBoolOptional(dLbl: SafeXmlNode, childName: string): boolean | undefined {
   const el = dLbl.child(childName);
   if (!el.exists()) return undefined;
-  const val = el.attr('val');
-  return val !== '0' && val !== 'false';
+  return parseOoxmlBoolElement(el);
 }
 
 function parseDataLabelBoxStyle(dLbls: SafeXmlNode, ctx: RenderContext): Partial<DataLabelConfig> {
@@ -765,7 +767,7 @@ function parseSeries(chartTypeNode: SafeXmlNode, ctx: RenderContext): SeriesData
     const marker = ser.child('marker');
     const markerSymbol = marker.child('symbol').attr('val');
     const markerSize = marker.child('size').numAttr('val');
-    const smooth = ser.child('smooth').attr('val') === '1';
+    const smooth = parseOoxmlBoolElement(ser.child('smooth'));
 
     seriesArr.push({
       name,
@@ -2035,6 +2037,7 @@ function buildLineChartOption(
       itemStyle: s.colorHex ? { color: s.colorHex } : undefined,
       lineStyle,
       label,
+      ...(s.smooth ? { smooth: true } : {}),
       ...(s.formatCode
         ? {
             tooltip: {
@@ -2412,6 +2415,13 @@ function buildScatterChartOption(
   // Default scatter marker symbol per OOXML: lineMarker → diamond, smoothMarker → diamond
   const defaultScatterSymbol =
     scatterStyle === 'lineMarker' || scatterStyle === 'smoothMarker' ? 'diamond' : 'circle';
+  const scatterStyleDrawsLine =
+    scatterStyle === 'lineMarker' ||
+    scatterStyle === 'line' ||
+    scatterStyle === 'smoothMarker' ||
+    scatterStyle === 'smooth';
+  const scatterStyleIsSmooth = scatterStyle === 'smoothMarker' || scatterStyle === 'smooth';
+  const scatterStyleHidesMarkers = scatterStyle === 'line' || scatterStyle === 'smooth';
 
   const series = seriesArr.map((s) => {
     // Use xValues if available (parsed from c:xVal), otherwise fall back to index
@@ -2420,11 +2430,10 @@ function buildScatterChartOption(
       return [x, v];
     });
     const echartsSymbol = mapOoxmlSymbol(s.markerSymbol) ?? defaultScatterSymbol;
-    const showSymbol = echartsSymbol !== 'none';
-    const renderAsLine = scatterStyle === 'smoothMarker' || s.smooth;
+    const showSymbol = !scatterStyleHidesMarkers && echartsSymbol !== 'none';
+    const renderAsLine = scatterStyleDrawsLine || s.smooth;
     if (renderAsLine) {
-      const lineData =
-        scatterStyle === 'smoothMarker' || s.smooth ? buildSmoothScatterLineData(data) : data;
+      const lineData = scatterStyleIsSmooth || s.smooth ? buildSmoothScatterLineData(data) : data;
       const lineWidth = s.lineWidth ?? 4;
       return {
         type: 'line' as const,
@@ -2457,8 +2466,8 @@ function buildScatterChartOption(
   });
   const legendData = seriesArr.map((s) => {
     const echartsSymbol = mapOoxmlSymbol(s.markerSymbol) ?? defaultScatterSymbol;
-    const showSymbol = echartsSymbol !== 'none';
-    const renderAsLine = scatterStyle === 'smoothMarker' || s.smooth;
+    const showSymbol = !scatterStyleHidesMarkers && echartsSymbol !== 'none';
+    const renderAsLine = scatterStyleDrawsLine || s.smooth;
     if (renderAsLine) {
       return showSymbol && echartsSymbol
         ? { name: s.name, icon: echartsSymbol }

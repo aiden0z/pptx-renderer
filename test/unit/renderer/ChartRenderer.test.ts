@@ -1311,6 +1311,51 @@ describe('ChartRenderer', () => {
       expect(series[0].name).toBe('Revenue');
     });
 
+    it('should preserve smooth lineChart series from c:smooth', () => {
+      const xml = `
+        <c:chartSpace xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart"
+                      xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+          <c:chart>
+            <c:plotArea>
+              <c:lineChart>
+                <c:grouping val="standard"/>
+                <c:ser>
+                  <c:idx val="0"/><c:order val="0"/>
+                  <c:tx>
+                    <c:strRef><c:strCache><c:ptCount val="1"/><c:pt idx="0"><c:v>Trend</c:v></c:pt></c:strCache></c:strRef>
+                  </c:tx>
+                  <c:marker><c:symbol val="none"/></c:marker>
+                  <c:cat>
+                    <c:strRef><c:strCache><c:ptCount val="3"/>
+                      <c:pt idx="0"><c:v>Q1</c:v></c:pt>
+                      <c:pt idx="1"><c:v>Q2</c:v></c:pt>
+                      <c:pt idx="2"><c:v>Q3</c:v></c:pt>
+                    </c:strCache></c:strRef>
+                  </c:cat>
+                  <c:val>
+                    <c:numRef><c:numCache><c:formatCode>0</c:formatCode><c:ptCount val="3"/>
+                      <c:pt idx="0"><c:v>10</c:v></c:pt>
+                      <c:pt idx="1"><c:v>18</c:v></c:pt>
+                      <c:pt idx="2"><c:v>14</c:v></c:pt>
+                    </c:numCache></c:numRef>
+                  </c:val>
+                  <c:smooth val="1"/>
+                </c:ser>
+                <c:axId val="1"/><c:axId val="2"/>
+              </c:lineChart>
+              <c:catAx><c:axId val="1"/><c:delete val="0"/><c:crossAx val="2"/></c:catAx>
+              <c:valAx><c:axId val="2"/><c:delete val="0"/><c:crossAx val="1"/></c:valAx>
+            </c:plotArea>
+          </c:chart>
+        </c:chartSpace>`;
+
+      const { option } = parseChartOption(xml);
+      const series = (option.series as any[])?.[0];
+      expect(series?.type).toBe('line');
+      expect(series?.smooth).toBe(true);
+      expect(series?.showSymbol).toBe(false);
+    });
+
     it('should parse pieChart with single series and data point colors', () => {
       const xml = `
         <c:chartSpace xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart"
@@ -3466,7 +3511,7 @@ describe('ChartRenderer', () => {
   // ==========================================================================
 
   describe('scatter chart xVal/yVal parsing', () => {
-    it('should use yVal values instead of val and xVal for x-coordinates', () => {
+    it('should render lineMarker scatter with connected marker points', () => {
       const xml = `<c:chartSpace
         xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart"
         xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
@@ -3503,12 +3548,16 @@ describe('ChartRenderer', () => {
 
       const { option } = parseChartOption(xml);
       const series = (option.series as any[])?.[0];
-      expect(series?.type).toBe('scatter');
-      // Data should be [[10,100],[20,200],[30,300]]
+      expect(series?.type).toBe('line');
+      expect(series?.smooth).toBe(false);
+      expect(series?.showSymbol).toBe(true);
+      expect(series?.symbol).toBe('diamond');
       expect(series?.data?.length).toBe(3);
       expect(series?.data?.[0]).toEqual([10, 100]);
       expect(series?.data?.[1]).toEqual([20, 200]);
       expect(series?.data?.[2]).toEqual([30, 300]);
+      expect(series?.lineStyle?.cap).toBe('round');
+      expect(series?.lineStyle?.join).toBe('round');
     });
   });
 
