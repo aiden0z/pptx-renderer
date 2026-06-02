@@ -67,6 +67,8 @@ Office fallback cases where an EMF contains an embedded PDF preview or bitmap pr
 
 For EMF files with embedded PDF previews, install `pdfjs-dist` and pass explicit asset
 URLs. This keeps PDF.js optional and avoids forcing every consumer bundle to include it.
+This is only needed for EMF-PDF fallback previews; ordinary PPTX rendering does not
+require any code changes.
 
 ```ts
 import { PptxViewer } from '@aiden0z/pptx-renderer';
@@ -85,6 +87,15 @@ If your app uses a CDN or pre-copied assets, point those fields at your hosted f
 Set `pdfjs: false` to disable EMF-PDF fallback rendering entirely. With no `pdfjs`
 configuration, the renderer attempts only a best-effort automatic resolution and
 otherwise degrades gracefully.
+
+```ts
+type PdfjsConfig =
+  | {
+      moduleUrl?: string;
+      workerUrl?: string;
+    }
+  | false;
+```
 
 Or with more control over each step:
 
@@ -245,6 +256,9 @@ import { PptxRenderer } from '@aiden0z/pptx-renderer';
 const renderer = new PptxRenderer(container, { mode: 'list', listMountStrategy: 'windowed' });
 await renderer.preview(buffer); // deprecated — use PptxViewer.open() instead
 ```
+
+`PptxRenderer` accepts the same optional `pdfjs` configuration as `PptxViewer`, so legacy
+users can enable or disable EMF-PDF fallback rendering without changing APIs.
 
 ### Utility Exports
 
