@@ -2950,6 +2950,50 @@ describe('ChartRenderer', () => {
       expect(option.yAxis).toBeDefined();
     });
 
+    it('uses PowerPoint-like automatic value axis range for clustered column charts (oracle-pypptx-chart-0001)', () => {
+      const xml = buildChartSpaceXml({
+        valAxDeleted: false,
+        categories: ['Q1', 'Q2', 'Q3', 'Q4'],
+        values: [45, 52, 48, 61],
+      });
+
+      const { option } = parseChartOption(xml);
+      const yAxis = option.yAxis as any;
+
+      expect(yAxis.max).toBe(70);
+      expect(yAxis.interval).toBe(10);
+    });
+
+    it('uses PowerPoint-like automatic value axis range for line charts (oracle-pypptx-chart-0007)', () => {
+      const xml = `
+        <c:chartSpace xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart"
+                      xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+          <c:chart>
+            <c:autoTitleDeleted val="1"/>
+            <c:plotArea>
+              <c:lineChart>
+                <c:grouping val="standard"/>
+                <c:ser>
+                  <c:idx val="0"/><c:order val="0"/>
+                  <c:tx><c:strRef><c:strCache><c:ptCount val="1"/><c:pt idx="0"><c:v>Website</c:v></c:pt></c:strCache></c:strRef></c:tx>
+                  <c:cat><c:strRef><c:strCache><c:ptCount val="6"/><c:pt idx="0"><c:v>Jan</c:v></c:pt><c:pt idx="1"><c:v>Feb</c:v></c:pt><c:pt idx="2"><c:v>Mar</c:v></c:pt><c:pt idx="3"><c:v>Apr</c:v></c:pt><c:pt idx="4"><c:v>May</c:v></c:pt><c:pt idx="5"><c:v>Jun</c:v></c:pt></c:strCache></c:strRef></c:cat>
+                  <c:val><c:numRef><c:numCache><c:ptCount val="6"/><c:pt idx="0"><c:v>1200</c:v></c:pt><c:pt idx="1"><c:v>1350</c:v></c:pt><c:pt idx="2"><c:v>1100</c:v></c:pt><c:pt idx="3"><c:v>1450</c:v></c:pt><c:pt idx="4"><c:v>1380</c:v></c:pt><c:pt idx="5"><c:v>1520</c:v></c:pt></c:numCache></c:numRef></c:val>
+                </c:ser>
+                <c:axId val="1"/><c:axId val="2"/>
+              </c:lineChart>
+              <c:catAx><c:axId val="1"/><c:scaling><c:orientation val="minMax"/></c:scaling><c:delete val="0"/><c:axPos val="b"/><c:crossAx val="2"/></c:catAx>
+              <c:valAx><c:axId val="2"/><c:scaling><c:orientation val="minMax"/></c:scaling><c:delete val="0"/><c:axPos val="l"/><c:majorGridlines/><c:crossAx val="1"/></c:valAx>
+            </c:plotArea>
+          </c:chart>
+        </c:chartSpace>`;
+
+      const { option } = parseChartOption(xml);
+      const yAxis = option.yAxis as any;
+
+      expect(yAxis.max).toBe(1600);
+      expect(yAxis.interval).toBe(200);
+    });
+
     it('should handle axis with custom tick label position', () => {
       const xml = `
         <c:chartSpace xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart"
@@ -3877,11 +3921,11 @@ describe('ChartRenderer', () => {
   });
 
   // ==========================================================================
-  // Coverage: extractAxisLabelColor - pPr without defRPr (lines 852-863)
+  // Coverage: incomplete axis txPr falls back to Office default label color.
   // ==========================================================================
 
   describe('axis label color edge cases', () => {
-    it('should return no label color when txPr has pPr but no defRPr', () => {
+    it('should fall back to default label color when txPr has pPr but no defRPr', () => {
       const catAxTxPr = `
         <a:bodyPr/>
         <a:lstStyle/>
@@ -3895,11 +3939,10 @@ describe('ChartRenderer', () => {
       });
       const { option } = parseChartOption(xml);
       const xAxis = option.xAxis as any;
-      // No defRPr → no color extracted
-      expect(xAxis?.axisLabel?.color).toBeUndefined();
+      expect(xAxis?.axisLabel?.color).toBe('#000000');
     });
 
-    it('should return no label color when txPr has defRPr but no solidFill', () => {
+    it('should fall back to default label color when txPr has defRPr but no solidFill', () => {
       const catAxTxPr = `
         <a:bodyPr/>
         <a:lstStyle/>
@@ -3915,8 +3958,7 @@ describe('ChartRenderer', () => {
       });
       const { option } = parseChartOption(xml);
       const xAxis = option.xAxis as any;
-      // defRPr exists but no solidFill → no color
-      expect(xAxis?.axisLabel?.color).toBeUndefined();
+      expect(xAxis?.axisLabel?.color).toBe('#000000');
     });
   });
 
@@ -4809,6 +4851,81 @@ describe('ChartRenderer', () => {
       expect(yAxis.interval).toBe(0.1);
       expect(yAxis.axisLabel.formatter(0.5)).toBe('50%');
       expect(yAxis.splitLine?.show).not.toBe(false);
+    });
+
+    it('uses Office-style black major gridlines when c:majorGridlines has no explicit style', () => {
+      const xml = `<c:chartSpace
+        xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart"
+        xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+        <c:chart>
+          <c:autoTitleDeleted val="1"/>
+          <c:plotArea>
+            <c:barChart>
+              <c:barDir val="col"/>
+              <c:grouping val="clustered"/>
+              <c:ser>
+                <c:idx val="0"/><c:order val="0"/>
+                <c:tx><c:strRef><c:strCache><c:ptCount val="1"/><c:pt idx="0"><c:v>A</c:v></c:pt></c:strCache></c:strRef></c:tx>
+                <c:cat><c:strRef><c:strCache><c:ptCount val="2"/><c:pt idx="0"><c:v>Q1</c:v></c:pt><c:pt idx="1"><c:v>Q2</c:v></c:pt></c:strCache></c:strRef></c:cat>
+                <c:val><c:numRef><c:numCache><c:ptCount val="2"/><c:pt idx="0"><c:v>20</c:v></c:pt><c:pt idx="1"><c:v>50</c:v></c:pt></c:numCache></c:numRef></c:val>
+              </c:ser>
+              <c:axId val="1"/><c:axId val="2"/>
+            </c:barChart>
+            <c:catAx><c:axId val="1"/><c:delete val="0"/><c:axPos val="b"/><c:crossAx val="2"/></c:catAx>
+            <c:valAx><c:axId val="2"/><c:delete val="0"/><c:axPos val="l"/><c:majorGridlines/><c:crossAx val="1"/></c:valAx>
+          </c:plotArea>
+        </c:chart>
+      </c:chartSpace>`;
+
+      const { option } = parseChartOption(xml);
+      const yAxis = option.yAxis as any;
+      expect(yAxis.splitLine).toMatchObject({
+        show: true,
+        lineStyle: {
+          color: '#000000',
+          width: 1,
+          type: 'solid',
+        },
+      });
+    });
+
+    it('uses Office-style default axis text and lines when axis styling is omitted', () => {
+      const xml = `<c:chartSpace
+        xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart"
+        xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+        <c:chart>
+          <c:autoTitleDeleted val="1"/>
+          <c:plotArea>
+            <c:lineChart>
+              <c:grouping val="standard"/>
+              <c:ser>
+                <c:idx val="0"/><c:order val="0"/>
+                <c:tx><c:strRef><c:strCache><c:ptCount val="1"/><c:pt idx="0"><c:v>Website</c:v></c:pt></c:strCache></c:strRef></c:tx>
+                <c:cat><c:strRef><c:strCache><c:ptCount val="2"/><c:pt idx="0"><c:v>Jan</c:v></c:pt><c:pt idx="1"><c:v>Feb</c:v></c:pt></c:strCache></c:strRef></c:cat>
+                <c:val><c:numRef><c:numCache><c:ptCount val="2"/><c:pt idx="0"><c:v>1200</c:v></c:pt><c:pt idx="1"><c:v>1520</c:v></c:pt></c:numCache></c:numRef></c:val>
+              </c:ser>
+              <c:axId val="1"/><c:axId val="2"/>
+            </c:lineChart>
+            <c:catAx><c:axId val="1"/><c:delete val="0"/><c:axPos val="b"/><c:tickLblPos val="nextTo"/><c:crossAx val="2"/></c:catAx>
+            <c:valAx><c:axId val="2"/><c:delete val="0"/><c:axPos val="l"/><c:tickLblPos val="nextTo"/><c:majorGridlines/><c:crossAx val="1"/></c:valAx>
+          </c:plotArea>
+        </c:chart>
+      </c:chartSpace>`;
+
+      const { option } = parseChartOption(xml);
+      const xAxis = option.xAxis as any;
+      const yAxis = option.yAxis as any;
+      expect(yAxis.axisLabel.formatter(1600)).toBe('1600');
+      expect(xAxis.axisLabel.color).toBe('#000000');
+      expect(yAxis.axisLabel.color).toBe('#000000');
+      expect(xAxis.axisLine).toMatchObject({
+        show: true,
+        lineStyle: { color: '#000000' },
+      });
+      expect(yAxis.axisLine).toMatchObject({
+        show: true,
+        lineStyle: { color: '#000000' },
+      });
     });
 
     it('applies major gridline line style from value axis spPr', () => {

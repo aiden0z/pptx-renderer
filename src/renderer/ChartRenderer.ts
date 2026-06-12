@@ -42,6 +42,13 @@ interface ChartLineStyle {
   type?: ChartLineType;
 }
 
+const DEFAULT_CHART_FOREGROUND_COLOR = '#000000';
+const DEFAULT_MAJOR_GRIDLINE_STYLE: Required<ChartLineStyle> = {
+  color: DEFAULT_CHART_FOREGROUND_COLOR,
+  width: 1,
+  type: 'solid',
+};
+
 interface DataPointStyle {
   color?: string;
   borderColor?: string;
@@ -1599,8 +1606,9 @@ function applyAxisInfo(
     if (info.max !== undefined) axisDef.max = info.max;
   }
 
-  // Axis numFmt → label formatter (only for value axis, and only if not already set by series pctFormat)
-  if (kind === 'value' && info.numFmt && !info.deleted && info.tickLblPos !== 'none') {
+  // Axis numFmt → label formatter. Even without explicit numFmt, format through our
+  // Office-like formatter so ECharts does not inject browser-style thousands separators.
+  if (kind === 'value' && !info.deleted && info.tickLblPos !== 'none') {
     const existingLabel = (axisDef.axisLabel as Record<string, unknown>) || {};
     if (!existingLabel.formatter) {
       const nf = info.numFmt;
@@ -1623,29 +1631,46 @@ function applyAxisInfo(
         show: true,
         lineStyle: { ...existingLineStyle, ...info.majorGridlineStyle },
       };
+    } else {
+      const existingSplitLine = (axisDef.splitLine as Record<string, unknown>) || {};
+      const existingLineStyle = (existingSplitLine.lineStyle as Record<string, unknown>) || {};
+      axisDef.splitLine = {
+        ...existingSplitLine,
+        show: true,
+        lineStyle: { ...DEFAULT_MAJOR_GRIDLINE_STYLE, ...existingLineStyle },
+      };
     }
-    // If has gridlines without explicit styling, ECharts shows them by default.
   }
 
-  // Axis label color from txPr
-  if (info.labelColor) {
+  // Axis label color from txPr, falling back to Office's black foreground default.
+  if (info.labelColor || !info.deleted) {
     const existingLabel = (axisDef.axisLabel as Record<string, unknown>) || {};
-    axisDef.axisLabel = { ...existingLabel, color: info.labelColor };
+    const color =
+      info.labelColor ??
+      (existingLabel.color === undefined ? DEFAULT_CHART_FOREGROUND_COLOR : undefined);
+    if (color) {
+      axisDef.axisLabel = { ...existingLabel, color };
+    }
   }
   if (info.labelFontSize !== undefined) {
     const existingLabel = (axisDef.axisLabel as Record<string, unknown>) || {};
     axisDef.axisLabel = { ...existingLabel, fontSize: info.labelFontSize };
   }
 
-  // Axis line color from spPr > ln
-  if (info.lineColor) {
+  // Axis line color from spPr > ln, falling back to Office's black foreground default.
+  if (info.lineColor || !info.deleted) {
     const existingLine = (axisDef.axisLine as Record<string, unknown>) || {};
     const existingLineStyle = (existingLine.lineStyle as Record<string, unknown>) || {};
-    axisDef.axisLine = {
-      ...existingLine,
-      show: existingLine.show ?? true,
-      lineStyle: { ...existingLineStyle, color: info.lineColor },
-    };
+    const color =
+      info.lineColor ??
+      (existingLineStyle.color === undefined ? DEFAULT_CHART_FOREGROUND_COLOR : undefined);
+    if (color) {
+      axisDef.axisLine = {
+        ...existingLine,
+        show: existingLine.show ?? true,
+        lineStyle: { ...existingLineStyle, color },
+      };
+    }
   }
 }
 
@@ -3553,13 +3578,19 @@ function applyNiceAxisRange(option: echarts.EChartsOption): void {
       const dataMin = Math.min(...axisValues);
       const dataMax = Math.max(...axisValues);
 
+      const desiredTicks = 8;
+      const interval = niceAxisInterval(dataMax, dataMin, desiredTicks);
+
       // Only set max when not already specified
       if (ax.max === undefined) {
-        ax.max = niceAxisMax(dataMax, dataMin);
+        ax.max = niceAxisMax(dataMax, dataMin, desiredTicks);
       }
       // Set min to 0 when all values are non-negative and no explicit min
       if (ax.min === undefined && dataMin >= 0) {
         ax.min = 0;
+      }
+      if (ax.interval === undefined) {
+        ax.interval = interval;
       }
     });
   };
