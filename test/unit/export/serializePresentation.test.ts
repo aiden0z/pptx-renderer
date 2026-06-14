@@ -41,6 +41,7 @@ function makePres(nodes: any[]): PresentationData {
     index: 0,
     nodes,
     rels: new Map(),
+    slidePath: 'ppt/slides/slide1.xml',
     showMasterSp: true,
   };
   return {
@@ -240,6 +241,82 @@ describe('serializePresentation', () => {
     expect(node.children).toHaveLength(1);
     expect(node.children![0].nodeType).toBe('shape');
     expect(node.children![0].name).toBe('child-shape');
+  });
+
+  it('serializes group chart children', () => {
+    const xml = parseXml(`
+      <grpSp xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
+             xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"
+             xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart"
+             xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+        <graphicFrame>
+          <nvGraphicFramePr><cNvPr id="12" name="child-chart"/><nvPr/></nvGraphicFramePr>
+          <xfrm><off x="0" y="0"/><ext cx="914400" cy="457200"/></xfrm>
+          <a:graphic>
+            <a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/chart">
+              <c:chart r:id="rIdChart"/>
+            </a:graphicData>
+          </a:graphic>
+        </graphicFrame>
+      </grpSp>
+    `);
+    const chartFrame = xml.child('graphicFrame');
+    const group: GroupNodeData = {
+      ...makeBase({ id: '10', name: 'group' }),
+      nodeType: 'group',
+      childOffset: { x: 0, y: 0 },
+      childExtent: { w: 96, h: 96 },
+      children: [chartFrame],
+    };
+    const pres = makePres([group]);
+    pres.slides[0].rels = new Map([
+      ['rIdChart', { type: 'chart', target: '../charts/chart1.xml' }],
+    ]);
+
+    const result = serializePresentation(pres);
+    const child = result.slides[0].nodes[0].children![0];
+    expect(child.nodeType).toBe('chart');
+    expect(child.chartPath).toBe('ppt/charts/chart1.xml');
+  });
+
+  it('serializes group OLE fallback picture children', () => {
+    const xml = parseXml(`
+      <grpSp xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
+             xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+        <graphicFrame>
+          <nvGraphicFramePr><cNvPr id="13" name="child-ole"/><nvPr/></nvGraphicFramePr>
+          <xfrm><off x="0" y="0"/><ext cx="914400" cy="457200"/></xfrm>
+          <a:graphic>
+            <a:graphicData uri="http://schemas.openxmlformats.org/presentationml/2006/ole">
+              <mc:AlternateContent>
+                <mc:Fallback>
+                  <p:oleObj>
+                    <p:pic>
+                      <p:blipFill><a:blip r:embed="rIdPreview"/></p:blipFill>
+                    </p:pic>
+                  </p:oleObj>
+                </mc:Fallback>
+              </mc:AlternateContent>
+            </a:graphicData>
+          </a:graphic>
+        </graphicFrame>
+      </grpSp>
+    `);
+    const oleFrame = xml.child('graphicFrame');
+    const group: GroupNodeData = {
+      ...makeBase({ id: '10', name: 'group' }),
+      nodeType: 'group',
+      childOffset: { x: 0, y: 0 },
+      childExtent: { w: 96, h: 96 },
+      children: [oleFrame],
+    };
+
+    const result = serializePresentation(makePres([group]));
+    const child = result.slides[0].nodes[0].children![0];
+    expect(child.nodeType).toBe('picture');
+    expect(child.blipEmbed).toBe('rIdPreview');
   });
 
   it('serializes group with unparseable children gracefully', () => {

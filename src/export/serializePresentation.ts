@@ -9,13 +9,15 @@ import { ShapeNodeData, TextBody } from '../model/nodes/ShapeNode';
 import { PicNodeData } from '../model/nodes/PicNode';
 import { TableNodeData, TableRow, TableCell } from '../model/nodes/TableNode';
 import { GroupNodeData } from '../model/nodes/GroupNode';
-import { ChartNodeData } from '../model/nodes/ChartNode';
+import { ChartNodeData, parseChartNode } from '../model/nodes/ChartNode';
 import { BaseNodeData } from '../model/nodes/BaseNode';
 import { parseShapeNode } from '../model/nodes/ShapeNode';
 import { parsePicNode } from '../model/nodes/PicNode';
 import { parseTableNode } from '../model/nodes/TableNode';
 import { parseGroupNode } from '../model/nodes/GroupNode';
 import { SafeXmlNode } from '../parser/XmlParser';
+import { parseOleFrameAsPicture } from '../model/Slide';
+import type { RelEntry } from '../parser/RelParser';
 
 // ---------------------------------------------------------------------------
 // Serialized Types (JSON-safe)
@@ -105,7 +107,11 @@ function serializeRow(row: TableRow): SerializedRow {
 /**
  * Parse a raw XML child node from a group into a typed node.
  */
-function parseGroupChild(childXml: SafeXmlNode): BaseNodeData | undefined {
+function parseGroupChild(
+  childXml: SafeXmlNode,
+  rels: Map<string, RelEntry>,
+  partPath: string,
+): BaseNodeData | undefined {
   const tag = childXml.localName;
   switch (tag) {
     case 'sp':
@@ -121,6 +127,11 @@ function parseGroupChild(childXml: SafeXmlNode): BaseNodeData | undefined {
       if (graphicData.child('tbl').exists()) {
         return parseTableNode(childXml);
       }
+      if ((graphicData.attr('uri') || '').includes('chart')) {
+        return parseChartNode(childXml, rels, partPath);
+      }
+      const olePic = parseOleFrameAsPicture(childXml);
+      if (olePic) return olePic;
       return undefined;
     }
     default:
@@ -128,7 +139,11 @@ function parseGroupChild(childXml: SafeXmlNode): BaseNodeData | undefined {
   }
 }
 
-function serializeNode(node: SlideNode | BaseNodeData): SerializedNode {
+function serializeNode(
+  node: SlideNode | BaseNodeData,
+  rels: Map<string, RelEntry>,
+  partPath: string,
+): SerializedNode {
   const base: SerializedNode = {
     id: node.id,
     name: node.name,
@@ -169,8 +184,8 @@ function serializeNode(node: SlideNode | BaseNodeData): SerializedNode {
       const children: SerializedNode[] = [];
       for (const childXml of g.children) {
         try {
-          const parsed = parseGroupChild(childXml);
-          if (parsed) children.push(serializeNode(parsed));
+          const parsed = parseGroupChild(childXml, rels, partPath);
+          if (parsed) children.push(serializeNode(parsed, rels, partPath));
         } catch {
           // skip unparseable group children
         }
@@ -194,7 +209,7 @@ export function serializePresentation(pres: PresentationData): SerializedPresent
     slideCount: pres.slides.length,
     slides: pres.slides.map((slide, i) => ({
       index: i,
-      nodes: slide.nodes.map(serializeNode),
+      nodes: slide.nodes.map((node) => serializeNode(node, slide.rels, slide.slidePath)),
     })),
   };
 }
