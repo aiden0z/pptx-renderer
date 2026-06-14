@@ -4847,6 +4847,81 @@ describe('ChartRenderer', () => {
       expect(rendered.children[1].shape.x2 - rendered.children[1].shape.x1).toBeLessThanOrEqual(4);
     });
 
+    it('should merge volume columns with stock HLC price glyphs in combo charts', () => {
+      const xml = `
+        <c:chartSpace xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart"
+                      xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+          <c:chart>
+            <c:plotArea>
+              <c:barChart>
+                <c:barDir val="col"/>
+                <c:grouping val="clustered"/>
+                <c:ser>
+                  <c:idx val="0"/><c:order val="0"/>
+                  <c:tx><c:strRef><c:strCache><c:ptCount val="1"/><c:pt idx="0"><c:v>Volume</c:v></c:pt></c:strCache></c:strRef></c:tx>
+                  <c:cat><c:strRef><c:strCache><c:ptCount val="1"/>
+                    <c:pt idx="0"><c:v>Day1</c:v></c:pt>
+                  </c:strCache></c:strRef></c:cat>
+                  <c:val><c:numRef><c:numCache><c:ptCount val="1"/>
+                    <c:pt idx="0"><c:v>1000</c:v></c:pt>
+                  </c:numCache></c:numRef></c:val>
+                </c:ser>
+                <c:axId val="1"/><c:axId val="2"/>
+              </c:barChart>
+              <c:stockChart>
+                <c:ser>
+                  <c:idx val="1"/><c:order val="1"/>
+                  <c:tx><c:strRef><c:strCache><c:ptCount val="1"/><c:pt idx="0"><c:v>High</c:v></c:pt></c:strCache></c:strRef></c:tx>
+                  <c:cat><c:strRef><c:strCache><c:ptCount val="1"/>
+                    <c:pt idx="0"><c:v>Day1</c:v></c:pt>
+                  </c:strCache></c:strRef></c:cat>
+                  <c:val><c:numRef><c:numCache><c:ptCount val="1"/>
+                    <c:pt idx="0"><c:v>55</c:v></c:pt>
+                  </c:numCache></c:numRef></c:val>
+                </c:ser>
+                <c:ser>
+                  <c:idx val="2"/><c:order val="2"/>
+                  <c:tx><c:strRef><c:strCache><c:ptCount val="1"/><c:pt idx="0"><c:v>Low</c:v></c:pt></c:strCache></c:strRef></c:tx>
+                  <c:val><c:numRef><c:numCache><c:ptCount val="1"/>
+                    <c:pt idx="0"><c:v>11</c:v></c:pt>
+                  </c:numCache></c:numRef></c:val>
+                </c:ser>
+                <c:ser>
+                  <c:idx val="3"/><c:order val="3"/>
+                  <c:tx><c:strRef><c:strCache><c:ptCount val="1"/><c:pt idx="0"><c:v>Close</c:v></c:pt></c:strCache></c:strRef></c:tx>
+                  <c:val><c:numRef><c:numCache><c:ptCount val="1"/>
+                    <c:pt idx="0"><c:v>32</c:v></c:pt>
+                  </c:numCache></c:numRef></c:val>
+                </c:ser>
+                <c:axId val="1"/><c:axId val="3"/>
+              </c:stockChart>
+              <c:catAx>
+                <c:axId val="1"/><c:scaling><c:orientation val="minMax"/></c:scaling>
+                <c:delete val="0"/><c:axPos val="b"/><c:tickLblPos val="nextTo"/><c:crossAx val="2"/>
+              </c:catAx>
+              <c:valAx>
+                <c:axId val="2"/><c:scaling><c:orientation val="minMax"/></c:scaling>
+                <c:delete val="0"/><c:axPos val="l"/><c:tickLblPos val="nextTo"/><c:crossAx val="1"/>
+              </c:valAx>
+              <c:valAx>
+                <c:axId val="3"/><c:scaling><c:orientation val="minMax"/></c:scaling>
+                <c:delete val="0"/><c:axPos val="r"/><c:tickLblPos val="none"/><c:crossAx val="1"/>
+              </c:valAx>
+            </c:plotArea>
+          </c:chart>
+        </c:chartSpace>`;
+
+      const { option } = parseChartOption(xml);
+      const series = option.series as any[];
+      const yAxes = option.yAxis as any[];
+
+      expect(series.map((s) => s.type)).toEqual(['bar', 'custom']);
+      expect(series[1].data[0]).toEqual([0, 55, 11, 32]);
+      expect(series[1].yAxisIndex).toBe(1);
+      expect(yAxes).toHaveLength(2);
+      expect(yAxes[1].axisLabel.show).toBe(false);
+    });
+
     it('should keep stock HLC gridlines on the value axis and convert Excel date serials without timezone drift', () => {
       const xml = `
         <c:chartSpace xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart"

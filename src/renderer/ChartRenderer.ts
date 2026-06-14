@@ -2981,7 +2981,7 @@ function buildBubbleChartOption(
 // ---------------------------------------------------------------------------
 
 function buildStockChartOption(
-  _chartTypeNode: SafeXmlNode,
+  chartTypeNode: SafeXmlNode,
   chartNode: SafeXmlNode,
   seriesArr: SeriesData[],
   ctx: RenderContext,
@@ -3030,7 +3030,7 @@ function buildStockChartOption(
   }
 
   const plotArea = chartNode.child('plotArea');
-  const { valueAxis, categoryAxis } = parseAxes(plotArea, ctx);
+  const { valueAxis, categoryAxis } = parseAxes(plotArea, ctx, chartTypeNode);
 
   const gridTop = getGridTopPx(!!title, legendInfo);
   const manualGrid = extractManualLayoutGrid(chartNode);
@@ -4214,6 +4214,7 @@ function isCartesianComboCapable(typeName: OoxmlChartType): boolean {
     typeName === 'line3DChart' ||
     typeName === 'areaChart' ||
     typeName === 'area3DChart' ||
+    typeName === 'stockChart' ||
     typeName === 'surface3DChart'
   );
 }
