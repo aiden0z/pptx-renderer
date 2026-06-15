@@ -90,6 +90,22 @@ describe('renderImage', () => {
       expect(ctx.mediaUrlCache.size).toBe(0);
     });
 
+    it('treats whitespace-padded TargetMode="External" as external for blipEmbed targets', () => {
+      const ctx = createMockRenderContext();
+      ctx.slide.rels.set('rId1', {
+        type: 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/image',
+        target: 'file:///tmp/image1.png',
+        targetMode: ' External ',
+      });
+      ctx.presentation.media.set('ppt/media/image1.png', new Uint8Array([0x89, 0x50, 0x4e, 0x47]));
+
+      const el = renderImage(createPicNode(), ctx);
+
+      expect(el.querySelector('img')).toBeNull();
+      expect(el.textContent).toContain('Image not found');
+      expect(ctx.mediaUrlCache.size).toBe(0);
+    });
+
     it('renders a safe external image from blipLink when no embedded image is present', () => {
       const ctx = createMockRenderContext();
       ctx.slide.rels.set('rIdLink', {

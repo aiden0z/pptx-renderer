@@ -12,12 +12,20 @@ export interface RelEntry {
 }
 
 export function isExternalTargetMode(targetMode: string | undefined): boolean {
-  return targetMode?.toLowerCase() === 'external';
+  return targetMode?.trim().toLowerCase() === 'external';
 }
 
 function stripUriSuffix(target: string): string {
   const suffixIndex = target.search(/[?#]/);
   return suffixIndex >= 0 ? target.slice(0, suffixIndex) : target;
+}
+
+function decodeUriPathSegment(segment: string): string {
+  try {
+    return decodeURIComponent(segment);
+  } catch {
+    return segment;
+  }
 }
 
 /**
@@ -71,12 +79,16 @@ export function resolveRelTarget(basePath: string, target: string): string {
 
   // Absolute targets (start with /) are returned as-is (strip leading /)
   if (targetPath.startsWith('/')) {
-    return targetPath.slice(1);
+    return targetPath.slice(1).replace(/\\/g, '/').split('/').map(decodeUriPathSegment).join('/');
   }
 
   // Split the base path into segments
   const baseParts = basePath.replace(/\\/g, '/').split('/').filter(Boolean);
-  const targetParts = targetPath.replace(/\\/g, '/').split('/').filter(Boolean);
+  const targetParts = targetPath
+    .replace(/\\/g, '/')
+    .split('/')
+    .filter(Boolean)
+    .map(decodeUriPathSegment);
 
   // Walk through target parts, resolving '..' by popping base parts
   const resolved = [...baseParts];

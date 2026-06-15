@@ -289,6 +289,23 @@ describe('parseZip – categorization', () => {
     expect(files.chartStyles.get('ppt/charts/style1.xml')).toBe(styleXml);
   });
 
+  it('parses non-numeric chart style and color part names', async () => {
+    const styleXml =
+      '<cs:chartStyle xmlns:cs="http://schemas.microsoft.com/office/drawing/2012/chartStyle" id="102" />';
+    const colorsXml =
+      '<cs:colorStyle xmlns:cs="http://schemas.microsoft.com/office/drawing/2012/chartStyle" meth="cycle" id="10" />';
+    const buffer = await buildZip([
+      ...SKELETON,
+      { path: 'ppt/charts/styleCorporate.xml', data: styleXml },
+      { path: 'ppt/charts/colorsCorporate.xml', data: colorsXml },
+    ]);
+
+    const files = await parseZip(buffer);
+
+    expect(files.chartStyles.get('ppt/charts/styleCorporate.xml')).toBe(styleXml);
+    expect(files.chartColors.get('ppt/charts/colorsCorporate.xml')).toBe(colorsXml);
+  });
+
   it('parses chart color files (ppt/charts/colors1.xml) into result.chartColors', async () => {
     const colorsXml =
       '<cs:colorStyle xmlns:cs="http://schemas.microsoft.com/office/drawing/2012/chartStyle" meth="cycle" id="10" />';
@@ -337,6 +354,18 @@ describe('parseZip – categorization', () => {
 
     expect(files.diagramDrawings.size).toBe(1);
     expect(files.diagramDrawings.get('ppt/diagrams/drawing1.xml')).toBe(drawingXml);
+  });
+
+  it('parses non-numeric diagram drawing part names', async () => {
+    const drawingXml = '<dsp:drawing />';
+    const buffer = await buildZip([
+      ...SKELETON,
+      { path: 'ppt/diagrams/process-flow.xml', data: drawingXml },
+    ]);
+
+    const files = await parseZip(buffer);
+
+    expect(files.diagramDrawings.get('ppt/diagrams/process-flow.xml')).toBe(drawingXml);
   });
 
   it('parses [Content_Types].xml into result.contentTypes', async () => {

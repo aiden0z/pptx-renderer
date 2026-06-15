@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseRels, resolveRelTarget } from '../../../src/parser/RelParser';
+import { isExternalTargetMode, parseRels, resolveRelTarget } from '../../../src/parser/RelParser';
 
 describe('parseRels', () => {
   it('parses TargetMode for external relationships', () => {
@@ -57,6 +57,11 @@ describe('parseRels', () => {
     const rel = parseRels(xml).get('rId1')!;
     expect(rel.targetMode).toBeUndefined();
   });
+
+  it('treats TargetMode="External" case-insensitively after trimming whitespace', () => {
+    expect(isExternalTargetMode(' External ')).toBe(true);
+    expect(isExternalTargetMode('\texternal\n')).toBe(true);
+  });
 });
 
 describe('resolveRelTarget', () => {
@@ -93,5 +98,11 @@ describe('resolveRelTarget', () => {
   it('ignores URI query and fragment suffixes for internal package targets', () => {
     expect(resolveRelTarget('ppt/slides', 'slide2.xml#section')).toBe('ppt/slides/slide2.xml');
     expect(resolveRelTarget('ppt/slides', 'slide2.xml?view=notes')).toBe('ppt/slides/slide2.xml');
+  });
+
+  it('decodes percent-encoded internal package target segments', () => {
+    expect(resolveRelTarget('ppt/slides', '../slideLayouts/Product%20Intro%231.xml')).toBe(
+      'ppt/slideLayouts/Product Intro#1.xml',
+    );
   });
 });

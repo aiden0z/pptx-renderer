@@ -49,6 +49,14 @@ describe('parseChartNode', () => {
     expect(node!.chartPath).toBe('ppt/charts/chart2.xml');
   });
 
+  it('decodes percent-encoded chart relationship targets', () => {
+    const rels = new Map([
+      ['rId1', { type: 'chart', target: '../charts/Sales%20Chart.xml' }],
+    ]) as Map<string, RelEntry>;
+    const node = parseChartNode(makeChartXml(), rels, 'ppt/slides/slide1.xml');
+    expect(node!.chartPath).toBe('ppt/charts/Sales Chart.xml');
+  });
+
   it('returns undefined when chart rId not found in rels', () => {
     const emptyRels = new Map<string, RelEntry>();
     const node = parseChartNode(makeChartXml(), emptyRels, 'ppt/slides/slide1.xml');

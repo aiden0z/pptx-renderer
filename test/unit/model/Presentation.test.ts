@@ -172,6 +172,50 @@ describe('buildPresentation', () => {
     expect(themePath).toBe('ppt/theme/theme1.xml');
   });
 
+  it('resolves percent-encoded relationship targets to decoded package part names', () => {
+    const files = makeMinimalFiles({
+      presentationRels: `
+        <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+          <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide" Target="slides/Product%20Intro.xml"/>
+        </Relationships>
+      `,
+      slides: new Map([['ppt/slides/Product Intro.xml', '<sld><cSld><spTree/></cSld></sld>']]),
+      slideRels: new Map([
+        [
+          'ppt/slides/_rels/Product Intro.xml.rels',
+          `<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideLayout" Target="../slideLayouts/Title%20Layout.xml"/></Relationships>`,
+        ],
+      ]),
+      slideLayouts: new Map([['ppt/slideLayouts/Title Layout.xml', '<sldLayout/>']]),
+      slideLayoutRels: new Map([
+        [
+          'ppt/slideLayouts/_rels/Title Layout.xml.rels',
+          `<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideMaster" Target="../slideMasters/Main%20Master.xml"/></Relationships>`,
+        ],
+      ]),
+      slideMasters: new Map([['ppt/slideMasters/Main Master.xml', '<sldMaster/>']]),
+      slideMasterRels: new Map([
+        [
+          'ppt/slideMasters/_rels/Main Master.xml.rels',
+          `<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/theme" Target="../theme/Corporate%20Theme.xml"/></Relationships>`,
+        ],
+      ]),
+      themes: new Map([['ppt/theme/Corporate Theme.xml', '<theme/>']]),
+    });
+
+    const pres = buildPresentation(files);
+
+    expect(pres.slides).toHaveLength(1);
+    expect(pres.slides[0].slidePath).toBe('ppt/slides/Product Intro.xml');
+    expect(pres.slideToLayout.get(0)).toBe('ppt/slideLayouts/Title Layout.xml');
+    expect(pres.layoutToMaster.get('ppt/slideLayouts/Title Layout.xml')).toBe(
+      'ppt/slideMasters/Main Master.xml',
+    );
+    expect(pres.masterToTheme.get('ppt/slideMasters/Main Master.xml')).toBe(
+      'ppt/theme/Corporate Theme.xml',
+    );
+  });
+
   it('parses theme with 12 color slots', () => {
     const pres = buildPresentation(makeMinimalFiles());
     const theme = pres.themes.values().next().value;

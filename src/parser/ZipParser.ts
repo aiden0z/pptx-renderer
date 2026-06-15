@@ -367,7 +367,7 @@ export async function parseZip(
     }
 
     // --- Chart Styles ---
-    if (/^ppt\/charts\/style\d+\.xml$/.test(normalizedPath)) {
+    if (/^ppt\/charts\/style[^/]*\.xml$/.test(normalizedPath)) {
       result.chartStyles.set(
         normalizedPath,
         await readZipTextEntry(normalizedPath, file, limitState),
@@ -376,7 +376,7 @@ export async function parseZip(
     }
 
     // --- Chart Colors ---
-    if (/^ppt\/charts\/colors\d+\.xml$/.test(normalizedPath)) {
+    if (/^ppt\/charts\/colors[^/]*\.xml$/.test(normalizedPath)) {
       result.chartColors.set(
         normalizedPath,
         await readZipTextEntry(normalizedPath, file, limitState),
@@ -385,7 +385,7 @@ export async function parseZip(
     }
 
     // --- Diagram Drawings (SmartArt fallback) ---
-    if (/^ppt\/diagrams\/drawing\d+\.xml$/.test(normalizedPath)) {
+    if (/^ppt\/diagrams\/[^/]+\.xml$/.test(normalizedPath)) {
       result.diagramDrawings.set(
         normalizedPath,
         await readZipTextEntry(normalizedPath, file, limitState),
