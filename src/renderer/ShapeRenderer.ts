@@ -4,6 +4,8 @@
 
 import { ShapeNodeData, LineEndInfo, TextBody } from '../model/nodes/ShapeNode';
 import { RenderContext } from './RenderContext';
+import { parseOoxmlBool } from '../parser/booleans';
+import { isExternalTargetMode } from '../parser/RelParser';
 
 /** True if the text body has at least one non-empty run (avoids covering shapes with empty placeholder text). */
 function hasVisibleText(textBody: TextBody): boolean {
@@ -92,6 +94,7 @@ import { resolveMediaPath, getOrCreateBlobUrl } from '../utils/media';
 import { isAllowedExternalUrl } from '../utils/urlSafety';
 import { getEffectiveBodyPrChild } from './TextBodyProperties';
 import { cssFontFamilyStack, resolveThemeFontStack } from './fontResolver';
+import { resolveSlideNavigationIndex, slideJumpTitle } from './navigation';
 
 function appendTransform(el: HTMLElement, transform: string): void {
   el.style.transform = `${el.style.transform || ''} ${transform}`.trim();
@@ -182,7 +185,7 @@ function renderWarpedTextBody(node: ShapeNodeData, ctx: RenderContext): SVGSVGEl
     ],
     ctx,
   );
-  const fontWeight = rPr?.attr('b') === '1' || rPr?.attr('b') === 'true' ? 'bold' : undefined;
+  const fontWeight = parseOoxmlBool(rPr?.attr('b')) ? 'bold' : undefined;
   const solidFill = rPr?.child('solidFill');
   const fill = solidFill?.exists() ? resolveColorToCss(solidFill, ctx) : '#000000';
 
@@ -2077,26 +2080,18 @@ export function renderShape(node: ShapeNodeData, ctx: RenderContext): HTMLElemen
   // ---- Shape-level hyperlink / action button navigation ----
   if (node.hlinkClick && ctx.onNavigate) {
     const { action, rId } = node.hlinkClick;
-    if (action === 'ppaction://hlinksldjump' && rId) {
-      // Resolve slide target from relationship
-      const rel = ctx.slide.rels.get(rId);
-      if (rel) {
-        // Target is like "slide28.xml" → slide index 27 (0-based)
-        const match = rel.target.match(/slide(\d+)\.xml/);
-        if (match) {
-          const slideIndex = parseInt(match[1], 10) - 1;
-          wrapper.style.cursor = 'pointer';
-          wrapper.title = node.hlinkClick.tooltip || `Go to slide ${slideIndex + 1}`;
-          wrapper.addEventListener('click', (e) => {
-            e.stopPropagation();
-            ctx.onNavigate!({ slideIndex });
-          });
-        }
-      }
+    const rel = rId ? ctx.slide.rels.get(rId) : undefined;
+    const slideIndex = resolveSlideNavigationIndex(ctx, action, rel);
+    if (slideIndex !== undefined) {
+      wrapper.style.cursor = 'pointer';
+      wrapper.title = node.hlinkClick.tooltip || slideJumpTitle(slideIndex);
+      wrapper.addEventListener('click', (e) => {
+        e.stopPropagation();
+        ctx.onNavigate!({ slideIndex });
+      });
     } else if (rId) {
       // External URL link
-      const rel = ctx.slide.rels.get(rId);
-      if (rel && rel.targetMode === 'External' && isAllowedExternalUrl(rel.target)) {
+      if (rel && isExternalTargetMode(rel.targetMode) && isAllowedExternalUrl(rel.target)) {
         wrapper.style.cursor = 'pointer';
         wrapper.title = node.hlinkClick.tooltip || rel.target;
         wrapper.addEventListener('click', (e) => {

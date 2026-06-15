@@ -11,6 +11,10 @@ export interface RelEntry {
   targetMode?: string;
 }
 
+export function isExternalTargetMode(targetMode: string | undefined): boolean {
+  return targetMode?.toLowerCase() === 'external';
+}
+
 /**
  * Parse a .rels XML string into a Map of relationship ID -> RelEntry.
  *

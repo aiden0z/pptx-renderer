@@ -5,6 +5,7 @@
 import { PicNodeData } from '../model/nodes/PicNode';
 import { RenderContext } from './RenderContext';
 import { resolveMediaPath, getOrCreateBlobUrl } from '../utils/media';
+import { isExternalTargetMode } from '../parser/RelParser';
 import { resolveColor, resolveFill, resolveLineStyle } from './StyleResolver';
 import { hexToRgb } from '../utils/color';
 import { parseEmfContent } from '../utils/emfParser';
@@ -12,6 +13,7 @@ import { renderPdfToImage } from '../utils/pdfRenderer';
 import { emuToPx } from '../parser/units';
 import { SafeXmlNode } from '../parser/XmlParser';
 import { isAllowedExternalMediaUrl, isAllowedExternalUrl } from '../utils/urlSafety';
+import { resolveSlideNavigationIndex, slideJumpTitle } from './navigation';
 
 /**
  * Check if a file extension is an unsupported legacy format (WMF only now; EMF is handled).
@@ -388,14 +390,11 @@ function applyPictureHyperlink(wrapper: HTMLElement, node: PicNodeData, ctx: Ren
   if (!node.hlinkClick || !ctx.onNavigate) return;
 
   const { action, rId } = node.hlinkClick;
-  if (action === 'ppaction://hlinksldjump' && rId) {
-    const rel = ctx.slide.rels.get(rId);
-    const match = rel?.target.match(/slide(\d+)\.xml/);
-    if (!match) return;
-
-    const slideIndex = parseInt(match[1], 10) - 1;
+  const rel = rId ? ctx.slide.rels.get(rId) : undefined;
+  const slideIndex = resolveSlideNavigationIndex(ctx, action, rel);
+  if (slideIndex !== undefined) {
     wrapper.style.cursor = 'pointer';
-    wrapper.title = node.hlinkClick.tooltip || `Go to slide ${slideIndex + 1}`;
+    wrapper.title = node.hlinkClick.tooltip || slideJumpTitle(slideIndex);
     wrapper.addEventListener('click', (e) => {
       e.stopPropagation();
       ctx.onNavigate!({ slideIndex });
@@ -404,8 +403,7 @@ function applyPictureHyperlink(wrapper: HTMLElement, node: PicNodeData, ctx: Ren
   }
 
   if (!rId) return;
-  const rel = ctx.slide.rels.get(rId);
-  if (!rel || rel.targetMode !== 'External' || !isAllowedExternalUrl(rel.target)) return;
+  if (!rel || !isExternalTargetMode(rel.targetMode) || !isAllowedExternalUrl(rel.target)) return;
 
   wrapper.style.cursor = 'pointer';
   wrapper.title = node.hlinkClick.tooltip || rel.target;
@@ -551,8 +549,8 @@ function resolveMediaUrl(rId: string | undefined, ctx: RenderContext): string | 
   if (!rel) return undefined;
 
   // Check if target is an external URL
-  if (rel.targetMode === 'External' && isAllowedExternalMediaUrl(rel.target)) {
-    return rel.target;
+  if (isExternalTargetMode(rel.targetMode)) {
+    return isAllowedExternalMediaUrl(rel.target) ? rel.target : undefined;
   }
 
   // Resolve from embedded media

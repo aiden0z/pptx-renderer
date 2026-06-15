@@ -6,7 +6,7 @@ import { SafeXmlNode } from '../parser/XmlParser';
 import { RenderContext } from './RenderContext';
 import { resolveColor, resolveFill, resolveThemeBackgroundFillReference } from './StyleResolver';
 import { hexToRgb } from '../utils/color';
-import { RelEntry } from '../parser/RelParser';
+import { isExternalTargetMode, RelEntry } from '../parser/RelParser';
 import { resolveMediaPath, getOrCreateBlobUrl } from '../utils/media';
 import { isAllowedExternalMediaUrl } from '../utils/urlSafety';
 
@@ -205,7 +205,7 @@ function renderBlipBackground(
   if (!rel) return;
 
   let url: string | undefined;
-  if (rel.targetMode === 'External') {
+  if (isExternalTargetMode(rel.targetMode)) {
     if (!isAllowedExternalMediaUrl(rel.target)) return;
     url = rel.target;
   } else {

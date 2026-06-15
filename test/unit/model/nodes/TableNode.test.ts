@@ -85,6 +85,30 @@ describe('parseTableNode', () => {
     expect(node.rows[0].cells[1].hMerge).toBe(true);
   });
 
+  it('parses OOXML boolean aliases for table merge attributes', () => {
+    const node = parseTableNode(parseXml(`
+      <graphicFrame xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+        <nvGraphicFramePr><cNvPr id="8" name="Table 1"/><nvPr/></nvGraphicFramePr>
+        <xfrm><off x="0" y="0"/><ext cx="1828800" cy="741680"/></xfrm>
+        <graphic>
+          <graphicData>
+            <tbl>
+              <tblPr/>
+              <tblGrid><gridCol w="914400"/><gridCol w="914400"/></tblGrid>
+              <tr h="370840">
+                <tc hMerge="on"><txBody><p><r><t>A</t></r></p></txBody><tcPr/></tc>
+                <tc vMerge="t"><txBody><p><r><t>B</t></r></p></txBody><tcPr/></tc>
+              </tr>
+            </tbl>
+          </graphicData>
+        </graphic>
+      </graphicFrame>
+    `));
+
+    expect(node.rows[0].cells[0].hMerge).toBe(true);
+    expect(node.rows[0].cells[1].vMerge).toBe(true);
+  });
+
   it('parses table style ID', () => {
     const node = parseTableNode(makeTableXml({
       styleId: '{5C22544A-7EE6-4342-B048-85BDC9FD1C3A}',

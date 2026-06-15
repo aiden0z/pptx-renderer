@@ -6,6 +6,7 @@ import { SafeXmlNode } from '../../parser/XmlParser';
 import { BaseNodeData, parseBaseProps } from './BaseNode';
 import { TextBody, parseTextBody } from './ShapeNode';
 import { emuToPx } from '../../parser/units';
+import { parseOoxmlBool } from '../../parser/booleans';
 
 export interface TableCell {
   gridSpan: number;
@@ -37,8 +38,8 @@ export interface TableNodeData extends BaseNodeData {
 function parseCell(tcNode: SafeXmlNode): TableCell {
   const gridSpan = tcNode.numAttr('gridSpan') ?? 1;
   const rowSpan = tcNode.numAttr('rowSpan') ?? 1;
-  const hMerge = tcNode.attr('hMerge') === '1' || tcNode.attr('hMerge') === 'true';
-  const vMerge = tcNode.attr('vMerge') === '1' || tcNode.attr('vMerge') === 'true';
+  const hMerge = parseOoxmlBool(tcNode.attr('hMerge'));
+  const vMerge = parseOoxmlBool(tcNode.attr('vMerge'));
 
   // Cell text body
   const txBody = tcNode.child('txBody');

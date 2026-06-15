@@ -7,6 +7,7 @@ import { ChartNodeData } from '../model/nodes/ChartNode';
 import { RenderContext } from './RenderContext';
 import { SafeXmlNode } from '../parser/XmlParser';
 import { emuToPx, ptToPx } from '../parser/units';
+import { parseOoxmlBool } from '../parser/booleans';
 import { resolveColor, resolveLineStyle } from './StyleResolver';
 import { cssFontFamilyStack, resolveThemeFontStack } from './fontResolver';
 
@@ -610,9 +611,7 @@ function parseOoxmlBoolElement(node: SafeXmlNode): boolean {
 }
 
 function parseOoxmlBoolValue(value: string | undefined, defaultValue: boolean): boolean {
-  if (value === undefined) return defaultValue;
-  const normalized = value.toLowerCase();
-  return normalized !== '0' && normalized !== 'false';
+  return parseOoxmlBool(value, defaultValue);
 }
 
 function parseDataLabelManualLayout(node: SafeXmlNode): DataLabelManualLayout | undefined {
@@ -989,8 +988,7 @@ function extractDefRPrStyle(defRPr: SafeXmlNode, ctx: RenderContext): ChartTextS
     style[EXPLICIT_FONT_SIZE] = true;
   }
   const b = defRPr.attr('b');
-  if (b === '1' || b === 'true') style.bold = true;
-  else if (b === '0' || b === 'false') style.bold = false;
+  if (b !== undefined) style.bold = parseOoxmlBool(b);
   const latinTypeface = defRPr.child('latin').attr('typeface');
   const eaTypeface = defRPr.child('ea').attr('typeface');
   const csTypeface = defRPr.child('cs').attr('typeface');

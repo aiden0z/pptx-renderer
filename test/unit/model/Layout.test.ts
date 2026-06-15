@@ -52,6 +52,11 @@ describe('parseLayout', () => {
     expect(layout.showMasterSp).toBe(false);
   });
 
+  it('parses OOXML false aliases for showMasterSp', () => {
+    expect(parseLayout(makeLayoutXml({ showMasterSp: 'f' })).showMasterSp).toBe(false);
+    expect(parseLayout(makeLayoutXml({ showMasterSp: 'off' })).showMasterSp).toBe(false);
+  });
+
   it('parses showMasterSp="1" as true', () => {
     const layout = parseLayout(makeLayoutXml({ showMasterSp: '1' }));
     expect(layout.showMasterSp).toBe(true);

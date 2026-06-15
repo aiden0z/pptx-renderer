@@ -3424,6 +3424,82 @@ describe('ShapeRenderer', () => {
     expect(navigateCalls[0].slideIndex).toBe(27);
   });
 
+  it('hlinkClick slide jumps follow presentation order instead of slide file numbers', () => {
+    const xml = `
+      <p:sp xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
+            xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"
+            xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+        <p:nvSpPr>
+          <p:cNvPr id="300" name="SlideJumpOutOfOrder">
+            <a:hlinkClick r:id="rId5" action="ppaction://hlinksldjump"/>
+          </p:cNvPr>
+          <p:cNvSpPr/>
+          <p:nvPr/>
+        </p:nvSpPr>
+        <p:spPr>
+          <a:xfrm><a:off x="0" y="0"/><a:ext cx="2000000" cy="1000000"/></a:xfrm>
+          <a:prstGeom prst="rect"><a:avLst/></a:prstGeom>
+          <a:solidFill><a:srgbClr val="4472C4"/></a:solidFill>
+        </p:spPr>
+      </p:sp>
+    `;
+    const shapeNode = parseShapeNode(parseXml(xml));
+    const navigateCalls: Array<{ slideIndex?: number; url?: string }> = [];
+    const ctx = createMockRenderContext();
+    ctx.slide.slidePath = 'ppt/slides/slide5.xml';
+    ctx.slide.rels.set('rId5', { type: 'slide', target: 'slide9.xml' });
+    ctx.presentation.slides = [
+      ctx.slide,
+      { ...ctx.slide, index: 1, slidePath: 'ppt/slides/slide2.xml', rels: new Map() },
+      { ...ctx.slide, index: 2, slidePath: 'ppt/slides/slide9.xml', rels: new Map() },
+    ];
+    ctx.onNavigate = (target) => navigateCalls.push(target);
+
+    const el = renderShape(shapeNode, ctx);
+
+    expect(el.style.cursor).toBe('pointer');
+    expect(el.title).toBe('Go to slide 3');
+    el.click();
+    expect(navigateCalls).toEqual([{ slideIndex: 2 }]);
+  });
+
+  it('hlinkClick hlinkshowjump nextslide navigates without a relationship id', () => {
+    const xml = `
+      <p:sp xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
+            xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+        <p:nvSpPr>
+          <p:cNvPr id="300" name="NextSlideAction">
+            <a:hlinkClick action="ppaction://hlinkshowjump?jump=nextslide"/>
+          </p:cNvPr>
+          <p:cNvSpPr/>
+          <p:nvPr/>
+        </p:nvSpPr>
+        <p:spPr>
+          <a:xfrm><a:off x="0" y="0"/><a:ext cx="2000000" cy="1000000"/></a:xfrm>
+          <a:prstGeom prst="actionButtonForwardNext"><a:avLst/></a:prstGeom>
+          <a:solidFill><a:srgbClr val="4472C4"/></a:solidFill>
+        </p:spPr>
+      </p:sp>
+    `;
+    const shapeNode = parseShapeNode(parseXml(xml));
+    const navigateCalls: Array<{ slideIndex?: number; url?: string }> = [];
+    const ctx = createMockRenderContext();
+    ctx.slide.index = 1;
+    ctx.presentation.slides = [
+      { ...ctx.slide, index: 0, slidePath: 'ppt/slides/slide1.xml', rels: new Map() },
+      ctx.slide,
+      { ...ctx.slide, index: 2, slidePath: 'ppt/slides/slide3.xml', rels: new Map() },
+    ];
+    ctx.onNavigate = (target) => navigateCalls.push(target);
+
+    const el = renderShape(shapeNode, ctx);
+
+    expect(el.style.cursor).toBe('pointer');
+    expect(el.title).toBe('Go to slide 3');
+    el.click();
+    expect(navigateCalls).toEqual([{ slideIndex: 2 }]);
+  });
+
   it('hlinkClick ppaction://hlinksldjump uses tooltip as title when provided', () => {
     const xml = `
       <p:sp xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"

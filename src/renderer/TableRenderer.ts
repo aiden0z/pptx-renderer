@@ -19,6 +19,7 @@ import {
 } from './StyleResolver';
 import { renderTextBody } from './TextRenderer';
 import { emuToPx } from '../parser/units';
+import { parseOoxmlBool } from '../parser/booleans';
 import { hexToRgb } from '../utils/color';
 import { SafeXmlNode } from '../parser/XmlParser';
 import { getPredefinedTableStyle } from './predefinedTableStyles';
@@ -106,11 +107,10 @@ function getStyleSections(
   const flag = (attrName: string, childName: string): boolean => {
     if (!tblPr) return false;
     const attr = tblPr.attr(attrName);
-    if (attr !== undefined) return attr === '1' || attr === 'true';
+    if (attr !== undefined) return parseOoxmlBool(attr);
     const ch = tblPr.child(childName);
     if (ch.exists()) {
-      const val = ch.attr('val');
-      return val !== '0' && val !== 'false';
+      return parseOoxmlBool(ch.attr('val'), true);
     }
     return false;
   };
@@ -194,13 +194,11 @@ function getEffectiveTableStyleTextProps(
 
     // Bold: b="on" or b="off" (OOXML CT_TableStyleTextStyle)
     const b = tcTxStyle.attr('b');
-    if (b === 'on') props.bold = true;
-    else if (b === 'off') props.bold = false;
+    if (b !== undefined) props.bold = parseOoxmlBool(b);
 
     // Italic: i="on" or i="off"
     const italic = tcTxStyle.attr('i');
-    if (italic === 'on') props.italic = true;
-    else if (italic === 'off') props.italic = false;
+    if (italic !== undefined) props.italic = parseOoxmlBool(italic);
 
     // Color: child elements (schemeClr, solidFill, srgbClr, etc.)
     for (const child of tcTxStyle.allChildren()) {

@@ -6,6 +6,7 @@
 import { SafeXmlNode } from '../parser/XmlParser';
 import { RelEntry } from '../parser/RelParser';
 import { parseRenderableChild, type RenderableNode } from './RenderableChild';
+import { parseOoxmlBool } from '../parser/booleans';
 
 export { parseOleFrameAsPicture } from './RenderableChild';
 
@@ -24,9 +25,7 @@ export interface SlideData {
 }
 
 function parseDefaultTrueBoolAttr(value: string | undefined): boolean {
-  if (value === undefined) return true;
-  const normalized = value.toLowerCase();
-  return normalized !== '0' && normalized !== 'false';
+  return parseOoxmlBool(value, true);
 }
 
 /**

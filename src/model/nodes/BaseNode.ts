@@ -4,6 +4,7 @@
 
 import { SafeXmlNode } from '../../parser/XmlParser';
 import { emuToPx, angleToDeg } from '../../parser/units';
+import { parseOoxmlBool } from '../../parser/booleans';
 
 export type NodeType = 'shape' | 'picture' | 'table' | 'group' | 'chart' | 'unknown';
 
@@ -137,8 +138,8 @@ export function parseBaseProps(spNode: SafeXmlNode): Omit<BaseNodeData, 'nodeTyp
   };
 
   const rotation = angleToDeg(xfrm.numAttr('rot') ?? 0);
-  const flipH = xfrm.attr('flipH') === '1' || xfrm.attr('flipH') === 'true';
-  const flipV = xfrm.attr('flipV') === '1' || xfrm.attr('flipV') === 'true';
+  const flipH = parseOoxmlBool(xfrm.attr('flipH'));
+  const flipV = parseOoxmlBool(xfrm.attr('flipV'));
 
   // --- Placeholder ---
   const placeholder = parsePlaceholder(nvPr);

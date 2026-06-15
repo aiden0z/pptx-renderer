@@ -9,9 +9,12 @@ import type { TextBody, TextParagraph, TextRun } from '../model/nodes/ShapeNode'
 import { PlaceholderInfo } from '../model/nodes/BaseNode';
 import { resolveColor, resolveColorToCss, resolveFill } from './StyleResolver';
 import { emuToPx, pctToDecimal, angleToDeg } from '../parser/units';
+import { parseOoxmlBool } from '../parser/booleans';
+import { isExternalTargetMode } from '../parser/RelParser';
 import { isAllowedExternalUrl } from '../utils/urlSafety';
 import { getEffectiveBodyPrChild } from './TextBodyProperties';
 import { cssFontFamilyStack, resolveThemeFont } from './fontResolver';
+import { resolveSlideNavigationIndex, slideJumpTitle } from './navigation';
 
 // ---------------------------------------------------------------------------
 // Style Inheritance Helpers
@@ -136,7 +139,7 @@ function mergeParagraphProps(target: MergedParagraphStyle, pPr: SafeXmlNode): vo
   if (algn) target.align = algn;
 
   const rtl = pPr.attr('rtl');
-  if (rtl !== undefined) target.rtl = rtl === '1' || rtl === 'true';
+  if (rtl !== undefined) target.rtl = parseOoxmlBool(rtl);
 
   const marL = pPr.numAttr('marL');
   if (marL !== undefined) target.marginLeft = emuToPx(marL);
@@ -283,6 +286,8 @@ interface MergedRunStyle {
   fontFamily?: string;
   fontFamilyStack?: string[];
   hlinkClick?: string;
+  hlinkSlideIndex?: number;
+  hlinkTooltip?: string;
   /** Character spacing (tracking) in points — from a:spc @val (hundredths of pt). */
   letterSpacingPt?: number;
   /** Kerning: minimum font size (pt) for kerning; 0 = always kern. */
@@ -327,10 +332,10 @@ function mergeRunProps(target: MergedRunStyle, rPr: SafeXmlNode, ctx: RenderCont
   if (sz !== undefined) target.fontSize = sz / 100; // hundredths of point -> pt
 
   const b = rPr.attr('b');
-  if (b !== undefined) target.bold = b === '1' || b === 'true';
+  if (b !== undefined) target.bold = parseOoxmlBool(b);
 
   const i = rPr.attr('i');
-  if (i !== undefined) target.italic = i === '1' || i === 'true';
+  if (i !== undefined) target.italic = parseOoxmlBool(i);
 
   const u = rPr.attr('u');
   if (u !== undefined && u !== 'none') target.underline = true;
@@ -409,14 +414,18 @@ function mergeRunProps(target: MergedRunStyle, rPr: SafeXmlNode, ctx: RenderCont
   // Hyperlink
   const hlinkClick = rPr.child('hlinkClick');
   if (hlinkClick.exists()) {
-    // The actual URL is in the slide rels, referenced by r:id
+    // The actual target is in the slide rels, referenced by r:id.
     const rId = hlinkClick.attr('id') ?? hlinkClick.attr('r:id');
-    if (rId) {
-      const rel = ctx.slide.rels.get(rId);
-      if (rel && rel.targetMode === 'External' && isAllowedExternalUrl(rel.target)) {
-        target.hlinkClick = rel.target;
-        if (target.underline === undefined) target.underline = true;
-      }
+    const rel = rId ? ctx.slide.rels.get(rId) : undefined;
+    const action = hlinkClick.attr('action');
+    const slideIndex = resolveSlideNavigationIndex(ctx, action, rel);
+    if (slideIndex !== undefined && ctx.onNavigate) {
+      target.hlinkSlideIndex = slideIndex;
+      target.hlinkTooltip = hlinkClick.attr('tooltip');
+      if (target.underline === undefined) target.underline = true;
+    } else if (rel && isExternalTargetMode(rel.targetMode) && isAllowedExternalUrl(rel.target)) {
+      target.hlinkClick = rel.target;
+      if (target.underline === undefined) target.underline = true;
     }
   }
 
@@ -543,6 +552,10 @@ function runHasHyperlink(rPr: SafeXmlNode | undefined): boolean {
   return rPr?.child('hlinkClick').exists() ?? false;
 }
 
+function hasRenderableHyperlink(runStyle: MergedRunStyle): boolean {
+  return Boolean(runStyle.hlinkClick) || runStyle.hlinkSlideIndex !== undefined;
+}
+
 function hasMatchingNonHyperlinkTextColor(
   run: TextRun,
   paragraph: TextParagraph,
@@ -567,7 +580,7 @@ function shouldUseHyperlinkThemeColor(
   hasExplicitRunColor: boolean,
   ctx: RenderContext,
 ): boolean {
-  if (!runStyle.hlinkClick) return false;
+  if (!hasRenderableHyperlink(runStyle)) return false;
   if (!hasExplicitRunColor || runColorKind === 'defaultTextScheme') return true;
   if (runColorKind !== 'explicit' || !hasSrgbSolidFill(run.properties)) return false;
   return hasMatchingNonHyperlinkTextColor(run, paragraph, runStyle.color, ctx);
@@ -1037,7 +1050,25 @@ export function renderTextBody(
 
       // Determine if this should be a link
       let element: HTMLElement;
-      if (runStyle.hlinkClick) {
+      if (runStyle.hlinkSlideIndex !== undefined) {
+        const span = document.createElement('span');
+        const slideIndex = runStyle.hlinkSlideIndex;
+        span.setAttribute('role', 'link');
+        span.tabIndex = 0;
+        span.title = runStyle.hlinkTooltip || slideJumpTitle(slideIndex);
+        span.style.cursor = 'pointer';
+        span.addEventListener('click', (e) => {
+          e.stopPropagation();
+          ctx.onNavigate?.({ slideIndex });
+        });
+        span.addEventListener('keydown', (e) => {
+          if (e.key !== 'Enter' && e.key !== ' ') return;
+          e.preventDefault();
+          e.stopPropagation();
+          ctx.onNavigate?.({ slideIndex });
+        });
+        element = span;
+      } else if (runStyle.hlinkClick) {
         const a = document.createElement('a');
         a.href = runStyle.hlinkClick;
         a.target = '_blank';

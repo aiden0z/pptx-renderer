@@ -364,6 +364,51 @@ describe('renderImage', () => {
       expect(el.title).toBe('Open details');
       expect(onNavigate).toHaveBeenCalledWith({ url: 'https://example.com/details' });
     });
+
+    it('navigates picture-level slide jumps by presentation order instead of slide file numbers', () => {
+      const onNavigate = vi.fn();
+      const ctx = createCtxWithMedia();
+      ctx.slide.slidePath = 'ppt/slides/slide5.xml';
+      ctx.slide.rels.set('rIdJump', { type: 'slide', target: 'slide9.xml' });
+      ctx.presentation.slides = [
+        ctx.slide,
+        { ...ctx.slide, index: 1, slidePath: 'ppt/slides/slide2.xml', rels: new Map() },
+        { ...ctx.slide, index: 2, slidePath: 'ppt/slides/slide9.xml', rels: new Map() },
+      ];
+      ctx.onNavigate = onNavigate;
+      const node = createPicNode({
+        hlinkClick: { rId: 'rIdJump', action: 'ppaction://hlinksldjump' },
+      });
+
+      const el = renderImage(node, ctx);
+      el.click();
+
+      expect(el.style.cursor).toBe('pointer');
+      expect(el.title).toBe('Go to slide 3');
+      expect(onNavigate).toHaveBeenCalledWith({ slideIndex: 2 });
+    });
+
+    it('navigates picture-level hlinkshowjump lastslide actions without a relationship id', () => {
+      const onNavigate = vi.fn();
+      const ctx = createCtxWithMedia();
+      ctx.slide.index = 0;
+      ctx.presentation.slides = [
+        ctx.slide,
+        { ...ctx.slide, index: 1, slidePath: 'ppt/slides/slide2.xml', rels: new Map() },
+        { ...ctx.slide, index: 2, slidePath: 'ppt/slides/slide3.xml', rels: new Map() },
+      ];
+      ctx.onNavigate = onNavigate;
+      const node = createPicNode({
+        hlinkClick: { action: 'ppaction://hlinkshowjump?jump=lastslide' },
+      });
+
+      const el = renderImage(node, ctx);
+      el.click();
+
+      expect(el.style.cursor).toBe('pointer');
+      expect(el.title).toBe('Go to slide 3');
+      expect(onNavigate).toHaveBeenCalledWith({ slideIndex: 2 });
+    });
   });
 
   describe('crop with pixel-based margins', () => {
@@ -1029,6 +1074,21 @@ describe('renderImage', () => {
     it('does not attach external media URLs without TargetMode="External"', () => {
       const ctx = createMockRenderContext();
       ctx.slide.rels.set('rId2', { type: 'video', target: 'https://example.com/video.mp4' });
+      const node = createPicNode({ isVideo: true, mediaRId: 'rId2', blipEmbed: undefined });
+      const el = renderImage(node, ctx);
+
+      expect(el.querySelector('video')).toBeNull();
+      expect(el.textContent).toContain('Video');
+    });
+
+    it('does not fall back to embedded media for disallowed external TargetMode URLs', () => {
+      const ctx = createMockRenderContext();
+      ctx.slide.rels.set('rId2', {
+        type: 'video',
+        target: 'file:///tmp/video1.mp4',
+        targetMode: 'External',
+      });
+      ctx.presentation.media.set('ppt/media/video1.mp4', new Uint8Array([0x00]));
       const node = createPicNode({ isVideo: true, mediaRId: 'rId2', blipEmbed: undefined });
       const el = renderImage(node, ctx);
 

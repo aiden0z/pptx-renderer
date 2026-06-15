@@ -38,7 +38,7 @@ export function getMimeType(path: string): string {
  * Media paths in PptxFiles are like "ppt/media/image1.png".
  */
 export function resolveMediaPath(target: string): string {
-  const fileName = target.split('/').pop() || '';
+  const fileName = target.replace(/\\/g, '/').split('/').pop() || '';
   return `ppt/media/${fileName}`;
 }
 

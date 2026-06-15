@@ -5,6 +5,7 @@
 
 import { SafeXmlNode } from '../parser/XmlParser';
 import { emuToPx } from '../parser/units';
+import { parseOoxmlBool } from '../parser/booleans';
 
 export interface PlaceholderXfrm {
   position: { x: number; y: number };
@@ -28,9 +29,7 @@ export interface LayoutData {
 }
 
 function parseDefaultTrueBoolAttr(value: string | undefined): boolean {
-  if (value === undefined) return true;
-  const normalized = value.toLowerCase();
-  return normalized !== '0' && normalized !== 'false';
+  return parseOoxmlBool(value, true);
 }
 
 /**

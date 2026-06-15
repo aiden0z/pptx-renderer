@@ -74,6 +74,21 @@ describe('TextRenderer — renderTextBody', () => {
       const container = renderToContainer(body);
       expect(container.textContent).toContain('Hello World');
     });
+
+    it('parses OOXML boolean aliases for paragraph rtl direction', () => {
+      const body = makeTextBody({
+        paragraphs: [
+          {
+            runs: [{ text: 'RTL' }],
+            properties: xmlNode('<pPr rtl="on"/>'),
+            level: 0,
+          },
+        ],
+      });
+      const container = renderToContainer(body);
+      const paragraph = container.querySelector('div');
+      expect(paragraph!.style.direction).toBe('rtl');
+    });
   });
 
   describe('run properties', () => {
@@ -759,6 +774,84 @@ describe('TextRenderer — renderTextBody', () => {
       expect(link).not.toBeNull();
       expect(link!.href).toContain('https://example.com');
       expect(link!.textContent).toBe('Click me');
+    });
+
+    it('renders internal slide jump hlinkClick as clickable text using presentation order', () => {
+      const body = makeTextBody({
+        paragraphs: [
+          {
+            runs: [
+              {
+                text: 'Jump',
+                properties: xmlNode(
+                  '<rPr xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><hlinkClick r:id="rIdJump" action="ppaction://hlinksldjump"/></rPr>',
+                ),
+              },
+            ],
+            level: 0,
+          },
+        ],
+      });
+      const navigateCalls: Array<{ slideIndex?: number; url?: string }> = [];
+      const ctx = createMockRenderContext();
+      ctx.slide.slidePath = 'ppt/slides/slide5.xml';
+      ctx.slide.rels.set('rIdJump', { type: 'slide', target: 'slide9.xml' });
+      ctx.presentation.slides = [
+        ctx.slide,
+        { ...ctx.slide, index: 1, slidePath: 'ppt/slides/slide2.xml', rels: new Map() },
+        { ...ctx.slide, index: 2, slidePath: 'ppt/slides/slide9.xml', rels: new Map() },
+      ];
+      ctx.onNavigate = (target) => navigateCalls.push(target);
+      const container = document.createElement('div');
+
+      renderTextBody(body, undefined, ctx, container);
+      const link = container.querySelector<HTMLElement>('[role="link"]');
+      link?.click();
+
+      expect(link).not.toBeNull();
+      expect(link!.textContent).toBe('Jump');
+      expect(link!.title).toBe('Go to slide 3');
+      expect(link!.style.cursor).toBe('pointer');
+      expect(link!.style.color).toBe('rgb(5, 99, 193)');
+      expect(navigateCalls).toEqual([{ slideIndex: 2 }]);
+    });
+
+    it('renders hlinkshowjump text actions as clickable slide navigation without r:id', () => {
+      const body = makeTextBody({
+        paragraphs: [
+          {
+            runs: [
+              {
+                text: 'Next',
+                properties: xmlNode(
+                  '<rPr><hlinkClick action="ppaction://hlinkshowjump?jump=nextslide"/></rPr>',
+                ),
+              },
+            ],
+            level: 0,
+          },
+        ],
+      });
+      const navigateCalls: Array<{ slideIndex?: number; url?: string }> = [];
+      const ctx = createMockRenderContext();
+      ctx.slide.index = 1;
+      ctx.presentation.slides = [
+        { ...ctx.slide, index: 0, slidePath: 'ppt/slides/slide1.xml', rels: new Map() },
+        ctx.slide,
+        { ...ctx.slide, index: 2, slidePath: 'ppt/slides/slide3.xml', rels: new Map() },
+      ];
+      ctx.onNavigate = (target) => navigateCalls.push(target);
+      const container = document.createElement('div');
+
+      renderTextBody(body, undefined, ctx, container);
+      const link = container.querySelector<HTMLElement>('[role="link"]');
+      link?.click();
+
+      expect(link).not.toBeNull();
+      expect(link!.textContent).toBe('Next');
+      expect(link!.title).toBe('Go to slide 3');
+      expect(link!.style.color).toBe('rgb(5, 99, 193)');
+      expect(navigateCalls).toEqual([{ slideIndex: 2 }]);
     });
   });
 

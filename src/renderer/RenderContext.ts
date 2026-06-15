@@ -37,7 +37,7 @@ export interface RenderContext {
   skipPlaceholderChildren?: boolean;
   /**
    * Navigation callback for shape-level hyperlink actions (action buttons, clickable shapes).
-   * Called with target slide index (0-based) for `ppaction://hlinksldjump`,
+   * Called with target slide index (0-based) for supported internal slide actions,
    * or with a URL string for external links.
    */
   onNavigate?: (target: { slideIndex?: number; url?: string }) => void;

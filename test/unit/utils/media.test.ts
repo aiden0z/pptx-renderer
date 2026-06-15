@@ -59,6 +59,10 @@ describe('resolveMediaPath', () => {
   it('handles deeply nested relative paths', () => {
     expect(resolveMediaPath('../../something/media/chart1.png')).toBe('ppt/media/chart1.png');
   });
+
+  it('normalizes backslash relationship targets before extracting the filename', () => {
+    expect(resolveMediaPath('..\\media\\image1.png')).toBe('ppt/media/image1.png');
+  });
 });
 
 describe('getOrCreateBlobUrl', () => {

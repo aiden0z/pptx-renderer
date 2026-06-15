@@ -60,6 +60,15 @@ describe('parseSlide', () => {
     expect(slide.showMasterSp).toBe(false);
   });
 
+  it('parses OOXML false aliases for showMasterSp', () => {
+    expect(parseSlide(makeSlideXml({ showMasterSp: 'f' }), 0, makeRels()).showMasterSp).toBe(
+      false,
+    );
+    expect(parseSlide(makeSlideXml({ showMasterSp: 'off' }), 0, makeRels()).showMasterSp).toBe(
+      false,
+    );
+  });
+
   it('parses sp as shape node', () => {
     const slide = parseSlide(
       makeSlideXml({

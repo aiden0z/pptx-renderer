@@ -5459,6 +5459,42 @@ describe('ChartRenderer', () => {
       expect(grid.right).toBe(10);
     });
 
+    it('treats OOXML false aliases on chart booleans as false', () => {
+      const xml = `<c:chartSpace
+        xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart"
+        xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+        <c:chart>
+          <c:autoTitleDeleted val="f"/>
+          <c:plotArea>
+            <c:barChart>
+              <c:barDir val="col"/>
+              <c:grouping val="clustered"/>
+              <c:ser>
+                <c:idx val="0"/><c:order val="0"/>
+                <c:tx><c:strRef><c:strCache><c:ptCount val="1"/><c:pt idx="0"><c:v>A</c:v></c:pt></c:strCache></c:strRef></c:tx>
+                <c:cat><c:strRef><c:strCache><c:ptCount val="1"/><c:pt idx="0"><c:v>Q1</c:v></c:pt></c:strCache></c:strRef></c:cat>
+                <c:val><c:numRef><c:numCache><c:ptCount val="1"/><c:pt idx="0"><c:v>20</c:v></c:pt></c:numCache></c:numRef></c:val>
+              </c:ser>
+              <c:axId val="1"/><c:axId val="2"/>
+            </c:barChart>
+            <c:catAx><c:axId val="1"/><c:delete val="off"/><c:axPos val="b"/><c:crossAx val="2"/></c:catAx>
+            <c:valAx><c:axId val="2"/><c:delete val="f"/><c:axPos val="l"/><c:majorGridlines/><c:crossAx val="1"/></c:valAx>
+          </c:plotArea>
+          <c:legend><c:legendPos val="r"/><c:overlay val="off"/></c:legend>
+        </c:chart>
+      </c:chartSpace>`;
+
+      const { option } = parseChartOption(xml);
+      const yAxis = option.yAxis as any;
+      const grid = option.grid as any;
+
+      expect(option.title).toBeDefined();
+      expect(yAxis.axisLabel.show).not.toBe(false);
+      expect(yAxis.axisLine.show).not.toBe(false);
+      expect(yAxis.splitLine.show).not.toBe(false);
+      expect(grid.right).not.toBe(10);
+    });
+
     it('varies single-series bar colors by point and inverts negative values by default (oracle-pypptx-chart-0002)', () => {
       const xml = `<c:chartSpace
         xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart"

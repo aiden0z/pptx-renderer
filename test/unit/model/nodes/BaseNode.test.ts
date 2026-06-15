@@ -52,6 +52,17 @@ describe('parseBaseProps', () => {
     expect(props.flipV).toBe(true);
   });
 
+  it('parses OOXML boolean aliases for flips', () => {
+    const props = base(`
+      <sp>
+        <nvSpPr><cNvPr id="1" name="R"/><nvPr/></nvSpPr>
+        <spPr><xfrm flipH="on" flipV="t"><off x="0" y="0"/><ext cx="0" cy="0"/></xfrm></spPr>
+      </sp>
+    `);
+    expect(props.flipH).toBe(true);
+    expect(props.flipV).toBe(true);
+  });
+
   it('defaults flipH and flipV to false', () => {
     const props = base(`
       <sp>
