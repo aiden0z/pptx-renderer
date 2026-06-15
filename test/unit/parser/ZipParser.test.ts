@@ -115,6 +115,21 @@ describe('parseZip – categorization', () => {
     expect(files.slideRels.get('ppt/slides/_rels/intro.xml.rels')).toBe(relsXml);
   });
 
+  it('aliases percent-encoded XML part names by decoded package paths', async () => {
+    const slideXml = '<p:sld />';
+    const relsXml = '<Relationships />';
+    const buffer = await buildZip([
+      ...SKELETON,
+      { path: 'ppt/slides/Product%20Intro.xml', data: slideXml },
+      { path: 'ppt/slides/_rels/Product%20Intro.xml.rels', data: relsXml },
+    ]);
+
+    const files = await parseZip(buffer);
+
+    expect(files.slides.get('ppt/slides/Product Intro.xml')).toBe(slideXml);
+    expect(files.slideRels.get('ppt/slides/_rels/Product Intro.xml.rels')).toBe(relsXml);
+  });
+
   it('does not place slide rels entries into result.slides', async () => {
     const buffer = await buildZip([
       ...SKELETON,

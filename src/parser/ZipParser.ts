@@ -56,6 +56,27 @@ function isMediaPath(path: string): boolean {
   return path.startsWith('ppt/media/');
 }
 
+function decodeZipPath(path: string): string {
+  return path
+    .split('/')
+    .map((segment) => {
+      try {
+        return decodeURIComponent(segment);
+      } catch {
+        return segment;
+      }
+    })
+    .join('/');
+}
+
+function setPathMapEntry<T>(map: Map<string, T>, path: string, value: T): void {
+  map.set(path, value);
+  const decodedPath = decodeZipPath(path);
+  if (decodedPath !== path && !map.has(decodedPath)) {
+    map.set(decodedPath, value);
+  }
+}
+
 function readUncompressedSize(file: JSZipObject): number | undefined {
   const data = (file as unknown as { _data?: { uncompressedSize?: number } })._data;
   const size = data?.uncompressedSize;
@@ -281,13 +302,14 @@ export async function parseZip(
     // --- Media (binary) ---
     if (isMediaPath(normalizedPath)) {
       const bytes = await readZipBinaryEntry(normalizedPath, file, limitState);
-      result.media.set(normalizedPath, bytes);
+      setPathMapEntry(result.media, normalizedPath, bytes);
       return;
     }
 
     // --- Slide Rels (must check before slides to avoid false match) ---
     if (/^ppt\/slides\/_rels\/[^/]+\.xml\.rels$/.test(normalizedPath)) {
-      result.slideRels.set(
+      setPathMapEntry(
+        result.slideRels,
         normalizedPath,
         await readZipTextEntry(normalizedPath, file, limitState),
       );
@@ -296,13 +318,18 @@ export async function parseZip(
 
     // --- Slides ---
     if (/^ppt\/slides\/[^/]+\.xml$/.test(normalizedPath)) {
-      result.slides.set(normalizedPath, await readZipTextEntry(normalizedPath, file, limitState));
+      setPathMapEntry(
+        result.slides,
+        normalizedPath,
+        await readZipTextEntry(normalizedPath, file, limitState),
+      );
       return;
     }
 
     // --- Slide Layout Rels ---
     if (/^ppt\/slideLayouts\/_rels\/[^/]+\.xml\.rels$/.test(normalizedPath)) {
-      result.slideLayoutRels.set(
+      setPathMapEntry(
+        result.slideLayoutRels,
         normalizedPath,
         await readZipTextEntry(normalizedPath, file, limitState),
       );
@@ -311,7 +338,8 @@ export async function parseZip(
 
     // --- Slide Layouts ---
     if (/^ppt\/slideLayouts\/[^/]+\.xml$/.test(normalizedPath)) {
-      result.slideLayouts.set(
+      setPathMapEntry(
+        result.slideLayouts,
         normalizedPath,
         await readZipTextEntry(normalizedPath, file, limitState),
       );
@@ -320,7 +348,8 @@ export async function parseZip(
 
     // --- Slide Master Rels ---
     if (/^ppt\/slideMasters\/_rels\/[^/]+\.xml\.rels$/.test(normalizedPath)) {
-      result.slideMasterRels.set(
+      setPathMapEntry(
+        result.slideMasterRels,
         normalizedPath,
         await readZipTextEntry(normalizedPath, file, limitState),
       );
@@ -329,7 +358,8 @@ export async function parseZip(
 
     // --- Slide Masters ---
     if (/^ppt\/slideMasters\/[^/]+\.xml$/.test(normalizedPath)) {
-      result.slideMasters.set(
+      setPathMapEntry(
+        result.slideMasters,
         normalizedPath,
         await readZipTextEntry(normalizedPath, file, limitState),
       );
@@ -338,37 +368,52 @@ export async function parseZip(
 
     // --- Themes ---
     if (/^ppt\/theme\/(?!themeOverride[^/]*\.xml$)[^/]+\.xml$/.test(normalizedPath)) {
-      result.themes.set(normalizedPath, await readZipTextEntry(normalizedPath, file, limitState));
+      setPathMapEntry(
+        result.themes,
+        normalizedPath,
+        await readZipTextEntry(normalizedPath, file, limitState),
+      );
       return;
     }
 
     // --- Theme Overrides (used by chart parts) ---
     if (/^ppt\/theme\/themeOverride[^/]*\.xml$/.test(normalizedPath)) {
-      result.themeOverrides?.set(
-        normalizedPath,
-        await readZipTextEntry(normalizedPath, file, limitState),
-      );
+      if (result.themeOverrides) {
+        setPathMapEntry(
+          result.themeOverrides,
+          normalizedPath,
+          await readZipTextEntry(normalizedPath, file, limitState),
+        );
+      }
       return;
     }
 
     // --- Chart Rels ---
     if (/^ppt\/charts\/_rels\/[^/]+\.xml\.rels$/.test(normalizedPath)) {
-      result.chartRels?.set(
+      if (result.chartRels) {
+        setPathMapEntry(
+          result.chartRels,
+          normalizedPath,
+          await readZipTextEntry(normalizedPath, file, limitState),
+        );
+      }
+      return;
+    }
+
+    // --- Charts ---
+    if (/^ppt\/charts\/(?!style[^/]*\.xml$)(?!colors[^/]*\.xml$)[^/]+\.xml$/.test(normalizedPath)) {
+      setPathMapEntry(
+        result.charts,
         normalizedPath,
         await readZipTextEntry(normalizedPath, file, limitState),
       );
       return;
     }
 
-    // --- Charts ---
-    if (/^ppt\/charts\/(?!style[^/]*\.xml$)(?!colors[^/]*\.xml$)[^/]+\.xml$/.test(normalizedPath)) {
-      result.charts.set(normalizedPath, await readZipTextEntry(normalizedPath, file, limitState));
-      return;
-    }
-
     // --- Chart Styles ---
     if (/^ppt\/charts\/style[^/]*\.xml$/.test(normalizedPath)) {
-      result.chartStyles.set(
+      setPathMapEntry(
+        result.chartStyles,
         normalizedPath,
         await readZipTextEntry(normalizedPath, file, limitState),
       );
@@ -377,7 +422,8 @@ export async function parseZip(
 
     // --- Chart Colors ---
     if (/^ppt\/charts\/colors[^/]*\.xml$/.test(normalizedPath)) {
-      result.chartColors.set(
+      setPathMapEntry(
+        result.chartColors,
         normalizedPath,
         await readZipTextEntry(normalizedPath, file, limitState),
       );
@@ -386,7 +432,8 @@ export async function parseZip(
 
     // --- Diagram Drawings (SmartArt fallback) ---
     if (/^ppt\/diagrams\/[^/]+\.xml$/.test(normalizedPath)) {
-      result.diagramDrawings.set(
+      setPathMapEntry(
+        result.diagramDrawings,
         normalizedPath,
         await readZipTextEntry(normalizedPath, file, limitState),
       );

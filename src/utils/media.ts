@@ -37,20 +37,45 @@ function stripUriSuffix(target: string): string {
   return suffixIndex >= 0 ? target.slice(0, suffixIndex) : target;
 }
 
+function normalizePathSegments(path: string): string[] {
+  const normalized: string[] = [];
+  for (const part of path.replace(/\\/g, '/').split('/')) {
+    if (!part || part === '.') continue;
+    if (part === '..') {
+      normalized.pop();
+      continue;
+    }
+    normalized.push(part);
+  }
+  return normalized;
+}
+
+function decodeUriPathSegment(segment: string): string {
+  try {
+    return decodeURIComponent(segment);
+  } catch {
+    return segment;
+  }
+}
+
+function mediaRelativePath(target: string): string {
+  const parts = normalizePathSegments(stripUriSuffix(target));
+  const mediaIndex = parts.lastIndexOf('media');
+  const mediaParts =
+    mediaIndex >= 0 && mediaIndex < parts.length - 1
+      ? parts.slice(mediaIndex + 1)
+      : parts.slice(-1);
+  return mediaParts.join('/');
+}
+
 /**
  * Resolve a relative media path (from rels) to its canonical path in PptxFiles.media.
  * Rels targets are relative like "../media/image1.png".
  * Media paths in PptxFiles are like "ppt/media/image1.png".
  */
 export function resolveMediaPath(target: string): string {
-  const rawFileName = stripUriSuffix(target).replace(/\\/g, '/').split('/').pop() || '';
-  let fileName: string;
-  try {
-    fileName = decodeURIComponent(rawFileName);
-  } catch {
-    fileName = rawFileName;
-  }
-  return `ppt/media/${fileName}`;
+  const decodedPath = mediaRelativePath(target).split('/').map(decodeUriPathSegment).join('/');
+  return `ppt/media/${decodedPath}`;
 }
 
 /**
@@ -62,9 +87,9 @@ export function resolveMediaPath(target: string): string {
  * keep the raw basename as a compatibility fallback.
  */
 export function resolveMediaPathCandidates(target: string): string[] {
-  const rawFileName = stripUriSuffix(target).replace(/\\/g, '/').split('/').pop() || '';
+  const rawRelativePath = mediaRelativePath(target);
   const decodedPath = resolveMediaPath(target);
-  const rawPath = `ppt/media/${rawFileName}`;
+  const rawPath = `ppt/media/${rawRelativePath}`;
   return decodedPath === rawPath ? [decodedPath] : [decodedPath, rawPath];
 }
 

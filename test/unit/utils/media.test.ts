@@ -66,6 +66,10 @@ describe('resolveMediaPath', () => {
     expect(resolveMediaPath('../../something/media/chart1.png')).toBe('ppt/media/chart1.png');
   });
 
+  it('preserves subdirectories below the media package folder', () => {
+    expect(resolveMediaPath('../media/icons/logo.png')).toBe('ppt/media/icons/logo.png');
+  });
+
   it('normalizes backslash relationship targets before extracting the filename', () => {
     expect(resolveMediaPath('..\\media\\image1.png')).toBe('ppt/media/image1.png');
   });
@@ -88,6 +92,13 @@ describe('resolveMediaPath', () => {
     ]);
   });
 
+  it('keeps raw percent-encoded subdirectory media paths as fallback candidates', () => {
+    expect(resolveMediaPathCandidates('../media/icons/product%20photo.png')).toEqual([
+      'ppt/media/icons/product photo.png',
+      'ppt/media/icons/product%20photo.png',
+    ]);
+  });
+
   it('finds media by decoded target first and raw encoded target as compatibility fallback', () => {
     const decodedMedia = new Map([['ppt/media/product photo.png', new Uint8Array([1])]]);
     const rawMedia = new Map([['ppt/media/product%20photo.png', new Uint8Array([2])]]);
@@ -97,6 +108,14 @@ describe('resolveMediaPath', () => {
     );
     expect(findMediaByTarget('../media/product%20photo.png', rawMedia)?.mediaPath).toBe(
       'ppt/media/product%20photo.png',
+    );
+  });
+
+  it('finds media stored in subdirectories below ppt/media', () => {
+    const media = new Map([['ppt/media/icons/logo.png', new Uint8Array([1])]]);
+
+    expect(findMediaByTarget('../media/icons/logo.png', media)?.mediaPath).toBe(
+      'ppt/media/icons/logo.png',
     );
   });
 });
