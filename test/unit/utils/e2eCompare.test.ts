@@ -23,6 +23,12 @@ describe('resolveCompareSlideCounts', () => {
     expect(result.displaySlideCount).toBe(0);
     expect(result.comparableSlideCount).toBe(0);
   });
+
+  it('floors fractional counts before comparing slide totals', () => {
+    const result = resolveCompareSlideCounts(3.9, 2.8);
+
+    expect(result).toEqual({ displaySlideCount: 3, comparableSlideCount: 2 });
+  });
 });
 
 describe('resolveComparablePdfPages', () => {
@@ -39,6 +45,12 @@ describe('resolveComparablePdfPages', () => {
     const pages = resolveComparablePdfPages([{ hidden: false }, { hidden: false }], 1);
 
     expect(pages).toEqual([0, null]);
+  });
+
+  it('returns null for all slides when the PDF page count is invalid', () => {
+    const pages = resolveComparablePdfPages([{ hidden: false }, { hidden: true }], Number.NaN);
+
+    expect(pages).toEqual([null, null]);
   });
 });
 
@@ -106,6 +118,101 @@ describe('mergeServerMetricsIntoSlides', () => {
       colorHistCorr: null,
       needsReview: null,
       hasDiff: false,
+    });
+  });
+
+  it('clears visual metrics for slides marked hidden by the server', () => {
+    const slides = [
+      {
+        index: 2,
+        hasComparablePdf: true,
+        ssim: 0.5,
+        mae: 0.1,
+        fgIou: 0.2,
+        fgIouTolerant: 0.3,
+        chamferScore: 0.4,
+        colorHistCorr: 0.5,
+        needsReview: true,
+        hasDiff: true,
+      },
+    ];
+
+    const merged = mergeServerMetricsIntoSlides(slides, [{ slideIdx: 2, hidden: true }]);
+
+    expect(merged[0]).toMatchObject({
+      hasComparablePdf: false,
+      ssim: null,
+      mae: null,
+      fgIou: null,
+      fgIouTolerant: null,
+      chamferScore: null,
+      colorHistCorr: null,
+      needsReview: null,
+      hasDiff: false,
+    });
+  });
+
+  it('clears metrics when the server metrics list is missing or lacks numeric SSIM', () => {
+    const slides = [
+      {
+        index: 0,
+        hasComparablePdf: true,
+        ssim: 0.5,
+        mae: 0.1,
+        fgIou: 0.2,
+        fgIouTolerant: 0.3,
+        chamferScore: 0.4,
+        colorHistCorr: 0.5,
+        needsReview: true,
+        hasDiff: true,
+      },
+    ];
+
+    expect(mergeServerMetricsIntoSlides(slides, null)[0].hasDiff).toBe(false);
+    expect(mergeServerMetricsIntoSlides(slides, [{ slideIdx: 0, ssim: null }])[0]).toMatchObject({
+      ssim: null,
+      hasDiff: false,
+    });
+  });
+
+  it('normalizes optional metric fields with non-number or non-boolean values to null', () => {
+    const slides = [
+      {
+        index: 0,
+        hasComparablePdf: true,
+        ssim: null,
+        mae: null,
+        fgIou: null,
+        fgIouTolerant: null,
+        chamferScore: null,
+        colorHistCorr: null,
+        needsReview: null,
+        hasDiff: false,
+      },
+    ];
+
+    const merged = mergeServerMetricsIntoSlides(slides, [
+      {
+        slideIdx: 0,
+        ssim: 0.95,
+        mae: null,
+        fgIou: undefined,
+        fgIouTolerant: null,
+        chamferScore: undefined,
+        colorHistCorr: null,
+        needsReview: null,
+      },
+    ]);
+
+    expect(merged[0]).toMatchObject({
+      ssim: 0.95,
+      mae: null,
+      fgIou: null,
+      fgIouTolerant: null,
+      chamferScore: null,
+      colorHistCorr: null,
+      needsReview: null,
+      hasDiff: true,
     });
   });
 });

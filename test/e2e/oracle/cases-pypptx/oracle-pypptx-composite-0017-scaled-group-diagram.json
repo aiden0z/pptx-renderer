@@ -1,0 +1,13 @@
+{
+  "name": "oracle-pypptx-composite-0017-scaled-group-diagram",
+  "generator": "python-pptx",
+  "slides": [
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    }
+  ]
+}

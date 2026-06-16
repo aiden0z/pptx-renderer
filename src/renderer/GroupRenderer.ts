@@ -18,6 +18,28 @@ function rotationSwapsAxes(rotation: number): boolean {
   return Math.abs(normalized - 90) < 0.0001 || Math.abs(normalized - 270) < 0.0001;
 }
 
+function remapShapeTextBoxBounds(
+  node: BaseNodeData,
+  scaleX: number,
+  scaleY: number,
+  swapsAxes: boolean,
+): void {
+  if (node.nodeType !== 'shape') return;
+  const shapeNode = node as ShapeNodeData;
+  if (!shapeNode.textBoxBounds) return;
+
+  const tbScaleX = swapsAxes ? scaleY : scaleX;
+  const tbScaleY = swapsAxes ? scaleX : scaleY;
+  const tb = shapeNode.textBoxBounds;
+  shapeNode.textBoxBounds = {
+    ...tb,
+    x: tb.x * tbScaleX,
+    y: tb.y * tbScaleY,
+    w: tb.w * tbScaleX,
+    h: tb.h * tbScaleY,
+  };
+}
+
 function resolveEffectColor(node: SafeXmlNode, ctx: RenderContext, fallback: string): string {
   const { color, alpha } = resolveColor(node, ctx);
   if (!color) return fallback;
@@ -230,6 +252,7 @@ export function renderGroup(
             h: originalSize.h * scaleY,
           };
         }
+        remapShapeTextBoxBounds(childNode, scaleX, scaleY, swapsAxes);
       }
 
       // Overlap the 3 pie sectors at the same center so they form one circle

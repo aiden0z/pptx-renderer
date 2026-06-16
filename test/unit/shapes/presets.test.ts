@@ -1498,3 +1498,579 @@ describe('actionButtonHelp (oracle-full-shapeid-0127)', () => {
     expect(moveCount).toBe(3); // 2 diagonals + 1 vertical
   });
 });
+
+describe('preset geometry branch coverage — adjustment extremes and degenerate extents', () => {
+  const expectValidPath = (path: string) => {
+    expect(path.length).toBeGreaterThan(0);
+    expect(path).toContain('M');
+    expect(path).not.toMatch(/(?:NaN|-?Infinity)/);
+  };
+
+  const expectValidMultiPath = (paths: PresetSubPath[] | null) => {
+    expect(paths).not.toBeNull();
+    expect(paths!.length).toBeGreaterThan(0);
+    for (const path of paths!) {
+      expectValidPath(path.d);
+      expect(['norm', 'darken', 'darkenLess', 'lighten', 'lightenLess', 'none']).toContain(
+        path.fill,
+      );
+      expect(typeof path.stroke).toBe('boolean');
+    }
+  };
+
+  it.each([
+    ['line', 0, 80, 'M0.5,0 L0.5,80'],
+    ['line', 120, 0, 'M0,0.5 L120,0.5'],
+    ['lineInv', 0, 80, 'M0.5,0 L0.5,80'],
+    ['lineInv', 120, 0, 'M0,0.5 L120,0.5'],
+    ['straightConnector1', 0, 80, 'M0.5,0 L0.5,80'],
+    ['straightConnector1', 120, 0, 'M0,0.5 L120,0.5'],
+  ])('%s keeps zero-extent connector strokes visible for %sx%s', (name, w, h, expected) => {
+    expect(getPresetShapePath(name, w, h)).toBe(expected);
+  });
+
+  it.each(['star4', 'star5', 'star6', 'star7', 'star8', 'star10', 'star12', 'star16', 'star24', 'star32'])(
+    '%s clamps out-of-range inner-radius adjustments',
+    (name) => {
+      for (const adjValue of [-10000, 0, 50000, 90000]) {
+        const path = getPresetShapePath(name, 320, 240, new Map([['adj', adjValue]]));
+        expectValidPath(path);
+        expect(path).toContain('Z');
+      }
+    },
+  );
+
+  it.each([
+    'bentConnector3',
+    'bentConnector4',
+    'bentConnector5',
+    'curvedConnector3',
+    'curvedConnector4',
+    'curvedConnector5',
+  ])('%s handles explicit connector guide extremes', (name) => {
+    const guideSets = [
+      new Map([
+        ['adj1', 0],
+        ['adj2', 0],
+        ['adj3', 0],
+      ]),
+      new Map([
+        ['adj1', 100000],
+        ['adj2', 100000],
+        ['adj3', 100000],
+      ]),
+      new Map([
+        ['adj1', 12500],
+        ['adj2', 87500],
+        ['adj3', 37500],
+      ]),
+    ];
+
+    for (const adjustments of guideSets) {
+      expectValidPath(getPresetShapePath(name, 360, 220, adjustments));
+    }
+  });
+
+  it.each([
+    'diagStripe',
+    'rightArrow',
+    'leftArrow',
+    'upArrow',
+    'downArrow',
+    'rightArrowCallout',
+    'leftArrowCallout',
+    'upArrowCallout',
+    'downArrowCallout',
+    'upDownArrowCallout',
+    'leftRightArrowCallout',
+    'uturnArrow',
+    'leftRightArrow',
+    'leftUpArrow',
+    'upDownArrow',
+    'notchedRightArrow',
+    'chevron',
+    'homePlate',
+    'stripedRightArrow',
+    'bentArrow',
+    'bentUpArrow',
+    'quadArrow',
+    'leftRightUpArrow',
+  ])('%s handles clamped OOXML adjustment bounds without invalid path data', (name) => {
+    const extremes = [
+      new Map([
+        ['adj1', -50000],
+        ['adj2', -50000],
+        ['adj3', -50000],
+        ['adj4', -50000],
+        ['adj5', -50000],
+      ]),
+      new Map([
+        ['adj1', 250000],
+        ['adj2', 250000],
+        ['adj3', 250000],
+        ['adj4', 250000],
+        ['adj5', 250000],
+      ]),
+      new Map([
+        ['adj1', 12000],
+        ['adj2', 88000],
+        ['adj3', 33000],
+        ['adj4', 77000],
+        ['adj5', 45000],
+      ]),
+    ];
+
+    for (const adjustments of extremes) {
+      expectValidPath(getPresetShapePath(name, 420, 260, adjustments));
+    }
+  });
+
+  it.each(['circularArrow', 'leftCircularArrow', 'leftRightCircularArrow'])(
+    '%s keeps circular-arrow geometry valid at adjustment bounds',
+    (name) => {
+      for (const adjustments of [
+        new Map([
+          ['adj1', -10000],
+          ['adj2', -10000],
+          ['adj3', -10000],
+          ['adj4', -10000],
+          ['adj5', -10000],
+        ]),
+        new Map([
+          ['adj1', 150000],
+          ['adj2', 150000],
+          ['adj3', 150000],
+          ['adj4', 150000],
+          ['adj5', 150000],
+        ]),
+      ]) {
+        expectValidPath(getPresetShapePath(name, 300, 300, adjustments));
+      }
+    },
+  );
+
+  it.each(['mathPlus', 'bracketPair', 'bracePair'])(
+    '%s supports explicit extreme adjustments used by equation-like shapes',
+    (name) => {
+      for (const adjValue of [-10000, 0, 100000, 150000]) {
+        expectValidPath(getPresetShapePath(name, 260, 180, new Map([['adj', adjValue]])));
+      }
+    },
+  );
+
+  it.each([
+    'can',
+    'foldedCorner',
+    'smileyFace',
+    'ribbon',
+    'ribbon2',
+    'ellipseRibbon',
+    'ellipseRibbon2',
+    'cube',
+    'bevel',
+  ])('%s multi-path preset clamps explicit adjustment extremes', (name) => {
+    const extremes = [
+      new Map([
+        ['adj', -20000],
+        ['adj1', -20000],
+        ['adj2', -20000],
+        ['adj3', -20000],
+      ]),
+      new Map([
+        ['adj', 180000],
+        ['adj1', 180000],
+        ['adj2', 180000],
+        ['adj3', 180000],
+      ]),
+      new Map([
+        ['adj', 4653],
+        ['adj1', 20000],
+        ['adj2', 50000],
+        ['adj3', 10000],
+      ]),
+    ];
+
+    for (const adjustments of extremes) {
+      expectValidMultiPath(getMultiPathPreset(name, 360, 240, adjustments));
+    }
+  });
+
+  it.each([
+    'actionButtonForwardNext',
+    'actionButtonBackPrevious',
+    'actionButtonReturn',
+    'actionButtonBeginning',
+    'actionButtonEnd',
+    'actionButtonInformation',
+    'actionButtonDocument',
+  ])('%s exposes a valid legacy icon overlay path', (name) => {
+    const iconPath = getActionButtonIconPath(name, 360, 240);
+    expect(iconPath).toBeTypeOf('string');
+    expectValidPath(iconPath!);
+  });
+
+  it('returns undefined for action buttons without a legacy overlay icon', () => {
+    expect(getActionButtonIconPath('actionButtonBlank', 360, 240)).toBeUndefined();
+    expect(getActionButtonIconPath('unknownShape', 360, 240)).toBeUndefined();
+  });
+
+  it.each(['wedgeRectCallout', 'wedgeRoundRectCallout'])(
+    '%s covers all pointer-side decision branches',
+    (name) => {
+      const pointerCases = [
+        new Map([
+          ['adj1', 50000],
+          ['adj2', 10000],
+          ['adj3', 16667],
+        ]),
+        new Map([
+          ['adj1', -50000],
+          ['adj2', 10000],
+          ['adj3', 16667],
+        ]),
+        new Map([
+          ['adj1', 10000],
+          ['adj2', 50000],
+          ['adj3', 16667],
+        ]),
+        new Map([
+          ['adj1', -10000],
+          ['adj2', -50000],
+          ['adj3', 16667],
+        ]),
+        new Map([
+          ['adj1', 50000],
+          ['adj2', -10000],
+          ['adj3', 16667],
+        ]),
+      ];
+
+      for (const adjustments of pointerCases) {
+        expectValidPath(getPresetShapePath(name, 300, 200, adjustments));
+      }
+    },
+  );
+
+  it.each(['wedgeEllipseCallout', 'cloudCallout', 'borderCallout1'])(
+    '%s handles explicit callout pointer coordinates',
+    (name) => {
+      for (const adjustments of [
+        new Map([
+          ['adj1', -50000],
+          ['adj2', -50000],
+          ['adj3', 120000],
+          ['adj4', -80000],
+        ]),
+        new Map([
+          ['adj1', 50000],
+          ['adj2', 50000],
+          ['adj3', -20000],
+          ['adj4', 90000],
+        ]),
+      ]) {
+        expectValidPath(getPresetShapePath(name, 300, 200, adjustments));
+      }
+    },
+  );
+
+  it.each(['curvedRightArrow', 'curvedLeftArrow', 'curvedUpArrow', 'curvedDownArrow'])(
+    '%s keeps curved-arrow arc flags finite at adjustment bounds',
+    (name) => {
+      for (const adjustments of [
+        new Map([
+          ['adj1', 0],
+          ['adj2', 0],
+          ['adj3', 0],
+        ]),
+        new Map([
+          ['adj1', 100000],
+          ['adj2', 100000],
+          ['adj3', 100000],
+        ]),
+      ]) {
+        expectValidPath(getPresetShapePath(name, 400, 280, adjustments));
+      }
+    },
+  );
+
+  it.each(['curvedRightArrow', 'curvedLeftArrow', 'curvedUpArrow', 'curvedDownArrow'])(
+    '%s multi-path layering remains valid at adjustment bounds',
+    (name) => {
+      for (const adjustments of [
+        new Map([
+          ['adj1', 0],
+          ['adj2', 0],
+          ['adj3', 0],
+        ]),
+        new Map([
+          ['adj1', 100000],
+          ['adj2', 100000],
+          ['adj3', 100000],
+        ]),
+      ]) {
+        expectValidMultiPath(getMultiPathPreset(name, 400, 280, adjustments));
+      }
+    },
+  );
+
+  it.each(['wave', 'doubleWave'])('%s covers positive and negative phase offsets', (name) => {
+    for (const adj2 of [-10000, 0, 10000]) {
+      expectValidPath(
+        getPresetShapePath(
+          name,
+          360,
+          180,
+          new Map([
+            ['adj1', 12500],
+            ['adj2', adj2],
+          ]),
+        ),
+      );
+    }
+  });
+
+  it.each(['pie', 'arc', 'chord'])('%s handles equal and wide-angle sweep branches', (name) => {
+    const angleCases = [
+      new Map([
+        ['adj1', 0],
+        ['adj2', 0],
+      ]),
+      new Map([
+        ['adj1', 0],
+        ['adj2', 21600000],
+      ]),
+      new Map([
+        ['adj1', 1800000],
+        ['adj2', 16200000],
+      ]),
+    ];
+
+    for (const adjustments of angleCases) {
+      expectValidPath(getPresetShapePath(name, 320, 180, adjustments));
+    }
+  });
+
+  it.each([
+    'plus',
+    'mathMinus',
+    'mathMultiply',
+    'mathDivide',
+    'mathEqual',
+    'mathNotEqual',
+    'donut',
+    'noSmoking',
+    'blockArc',
+    'sun',
+  ])('%s clamps equation and radial adjustments across low/high bounds', (name) => {
+    const extremes = [
+      new Map([
+        ['adj', -50000],
+        ['adj1', -50000],
+        ['adj2', -50000],
+        ['adj3', -50000],
+      ]),
+      new Map([
+        ['adj', 200000],
+        ['adj1', 200000],
+        ['adj2', 24000000],
+        ['adj3', 200000],
+      ]),
+      new Map([
+        ['adj', 25000],
+        ['adj1', 23520],
+        ['adj2', 11760],
+        ['adj3', 11760],
+      ]),
+    ];
+
+    for (const adjustments of extremes) {
+      expectValidPath(getPresetShapePath(name, 300, 220, adjustments));
+    }
+  });
+
+  it.each(['leftBracket', 'rightBracket', 'leftBrace', 'rightBrace'])(
+    '%s handles regular and zero-short-side bracket geometry',
+    (name) => {
+      for (const size of [
+        [260, 180],
+        [0, 180],
+      ] as const) {
+        expectValidPath(
+          getPresetShapePath(
+            name,
+            size[0],
+            size[1],
+            new Map([
+              ['adj', 150000],
+              ['adj1', 150000],
+              ['adj2', 100000],
+            ]),
+          ),
+        );
+      }
+    },
+  );
+
+  it('moon falls back to a rectangle for zero extents and keeps high-adjustment crescents finite', () => {
+    expect(getPresetShapePath('moon', 0, 180)).toBe('M0,0 L0,0 L0,180 L0,180 Z');
+    expectValidPath(getPresetShapePath('moon', 300, 180, new Map([['adj', 87500]])));
+  });
+
+  it('keeps every registered single-path preset finite across aspect-ratio and adjustment sweeps', () => {
+    const adjustmentSweeps = [
+      new Map([
+        ['adj', -50000],
+        ['adj1', -50000],
+        ['adj2', -50000],
+        ['adj3', -50000],
+        ['adj4', -50000],
+        ['adj5', -50000],
+      ]),
+      new Map([
+        ['adj', 0],
+        ['adj1', 0],
+        ['adj2', 0],
+        ['adj3', 0],
+        ['adj4', 0],
+        ['adj5', 0],
+      ]),
+      new Map([
+        ['adj', 50000],
+        ['adj1', 25000],
+        ['adj2', 50000],
+        ['adj3', 75000],
+        ['adj4', 100000],
+        ['adj5', 125000],
+      ]),
+      new Map([
+        ['adj', 200000],
+        ['adj1', 200000],
+        ['adj2', 21600000],
+        ['adj3', 200000],
+        ['adj4', 200000],
+        ['adj5', 200000],
+      ]),
+    ];
+    const sizes = [
+      [320, 180],
+      [180, 320],
+      [1, 240],
+      [240, 1],
+    ] as const;
+
+    for (const name of presetShapes.keys()) {
+      for (const [w, h] of sizes) {
+        for (const adjustments of adjustmentSweeps) {
+          const path = getPresetShapePath(name, w, h, adjustments);
+          expect(
+            path,
+            `${name} ${w}x${h} ${JSON.stringify(Object.fromEntries(adjustments))}`,
+          ).not.toMatch(/(?:NaN|-?Infinity)/);
+          expectValidPath(path);
+        }
+      }
+    }
+  });
+
+  it('keeps known multi-path presets finite across aspect-ratio and adjustment sweeps', () => {
+    const multiPathNames = [
+      'actionButtonForwardNext',
+      'actionButtonForward',
+      'actionButtonBackPrevious',
+      'actionButtonBeginning',
+      'actionButtonEnd',
+      'actionButtonReturn',
+      'actionButtonSound',
+      'actionButtonInformation',
+      'actionButtonHome',
+      'actionButtonHelp',
+      'actionButtonDocument',
+      'actionButtonMovie',
+      'flowChartOfflineStorage',
+      'cube',
+      'bevel',
+      'leftRightRibbon',
+      'ellipseRibbon',
+      'ellipseRibbon2',
+      'smileyFace',
+      'foldedCorner',
+      'can',
+      'curvedRightArrow',
+      'curvedLeftArrow',
+      'curvedUpArrow',
+      'curvedDownArrow',
+      'borderCallout1',
+      'accentCallout1',
+      'accentCallout2',
+      'accentCallout3',
+      'callout1',
+      'callout2',
+      'callout3',
+      'borderCallout2',
+      'borderCallout3',
+      'accentBorderCallout1',
+      'accentBorderCallout2',
+      'accentBorderCallout3',
+      'chartX',
+      'chartPlus',
+      'chartStar',
+      'ribbon',
+      'ribbon2',
+      'horizontalScroll',
+      'verticalScroll',
+    ];
+    const adjustmentSweeps = [
+      new Map([
+        ['adj', -50000],
+        ['adj1', -50000],
+        ['adj2', -50000],
+        ['adj3', -50000],
+        ['adj4', -50000],
+        ['adj5', -50000],
+      ]),
+      new Map([
+        ['adj', 0],
+        ['adj1', 0],
+        ['adj2', 0],
+        ['adj3', 0],
+        ['adj4', 0],
+        ['adj5', 0],
+      ]),
+      new Map([
+        ['adj', 50000],
+        ['adj1', 25000],
+        ['adj2', 50000],
+        ['adj3', 75000],
+        ['adj4', 100000],
+        ['adj5', 125000],
+      ]),
+      new Map([
+        ['adj', 200000],
+        ['adj1', 200000],
+        ['adj2', 21600000],
+        ['adj3', 200000],
+        ['adj4', 200000],
+        ['adj5', 200000],
+      ]),
+    ];
+    const sizes = [
+      [320, 180],
+      [180, 320],
+      [1, 240],
+      [240, 1],
+    ] as const;
+
+    for (const name of multiPathNames) {
+      for (const [w, h] of sizes) {
+        for (const adjustments of adjustmentSweeps) {
+          const paths = getMultiPathPreset(name, w, h, adjustments);
+          expect(
+            paths,
+            `${name} ${w}x${h} ${JSON.stringify(Object.fromEntries(adjustments))}`,
+          ).not.toBeNull();
+          expectValidMultiPath(paths);
+        }
+      }
+    }
+  });
+});

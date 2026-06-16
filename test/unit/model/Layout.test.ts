@@ -132,6 +132,23 @@ describe('parseLayout', () => {
     expect(layout.placeholders[0].absoluteXfrm!.size.h).toBeCloseTo(96, 0);
   });
 
+  it('extracts connector placeholders from nvCxnSpPr', () => {
+    const layout = parseLayout(makeLayoutXml({
+      shapes: `
+        <cxnSp>
+          <nvCxnSpPr><cNvPr id="6" name="Connector"/><nvPr><ph type="body"/></nvPr></nvCxnSpPr>
+          <spPr>
+            <xfrm><off x="457200" y="0"/><ext cx="457200" cy="457200"/></xfrm>
+          </spPr>
+        </cxnSp>
+      `,
+    }));
+
+    expect(layout.placeholders).toHaveLength(1);
+    expect(layout.placeholders[0].absoluteXfrm!.position.x).toBeCloseTo(48, 0);
+    expect(layout.placeholders[0].absoluteXfrm!.size.w).toBeCloseTo(48, 0);
+  });
+
   it('skips non-placeholder shapes', () => {
     const layout = parseLayout(makeLayoutXml({
       shapes: `
@@ -251,5 +268,79 @@ describe('parseLayout', () => {
     expect(layout.placeholders).toHaveLength(1);
     // Scale should be 1:1 when chExt defaults to ext
     expect(layout.placeholders[0].absoluteXfrm!.size.w).toBeCloseTo(96, 0);
+  });
+
+  it('guards zero child extents in layout grouped placeholders', () => {
+    const layout = parseLayout(makeLayoutXml({
+      shapes: `
+        <grpSp>
+          <grpSpPr>
+            <xfrm>
+              <off x="0" y="0"/><ext cx="914400" cy="914400"/>
+              <chExt cx="0" cy="0"/>
+            </xfrm>
+          </grpSpPr>
+          <sp>
+            <nvSpPr><cNvPr id="31" name="ZeroChExt"/><nvPr><ph type="body"/></nvPr></nvSpPr>
+            <spPr>
+              <xfrm><off x="0" y="0"/><ext cx="1" cy="1"/></xfrm>
+            </spPr>
+          </sp>
+        </grpSp>
+      `,
+    }));
+
+    expect(layout.placeholders).toHaveLength(1);
+    expect(layout.placeholders[0].absoluteXfrm!.size.w).toBeCloseTo(96, 0);
+    expect(layout.placeholders[0].absoluteXfrm!.size.h).toBeCloseTo(96, 0);
+  });
+
+  it('defaults missing placeholder xfrm attributes to zero', () => {
+    const layout = parseLayout(makeLayoutXml({
+      shapes: `
+        <sp>
+          <nvSpPr><cNvPr id="40" name="IncompleteXfrm"/><nvPr><ph type="body"/></nvPr></nvSpPr>
+          <spPr><xfrm><off/><ext/></xfrm></spPr>
+        </sp>
+      `,
+    }));
+
+    expect(layout.placeholders).toHaveLength(1);
+    expect(layout.placeholders[0].absoluteXfrm).toEqual({
+      position: { x: 0, y: 0 },
+      size: { w: 0, h: 0 },
+    });
+  });
+
+  it('composes transforms for nested grouped placeholders with sparse group xfrm attrs', () => {
+    const layout = parseLayout(makeLayoutXml({
+      shapes: `
+        <grpSp>
+          <grpSpPr>
+            <xfrm>
+              <off x="914400" y="0"/><ext cx="1828800" cy="1828800"/>
+              <chOff/><chExt/>
+            </xfrm>
+          </grpSpPr>
+          <grpSp>
+            <grpSpPr>
+              <xfrm>
+                <off x="457200" y="457200"/><ext cx="914400" cy="914400"/>
+                <chOff x="0" y="0"/><chExt cx="914400" cy="914400"/>
+              </xfrm>
+            </grpSpPr>
+            <sp>
+              <nvSpPr><cNvPr id="41" name="Nested"/><nvPr><ph type="body"/></nvPr></nvSpPr>
+              <spPr><xfrm><off x="457200" y="0"/><ext cx="457200" cy="457200"/></xfrm></spPr>
+            </sp>
+          </grpSp>
+        </grpSp>
+      `,
+    }));
+
+    expect(layout.placeholders).toHaveLength(1);
+    expect(layout.placeholders[0].absoluteXfrm!.position.x).toBeCloseTo(192, 0);
+    expect(layout.placeholders[0].absoluteXfrm!.position.y).toBeCloseTo(48, 0);
+    expect(layout.placeholders[0].absoluteXfrm!.size.w).toBeCloseTo(48, 0);
   });
 });

@@ -1,0 +1,13 @@
+{
+  "name": "oracle-pypptx-composite-0014-chart-table-callout-overlay",
+  "generator": "python-pptx",
+  "slides": [
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    }
+  ]
+}

@@ -656,6 +656,74 @@ describe('ShapeRenderer', () => {
     }
   });
 
+  it('preserves textBoxBounds pixel dimensions when explicit normAutofit still needs dynamic scale', () => {
+    const isFitContainer = (el: HTMLElement) =>
+      el.style.display === 'flex' && el.style.flexDirection === 'column';
+    const clientWidthSpy = vi
+      .spyOn(HTMLElement.prototype, 'clientWidth', 'get')
+      .mockImplementation(function (this: HTMLElement) {
+        return isFitContainer(this) ? 120 : 0;
+      });
+    const clientHeightSpy = vi
+      .spyOn(HTMLElement.prototype, 'clientHeight', 'get')
+      .mockImplementation(function (this: HTMLElement) {
+        return isFitContainer(this) ? 60 : 0;
+      });
+    const scrollWidthSpy = vi
+      .spyOn(HTMLElement.prototype, 'scrollWidth', 'get')
+      .mockImplementation(function (this: HTMLElement) {
+        return isFitContainer(this) ? 240 : 0;
+      });
+    const scrollHeightSpy = vi
+      .spyOn(HTMLElement.prototype, 'scrollHeight', 'get')
+      .mockImplementation(function (this: HTMLElement) {
+        return isFitContainer(this) ? 60 : 0;
+      });
+
+    try {
+      const xml = `
+        <p:sp xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
+              xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+          <p:nvSpPr>
+            <p:cNvPr id="15" name="Diagram NormAutofit"/>
+            <p:cNvSpPr/>
+            <p:nvPr/>
+          </p:nvSpPr>
+          <p:spPr>
+            <a:xfrm><a:off x="0" y="0"/><a:ext cx="1828800" cy="914400"/></a:xfrm>
+            <a:prstGeom prst="rect"><a:avLst/></a:prstGeom>
+          </p:spPr>
+          <p:txBody>
+            <a:bodyPr><a:normAutofit fontScale="50000"/></a:bodyPr>
+            <a:lstStyle/>
+            <a:p><a:r><a:rPr sz="2400"/><a:t>Scaled bounded text</a:t></a:r></a:p>
+          </p:txBody>
+        </p:sp>
+      `;
+      const shapeNode = parseShapeNode(parseXml(xml));
+      shapeNode.textBoxBounds = { x: 8, y: 12, w: 120, h: 60 };
+
+      const el = renderShape(shapeNode, createMockRenderContext());
+      const textContainer = Array.from(el.querySelectorAll('div')).find(
+        (div) =>
+          div.textContent?.includes('Scaled bounded text') &&
+          div.style.flexDirection === 'column',
+      ) as HTMLElement | undefined;
+      const span = textContainer?.querySelector('span') as HTMLSpanElement | null;
+
+      expect(textContainer).toBeDefined();
+      expect(span?.style.fontSize).toBe('12pt');
+      expect(textContainer!.style.transform).toBe('scale(0.5)');
+      expect(textContainer!.style.width).toBe('240px');
+      expect(textContainer!.style.height).toBe('120px');
+    } finally {
+      clientWidthSpy.mockRestore();
+      clientHeightSpy.mockRestore();
+      scrollWidthSpy.mockRestore();
+      scrollHeightSpy.mockRestore();
+    }
+  });
+
   it('preserves existing text transforms when dynamic autofit applies scale', () => {
     const clientHeightSpy = vi
       .spyOn(HTMLElement.prototype, 'clientHeight', 'get')
@@ -5214,5 +5282,298 @@ describe('ShapeRenderer', () => {
     // Leader line path should have stroke applied
     const leaderPath = paths[1];
     expect(leaderPath.getAttribute('stroke')).not.toBe('none');
+  });
+
+  it.each([
+    ['pct5', 'circle', null],
+    ['pct10', 'circle', null],
+    ['pct20', 'circle', null],
+    ['pct25', 'circle', null],
+    ['pct30', 'circle', null],
+    ['pct40', 'circle', null],
+    ['pct50', 'circle', null],
+    ['pct70', 'circle', null],
+    ['pct75', 'circle', null],
+    ['pct80', 'circle', null],
+    ['pct90', 'circle', null],
+    ['sphere', 'circle', null],
+    ['shingle', 'circle', null],
+    ['plaid', 'circle', null],
+    ['divot', 'circle', null],
+    ['zigZag', 'circle', null],
+    ['horz', 'line', null],
+    ['ltHorz', 'line', null],
+    ['narHorz', 'line', null],
+    ['dkHorz', 'line', null],
+    ['vert', 'line', null],
+    ['ltVert', 'line', null],
+    ['narVert', 'line', null],
+    ['dkVert', 'line', null],
+    ['dnDiag', 'line', null],
+    ['narDnDiag', 'line', null],
+    ['dkDnDiag', 'line', null],
+    ['wdDnDiag', 'line', null],
+    ['upDiag', 'line', null],
+    ['ltUpDiag', 'line', null],
+    ['narUpDiag', 'line', null],
+    ['dkUpDiag', 'line', null],
+    ['wdUpDiag', 'line', null],
+    ['smGrid', 'line', '-3'],
+    ['lgGrid', 'line', '-3'],
+    ['diagCross', 'line', null],
+    ['smCheck', 'line', null],
+    ['lgCheck', 'line', null],
+    ['openDmnd', 'line', null],
+    ['trellis', 'line', null],
+    ['weave', 'line', null],
+    ['dashHorz', 'line', null],
+    ['dashVert', 'line', null],
+    ['dashDnDiag', 'line', null],
+    ['dashUpDiag', 'line', null],
+  ])('renders OOXML pattern fill preset %s as an SVG pattern', (preset, expectedNode, y) => {
+    const xml = `
+      <p:sp xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
+            xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+        <p:nvSpPr>
+          <p:cNvPr id="20" name="Pattern ${preset}"/>
+          <p:cNvSpPr/>
+          <p:nvPr/>
+        </p:nvSpPr>
+        <p:spPr>
+          <a:xfrm><a:off x="0" y="0"/><a:ext cx="914400" cy="914400"/></a:xfrm>
+          <a:prstGeom prst="rect"><a:avLst/></a:prstGeom>
+          <a:pattFill prst="${preset}">
+            <a:fgClr><a:srgbClr val="112233"/></a:fgClr>
+            <a:bgClr><a:srgbClr val="DDEEFF"/></a:bgClr>
+          </a:pattFill>
+        </p:spPr>
+      </p:sp>
+    `;
+
+    const el = renderShape(parseShapeNode(parseXml(xml)), createMockRenderContext());
+    const path = el.querySelector('svg > path')!;
+    const pattern = el.querySelector('defs pattern')!;
+
+    expect(path.getAttribute('fill')).toMatch(/^url\(#shape-pattern-/);
+    expect(pattern).toBeTruthy();
+    expect(pattern.querySelector('rect')?.getAttribute('fill')).toBe('#DDEEFF');
+    expect(pattern.querySelector(expectedNode)).toBeTruthy();
+    expect(pattern.getAttribute('y')).toBe(y);
+
+    const dashedLine = pattern.querySelector('line[stroke-dasharray]');
+    if (preset.startsWith('dash')) {
+      expect(dashedLine).toBeTruthy();
+    } else {
+      expect(dashedLine).toBeNull();
+    }
+  });
+
+  it.each(['solid', 'solidDmnd', 'unknownPattern'])(
+    'falls back to solid fill when pattern preset %s has no foreground pattern',
+    (preset) => {
+      const xml = `
+        <p:sp xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
+              xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+          <p:nvSpPr>
+            <p:cNvPr id="21" name="Pattern fallback ${preset}"/>
+            <p:cNvSpPr/>
+            <p:nvPr/>
+          </p:nvSpPr>
+          <p:spPr>
+            <a:xfrm><a:off x="0" y="0"/><a:ext cx="914400" cy="914400"/></a:xfrm>
+            <a:prstGeom prst="rect"><a:avLst/></a:prstGeom>
+            <a:solidFill><a:srgbClr val="ABCDEF"/></a:solidFill>
+            <a:pattFill prst="${preset}"/>
+          </p:spPr>
+        </p:sp>
+      `;
+
+      const el = renderShape(parseShapeNode(parseXml(xml)), createMockRenderContext());
+      const path = el.querySelector('svg > path')!;
+
+      expect(el.querySelector('defs pattern')).toBeNull();
+      expect(path.getAttribute('fill')).toBe('#ABCDEF');
+    },
+  );
+
+  it.each([
+    ['textArchDown', /Q50,72 96,28\.79/],
+    ['textArchUp', /Q50,6.4 96,52.8/],
+  ])('renders supported text warp preset %s as an SVG textPath', (preset, pathMatcher) => {
+    const xml = `
+      <p:sp xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
+            xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+        <p:nvSpPr>
+          <p:cNvPr id="22" name="Warped text"/>
+          <p:cNvSpPr txBox="1"/>
+          <p:nvPr/>
+        </p:nvSpPr>
+        <p:spPr>
+          <a:xfrm><a:off x="0" y="0"/><a:ext cx="952500" cy="762000"/></a:xfrm>
+          <a:prstGeom prst="rect"><a:avLst/></a:prstGeom>
+        </p:spPr>
+        <p:txBody>
+          <a:bodyPr>
+            <a:prstTxWarp prst="${preset}"/>
+          </a:bodyPr>
+          <a:lstStyle/>
+          <a:p>
+            <a:r>
+              <a:rPr lang="zh-CN" b="1" sz="2800">
+                <a:latin typeface="+mj-lt"/>
+                <a:ea typeface="微软雅黑"/>
+                <a:solidFill><a:srgbClr val="CC3300"/></a:solidFill>
+              </a:rPr>
+              <a:t>曲线文字</a:t>
+            </a:r>
+          </a:p>
+        </p:txBody>
+      </p:sp>
+    `;
+
+    const el = renderShape(parseShapeNode(parseXml(xml)), createMockRenderContext());
+    const textPath = el.querySelector('svg textPath')!;
+    const text = textPath.closest('text')!;
+    const warpPath = el.querySelector('svg defs path')!;
+
+    expect(textPath.textContent).toBe('曲线文字');
+    expect(textPath.getAttribute('startOffset')).toBe('50%');
+    expect(text.getAttribute('font-size')).toBe('28pt');
+    expect(text.getAttribute('font-weight')).toBe('bold');
+    expect(text.getAttribute('fill')).toBe('#CC3300');
+    expect(text.getAttribute('font-family')).toContain('微软雅黑');
+    expect(warpPath.getAttribute('d')).toMatch(pathMatcher);
+  });
+
+  it('falls back to normal text rendering when text warp has multiple visible paragraphs', () => {
+    const xml = `
+      <p:sp xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
+            xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+        <p:nvSpPr>
+          <p:cNvPr id="23" name="Multi paragraph warp"/>
+          <p:cNvSpPr txBox="1"/>
+          <p:nvPr/>
+        </p:nvSpPr>
+        <p:spPr>
+          <a:xfrm><a:off x="0" y="0"/><a:ext cx="952500" cy="762000"/></a:xfrm>
+          <a:prstGeom prst="rect"><a:avLst/></a:prstGeom>
+        </p:spPr>
+        <p:txBody>
+          <a:bodyPr><a:prstTxWarp prst="textArchDown"/></a:bodyPr>
+          <a:lstStyle/>
+          <a:p><a:r><a:t>第一行</a:t></a:r></a:p>
+          <a:p><a:r><a:t>第二行</a:t></a:r></a:p>
+        </p:txBody>
+      </p:sp>
+    `;
+
+    const el = renderShape(parseShapeNode(parseXml(xml)), createMockRenderContext());
+
+    expect(el.querySelector('textPath')).toBeNull();
+    expect(el.textContent).toContain('第一行');
+    expect(el.textContent).toContain('第二行');
+  });
+
+  it.each([
+    ['r:embed="rIdImage"', 'local blob', /^blob:/, 'none'],
+    ['r:link="rIdAllowed"', 'allowed external URL', /^https:\/\/example.com\/image.png$/, 'xMidYMid slice'],
+    ['r:embed="rIdStretchNoRect"', 'stretch without fillRect', /^blob:/, 'none'],
+  ])('renders shape blipFill from %s as an SVG image', (relAttr, _label, hrefMatcher, preserve) => {
+    const xml = `
+      <p:sp xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
+            xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"
+            xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+        <p:nvSpPr>
+          <p:cNvPr id="24" name="Blip fill"/>
+          <p:cNvSpPr/>
+          <p:nvPr/>
+        </p:nvSpPr>
+        <p:spPr>
+          <a:xfrm><a:off x="0" y="0"/><a:ext cx="1828800" cy="914400"/></a:xfrm>
+          <a:prstGeom prst="rect"><a:avLst/></a:prstGeom>
+          <a:blipFill>
+            <a:blip ${relAttr}/>
+            ${relAttr.includes('rIdStretchNoRect') ? '<a:stretch/>' : ''}
+            ${
+              preserve === 'none' && !relAttr.includes('rIdStretchNoRect')
+                ? '<a:stretch><a:fillRect l="10000" t="20000" r="30000" b="40000"/></a:stretch>'
+                : ''
+            }
+          </a:blipFill>
+        </p:spPr>
+      </p:sp>
+    `;
+    const ctx = createMockRenderContext();
+    ctx.slide.rels.set('rIdImage', {
+      type: 'image',
+      target: '../media/image1.png',
+    });
+    ctx.slide.rels.set('rIdAllowed', {
+      type: 'image',
+      target: 'https://example.com/image.png',
+      targetMode: 'External',
+    });
+    ctx.slide.rels.set('rIdStretchNoRect', {
+      type: 'image',
+      target: '../media/image1.png',
+    });
+    ctx.presentation.media.set('ppt/media/image1.png', new Uint8Array([137, 80, 78, 71]));
+
+    const el = renderShape(parseShapeNode(parseXml(xml)), ctx);
+    const image = el.querySelector('svg image')!;
+
+    expect(image.getAttribute('href')).toMatch(hrefMatcher);
+    expect(image.getAttribute('preserveAspectRatio')).toBe(preserve);
+    if (preserve === 'none') {
+      if (relAttr.includes('rIdStretchNoRect')) {
+        expect(Number(image.getAttribute('x'))).toBe(0);
+        expect(Number(image.getAttribute('y'))).toBe(0);
+        expect(Number(image.getAttribute('width'))).toBeCloseTo(192);
+        expect(Number(image.getAttribute('height'))).toBeCloseTo(96);
+      } else {
+        expect(Number(image.getAttribute('x'))).toBeCloseTo(19.2);
+        expect(Number(image.getAttribute('y'))).toBeCloseTo(19.2);
+        expect(Number(image.getAttribute('width'))).toBeCloseTo(115.2);
+        expect(Number(image.getAttribute('height'))).toBeCloseTo(38.4);
+      }
+    }
+  });
+
+  it.each([
+    ['missing rel', 'r:embed="rIdMissing"'],
+    ['missing package media', 'r:embed="rIdMissingMedia"'],
+    ['blocked external URL', 'r:link="rIdBlocked"'],
+    ['missing rel id', ''],
+  ])('skips shape blipFill image when the media reference is %s', (_label, relAttr) => {
+    const xml = `
+      <p:sp xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
+            xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"
+            xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+        <p:nvSpPr>
+          <p:cNvPr id="25" name="Missing blip fill"/>
+          <p:cNvSpPr/>
+          <p:nvPr/>
+        </p:nvSpPr>
+        <p:spPr>
+          <a:xfrm><a:off x="0" y="0"/><a:ext cx="914400" cy="914400"/></a:xfrm>
+          <a:prstGeom prst="rect"><a:avLst/></a:prstGeom>
+          <a:blipFill><a:blip ${relAttr}/></a:blipFill>
+        </p:spPr>
+      </p:sp>
+    `;
+    const ctx = createMockRenderContext();
+    ctx.slide.rels.set('rIdBlocked', {
+      type: 'image',
+      target: 'ftp://example.com/image.png',
+      targetMode: 'External',
+    });
+    ctx.slide.rels.set('rIdMissingMedia', {
+      type: 'image',
+      target: '../media/missing.png',
+    });
+
+    const el = renderShape(parseShapeNode(parseXml(xml)), ctx);
+
+    expect(el.querySelector('svg image')).toBeNull();
   });
 });

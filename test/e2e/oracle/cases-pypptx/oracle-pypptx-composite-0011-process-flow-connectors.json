@@ -1,0 +1,13 @@
+{
+  "name": "oracle-pypptx-composite-0011-process-flow-connectors",
+  "generator": "python-pptx",
+  "slides": [
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    }
+  ]
+}

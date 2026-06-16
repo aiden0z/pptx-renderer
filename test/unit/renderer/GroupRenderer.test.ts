@@ -113,6 +113,37 @@ function makePlaceholderSpXml(id = '101', name = 'Grouped Placeholder'): SafeXml
   `);
 }
 
+function makeTxXfrmSpXml(
+  id = '102',
+  name = 'Grouped Diagram Shape',
+  opts: { rot?: number } = {},
+): SafeXmlNode {
+  const rotAttr = opts.rot !== undefined ? ` rot="${opts.rot}"` : '';
+  return xml(`
+    <p:sp xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
+          xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"
+          xmlns:dsp="http://schemas.microsoft.com/office/drawing/2008/diagram">
+      <p:nvSpPr>
+        <p:cNvPr id="${id}" name="${name}"/>
+        <p:cNvSpPr/>
+        <p:nvPr/>
+      </p:nvSpPr>
+      <p:spPr>
+        <a:xfrm${rotAttr}><a:off x="0" y="0"/><a:ext cx="1828800" cy="914400"/></a:xfrm>
+        <a:prstGeom prst="rect"><a:avLst/></a:prstGeom>
+      </p:spPr>
+      <dsp:txXfrm>
+        <a:off x="457200" y="228600"/>
+        <a:ext cx="914400" cy="457200"/>
+      </dsp:txXfrm>
+      <p:txBody>
+        <a:bodyPr/><a:lstStyle/>
+        <a:p><a:r><a:t>Grouped diagram label</a:t></a:r></a:p>
+      </p:txBody>
+    </p:sp>
+  `);
+}
+
 function makeLayoutPlaceholderXml(): SafeXmlNode {
   return xml(`
     <p:sp xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
@@ -231,6 +262,37 @@ function makeNestedGrpSpXml(id = '4'): SafeXmlNode {
         <p:spPr>
           <a:xfrm><a:off x="0" y="0"/><a:ext cx="457200" cy="457200"/></a:xfrm>
           <a:prstGeom prst="rect"><a:avLst/></a:prstGeom>
+        </p:spPr>
+      </p:sp>
+    </p:grpSp>
+  `);
+}
+
+function makeNestedGrpFillXml(id = '40'): SafeXmlNode {
+  return xml(`
+    <p:grpSp xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
+             xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+      <p:nvGrpSpPr>
+        <p:cNvPr id="${id}" name="Nested group fill ${id}"/>
+        <p:nvPr/>
+      </p:nvGrpSpPr>
+      <p:grpSpPr>
+        <a:xfrm>
+          <a:off x="0" y="0"/><a:ext cx="914400" cy="914400"/>
+          <a:chOff x="0" y="0"/><a:chExt cx="914400" cy="914400"/>
+        </a:xfrm>
+        <a:grpFill/>
+      </p:grpSpPr>
+      <p:sp>
+        <p:nvSpPr>
+          <p:cNvPr id="409" name="Inner grpFill shape"/>
+          <p:cNvSpPr/>
+          <p:nvPr/>
+        </p:nvSpPr>
+        <p:spPr>
+          <a:xfrm><a:off x="0" y="0"/><a:ext cx="457200" cy="457200"/></a:xfrm>
+          <a:prstGeom prst="rect"><a:avLst/></a:prstGeom>
+          <a:grpFill/>
         </p:spPr>
       </p:sp>
     </p:grpSp>
@@ -521,6 +583,31 @@ describe('renderGroup — group-level effects', () => {
     expect(el.style.filter).toContain('rgba(51,102,153,0.500)');
   });
 
+  it('uses box-shadow spread for scaled outerShdw and falls back to default color', () => {
+    const groupSource = xml(`
+      <p:grpSp xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
+               xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+        <p:nvGrpSpPr><p:cNvPr id="1" name="G"/><p:nvPr/></p:nvGrpSpPr>
+        <p:grpSpPr>
+          <a:xfrm>
+            <a:off x="0" y="0"/><a:ext cx="914400" cy="914400"/>
+            <a:chOff x="0" y="0"/><a:chExt cx="914400" cy="914400"/>
+          </a:xfrm>
+          <a:effectLst>
+            <a:outerShdw blurRad="9525" dist="19050" dir="5400000" sx="120000" sy="110000"/>
+          </a:effectLst>
+        </p:grpSpPr>
+      </p:grpSp>
+    `);
+    const group = makeGroup([], { source: groupSource, w: 200, h: 100 });
+
+    const el = renderGroup(group, createMockRenderContext(), stubRenderNode);
+
+    expect(el.style.boxShadow).toContain('rgba(0,0,0,1.000)');
+    expect(el.style.boxShadow).toContain('px');
+    expect(el.style.filter).toBe('');
+  });
+
   it('applies grpSpPr reflection to the group wrapper', () => {
     const groupSource = xml(`
       <p:grpSp xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
@@ -544,6 +631,31 @@ describe('renderGroup — group-level effects', () => {
 
     expect((el.style as any).webkitBoxReflect).toContain('linear-gradient');
     expect((el.style as any).webkitBoxReflect).toContain('below');
+  });
+
+  it('uses reflection defaults when optional alpha and position attributes are omitted', () => {
+    const groupSource = xml(`
+      <p:grpSp xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
+               xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+        <p:nvGrpSpPr><p:cNvPr id="1" name="G"/><p:nvPr/></p:nvGrpSpPr>
+        <p:grpSpPr>
+          <a:xfrm>
+            <a:off x="0" y="0"/><a:ext cx="914400" cy="914400"/>
+            <a:chOff x="0" y="0"/><a:chExt cx="914400" cy="914400"/>
+          </a:xfrm>
+          <a:effectLst>
+            <a:reflection/>
+          </a:effectLst>
+        </p:grpSpPr>
+      </p:grpSp>
+    `);
+    const group = makeGroup([], { source: groupSource });
+
+    const el = renderGroup(group, createMockRenderContext(), stubRenderNode);
+
+    expect((el.style as any).webkitBoxReflect).toContain('below 0.0px');
+    expect((el.style as any).webkitBoxReflect).toContain('0.500');
+    expect((el.style as any).webkitBoxReflect).toContain('100.0%');
   });
 });
 
@@ -617,6 +729,61 @@ describe('renderGroup — parseGroupChild dispatch for sp', () => {
     expect(child.style.height).toBe('20px');
     expect(child.dataset.anchor).toBe('ctr');
   });
+
+  it('remaps child textBoxBounds with group scale for diagram-like shapes', () => {
+    const group = makeGroup([makeTxXfrmSpXml()], {
+      w: 192,
+      h: 96,
+      childOffsetX: 0,
+      childOffsetY: 0,
+      childExtentW: 384,
+      childExtentH: 192,
+    });
+    const renderNode = vi.fn((node) => {
+      const el = document.createElement('div');
+      el.dataset.textBoxBounds = JSON.stringify(node.textBoxBounds);
+      return el;
+    });
+
+    renderGroup(group, createMockRenderContext(), renderNode);
+
+    const shapeNode = renderNode.mock.calls[0][0];
+    expect(shapeNode.position).toEqual({ x: 0, y: 0 });
+    expect(shapeNode.size).toEqual({ w: 96, h: 48 });
+    expect(shapeNode.textBoxBounds).toMatchObject({
+      x: 24,
+      y: 12,
+      w: 48,
+      h: 24,
+    });
+  });
+
+  it('remaps child textBoxBounds with swapped scale axes for quarter-turn children', () => {
+    const group = makeGroup([makeTxXfrmSpXml('103', 'Rotated Grouped Diagram Shape', { rot: 5400000 })], {
+      w: 200,
+      h: 100,
+      childOffsetX: 0,
+      childOffsetY: 0,
+      childExtentW: 400,
+      childExtentH: 100,
+    });
+    const renderNode = vi.fn((node) => {
+      const el = document.createElement('div');
+      el.dataset.textBoxBounds = JSON.stringify(node.textBoxBounds);
+      return el;
+    });
+
+    renderGroup(group, createMockRenderContext(), renderNode);
+
+    const shapeNode = renderNode.mock.calls[0][0];
+    expect(shapeNode.size).toEqual({ w: 192, h: 48 });
+    expect(shapeNode.textBoxBounds).toMatchObject({
+      x: 48,
+      y: 12,
+      w: 96,
+      h: 24,
+    });
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -676,6 +843,30 @@ describe('renderGroup — parseGroupChild dispatch for grpSp (nested group)', ()
     const el = renderGroup(group, createMockRenderContext(), stubRenderNode);
     const child = el.children[0] as HTMLElement;
     expect(child.getAttribute('data-node-id')).toBe('55');
+  });
+
+  it('composes parent and nested group coordinate scales when rendered recursively', () => {
+    const group = makeGroup([makeNestedGrpSpXml('56')], {
+      w: 384,
+      h: 192,
+      childExtentW: 192,
+      childExtentH: 96,
+    });
+
+    const el = renderGroup(group, createMockRenderContext(), (childNode, ctx) => {
+      if (childNode.nodeType === 'group') {
+        return renderGroup(childNode as any, ctx, stubRenderNode);
+      }
+      return stubRenderNode(childNode, ctx);
+    });
+    const nestedGroup = el.children[0] as HTMLElement;
+    const innerShape = nestedGroup.children[0] as HTMLElement;
+
+    expect(nestedGroup.style.width).toBe('192px');
+    expect(nestedGroup.style.height).toBe('192px');
+    expect(innerShape.getAttribute('data-node-type')).toBe('shape');
+    expect(innerShape.style.width).toBe('96px');
+    expect(innerShape.style.height).toBe('96px');
   });
 });
 
@@ -1042,6 +1233,44 @@ describe('renderGroup — group fill propagation via grpSpPr', () => {
     // Child ctx should carry the parent's groupFillNode through
     expect(receivedCtx?.groupFillNode).toBe(parentFillNode);
   });
+
+  it('recursively propagates a parent group fill through a nested grpFill group', () => {
+    const groupSource = xml(`
+      <p:grpSp xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
+               xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+        <p:nvGrpSpPr>
+          <p:cNvPr id="1" name="Outer G"/>
+          <p:nvPr/>
+        </p:nvGrpSpPr>
+        <p:grpSpPr>
+          <a:xfrm>
+            <a:off x="0" y="0"/><a:ext cx="914400" cy="914400"/>
+          </a:xfrm>
+          <a:solidFill><a:srgbClr val="7030A0"/></a:solidFill>
+        </p:grpSpPr>
+      </p:grpSp>
+    `);
+    const group = makeGroup([makeNestedGrpFillXml()], { source: groupSource });
+
+    let innerShapeCtx: RenderContext | undefined;
+    const recursiveRender = (childNode: any, ctx: RenderContext): HTMLElement => {
+      if (childNode.nodeType === 'group') {
+        return renderGroup(childNode, ctx, (innerNode, innerCtx) => {
+          innerShapeCtx = innerCtx;
+          return stubRenderNode(innerNode, innerCtx);
+        });
+      }
+      return stubRenderNode(childNode, ctx);
+    };
+
+    renderGroup(group, createMockRenderContext(), recursiveRender);
+
+    expect(innerShapeCtx?.groupFillNode).toBeDefined();
+    expect(innerShapeCtx?.groupFillNode?.child('solidFill').exists()).toBe(true);
+    expect(innerShapeCtx?.groupFillNode?.child('solidFill').child('srgbClr').attr('val')).toBe(
+      '7030A0',
+    );
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -1083,6 +1312,32 @@ describe('renderGroup — mixed child types', () => {
     expect(capturedNode?.children[0].localName).toBe('sp');
   });
 
+  it('selects the diagram drawing whose number matches the diagram data relationship', () => {
+    const ctx = makeCtxWithDiagram();
+    ctx.slide.rels.set('rIdDrawing6', {
+      type: 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/diagramDrawing',
+      target: '../diagrams/drawing6.xml',
+    });
+    ctx.slide.rels.set('rIdDrawing7', {
+      type: 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/diagramDrawing',
+      target: '../diagrams/drawing7.xml',
+    });
+    (ctx.presentation as any).diagramDrawings = new Map([
+      ['ppt/diagrams/drawing6.xml', diagramDrawingXml('Wrong diagram drawing')],
+      ['ppt/diagrams/drawing7.xml', diagramDrawingXml('Matched diagram drawing')],
+    ]);
+    const group = makeGroup([makeDiagramFrameXml()]);
+    let capturedNode: any;
+
+    renderGroup(group, ctx, (childNode, childCtx) => {
+      capturedNode = childNode;
+      return stubRenderNode(childNode, childCtx);
+    });
+
+    const text = capturedNode?.children?.[0]?.child('txBody').child('p').child('r').child('t').text();
+    expect(text).toBe('Matched diagram drawing');
+  });
+
   it('skips unknown children while rendering known ones in the same group', () => {
     const children = [
       makeUnknownTagXml(),
@@ -1099,6 +1354,29 @@ describe('renderGroup — mixed child types', () => {
       (c as HTMLElement).getAttribute('data-node-type'),
     );
     expect(types).toEqual(['shape', 'picture']);
+  });
+
+  it('remaps table, chart, and picture children with the same non-uniform group scale', () => {
+    const group = makeGroup(
+      [makeTableFrameXml('31'), makeChartFrameXml('rId10', '32'), makePicXml('33')],
+      {
+        w: 384,
+        h: 144,
+        childExtentW: 192,
+        childExtentH: 96,
+      },
+    );
+    const capturedNodes: any[] = [];
+
+    renderGroup(group, makeCtxWithChart(), (childNode, ctx) => {
+      capturedNodes.push(childNode);
+      return stubRenderNode(childNode, ctx);
+    });
+
+    expect(capturedNodes.map((node) => node.nodeType)).toEqual(['table', 'chart', 'picture']);
+    expect(capturedNodes[0].size).toMatchObject({ w: 192, h: 72 });
+    expect(capturedNodes[1].size).toMatchObject({ w: 192, h: 144 });
+    expect(capturedNodes[2].size).toMatchObject({ w: 192, h: 144 });
   });
 });
 
@@ -1160,6 +1438,37 @@ describe('renderGroup — cycle diagram (3 pie + 3 circularArrow reordering)', (
     const arrowEnd = Math.max(...arrowIds.map((id) => renderOrder.indexOf(id)));
     const pieStart = Math.min(...pieIds.map((id) => renderOrder.indexOf(id)));
     expect(arrowEnd).toBeLessThan(pieStart);
+  });
+
+  it('rescales text box bounds for overlapped cycle pie sectors', () => {
+    const children = [
+      makeTxXfrmSpXml('1', 'pie-1'),
+      makeSpWithPreset('pie', '2'),
+      makeSpWithPreset('pie', '3'),
+      makeSpWithPreset('circularArrow', '4'),
+      makeSpWithPreset('circularArrow', '5'),
+      makeSpWithPreset('circularArrow', '6'),
+    ];
+    const firstPie = children[0].child('spPr').child('prstGeom');
+    firstPie.element?.setAttribute('prst', 'pie');
+    const group = makeGroup(children, {
+      w: 200, h: 200,
+      childOffsetX: 0, childOffsetY: 0,
+      childExtentW: 200, childExtentH: 200,
+    });
+
+    let capturedPie: any;
+    renderGroup(group, createMockRenderContext(), (childNode, ctx) => {
+      if (childNode.id === '1') capturedPie = childNode;
+      return stubRenderNode(childNode, ctx);
+    });
+
+    expect(capturedPie.textBoxBounds).toMatchObject({
+      x: 24,
+      y: 24,
+      w: 48,
+      h: 48,
+    });
   });
 
   it('does not reorder children when pattern is not 3-pie + 3-circularArrow', () => {

@@ -150,6 +150,26 @@ describe('renderImage', () => {
       expect(el.style.backgroundSize).toBe('auto');
       expect(el.querySelector('img')).toBeNull();
     });
+
+    it('applies blip alpha opacity to tiled picture fills', () => {
+      const ctx = createCtxWithMedia();
+      const source = xmlNode(
+        `<pic xmlns="http://schemas.openxmlformats.org/drawingml/2006/main"
+              xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+          <nvPicPr><cNvPr id="1" name="pic"/><nvPr/></nvPicPr>
+          <blipFill>
+            <blip r:embed="rId1"><alphaModFix amt="62500"/></blip>
+            <tile/>
+          </blipFill>
+          <spPr><xfrm><off x="0" y="0"/><ext cx="0" cy="0"/></xfrm></spPr>
+        </pic>`,
+      );
+
+      const el = renderImage(createPicNode({ source }), ctx);
+
+      expect(el.style.backgroundRepeat).toBe('repeat');
+      expect(el.style.opacity).toBe('0.625');
+    });
   });
 
   describe('blipFill stretch fillRect', () => {
@@ -351,6 +371,30 @@ describe('renderImage', () => {
       expect(el.style.filter).toContain('rgba(0,0,0,0.400)');
     });
 
+    it('uses box-shadow spread when outer shadow has positive sx and sy scaling', () => {
+      const ctx = createCtxWithMedia();
+      const source = xmlNode(
+        `<pic xmlns="http://schemas.openxmlformats.org/drawingml/2006/main"
+              xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+          <nvPicPr><cNvPr id="1" name="pic"/><nvPr/></nvPicPr>
+          <blipFill><blip r:embed="rId1"/></blipFill>
+          <spPr>
+            <xfrm><off x="0" y="0"/><ext cx="0" cy="0"/></xfrm>
+            <effectLst>
+              <outerShdw blurRad="38100" dist="38100" dir="0" sx="120000" sy="140000">
+                <srgbClr val="333333"><alpha val="50000"/></srgbClr>
+              </outerShdw>
+            </effectLst>
+          </spPr>
+        </pic>`,
+      );
+
+      const el = renderImage(createPicNode({ source, size: { w: 200, h: 100 } }), ctx);
+
+      expect(el.style.boxShadow).toContain('rgba(51,51,51,0.500)');
+      expect(el.style.filter).toBe('');
+    });
+
     it('applies picture reflection from spPr effectLst', () => {
       const ctx = createCtxWithMedia();
       const source = xmlNode(
@@ -400,6 +444,99 @@ describe('renderImage', () => {
       expect(el.style.filter).toContain('drop-shadow');
       expect(el.style.filter).toContain('6.7px');
       expect(el.style.filter).toContain('rgba(106,195,70,0.400)');
+    });
+
+    it('skips glow when radius is zero or alpha is transparent', () => {
+      const ctx = createCtxWithMedia();
+      const zeroRadius = xmlNode(
+        `<pic xmlns="http://schemas.openxmlformats.org/drawingml/2006/main"
+              xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+          <nvPicPr><cNvPr id="1" name="pic"/><nvPr/></nvPicPr>
+          <blipFill><blip r:embed="rId1"/></blipFill>
+          <spPr><effectLst><glow rad="0"><srgbClr val="6AC346"/></glow></effectLst></spPr>
+        </pic>`,
+      );
+      const transparent = xmlNode(
+        `<pic xmlns="http://schemas.openxmlformats.org/drawingml/2006/main"
+              xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+          <nvPicPr><cNvPr id="1" name="pic"/><nvPr/></nvPicPr>
+          <blipFill><blip r:embed="rId1"/></blipFill>
+          <spPr><effectLst><glow rad="63500"><srgbClr val="6AC346"><alpha val="0"/></srgbClr></glow></effectLst></spPr>
+        </pic>`,
+      );
+
+      expect(renderImage(createPicNode({ source: zeroRadius }), ctx).style.filter).toBe('');
+      expect(renderImage(createPicNode({ source: transparent }), ctx).style.filter).toBe('');
+    });
+
+    it('ignores picture hyperlinks when navigation is unavailable or unsafe', () => {
+      const noNavigation = createCtxWithMedia();
+      const missingRid = createCtxWithMedia();
+      missingRid.onNavigate = vi.fn();
+      const unsafe = createCtxWithMedia();
+      unsafe.onNavigate = vi.fn();
+      unsafe.slide.rels.set('rIdUnsafe', {
+        type: 'hyperlink',
+        target: 'javascript:alert(1)',
+        targetMode: 'External',
+      });
+
+      const noNavigationEl = renderImage(
+        createPicNode({ hlinkClick: { rId: 'rIdMissing', tooltip: 'No nav' } }),
+        noNavigation,
+      );
+      const missingRidEl = renderImage(
+        createPicNode({ hlinkClick: { rId: 'rIdMissing' } }),
+        missingRid,
+      );
+      const unsafeEl = renderImage(
+        createPicNode({ hlinkClick: { rId: 'rIdUnsafe' } }),
+        unsafe,
+      );
+
+      noNavigationEl.click();
+      missingRidEl.click();
+      unsafeEl.click();
+
+      expect(noNavigationEl.style.cursor).toBe('');
+      expect(missingRid.onNavigate).not.toHaveBeenCalled();
+      expect(unsafe.onNavigate).not.toHaveBeenCalled();
+    });
+
+    it('renders safe external blipEmbed image URLs without creating blob URLs', () => {
+      const ctx = createMockRenderContext();
+      ctx.slide.rels.set('rId1', {
+        type: 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/image',
+        target: 'https://example.com/embed.png',
+        targetMode: 'External',
+      });
+
+      const el = renderImage(createPicNode(), ctx);
+      const img = el.querySelector('img');
+
+      expect(img).not.toBeNull();
+      expect(img!.src).toBe('https://example.com/embed.png');
+      expect(ctx.mediaUrlCache.size).toBe(0);
+    });
+
+    it('rejects unsafe external blipLink targets', () => {
+      const ctx = createMockRenderContext();
+      ctx.slide.rels.set('rIdLink', {
+        type: 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/image',
+        target: 'file:///tmp/linked-image.png',
+        targetMode: 'External',
+      });
+
+      const el = renderImage(
+        createPicNode({
+          blipEmbed: undefined,
+          blipLink: 'rIdLink',
+        }),
+        ctx,
+      );
+
+      expect(el.querySelector('img')).toBeNull();
+      expect(el.textContent).toContain('Image not found');
     });
 
     it('navigates picture-level external hyperlinks through onNavigate', () => {

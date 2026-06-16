@@ -22,6 +22,12 @@ describe('shapeArc', () => {
     expect(d).toContain('Z');
   });
 
+  it('treats equivalent but distinct start/end angles as a full clockwise sweep', () => {
+    const d = shapeArc(50, 50, 50, 50, 0, 360, false);
+
+    expect(d).toContain('A50,50 0 1,1');
+  });
+
   it('closes path when isClose=true', () => {
     const d = shapeArc(50, 50, 30, 30, 0, 90, true);
     expect(d.endsWith('Z')).toBe(true);

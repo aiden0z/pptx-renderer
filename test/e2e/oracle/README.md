@@ -109,11 +109,11 @@ Report (default):
 
 ## Python-pptx Ground Truth Pipeline
 
-A second pipeline using `python-pptx` for PPTX creation and PowerPoint COM for PDF/PNG export. Generates 101 cases under `oracle/cases-pypptx/` with `oracle-pypptx-*` prefix, covering:
+A second pipeline using `python-pptx` for PPTX creation and PowerPoint COM for PDF/PNG export. Generates 111 cases under `oracle/cases-pypptx/` with `oracle-pypptx-*` prefix, covering:
 
 - **Text** (39 cases): fonts, sizes, styles, alignment, colors, bullets, vertical text, line spacing, placeholder inheritance
 - **Shape adjustments** (31 cases): adjustment handles for roundRect, chevron, arrow, star, donut, cross, trapezoid, blockArc, bevel, triangle, pentagon, can, heart, moon, brace
-- **Composites** (10 cases): multi-element layouts combining shapes, text, tables, and charts
+- **Composites** (20 cases): multi-element layouts combining shapes, text, tables, charts, connectors, merged cells, vertical text, transparent overlaps, and scaled groups
 - **Charts** (21 cases): column, bar, line, pie, doughnut, area, scatter, radar, bubble variants
 
 Generate cases:

@@ -73,6 +73,29 @@ describe('parseTableNode', () => {
     expect(node.rows[0].height).toBeCloseTo(48, 0);
   });
 
+  it('defaults missing grid column width and row height to zero', () => {
+    const node = parseTableNode(
+      parseXml(`
+        <graphicFrame xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+          <nvGraphicFramePr><cNvPr id="8" name="Table 1"/><nvPr/></nvGraphicFramePr>
+          <xfrm><off x="0" y="0"/><ext cx="1828800" cy="741680"/></xfrm>
+          <graphic>
+            <graphicData>
+              <tbl>
+                <tblPr/>
+                <tblGrid><gridCol/></tblGrid>
+                <tr><tc><txBody/><tcPr/></tc></tr>
+              </tbl>
+            </graphicData>
+          </graphic>
+        </graphicFrame>
+      `),
+    );
+
+    expect(node.columns).toEqual([0]);
+    expect(node.rows[0].height).toBe(0);
+  });
+
   it('parses cell text', () => {
     const node = parseTableNode(makeTableXml({ cells: [['Hello', 'World']] }));
     expect(node.rows[0].cells[0].textBody).toBeDefined();
@@ -114,6 +137,92 @@ describe('parseTableNode', () => {
       styleId: '{5C22544A-7EE6-4342-B048-85BDC9FD1C3A}',
     }));
     expect(node.tableStyleId).toBe('{5C22544A-7EE6-4342-B048-85BDC9FD1C3A}');
+  });
+
+  it('parses tableStyleId from val attribute when text content is empty', () => {
+    const node = parseTableNode(
+      parseXml(`
+        <graphicFrame xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+          <nvGraphicFramePr><cNvPr id="8" name="Table 1"/><nvPr/></nvGraphicFramePr>
+          <xfrm><off x="0" y="0"/><ext cx="1828800" cy="741680"/></xfrm>
+          <graphic>
+            <graphicData>
+              <tbl>
+                <tblPr><tableStyleId val="{STYLE_FROM_VAL}"/></tblPr>
+                <tblGrid><gridCol w="914400"/></tblGrid>
+                <tr h="370840"><tc><txBody/><tcPr/></tc></tr>
+              </tbl>
+            </graphicData>
+          </graphic>
+        </graphicFrame>
+      `),
+    );
+
+    expect(node.tableStyleId).toBe('{STYLE_FROM_VAL}');
+  });
+
+  it('returns undefined for an empty tableStyleId node without val', () => {
+    const node = parseTableNode(
+      parseXml(`
+        <graphicFrame xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+          <nvGraphicFramePr><cNvPr id="8" name="Table 1"/><nvPr/></nvGraphicFramePr>
+          <xfrm><off x="0" y="0"/><ext cx="1828800" cy="741680"/></xfrm>
+          <graphic>
+            <graphicData>
+              <tbl>
+                <tblPr><tableStyleId/></tblPr>
+                <tblGrid/>
+              </tbl>
+            </graphicData>
+          </graphic>
+        </graphicFrame>
+      `),
+    );
+
+    expect(node.tableStyleId).toBeUndefined();
+  });
+
+  it('parses table style from tblStyle val, tblStyle text, and direct tblPr attribute', () => {
+    const withTblStyleVal = parseTableNode(
+      parseXml(`
+        <graphicFrame xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+          <nvGraphicFramePr><cNvPr id="8" name="Table 1"/><nvPr/></nvGraphicFramePr>
+          <xfrm><off x="0" y="0"/><ext cx="1828800" cy="741680"/></xfrm>
+          <graphic><graphicData><tbl>
+            <tblPr><tblStyle val="{STYLE_FROM_TBLSTYLE_VAL}"/></tblPr>
+            <tblGrid/><tr h="0"/>
+          </tbl></graphicData></graphic>
+        </graphicFrame>
+      `),
+    );
+    const withTblStyleText = parseTableNode(
+      parseXml(`
+        <graphicFrame xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+          <nvGraphicFramePr><cNvPr id="8" name="Table 1"/><nvPr/></nvGraphicFramePr>
+          <xfrm><off x="0" y="0"/><ext cx="1828800" cy="741680"/></xfrm>
+          <graphic><graphicData><tbl>
+            <tblPr><tblStyle>{STYLE_FROM_TBLSTYLE_TEXT}</tblStyle></tblPr>
+            <tblGrid/><tr h="0"/>
+          </tbl></graphicData></graphic>
+        </graphicFrame>
+      `),
+    );
+    const withDirectAttr = parseTableNode(
+      parseXml(`
+        <graphicFrame xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+          <nvGraphicFramePr><cNvPr id="8" name="Table 1"/><nvPr/></nvGraphicFramePr>
+          <xfrm><off x="0" y="0"/><ext cx="1828800" cy="741680"/></xfrm>
+          <graphic><graphicData><tbl>
+            <tblPr tblStyle="{STYLE_FROM_DIRECT_ATTR}"/>
+            <tblGrid/><tr h="0"/>
+          </tbl></graphicData></graphic>
+        </graphicFrame>
+      `),
+    );
+
+    expect(withTblStyleVal.tableStyleId).toBe('{STYLE_FROM_TBLSTYLE_VAL}');
+    expect(withTblStyleText.tableStyleId).toBe('{STYLE_FROM_TBLSTYLE_TEXT}');
+    expect(withDirectAttr.tableStyleId).toBe('{STYLE_FROM_DIRECT_ATTR}');
   });
 
   it('handles table without style ID', () => {

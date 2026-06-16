@@ -158,6 +158,54 @@ describe('renderCustomGeometry', () => {
     expect(d).toContain('L100,100');
   });
 
+  it('defaults missing point coordinates to zero while inferring path extent', () => {
+    const node = makeGeomNode(`
+      <path>
+        <moveTo><pt/></moveTo>
+        <lnTo><pt y="50"/></lnTo>
+      </path>
+    `);
+
+    const d = renderCustomGeometry(node, 100, 100);
+
+    expect(d).toBe('M0,0 L0,100');
+  });
+
+  it('defaults missing cubic and quadratic control point coordinates to zero', () => {
+    const node = makeGeomNode(`
+      <path w="100" h="100">
+        <moveTo><pt x="0" y="0"/></moveTo>
+        <cubicBezTo>
+          <pt/>
+          <pt x="50"/>
+          <pt y="100"/>
+        </cubicBezTo>
+        <quadBezTo>
+          <pt/>
+          <pt x="100"/>
+        </quadBezTo>
+      </path>
+    `);
+
+    const d = renderCustomGeometry(node, 100, 100);
+
+    expect(d).toContain('C0,0 50,0 0,100');
+    expect(d).toContain('Q0,0 100,0');
+  });
+
+  it('uses identity scale when path width or height is zero', () => {
+    const node = makeGeomNode(`
+      <path w="0" h="0">
+        <moveTo><pt x="10" y="20"/></moveTo>
+        <lnTo><pt x="30" y="40"/></lnTo>
+      </path>
+    `);
+
+    const d = renderCustomGeometry(node, 100, 100);
+
+    expect(d).toBe('M10,20 L30,40');
+  });
+
   it('skips degenerate arcTo with zero radii', () => {
     const node = makeGeomNode(`
       <path w="100" h="100">
@@ -183,6 +231,33 @@ describe('renderCustomGeometry', () => {
     const d = renderCustomGeometry(node, 100, 100);
     expect(d).not.toContain('A');
     expect(d).toContain('L100,100');
+  });
+
+  it('skips arcTo when radius and angle attributes are omitted', () => {
+    const node = makeGeomNode(`
+      <path w="100" h="100">
+        <moveTo><pt x="100" y="50"/></moveTo>
+        <arcTo/>
+        <lnTo><pt x="100" y="100"/></lnTo>
+      </path>
+    `);
+
+    const d = renderCustomGeometry(node, 100, 100);
+
+    expect(d).toBe('M100,50 L100,100');
+  });
+
+  it('renders negative large arcs with a counter-clockwise SVG sweep flag', () => {
+    const node = makeGeomNode(`
+      <path w="100" h="100">
+        <moveTo><pt x="100" y="50"/></moveTo>
+        <arcTo wR="50" hR="50" stAng="0" swAng="-16200000"/>
+      </path>
+    `);
+
+    const d = renderCustomGeometry(node, 100, 100);
+
+    expect(d).toContain('A50,50 0 1,0');
   });
 
   it('silently skips unknown path commands', () => {

@@ -1,0 +1,13 @@
+{
+  "name": "oracle-pypptx-composite-0015-layered-transparent-shapes",
+  "generator": "python-pptx",
+  "slides": [
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    }
+  ]
+}

@@ -902,6 +902,62 @@ function getLineEndsFromLn(ln: SafeXmlNode): { headEnd?: LineEndInfo; tailEnd?: 
   return out;
 }
 
+interface PresetGeometryCacheEntry {
+  effectivePreset: string;
+  w: number;
+  h: number;
+  adjustmentKey: string;
+  pathD: string;
+  multiPaths: PresetSubPath[] | null;
+}
+
+const presetGeometryCache = new WeakMap<ShapeNodeData, PresetGeometryCacheEntry>();
+
+function buildAdjustmentKey(adjustments?: Map<string, number>): string {
+  if (!adjustments || adjustments.size === 0) return '';
+
+  return Array.from(adjustments.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([key, value]) => `${key}:${value}`)
+    .join('|');
+}
+
+function resolvePresetGeometry(
+  node: ShapeNodeData,
+  effectivePreset: string,
+  w: number,
+  h: number,
+): { pathD: string; multiPaths: PresetSubPath[] | null } {
+  const adjustmentKey = buildAdjustmentKey(node.adjustments);
+  const cached = presetGeometryCache.get(node);
+  if (
+    cached &&
+    cached.effectivePreset === effectivePreset &&
+    cached.w === w &&
+    cached.h === h &&
+    cached.adjustmentKey === adjustmentKey
+  ) {
+    return {
+      pathD: cached.pathD,
+      multiPaths: cached.multiPaths,
+    };
+  }
+
+  const multiPaths = getMultiPathPreset(effectivePreset, w, h, node.adjustments);
+  const pathD = multiPaths
+    ? (multiPaths[0]?.d ?? '')
+    : getPresetShapePath(effectivePreset, w, h, node.adjustments);
+  presetGeometryCache.set(node, {
+    effectivePreset,
+    w,
+    h,
+    adjustmentKey,
+    pathD,
+    multiPaths,
+  });
+  return { pathD, multiPaths };
+}
+
 // ---------------------------------------------------------------------------
 // Shape Rendering
 // ---------------------------------------------------------------------------
@@ -981,14 +1037,9 @@ export function renderShape(node: ShapeNodeData, ctx: RenderContext): HTMLElemen
     if (isConnectorShape && effectivePreset === 'line') {
       effectivePreset = 'straightConnector1';
     }
-    // Try multi-path preset first (complex shapes like scrolls with darkenLess paths)
-    multiPaths = getMultiPathPreset(effectivePreset, pathW, pathH, node.adjustments);
-    if (multiPaths) {
-      // Use the first (main fill) path as pathD for backwards-compatible code paths
-      pathD = multiPaths[0]?.d ?? '';
-    } else {
-      pathD = getPresetShapePath(effectivePreset, pathW, pathH, node.adjustments);
-    }
+    const geometry = resolvePresetGeometry(node, effectivePreset, pathW, pathH);
+    pathD = geometry.pathD;
+    multiPaths = geometry.multiPaths;
   } else if (node.customGeometry) {
     const extNode = node.source.child('spPr').child('xfrm').child('ext');
     const sourceExtentEmu = {
@@ -2313,7 +2364,7 @@ export function renderShape(node: ShapeNodeData, ctx: RenderContext): HTMLElemen
 
         applyDynamicAutofit();
         scheduleDynamicAutofit();
-        if (document.fonts?.ready) {
+        if (document.fonts?.status === 'loading' && document.fonts.ready) {
           void document.fonts.ready.then(() => scheduleDynamicAutofit()).catch(() => undefined);
         }
       }

@@ -1,0 +1,13 @@
+{
+  "name": "oracle-pypptx-composite-0018-vertical-text-with-table",
+  "generator": "python-pptx",
+  "slides": [
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    }
+  ]
+}

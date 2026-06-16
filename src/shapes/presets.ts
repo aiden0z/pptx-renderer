@@ -3169,10 +3169,14 @@ function gearShape(w: number, h: number, teeth: number, adj1Raw: number, adj2Raw
     // Unit normal perpendicular to edge, pointing outward
     // For clockwise winding (our standard), outward normal is (-edgeY, edgeX) / len
     // Verify with radial dot product and flip if needed
-    let nx = -edgeY / edgeLen;
-    let ny = edgeX / edgeLen;
     const radX = Math.cos(baseAngle);
     const radY = Math.sin(baseAngle);
+    let nx = radX;
+    let ny = radY;
+    if (edgeLen > 0) {
+      nx = -edgeY / edgeLen;
+      ny = edgeX / edgeLen;
+    }
     if (nx * radX + ny * radY < 0) {
       nx = -nx;
       ny = -ny;

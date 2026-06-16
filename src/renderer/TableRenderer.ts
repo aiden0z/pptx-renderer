@@ -508,7 +508,12 @@ export function renderTable(node: TableNodeData, ctx: RenderContext): HTMLElemen
     for (const cell of row.cells) {
       // Skip merged cells
       if (cell.hMerge || cell.vMerge) {
-        colIdx++;
+        // Horizontal merge continuation cells are already accounted for by the
+        // origin cell's gridSpan. Vertical continuations still occupy their
+        // own grid column.
+        if (cell.vMerge && !cell.hMerge) {
+          colIdx += cell.gridSpan;
+        }
         continue;
       }
 

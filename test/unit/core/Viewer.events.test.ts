@@ -144,6 +144,21 @@ describe('PptxViewer EventTarget', () => {
     viewer.goToSlide(0); // already at 0
     expect(listener).not.toHaveBeenCalled();
   });
+
+  it('wires onNodeError shorthand through the slide renderer callback', async () => {
+    const onNodeError = vi.fn();
+    const container = document.createElement('div');
+    const viewer = new PptxViewer(container, { onNodeError });
+    viewer.load(makeMockPresentation());
+
+    await viewer.renderSlide(0);
+
+    const lastCall = vi.mocked(mockRenderSlide).mock.calls.at(-1);
+    const err = new Error('node failed');
+    lastCall?.[2].onNodeError?.('node-1', err);
+
+    expect(onNodeError).toHaveBeenCalledWith('node-1', err);
+  });
 });
 
 describe('PptxViewer load() and renderList()', () => {
@@ -218,6 +233,23 @@ describe('PptxViewer load() and renderList()', () => {
     } finally {
       (window as any).IntersectionObserver = origIO;
     }
+  });
+
+  it('normalizes invalid list options and renders optional slide labels', async () => {
+    const container = document.createElement('div');
+    const viewer = new PptxViewer(container);
+    viewer.load(makeMockPresentation(2));
+
+    await viewer.renderList({
+      batchSize: 0,
+      initialSlides: -2,
+      overscanViewport: Number.NaN,
+      showSlideLabels: true,
+    });
+
+    expect(viewer.getMountedSlides()).toEqual([0, 1]);
+    expect(container.textContent).toContain('Slide 1');
+    expect(container.textContent).toContain('Slide 2');
   });
 
   it('renderSlide() does not create nav buttons', async () => {
@@ -311,6 +343,22 @@ describe('render lifecycle events', () => {
 
     expect(start).toHaveBeenCalledOnce();
     expect(complete).toHaveBeenCalledOnce();
+  });
+
+  it('does not rerender when normalized zoom or fit mode is unchanged', async () => {
+    const container = document.createElement('div');
+    const viewer = new PptxViewer(container, { zoomPercent: Number.POSITIVE_INFINITY });
+    viewer.load(makeMockPresentation());
+    await viewer.renderSlide(0);
+
+    const start = vi.fn();
+    viewer.addEventListener('renderstart', start);
+
+    await viewer.setZoom(Number.POSITIVE_INFINITY);
+    await viewer.setFitMode('contain');
+
+    expect(viewer.zoomPercent).toBe(100);
+    expect(start).not.toHaveBeenCalled();
   });
 
   it('fires rendercomplete even when render throws', async () => {
@@ -467,6 +515,14 @@ describe('goToSlide() async', () => {
     expect(result).toBeInstanceOf(Promise);
     await result;
     expect(viewer.currentSlideIndex).toBe(1);
+  });
+
+  it('resolves without changing state before a presentation is loaded', async () => {
+    const viewer = new PptxViewer(document.createElement('div'));
+
+    await expect(viewer.goToSlide(1)).resolves.toBeUndefined();
+
+    expect(viewer.currentSlideIndex).toBe(0);
   });
 
   it('resolves immediately for single-slide mode', async () => {

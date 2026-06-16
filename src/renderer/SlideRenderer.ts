@@ -127,6 +127,15 @@ function createErrorPlaceholder(node: BaseNodeData): HTMLElement {
 // Master/Layout Shape Parsing
 // ---------------------------------------------------------------------------
 
+interface TemplateShapeCacheEntry {
+  nodes: BaseNodeData[];
+  rels?: Map<string, RelEntry>;
+  partPath?: string;
+  diagramDrawings?: Map<string, string>;
+}
+
+const templateShapeCache = new WeakMap<SafeXmlNode, TemplateShapeCacheEntry>();
+
 /**
  * Parse and collect renderable shapes from a master or layout spTree.
  * Only includes NON-placeholder shapes (decorative elements, logos, footers).
@@ -135,24 +144,24 @@ function createErrorPlaceholder(node: BaseNodeData): HTMLElement {
  */
 function parseTemplateShapes(
   spTree: SafeXmlNode,
-  _slideNodes: BaseNodeData[],
   rels?: Map<string, RelEntry>,
   partPath?: string,
   diagramDrawings?: Map<string, string>,
 ): BaseNodeData[] {
   const nodes: BaseNodeData[] = [];
   if (!spTree || !spTree.exists || !spTree.exists()) return nodes;
+  const parseContext = {
+    rels: rels ?? new Map<string, RelEntry>(),
+    partPath,
+    diagramDrawings,
+  };
 
   for (const child of spTree.allChildren()) {
     // Skip ALL placeholder shapes — they're templates, not renderable content
     if (isPlaceholderNode(child)) continue;
 
     try {
-      const node = parseRenderableChild(child, {
-        rels: rels ?? new Map(),
-        partPath,
-        diagramDrawings,
-      });
+      const node = parseRenderableChild(child, parseContext);
       // Skip empty/invisible nodes (0x0 size and no text)
       if (node && (node.size.w > 0 || node.size.h > 0)) {
         nodes.push(node);
@@ -161,6 +170,32 @@ function parseTemplateShapes(
       // Skip unparseable template shapes silently
     }
   }
+  return nodes;
+}
+
+function getTemplateShapes(
+  spTree: SafeXmlNode,
+  rels?: Map<string, RelEntry>,
+  partPath?: string,
+  diagramDrawings?: Map<string, string>,
+): BaseNodeData[] {
+  const cached = templateShapeCache.get(spTree);
+  if (
+    cached &&
+    cached.rels === rels &&
+    cached.partPath === partPath &&
+    cached.diagramDrawings === diagramDrawings
+  ) {
+    return cached.nodes;
+  }
+
+  const nodes = parseTemplateShapes(spTree, rels, partPath, diagramDrawings);
+  templateShapeCache.set(spTree, {
+    nodes,
+    rels,
+    partPath,
+    diagramDrawings,
+  });
   return nodes;
 }
 
@@ -225,9 +260,8 @@ export function renderSlide(
       partPath: ctx.masterPath,
       skipPlaceholderChildren: true,
     };
-    const masterShapes = parseTemplateShapes(
+    const masterShapes = getTemplateShapes(
       ctx.master.spTree,
-      slide.nodes,
       ctx.master.rels,
       ctx.masterPath,
       presentation.diagramDrawings,
@@ -250,9 +284,8 @@ export function renderSlide(
       partPath: ctx.layoutPath,
       skipPlaceholderChildren: true,
     };
-    const layoutShapes = parseTemplateShapes(
+    const layoutShapes = getTemplateShapes(
       ctx.layout.spTree,
-      slide.nodes,
       ctx.layout.rels,
       ctx.layoutPath,
       presentation.diagramDrawings,

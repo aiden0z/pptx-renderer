@@ -343,6 +343,48 @@ describe('PptxViewer text search and thumbnail preview', () => {
     );
   });
 
+  it('renderThumbnailToContainer returns null before load or for an out-of-range slide', () => {
+    const viewer = new PptxViewer(document.createElement('div'));
+    const container = document.createElement('div');
+
+    expect(viewer.renderThumbnailToContainer(0, container)).toBeNull();
+
+    viewer.load(makeMockPresentation(1));
+    expect(viewer.renderThumbnailToContainer(3, container)).toBeNull();
+    expect(container.children).toHaveLength(0);
+  });
+
+  it('renderThumbnailToContainer supports explicit scale, height-only scale, and default width scale', () => {
+    const viewer = new PptxViewer(document.createElement('div'));
+    viewer.load(makeMockPresentation(1));
+    const container = document.createElement('div');
+
+    const explicit = viewer.renderThumbnailToContainer(0, container, { scale: 0.5 });
+    expect(explicit!.element.style.width).toBe('480px');
+    expect(explicit!.element.style.height).toBe('270px');
+
+    const heightOnly = viewer.renderThumbnailToContainer(0, container, { height: 135 });
+    expect(heightOnly!.element.style.width).toBe('240px');
+    expect(heightOnly!.element.style.height).toBe('135px');
+
+    const defaultSize = viewer.renderThumbnailToContainer(0, container, { scale: Number.NaN });
+    expect(defaultSize!.element.style.width).toBe('180px');
+    expect(defaultSize!.element.style.height).toBe('101.25px');
+  });
+
+  it('renderThumbnailToContainer removes the wrapper if underlying slide rendering returns null', () => {
+    const viewer = new PptxViewer(document.createElement('div'));
+    viewer.load(makeMockPresentation(1));
+    const container = document.createElement('div');
+    const spy = vi.spyOn(viewer, 'renderSlideToContainer').mockReturnValue(null);
+
+    const handle = viewer.renderThumbnailToContainer(0, container, { width: 192 });
+
+    expect(handle).toBeNull();
+    expect(container.children).toHaveLength(0);
+    spy.mockRestore();
+  });
+
   it('renderThumbnailToContainer disposes the underlying slide and removes the wrapper', () => {
     const viewer = new PptxViewer(document.createElement('div'));
     viewer.load(makeMockPresentation(1));
@@ -354,6 +396,45 @@ describe('PptxViewer text search and thumbnail preview', () => {
 
     expect(slideHandle.dispose).toHaveBeenCalledOnce();
     expect(container.children.length).toBe(0);
+  });
+
+  it('renderThumbnailToContainer dispose is idempotent', () => {
+    const viewer = new PptxViewer(document.createElement('div'));
+    viewer.load(makeMockPresentation(1));
+    const container = document.createElement('div');
+
+    const handle = viewer.renderThumbnailToContainer(0, container, { width: 192 });
+    const slideHandle = vi.mocked(renderSlide).mock.results.at(-1)!.value;
+
+    handle!.dispose();
+    handle!.dispose();
+
+    expect(slideHandle.dispose).toHaveBeenCalledOnce();
+    expect(container.children.length).toBe(0);
+  });
+
+  it('highlightSearchResult returns null before load, for out-of-range slides, or before rendering', async () => {
+    const viewer = new PptxViewer(document.createElement('div'));
+    const result = {
+      slideIndex: 0,
+      nodeId: 'title',
+      nodePath: 'slides/0/nodes/title',
+      nodeType: 'shape',
+      textKind: 'shape',
+      text: 'GPU',
+      bounds: { x: 0, y: 0, w: 10, h: 10 },
+      matchStart: 0,
+      matchEnd: 3,
+      snippet: 'GPU',
+    } as any;
+
+    await expect(viewer.highlightSearchResult(result)).resolves.toBeNull();
+
+    viewer.load(makeMockPresentation(1));
+    await expect(viewer.highlightSearchResult({ ...result, slideIndex: 5 })).resolves.toBeNull();
+    await expect(
+      viewer.highlightSearchResult(result, { scrollIntoView: false }),
+    ).resolves.toBeNull();
   });
 
   it('highlightSearchResult draws a default node-level overlay on the rendered slide', async () => {
@@ -390,6 +471,37 @@ describe('PptxViewer text search and thumbnail preview', () => {
     expect(handle!.element.style.top).toBe('20px');
     expect(handle!.element.style.width).toBe('200px');
     expect(handle!.element.style.height).toBe('80px');
+    expect(container.querySelectorAll('.pptx-search-highlight')).toHaveLength(1);
+  });
+
+  it('highlightSearchResult with scrollIntoView=false navigates in slide mode when needed', async () => {
+    const container = document.createElement('div');
+    const viewer = new PptxViewer(container);
+    const presentation = makeMockPresentation(2);
+    presentation.slides[1].nodes = [
+      {
+        id: 'detail',
+        name: 'Detail',
+        nodeType: 'shape',
+        position: { x: 30, y: 40 },
+        size: { w: 160, h: 50 },
+        rotation: 0,
+        flipH: false,
+        flipV: false,
+        adjustments: new Map(),
+        textBody: { paragraphs: [{ level: 0, runs: [{ text: 'GPU detail' }] }] },
+        source: {} as any,
+      } as any,
+    ];
+
+    viewer.load(presentation);
+    await viewer.renderSlide(0);
+
+    const [result] = viewer.searchText('detail');
+    const handle = await viewer.highlightSearchResult(result, { scrollIntoView: false });
+
+    expect(handle).not.toBeNull();
+    expect(viewer.currentSlideIndex).toBe(1);
     expect(container.querySelectorAll('.pptx-search-highlight')).toHaveLength(1);
   });
 
@@ -445,6 +557,46 @@ describe('PptxViewer text search and thumbnail preview', () => {
 
     handle!.dispose();
     expect(container.querySelectorAll('.pptx-search-highlight')).toHaveLength(0);
+  });
+
+  it('highlightSearchResult accepts string CSS lengths and skips undefined extra styles', async () => {
+    const container = document.createElement('div');
+    const viewer = new PptxViewer(container);
+    const presentation = makeMockPresentation(1);
+    presentation.slides[0].nodes = [
+      {
+        id: 'title',
+        name: 'Title',
+        nodeType: 'shape',
+        position: { x: 10, y: 20 },
+        size: { w: 200, h: 80 },
+        rotation: 0,
+        flipH: false,
+        flipV: false,
+        adjustments: new Map(),
+        textBody: { paragraphs: [{ level: 0, runs: [{ text: 'GPU capacity' }] }] },
+        source: {} as any,
+      } as any,
+    ];
+
+    viewer.load(presentation);
+    await viewer.renderSlide(0);
+
+    const [result] = viewer.searchText('gpu');
+    const handle = await viewer.highlightSearchResult(result, {
+      className: '  alpha   beta  ',
+      borderRadius: '12%',
+      borderWidth: '0.2rem',
+      scrollIntoView: false,
+      style: { opacity: undefined, outline: '1px solid red' },
+    });
+
+    expect(handle!.element.classList.contains('alpha')).toBe(true);
+    expect(handle!.element.classList.contains('beta')).toBe(true);
+    expect(handle!.element.style.borderRadius).toBe('12%');
+    expect(handle!.element.style.borderWidth).toBe('0.2rem');
+    expect(handle!.element.style.opacity).toBe('');
+    expect(handle!.element.style.outline).toBe('1px solid red');
   });
 
   it('clearSearchHighlights removes all active search overlays', async () => {

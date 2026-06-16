@@ -105,4 +105,13 @@ describe('resolveRelTarget', () => {
       'ppt/slideLayouts/Product Intro#1.xml',
     );
   });
+
+  it('preserves malformed percent-encoded target segments instead of throwing', () => {
+    expect(resolveRelTarget('ppt/slides', '../media/bad%ZZname.png')).toBe(
+      'ppt/media/bad%ZZname.png',
+    );
+    expect(resolveRelTarget('ppt/slides', '/ppt/media/bad%ZZname.png')).toBe(
+      'ppt/media/bad%ZZname.png',
+    );
+  });
 });

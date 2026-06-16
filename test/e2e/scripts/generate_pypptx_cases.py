@@ -28,8 +28,9 @@ from pptx import Presentation
 from pptx.chart.data import BubbleChartData, CategoryChartData, XyChartData
 from pptx.dml.color import RGBColor
 from pptx.enum.chart import XL_CHART_TYPE
+from pptx.enum.dml import MSO_LINE_DASH_STYLE
 from pptx.enum.text import PP_ALIGN
-from pptx.enum.shapes import MSO_SHAPE
+from pptx.enum.shapes import MSO_CONNECTOR, MSO_SHAPE
 from pptx.oxml.ns import qn
 from pptx.util import Inches, Pt
 
@@ -81,18 +82,35 @@ def _relationship_target(zf: ZipFile, part_name: str, rel_suffix: str) -> str | 
     return None
 
 
+def _read_pptx_entries(pptx_path: Path) -> tuple[list[tuple], dict[str, bytes]]:
+    with ZipFile(pptx_path, "r") as zf:
+        entries = [(info, zf.read(info.filename)) for info in zf.infolist()]
+    return entries, {info.filename: data for info, data in entries}
+
+
+def _replace_pptx_entries(pptx_path: Path, entries: list[tuple], patched: dict[str, bytes]) -> None:
+    tmp_path = pptx_path.with_name(f"{pptx_path.name}.tmp")
+    if tmp_path.exists():
+        tmp_path.unlink()
+
+    with ZipFile(tmp_path, "w", ZIP_DEFLATED) as out:
+        for info, data in entries:
+            out.writestr(info, patched.get(info.filename, data))
+    tmp_path.replace(pptx_path)
+
+
 def _patch_placeholder_idx_inheritance_case(pptx_path: Path) -> None:
     """Make slide placeholders inherit type through idx, matching real OOXML edge cases."""
     slide_part = "ppt/slides/slide1.xml"
 
     with ZipFile(pptx_path, "r") as zf:
-        entries = [(info, zf.read(info.filename)) for info in zf.infolist()]
+        entries, data_by_name = _read_pptx_entries(pptx_path)
         layout_part = _relationship_target(zf, slide_part, "/slideLayout")
         if layout_part is None:
             raise RuntimeError("placeholder inheritance case slide has no slideLayout relationship")
 
-        slide_root = etree.fromstring(dict((info.filename, data) for info, data in entries)[slide_part])
-        layout_root = etree.fromstring(dict((info.filename, data) for info, data in entries)[layout_part])
+        slide_root = etree.fromstring(data_by_name[slide_part])
+        layout_root = etree.fromstring(data_by_name[layout_part])
 
     slide_title_ph = slide_root.xpath(".//p:ph[@type='title']", namespaces=NS)
     if not slide_title_ph:
@@ -114,14 +132,140 @@ def _patch_placeholder_idx_inheritance_case(pptx_path: Path) -> None:
         slide_part: etree.tostring(slide_root, encoding="UTF-8", xml_declaration=True),
         layout_part: etree.tostring(layout_root, encoding="UTF-8", xml_declaration=True),
     }
-    tmp_path = pptx_path.with_name(f"{pptx_path.name}.tmp")
-    if tmp_path.exists():
-        tmp_path.unlink()
+    _replace_pptx_entries(pptx_path, entries, patched)
 
-    with ZipFile(tmp_path, "w", ZIP_DEFLATED) as out:
-        for info, data in entries:
-            out.writestr(info, patched.get(info.filename, data))
-    tmp_path.replace(pptx_path)
+
+def _patch_connector_tail_arrows(pptx_path: Path) -> None:
+    """Add OOXML tail arrowheads to generated connectors where python-pptx has no API."""
+    slide_part = "ppt/slides/slide1.xml"
+    entries, data_by_name = _read_pptx_entries(pptx_path)
+    slide_root = etree.fromstring(data_by_name[slide_part])
+    ns = {"p": PML_NS, "a": "http://schemas.openxmlformats.org/drawingml/2006/main"}
+
+    for ln in slide_root.xpath(".//p:cxnSp/p:spPr/a:ln", namespaces=ns):
+        if ln.find(qn("a:tailEnd")) is not None:
+            continue
+        tail = etree.SubElement(ln, qn("a:tailEnd"))
+        tail.set("type", "triangle")
+        tail.set("w", "med")
+        tail.set("len", "med")
+
+    _replace_pptx_entries(
+        pptx_path,
+        entries,
+        {slide_part: etree.tostring(slide_root, encoding="UTF-8", xml_declaration=True)},
+    )
+
+
+def _patch_layered_transparency_case(pptx_path: Path) -> None:
+    """Apply alpha modifiers to named overlap shapes for translucent-layer regressions."""
+    slide_part = "ppt/slides/slide1.xml"
+    entries, data_by_name = _read_pptx_entries(pptx_path)
+    slide_root = etree.fromstring(data_by_name[slide_part])
+    ns = {"p": PML_NS, "a": "http://schemas.openxmlformats.org/drawingml/2006/main"}
+
+    for sp in slide_root.xpath(".//p:sp", namespaces=ns):
+        name = (sp.xpath("string(p:nvSpPr/p:cNvPr/@name)", namespaces=ns) or "").lower()
+        if "alpha layer" not in name:
+            continue
+        srgb = sp.find(".//a:solidFill/a:srgbClr", namespaces=ns)
+        if srgb is None or srgb.find(qn("a:alpha")) is not None:
+            continue
+        alpha = etree.SubElement(srgb, qn("a:alpha"))
+        alpha.set("val", "45000")
+
+    _replace_pptx_entries(
+        pptx_path,
+        entries,
+        {slide_part: etree.tostring(slide_root, encoding="UTF-8", xml_declaration=True)},
+    )
+
+
+def _patch_scaled_group_diagram_case(pptx_path: Path) -> None:
+    """Append a valid p:grpSp with non-identity chExt/ext scaling."""
+    slide_part = "ppt/slides/slide1.xml"
+    entries, data_by_name = _read_pptx_entries(pptx_path)
+    slide_root = etree.fromstring(data_by_name[slide_part])
+    sp_tree = slide_root.find(".//{%s}spTree" % PML_NS)
+    if sp_tree is None:
+        raise RuntimeError("scaled group case slide has no spTree")
+
+    group_xml = f"""
+      <p:grpSp xmlns:p="{PML_NS}" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+        <p:nvGrpSpPr>
+          <p:cNvPr id="501" name="Scaled pipeline group"/>
+          <p:cNvGrpSpPr/>
+          <p:nvPr/>
+        </p:nvGrpSpPr>
+        <p:grpSpPr>
+          <a:xfrm>
+            <a:off x="914400" y="914400"/>
+            <a:ext cx="9144000" cy="3657600"/>
+            <a:chOff x="0" y="0"/>
+            <a:chExt cx="4572000" cy="1828800"/>
+          </a:xfrm>
+        </p:grpSpPr>
+        <p:sp>
+          <p:nvSpPr><p:cNvPr id="502" name="Group Parse"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+          <p:spPr>
+            <a:xfrm><a:off x="0" y="228600"/><a:ext cx="1219200" cy="685800"/></a:xfrm>
+            <a:prstGeom prst="roundRect"><a:avLst/></a:prstGeom>
+            <a:solidFill><a:srgbClr val="2F5597"/></a:solidFill>
+          </p:spPr>
+          <p:txBody>
+            <a:bodyPr anchor="ctr"/><a:lstStyle/>
+            <a:p><a:pPr algn="ctr"/><a:r><a:rPr sz="1800"><a:solidFill><a:srgbClr val="FFFFFF"/></a:solidFill></a:rPr><a:t>Parse</a:t></a:r></a:p>
+          </p:txBody>
+        </p:sp>
+        <p:cxnSp>
+          <p:nvCxnSpPr><p:cNvPr id="503" name="Group Arrow 1"/><p:cNvCxnSpPr/><p:nvPr/></p:nvCxnSpPr>
+          <p:spPr>
+            <a:xfrm><a:off x="1371600" y="571500"/><a:ext cx="457200" cy="0"/></a:xfrm>
+            <a:prstGeom prst="straightConnector1"><a:avLst/></a:prstGeom>
+            <a:ln w="25400"><a:solidFill><a:srgbClr val="5B9BD5"/></a:solidFill><a:tailEnd type="triangle" w="med" len="med"/></a:ln>
+          </p:spPr>
+        </p:cxnSp>
+        <p:sp>
+          <p:nvSpPr><p:cNvPr id="504" name="Group Model"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+          <p:spPr>
+            <a:xfrm><a:off x="1828800" y="0"/><a:ext cx="1219200" cy="1143000"/></a:xfrm>
+            <a:prstGeom prst="hexagon"><a:avLst/></a:prstGeom>
+            <a:solidFill><a:srgbClr val="70AD47"/></a:solidFill>
+          </p:spPr>
+          <p:txBody>
+            <a:bodyPr anchor="ctr"/><a:lstStyle/>
+            <a:p><a:pPr algn="ctr"/><a:r><a:rPr sz="1800"><a:solidFill><a:srgbClr val="FFFFFF"/></a:solidFill></a:rPr><a:t>Model</a:t></a:r></a:p>
+          </p:txBody>
+        </p:sp>
+        <p:cxnSp>
+          <p:nvCxnSpPr><p:cNvPr id="505" name="Group Arrow 2"/><p:cNvCxnSpPr/><p:nvPr/></p:nvCxnSpPr>
+          <p:spPr>
+            <a:xfrm><a:off x="3200400" y="571500"/><a:ext cx="457200" cy="0"/></a:xfrm>
+            <a:prstGeom prst="straightConnector1"><a:avLst/></a:prstGeom>
+            <a:ln w="25400"><a:solidFill><a:srgbClr val="5B9BD5"/></a:solidFill><a:tailEnd type="triangle" w="med" len="med"/></a:ln>
+          </p:spPr>
+        </p:cxnSp>
+        <p:sp>
+          <p:nvSpPr><p:cNvPr id="506" name="Group Render"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+          <p:spPr>
+            <a:xfrm><a:off x="3657600" y="228600"/><a:ext cx="914400" cy="685800"/></a:xfrm>
+            <a:prstGeom prst="roundRect"><a:avLst/></a:prstGeom>
+            <a:solidFill><a:srgbClr val="ED7D31"/></a:solidFill>
+          </p:spPr>
+          <p:txBody>
+            <a:bodyPr anchor="ctr"/><a:lstStyle/>
+            <a:p><a:pPr algn="ctr"/><a:r><a:rPr sz="1800"><a:solidFill><a:srgbClr val="FFFFFF"/></a:solidFill></a:rPr><a:t>Render</a:t></a:r></a:p>
+          </p:txBody>
+        </p:sp>
+      </p:grpSp>
+    """
+    sp_tree.append(etree.fromstring(group_xml))
+
+    _replace_pptx_entries(
+        pptx_path,
+        entries,
+        {slide_part: etree.tostring(slide_root, encoding="UTF-8", xml_declaration=True)},
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -485,13 +629,27 @@ def _build_composite_cases() -> list[CaseDef]:
     cases: list[CaseDef] = []
     seq = 0
 
-    def _add(slug: str, build_fn):
+    def _add(slug: str, build_fn, postprocess_fn=None):
         nonlocal seq
         seq += 1
-        cases.append({
+        case = {
             "name": f"oracle-pypptx-composite-{seq:04d}-{slug}",
             "build_fn": build_fn,
-        })
+        }
+        if postprocess_fn is not None:
+            case["postprocess_fn"] = postprocess_fn
+        cases.append(case)
+
+    def _style_shape_text(shp, text: str, size: int = 16, color=RGBColor(0xFF, 0xFF, 0xFF)):
+        tf = shp.text_frame
+        tf.word_wrap = True
+        p = tf.paragraphs[0]
+        p.text = text
+        p.alignment = PP_ALIGN.CENTER
+        p.font.name = "Calibri"
+        p.font.size = Pt(size)
+        p.font.bold = True
+        p.font.color.rgb = color
 
     # --- Two shapes side by side ---
     def _build_two_shapes(prs):
@@ -682,6 +840,301 @@ def _build_composite_cases() -> list[CaseDef]:
             _emu(5), _emu(1.2), _emu(7.5), _emu(5.5), cd,
         )
     _add("dashboard-table-chart", _build_dashboard)
+
+    # --- Process flow with arrowed connectors and callouts ---
+    def _build_process_flow_connectors(prs):
+        sld = prs.slides.add_slide(prs.slide_layouts[6])
+        title = sld.shapes.add_textbox(_emu(0.5), _emu(0.25), _emu(12), _emu(0.5))
+        p = title.text_frame.paragraphs[0]
+        p.text = "Pipeline with connectors, labels, and callouts"
+        p.font.size = Pt(24)
+        p.font.bold = True
+        p.alignment = PP_ALIGN.CENTER
+
+        steps = [
+            ("Ingest", 0x2F5597),
+            ("Parse", 0x70AD47),
+            ("Model", 0xFFC000),
+            ("Render", 0xED7D31),
+        ]
+        boxes = []
+        for idx, (label, color) in enumerate(steps):
+            shp = sld.shapes.add_shape(
+                MSO_SHAPE.ROUNDED_RECTANGLE,
+                _emu(0.8 + idx * 3.1),
+                _emu(2.2),
+                _emu(2.2),
+                _emu(1.0),
+            )
+            shp.fill.solid()
+            shp.fill.fore_color.rgb = RGBColor((color >> 16) & 0xFF, (color >> 8) & 0xFF, color & 0xFF)
+            shp.line.color.rgb = RGBColor(0x2F, 0x2F, 0x2F)
+            _style_shape_text(shp, label, 18)
+            boxes.append(shp)
+
+        for idx in range(len(boxes) - 1):
+            x1 = _emu(3.0 + idx * 3.1)
+            x2 = _emu(3.85 + idx * 3.1)
+            conn = sld.shapes.add_connector(MSO_CONNECTOR.STRAIGHT, x1, _emu(2.7), x2, _emu(2.7))
+            conn.line.width = Pt(2.25)
+            conn.line.color.rgb = RGBColor(0x5B, 0x9B, 0xD5)
+
+        callout = sld.shapes.add_shape(MSO_SHAPE.CLOUD_CALLOUT, _emu(4.3), _emu(4.2), _emu(4.5), _emu(1.3))
+        callout.fill.solid()
+        callout.fill.fore_color.rgb = RGBColor(0xFF, 0xF2, 0xCC)
+        callout.line.color.rgb = RGBColor(0xBF, 0x90, 0x00)
+        _style_shape_text(callout, "Connectors should stay stroke-only with arrowheads", 14, RGBColor(0, 0, 0))
+    _add("process-flow-connectors", _build_process_flow_connectors, _patch_connector_tail_arrows)
+
+    # --- Merged table with adjacent callouts and direct cell styling ---
+    def _build_merged_table_callouts(prs):
+        sld = prs.slides.add_slide(prs.slide_layouts[6])
+        tbl_shape = sld.shapes.add_table(5, 4, _emu(0.8), _emu(1.0), _emu(7.2), _emu(4.7))
+        tbl = tbl_shape.table
+        tbl.cell(0, 0).merge(tbl.cell(0, 3))
+        tbl.cell(0, 0).text = "Merged table header"
+        for p in tbl.cell(0, 0).text_frame.paragraphs:
+            p.font.bold = True
+            p.font.size = Pt(16)
+            p.alignment = PP_ALIGN.CENTER
+        for r in range(1, 5):
+            tbl.cell(r, 0).text = f"Phase {r}"
+            tbl.cell(r, 1).text = f"{70 + r * 4}%"
+            tbl.cell(r, 2).text = "OK" if r % 2 else "Review"
+            tbl.cell(r, 3).text = f"T+{r}"
+        tbl.cell(2, 2).merge(tbl.cell(3, 2))
+        tbl.cell(2, 2).text = "Merged\nstatus"
+
+        for col, color in [(0, RGBColor(0xD9, 0xE2, 0xF3)), (3, RGBColor(0xE2, 0xF0, 0xD9))]:
+            for r in range(1, 5):
+                cell = tbl.cell(r, col)
+                cell.fill.solid()
+                cell.fill.fore_color.rgb = color
+
+        note = sld.shapes.add_shape(MSO_SHAPE.LINE_CALLOUT_2, _emu(8.4), _emu(1.35), _emu(3.8), _emu(2.2))
+        note.fill.solid()
+        note.fill.fore_color.rgb = RGBColor(0xF2, 0xF2, 0xF2)
+        note.line.color.rgb = RGBColor(0x7F, 0x7F, 0x7F)
+        _style_shape_text(note, "Merged cells plus callout geometry", 14, RGBColor(0, 0, 0))
+    _add("merged-table-callouts", _build_merged_table_callouts)
+
+    # --- Rotated text and shapes mixed with curved connectors ---
+    def _build_rotated_text_and_shapes(prs):
+        sld = prs.slides.add_slide(prs.slide_layouts[6])
+        left = sld.shapes.add_shape(MSO_SHAPE.TRAPEZOID, _emu(1.0), _emu(1.1), _emu(3.2), _emu(1.7))
+        left.rotation = -12
+        left.fill.solid()
+        left.fill.fore_color.rgb = RGBColor(0x44, 0x72, 0xC4)
+        _style_shape_text(left, "Rotated shape", 18)
+
+        middle = sld.shapes.add_textbox(_emu(4.7), _emu(0.9), _emu(2.2), _emu(3.1))
+        middle.rotation = 90
+        p = middle.text_frame.paragraphs[0]
+        p.text = "Vertical rotated label"
+        p.font.size = Pt(20)
+        p.font.bold = True
+        p.alignment = PP_ALIGN.CENTER
+
+        right = sld.shapes.add_shape(MSO_SHAPE.CAN, _emu(8.2), _emu(1.2), _emu(3.2), _emu(2.3))
+        right.rotation = 18
+        right.fill.solid()
+        right.fill.fore_color.rgb = RGBColor(0x70, 0xAD, 0x47)
+        _style_shape_text(right, "Cylinder", 18)
+
+        conn = sld.shapes.add_connector(MSO_CONNECTOR.CURVE, _emu(3.9), _emu(4.6), _emu(9.8), _emu(4.6))
+        conn.line.width = Pt(3)
+        conn.line.dash_style = MSO_LINE_DASH_STYLE.DASH
+        conn.line.color.rgb = RGBColor(0xED, 0x7D, 0x31)
+    _add("rotated-text-and-shapes", _build_rotated_text_and_shapes, _patch_connector_tail_arrows)
+
+    # --- Chart + table + shape callout overlay ---
+    def _build_chart_table_callout_overlay(prs):
+        sld = prs.slides.add_slide(prs.slide_layouts[6])
+        chart_data = CategoryChartData()
+        chart_data.categories = ["North", "South", "East", "West"]
+        chart_data.add_series("Actual", (42, 58, 49, 66))
+        chart_data.add_series("Plan", (50, 55, 52, 60))
+        sld.shapes.add_chart(
+            XL_CHART_TYPE.COLUMN_CLUSTERED,
+            _emu(0.7),
+            _emu(0.8),
+            _emu(7.1),
+            _emu(4.6),
+            chart_data,
+        )
+
+        tbl_shape = sld.shapes.add_table(3, 2, _emu(8.2), _emu(1.0), _emu(3.9), _emu(1.8))
+        tbl = tbl_shape.table
+        tbl.cell(0, 0).text = "Metric"
+        tbl.cell(0, 1).text = "Value"
+        tbl.cell(1, 0).text = "Delta"
+        tbl.cell(1, 1).text = "+8%"
+        tbl.cell(2, 0).text = "Risk"
+        tbl.cell(2, 1).text = "Low"
+
+        callout = sld.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, _emu(8.1), _emu(3.25), _emu(4.0), _emu(1.55))
+        callout.fill.solid()
+        callout.fill.fore_color.rgb = RGBColor(0x1F, 0x4E, 0x79)
+        callout.line.color.rgb = RGBColor(0xFF, 0xFF, 0xFF)
+        _style_shape_text(callout, "Overlay label should not hide chart/table text", 14)
+    _add("chart-table-callout-overlay", _build_chart_table_callout_overlay)
+
+    # --- Translucent overlapping shapes with foreground labels ---
+    def _build_layered_transparent_shapes(prs):
+        sld = prs.slides.add_slide(prs.slide_layouts[6])
+        palette = [
+            (MSO_SHAPE.OVAL, _emu(1.4), _emu(1.1), RGBColor(0x44, 0x72, 0xC4), "Alpha Layer Blue"),
+            (MSO_SHAPE.OVAL, _emu(3.2), _emu(1.1), RGBColor(0xED, 0x7D, 0x31), "Alpha Layer Orange"),
+            (MSO_SHAPE.OVAL, _emu(2.3), _emu(2.7), RGBColor(0x70, 0xAD, 0x47), "Alpha Layer Green"),
+        ]
+        for st, left, top, color, name in palette:
+            shp = sld.shapes.add_shape(st, left, top, _emu(3.2), _emu(2.4))
+            shp.name = name
+            shp.fill.solid()
+            shp.fill.fore_color.rgb = color
+            shp.line.color.rgb = RGBColor(0xFF, 0xFF, 0xFF)
+        label = sld.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, _emu(6.8), _emu(2.0), _emu(4.6), _emu(1.4))
+        label.fill.solid()
+        label.fill.fore_color.rgb = RGBColor(0x26, 0x26, 0x26)
+        _style_shape_text(label, "Alpha overlap + z-order + foreground text", 15)
+    _add("layered-transparent-shapes", _build_layered_transparent_shapes, _patch_layered_transparency_case)
+
+    # --- Dense CJK bullet cards with mixed paragraph levels ---
+    def _build_dense_cjk_bullet_cards(prs):
+        sld = prs.slides.add_slide(prs.slide_layouts[6])
+        cards = [
+            ("知识采集", ["多源接入", "权限继承", "增量同步"]),
+            ("智能解析", ["版式识别", "表格抽取", "图片理解"]),
+            ("精准检索", ["语义召回", "重排优化", "引用追踪"]),
+            ("安全应用", ["租户隔离", "审计留痕", "策略管控"]),
+        ]
+        for idx, (title, bullets) in enumerate(cards):
+            row, col = divmod(idx, 2)
+            card = sld.shapes.add_shape(
+                MSO_SHAPE.ROUNDED_RECTANGLE,
+                _emu(0.8 + col * 6.1),
+                _emu(0.8 + row * 3.0),
+                _emu(5.4),
+                _emu(2.3),
+            )
+            card.fill.solid()
+            card.fill.fore_color.rgb = RGBColor(0xF8, 0xF9, 0xFB)
+            card.line.color.rgb = RGBColor(0xB4, 0xC7, 0xE7)
+            tf = card.text_frame
+            tf.word_wrap = True
+            p0 = tf.paragraphs[0]
+            p0.text = title
+            p0.font.name = "Microsoft YaHei"
+            p0.font.size = Pt(17)
+            p0.font.bold = True
+            for bullet in bullets:
+                p = tf.add_paragraph()
+                p.text = bullet
+                p.level = 1
+                p.font.name = "Microsoft YaHei"
+                p.font.size = Pt(12)
+    _add("dense-cjk-bullet-cards", _build_dense_cjk_bullet_cards)
+
+    # --- Valid grouped diagram with non-identity child coordinate space ---
+    def _build_scaled_group_diagram(prs):
+        sld = prs.slides.add_slide(prs.slide_layouts[6])
+        title = sld.shapes.add_textbox(_emu(0.8), _emu(0.35), _emu(10.5), _emu(0.5))
+        p = title.text_frame.paragraphs[0]
+        p.text = "Scaled group diagram"
+        p.font.size = Pt(24)
+        p.font.bold = True
+    _add("scaled-group-diagram", _build_scaled_group_diagram, _patch_scaled_group_diagram_case)
+
+    # --- Vertical side label next to a dense table ---
+    def _build_vertical_text_with_table(prs):
+        sld = prs.slides.add_slide(prs.slide_layouts[6])
+        side = sld.shapes.add_textbox(_emu(0.45), _emu(1.0), _emu(0.8), _emu(5.2))
+        body_pr = side.text_frame._txBody.find(qn("a:bodyPr"))
+        body_pr.set("vert", "eaVert")
+        p = side.text_frame.paragraphs[0]
+        p.text = "纵向标签"
+        p.font.name = "Microsoft YaHei"
+        p.font.size = Pt(22)
+        p.font.bold = True
+
+        tbl_shape = sld.shapes.add_table(6, 5, _emu(1.6), _emu(0.9), _emu(10.5), _emu(5.5))
+        tbl = tbl_shape.table
+        headers = ["能力", "输入", "处理", "输出", "状态"]
+        for c, header in enumerate(headers):
+            tbl.cell(0, c).text = header
+        for r in range(1, 6):
+            tbl.cell(r, 0).text = f"模块 {r}"
+            tbl.cell(r, 1).text = "PPTX/XML"
+            tbl.cell(r, 2).text = "解析 + 渲染"
+            tbl.cell(r, 3).text = "HTML/SVG"
+            tbl.cell(r, 4).text = "覆盖"
+    _add("vertical-text-with-table", _build_vertical_text_with_table)
+
+    # --- Mixed straight, elbow, curve connectors with dash styles ---
+    def _build_mixed_dash_connectors(prs):
+        sld = prs.slides.add_slide(prs.slide_layouts[6])
+        coords = [(1.0, 1.0), (5.2, 1.0), (9.2, 1.0), (5.2, 4.5)]
+        labels = ["Source", "Transform", "Decision", "Output"]
+        for (x, y), label in zip(coords, labels):
+            shp = sld.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, _emu(x), _emu(y), _emu(2.2), _emu(0.9))
+            shp.fill.solid()
+            shp.fill.fore_color.rgb = RGBColor(0xDA, 0xE8, 0xFC)
+            shp.line.color.rgb = RGBColor(0x6C, 0x8E, 0xB5)
+            _style_shape_text(shp, label, 14, RGBColor(0, 0, 0))
+        connectors = [
+            (MSO_CONNECTOR.STRAIGHT, 3.2, 1.45, 5.2, 1.45, MSO_LINE_DASH_STYLE.SOLID),
+            (MSO_CONNECTOR.ELBOW, 7.4, 1.45, 9.2, 1.45, MSO_LINE_DASH_STYLE.DASH),
+            (MSO_CONNECTOR.CURVE, 6.3, 1.9, 6.3, 4.5, MSO_LINE_DASH_STYLE.DASH_DOT),
+        ]
+        for ctype, x1, y1, x2, y2, dash in connectors:
+            conn = sld.shapes.add_connector(ctype, _emu(x1), _emu(y1), _emu(x2), _emu(y2))
+            conn.line.width = Pt(2.25)
+            conn.line.dash_style = dash
+            conn.line.color.rgb = RGBColor(0xC0, 0x00, 0x00)
+    _add("mixed-dash-connectors", _build_mixed_dash_connectors, _patch_connector_tail_arrows)
+
+    # --- Compact report mixing chart, table, connectors, callouts, and CJK text ---
+    def _build_mini_report_all_systems(prs):
+        sld = prs.slides.add_slide(prs.slide_layouts[6])
+        title = sld.shapes.add_textbox(_emu(0.5), _emu(0.2), _emu(12.3), _emu(0.55))
+        p = title.text_frame.paragraphs[0]
+        p.text = "Mini report: text, table, chart, shapes, and connectors"
+        p.font.size = Pt(22)
+        p.font.bold = True
+        p.alignment = PP_ALIGN.CENTER
+
+        chart_data = CategoryChartData()
+        chart_data.categories = ["T1", "T2", "T3"]
+        chart_data.add_series("Pass", (88, 92, 95))
+        chart_data.add_series("Fail", (12, 8, 5))
+        sld.shapes.add_chart(XL_CHART_TYPE.BAR_STACKED, _emu(0.7), _emu(1.0), _emu(5.5), _emu(3.8), chart_data)
+
+        tbl_shape = sld.shapes.add_table(4, 3, _emu(6.7), _emu(1.0), _emu(5.7), _emu(2.4))
+        tbl = tbl_shape.table
+        for c, header in enumerate(["Area", "Risk", "Owner"]):
+            tbl.cell(0, c).text = header
+        for r, row in enumerate([("Text", "Low", "A"), ("Chart", "Med", "B"), ("Group", "High", "C")], 1):
+            for c, value in enumerate(row):
+                tbl.cell(r, c).text = value
+
+        alert = sld.shapes.add_shape(MSO_SHAPE.RIGHT_ARROW, _emu(6.9), _emu(4.35), _emu(2.8), _emu(0.85))
+        alert.fill.solid()
+        alert.fill.fore_color.rgb = RGBColor(0xC0, 0x00, 0x00)
+        _style_shape_text(alert, "Review", 15)
+
+        cjk = sld.shapes.add_textbox(_emu(9.9), _emu(4.05), _emu(2.5), _emu(1.35))
+        tf = cjk.text_frame
+        tf.word_wrap = True
+        p = tf.paragraphs[0]
+        p.text = "组合场景覆盖"
+        p.font.name = "Microsoft YaHei"
+        p.font.size = Pt(18)
+        p.font.bold = True
+
+        conn = sld.shapes.add_connector(MSO_CONNECTOR.ELBOW, _emu(6.2), _emu(3.0), _emu(7.2), _emu(4.35))
+        conn.line.width = Pt(2)
+        conn.line.color.rgb = RGBColor(0x70, 0xAD, 0x47)
+    _add("mini-report-all-systems", _build_mini_report_all_systems, _patch_connector_tail_arrows)
 
     return cases
 

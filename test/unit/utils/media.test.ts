@@ -99,6 +99,17 @@ describe('resolveMediaPath', () => {
     ]);
   });
 
+  it('keeps a single candidate when decoded and raw targets are identical', () => {
+    expect(resolveMediaPathCandidates('../media/plain.png')).toEqual(['ppt/media/plain.png']);
+  });
+
+  it('preserves malformed URI segments instead of throwing while resolving media paths', () => {
+    expect(resolveMediaPath('../media/bad%ZZname.png')).toBe('ppt/media/bad%ZZname.png');
+    expect(resolveMediaPathCandidates('../media/bad%ZZname.png')).toEqual([
+      'ppt/media/bad%ZZname.png',
+    ]);
+  });
+
   it('finds media by decoded target first and raw encoded target as compatibility fallback', () => {
     const decodedMedia = new Map([['ppt/media/product photo.png', new Uint8Array([1])]]);
     const rawMedia = new Map([['ppt/media/product%20photo.png', new Uint8Array([2])]]);

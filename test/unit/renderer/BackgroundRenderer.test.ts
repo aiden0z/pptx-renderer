@@ -585,4 +585,86 @@ describe('renderBackground', () => {
     expect(container.style.backgroundPosition).toBe('');
     expect(container.style.backgroundRepeat).toBe('no-repeat');
   });
+
+  it('falls back to white when a background node has neither bgPr nor bgRef', () => {
+    const bg = parseXml(`
+      <bg xmlns="http://schemas.openxmlformats.org/presentationml/2006/main"
+          xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"/>
+    `);
+    const ctx = createMockRenderContext({
+      slide: { rels: new Map(), background: bg } as any,
+    });
+
+    renderBackground(ctx, container);
+
+    expect(container.style.backgroundColor).toMatch(/white|rgb\(255,\s*255,\s*255\)/i);
+  });
+
+  it('falls back to white for bgRef without a valid theme fill or color child', () => {
+    const bg = bgRefXml(9999, '');
+    const ctx = createMockRenderContext({
+      slide: { rels: new Map(), background: bg } as any,
+    });
+
+    renderBackground(ctx, container);
+
+    expect(container.style.backgroundColor).toMatch(/white|rgb\(255,\s*255,\s*255\)/i);
+  });
+
+  it('uses regular theme fill styles for low-index bgRef values', () => {
+    const bg = bgRefXml(1, `<a:schemeClr val="accent2"/>`);
+    const ctx = createMockRenderContext({
+      slide: { rels: new Map(), background: bg } as any,
+      theme: {
+        ...createMockRenderContext().theme,
+        fillStyles: [
+          parseXml(
+            `<a:solidFill xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><a:schemeClr val="phClr"/></a:solidFill>`,
+          ),
+        ],
+      },
+    });
+
+    renderBackground(ctx, container);
+
+    expect(container.style.backgroundColor).toMatch(/#|rgb\(/);
+    expect(container.style.backgroundColor).not.toMatch(/white|rgb\(255,\s*255,\s*255\)/i);
+  });
+
+  it.each([
+    ['no relationship id', '<a:blip/>', new Map()],
+    [
+      'missing relationship',
+      '<a:blip r:embed="rIdMissing" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"/>',
+      new Map(),
+    ],
+    [
+      'blocked external relationship',
+      '<a:blip r:link="rIdBlocked" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"/>',
+      new Map([
+        [
+          'rIdBlocked',
+          {
+            type: 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/image',
+            target: 'ftp://example.com/background.png',
+            targetMode: 'External',
+          },
+        ],
+      ]),
+    ],
+  ])('leaves background image empty for blipFill with %s', (_label, blip, rels) => {
+    const bg = bgPrXml(`
+      <a:blipFill>
+        ${blip}
+        <a:stretch><a:fillRect/></a:stretch>
+      </a:blipFill>
+    `);
+    const ctx = createMockRenderContext({
+      slide: { rels, background: bg } as any,
+    });
+
+    renderBackground(ctx, container);
+
+    expect(container.style.backgroundImage).toBe('');
+  });
 });

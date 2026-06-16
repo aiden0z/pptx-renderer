@@ -4,6 +4,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import * as echarts from 'echarts';
 import type { ECharts } from 'echarts';
 
 // Mock echarts before importing modules that use it
@@ -187,6 +188,8 @@ describe('ChartRenderer chartInstances lifecycle', () => {
     mockChartInstance.resize.mockClear();
     mockChartInstance.dispose.mockClear();
     mockChartInstance.isDisposed.mockReturnValue(false);
+    vi.mocked(echarts.init).mockClear();
+    vi.mocked(echarts.init).mockImplementation(() => mockChartInstance as any);
 
     if (!window.ResizeObserver) {
       (window as any).ResizeObserver = class {
@@ -343,6 +346,81 @@ describe('ChartRenderer chartInstances lifecycle', () => {
     expect(mockChartInstance.setOption).toHaveBeenCalled();
 
     document.body.removeChild(wrapper);
+  });
+
+  it('resizes while connected and disposes observer-owned charts after container removal', () => {
+    const originalResizeObserver = window.ResizeObserver;
+    const chartInstances = new Set<ECharts>();
+    const ctx = createMockRenderContext({ chartInstances });
+    ctx.presentation.charts = new Map([['ppt/charts/chart1.xml', parseXml(buildSimpleChartXml())]]);
+    const disconnectSpy = vi.fn();
+    const roCallbacks: ResizeObserverCallback[] = [];
+
+    (window as any).ResizeObserver = class {
+      constructor(callback: ResizeObserverCallback) {
+        roCallbacks.push(callback);
+      }
+      observe = vi.fn();
+      disconnect = disconnectSpy;
+    };
+
+    try {
+      const wrapper = renderChart(makeChartNode(), ctx);
+      document.body.appendChild(wrapper);
+
+      const chartDiv = wrapper.querySelector('div') as HTMLElement;
+      Object.defineProperty(chartDiv, 'offsetWidth', { value: 400, configurable: true });
+      Object.defineProperty(chartDiv, 'offsetHeight', { value: 300, configurable: true });
+
+      for (const cb of rafCallbacks) cb();
+      expect(chartInstances.has(mockChartInstance as any)).toBe(true);
+
+      const initObserverCallback = roCallbacks.at(-1);
+      expect(initObserverCallback).toBeDefined();
+      initObserverCallback?.([], {} as any);
+      expect(mockChartInstance.resize).toHaveBeenCalledTimes(1);
+
+      document.body.removeChild(wrapper);
+      initObserverCallback?.([], {} as any);
+
+      expect(disconnectSpy).toHaveBeenCalled();
+      expect(mockChartInstance.dispose).toHaveBeenCalled();
+      expect(chartInstances.has(mockChartInstance as any)).toBe(false);
+    } finally {
+      if (originalResizeObserver) {
+        window.ResizeObserver = originalResizeObserver;
+      } else {
+        delete (window as any).ResizeObserver;
+      }
+    }
+  });
+
+  it('shows chart render error fallback when echarts initialization throws', () => {
+    const ctx = createMockRenderContext();
+    ctx.presentation.charts = new Map([['ppt/charts/chart1.xml', parseXml(buildSimpleChartXml())]]);
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    vi.mocked(echarts.init).mockImplementationOnce(() => {
+      throw new Error('init failed');
+    });
+
+    const wrapper = renderChart(makeChartNode(), ctx);
+    document.body.appendChild(wrapper);
+
+    const chartDiv = wrapper.querySelector('div') as HTMLElement;
+    Object.defineProperty(chartDiv, 'offsetWidth', { value: 400, configurable: true });
+    Object.defineProperty(chartDiv, 'offsetHeight', { value: 300, configurable: true });
+
+    try {
+      for (const cb of rafCallbacks) cb();
+
+      expect(chartDiv.textContent).toBe('Chart render error');
+      expect(chartDiv.style.display).toBe('flex');
+      expect(chartDiv.style.alignItems).toBe('center');
+      expect(warnSpy).toHaveBeenCalledWith('Failed to initialize ECharts:', expect.any(Error));
+    } finally {
+      document.body.removeChild(wrapper);
+      warnSpy.mockRestore();
+    }
   });
 
   it('renders custom side legend overlay and disables echarts legend for right-side scatter legends', () => {

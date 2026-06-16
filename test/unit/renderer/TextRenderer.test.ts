@@ -1361,6 +1361,29 @@ describe('TextRenderer — renderTextBody', () => {
       const para = container.children[0] as HTMLElement;
       expect(para.style.lineHeight).toBe('24pt');
     });
+
+    it('uses fixed-height line wrappers for spcPts paragraphs with manual line breaks', () => {
+      const body = makeTextBody({
+        paragraphs: [
+          {
+            properties: xmlNode('<pPr><lnSpc><spcPts val="1800"/></lnSpc></pPr>'),
+            runs: [{ text: 'Line 1' }, { text: '\n' }, { text: 'Line 2' }],
+            level: 0,
+          },
+        ],
+      });
+
+      const container = renderToContainer(body);
+      const para = container.children[0] as HTMLElement;
+      const lineWrappers = Array.from(para.children).filter(
+        (child) => child instanceof HTMLElement && child.tagName === 'DIV',
+      ) as HTMLElement[];
+
+      expect(para.querySelector('br')).toBeNull();
+      expect(lineWrappers).toHaveLength(2);
+      expect(lineWrappers.map((line) => line.style.height)).toEqual(['18pt', '18pt']);
+      expect(lineWrappers.map((line) => line.textContent)).toEqual(['Line 1', 'Line 2']);
+    });
   });
 
   describe('paragraph spacing', () => {
@@ -1413,6 +1436,116 @@ describe('TextRenderer — renderTextBody', () => {
       const container = renderToContainer(body);
       const span = container.querySelector('span');
       expect(span!.style.color).toBe('transparent');
+    });
+
+    it('applies highlight color from run properties without replacing text color', () => {
+      const body = makeTextBody({
+        paragraphs: [
+          {
+            runs: [
+              {
+                text: 'Highlighted',
+                properties: xmlNode(
+                  '<rPr><solidFill><srgbClr val="112233"/></solidFill><highlight><srgbClr val="FFFF00"/></highlight></rPr>',
+                ),
+              },
+            ],
+            level: 0,
+          },
+        ],
+      });
+
+      const container = renderToContainer(body);
+      const span = container.querySelector('span')!;
+
+      expect(span.style.backgroundColor).toBe('rgb(255, 255, 0)');
+      expect(span.style.color).toBe('rgb(17, 34, 51)');
+    });
+
+    it('applies explicit underline color from uFill independently of text color', () => {
+      const body = makeTextBody({
+        paragraphs: [
+          {
+            runs: [
+              {
+                text: 'Colored underline',
+                properties: xmlNode(
+                  '<rPr u="sng"><solidFill><srgbClr val="112233"/></solidFill><uFill><solidFill><srgbClr val="FF0000"/></solidFill></uFill></rPr>',
+                ),
+              },
+            ],
+            level: 0,
+          },
+        ],
+      });
+
+      const container = renderToContainer(body);
+      const span = container.querySelector('span')!;
+
+      expect(span.style.textDecoration).toContain('underline');
+      expect(span.style.color).toBe('rgb(17, 34, 51)');
+      expect(span.style.textDecorationColor.toUpperCase()).toBe('#FF0000');
+    });
+
+    it('makes uFillTx underline color follow the effective table text color', () => {
+      const body = makeTextBody({
+        paragraphs: [
+          {
+            runs: [
+              {
+                text: 'Table link style',
+                properties: xmlNode('<rPr u="sng"><uFillTx/></rPr>'),
+              },
+            ],
+            level: 0,
+          },
+        ],
+      });
+      const ctx = createMockRenderContext();
+      const container = document.createElement('div');
+
+      renderTextBody(body, undefined, ctx, container, { cellTextColor: '#00B050' });
+      const span = container.querySelector('span')!;
+
+      expect(span.style.textDecoration).toContain('underline');
+      expect(span.style.color).toBe('rgb(0, 176, 80)');
+      expect(span.style.textDecorationColor.toUpperCase()).toBe('#00B050');
+    });
+
+    it('clips gradient text fill to glyphs while keeping the text run measurable', () => {
+      const body = makeTextBody({
+        paragraphs: [
+          {
+            runs: [
+              {
+                text: 'Gradient text',
+                properties: xmlNode(`
+                  <rPr>
+                    <gradFill>
+                      <gsLst>
+                        <gs pos="0"><srgbClr val="FFFFFF"/></gs>
+                        <gs pos="100000"><srgbClr val="0070C0"/></gs>
+                      </gsLst>
+                      <lin ang="2700000"/>
+                    </gradFill>
+                  </rPr>
+                `),
+              },
+            ],
+            level: 0,
+          },
+        ],
+      });
+
+      const container = renderToContainer(body);
+      const span = container.querySelector('span') as HTMLElement & {
+        style: CSSStyleDeclaration & { webkitBackgroundClip?: string };
+      };
+
+      expect(span.textContent).toBe('Gradient text');
+      expect(span.style.background).toContain('linear-gradient');
+      expect(span.style.color).toBe('transparent');
+      expect(span.style.webkitBackgroundClip).toBe('text');
     });
 
     it('applies text outline with solid fill', () => {

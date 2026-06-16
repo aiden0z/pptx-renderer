@@ -21,4 +21,18 @@ describe('SafeXmlNode.attr', () => {
     expect(node.attr('id')).toBe('local-id');
     expect(node.attr('r:id')).toBe('rId7');
   });
+
+  it('uses any namespaced attribute for unknown prefixes with the same local name', () => {
+    const node = parseXml(`
+      <root xmlns:foo="urn:test" foo:id="foo-id"/>
+    `);
+
+    expect(node.attr('bar:id')).toBe('foo-id');
+  });
+
+  it('does not treat unprefixed attributes as unknown-prefixed namespace matches', () => {
+    const node = parseXml('<root id="plain-id"/>');
+
+    expect(node.attr('bar:id')).toBeUndefined();
+  });
 });

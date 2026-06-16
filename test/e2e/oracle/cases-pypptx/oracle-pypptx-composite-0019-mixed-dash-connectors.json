@@ -1,0 +1,13 @@
+{
+  "name": "oracle-pypptx-composite-0019-mixed-dash-connectors",
+  "generator": "python-pptx",
+  "slides": [
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    }
+  ]
+}

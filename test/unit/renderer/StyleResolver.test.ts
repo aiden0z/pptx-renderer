@@ -6,6 +6,7 @@ import {
   resolveLineStyle,
   resolveGradientFill,
   resolveGradientStroke,
+  resolveThemeBackgroundFillReference,
   resolveThemeFillReference,
 } from '../../../src/renderer/StyleResolver';
 import { createMockRenderContext } from '../helpers/mockContext';
@@ -1077,6 +1078,136 @@ describe('resolveThemeFillReference — pattern phClr placeholder colors', () =>
     const result = resolveThemeFillReference(fillRef, ctx);
 
     expect(result.fillCss.toLowerCase()).toContain('#00ff00');
+  });
+});
+
+describe('resolveThemeFillReference — fallback branches', () => {
+  it('uses fillRef color directly when idx is zero', () => {
+    const ctx = createMockRenderContext();
+    ctx.theme.fillStyles = [xmlNode('<solidFill><srgbClr val="FFFFFF"/></solidFill>')];
+    const fillRef = xmlNode('<fillRef idx="0"><srgbClr val="123456"/></fillRef>');
+
+    const result = resolveThemeFillReference(fillRef, ctx);
+
+    expect(result.fillCss.toLowerCase()).toBe('#123456');
+    expect(result.gradientFillData).toBeNull();
+  });
+
+  it('uses fillRef color directly when idx is outside theme fillStyles', () => {
+    const ctx = createMockRenderContext();
+    ctx.theme.fillStyles = [xmlNode('<solidFill><srgbClr val="FFFFFF"/></solidFill>')];
+    const fillRef = xmlNode('<fillRef idx="2"><srgbClr val="654321"/></fillRef>');
+
+    const result = resolveThemeFillReference(fillRef, ctx);
+
+    expect(result.fillCss.toLowerCase()).toBe('#654321');
+    expect(result.gradientFillData).toBeNull();
+  });
+
+  it('returns transparent for theme noFill entries', () => {
+    const ctx = createMockRenderContext();
+    ctx.theme.fillStyles = [xmlNode('<noFill/>')];
+    const fillRef = xmlNode('<fillRef idx="1"><srgbClr val="FF0000"/></fillRef>');
+
+    const result = resolveThemeFillReference(fillRef, ctx);
+
+    expect(result.fillCss).toBe('transparent');
+    expect(result.gradientFillData).toBeNull();
+  });
+
+  it('falls back to fillRef color for unhandled theme fill entries', () => {
+    const ctx = createMockRenderContext();
+    ctx.theme.fillStyles = [xmlNode('<grpFill/>')];
+    const fillRef = xmlNode('<fillRef idx="1"><srgbClr val="ABCDEF"/></fillRef>');
+
+    const result = resolveThemeFillReference(fillRef, ctx);
+
+    expect(result.fillCss.toLowerCase()).toBe('#abcdef');
+    expect(result.gradientFillData).toBeNull();
+  });
+});
+
+describe('resolveThemeBackgroundFillReference', () => {
+  it('uses bgFillStyles for idx values in the 1001+ background range', () => {
+    const ctx = createMockRenderContext();
+    ctx.theme.bgFillStyles = [xmlNode('<solidFill><srgbClr val="0A1B2C"/></solidFill>')];
+    const bgRef = xmlNode('<bgRef idx="1001"><srgbClr val="FF0000"/></bgRef>');
+
+    const result = resolveThemeBackgroundFillReference(bgRef, ctx);
+
+    expect(result.fillCss.toLowerCase()).toBe('#0a1b2c');
+    expect(result.gradientFillData).toBeNull();
+  });
+
+  it('falls back to bgRef color when the requested bgFillStyles entry is missing', () => {
+    const ctx = createMockRenderContext();
+    ctx.theme.bgFillStyles = [];
+    const bgRef = xmlNode('<bgRef idx="1003"><srgbClr val="334455"/></bgRef>');
+
+    const result = resolveThemeBackgroundFillReference(bgRef, ctx);
+
+    expect(result.fillCss.toLowerCase()).toBe('#334455');
+    expect(result.gradientFillData).toBeNull();
+  });
+
+  it('uses regular fillStyles for background refs below idx 1001', () => {
+    const ctx = createMockRenderContext();
+    ctx.theme.fillStyles = [xmlNode('<pattFill prst="solid"><fgClr><srgbClr val="00AA00"/></fgClr></pattFill>')];
+    const bgRef = xmlNode('<bgRef idx="1"><srgbClr val="FF0000"/></bgRef>');
+
+    const result = resolveThemeBackgroundFillReference(bgRef, ctx);
+
+    expect(result.fillCss.toLowerCase()).toBe('#00aa00');
+    expect(result.gradientFillData).toBeNull();
+  });
+});
+
+describe('resolveColor — missing attribute defaults', () => {
+  it('defaults wrapper srgbClr/sysClr/prstClr values when val-like attributes are absent', () => {
+    const ctx = createMockRenderContext();
+
+    expect(resolveColor(xmlNode('<solidFill><srgbClr/></solidFill>'), ctx)).toEqual({
+      color: '000000',
+      alpha: 1,
+    });
+    expect(resolveColor(xmlNode('<solidFill><sysClr/></solidFill>'), ctx)).toEqual({
+      color: '000000',
+      alpha: 1,
+    });
+    expect(resolveColor(xmlNode('<solidFill><prstClr/></solidFill>'), ctx)).toEqual({
+      color: '000000',
+      alpha: 1,
+    });
+  });
+
+  it('defaults wrapper hslClr and scrgbClr missing numeric attrs to black', () => {
+    const ctx = createMockRenderContext();
+
+    expect(resolveColor(xmlNode('<solidFill><hslClr/></solidFill>'), ctx)).toEqual({
+      color: '000000',
+      alpha: 1,
+    });
+    expect(resolveColor(xmlNode('<solidFill><scrgbClr/></solidFill>'), ctx)).toEqual({
+      color: '000000',
+      alpha: 1,
+    });
+  });
+
+  it('defaults direct self color nodes when attrs are omitted', () => {
+    const ctx = createMockRenderContext();
+
+    expect(resolveColor(xmlNode('<srgbClr/>'), ctx)).toEqual({ color: '000000', alpha: 1 });
+    expect(resolveColor(xmlNode('<schemeClr/>'), ctx)).toEqual({ color: '000000', alpha: 1 });
+    expect(resolveColor(xmlNode('<sysClr/>'), ctx)).toEqual({ color: '000000', alpha: 1 });
+    expect(resolveColor(xmlNode('<prstClr/>'), ctx)).toEqual({ color: '000000', alpha: 1 });
+    expect(resolveColor(xmlNode('<hslClr/>'), ctx)).toEqual({ color: '000000', alpha: 1 });
+    expect(resolveColor(xmlNode('<scrgbClr/>'), ctx)).toEqual({ color: '000000', alpha: 1 });
+  });
+
+  it('uses scheme tx1 when wrapper schemeClr omits val', () => {
+    const ctx = createMockRenderContext();
+    const result = resolveColor(xmlNode('<solidFill><schemeClr/></solidFill>'), ctx);
+    expect(result.color).toBe('000000');
   });
 });
 

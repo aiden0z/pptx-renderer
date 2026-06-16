@@ -132,6 +132,65 @@ describe('parseShapeNode', () => {
     expect(s.fill!.localName).toBe('noFill');
   });
 
+  it('parses remaining fill kinds in the documented priority order', () => {
+    expect(
+      shape(`
+        <sp>
+          <nvSpPr><cNvPr id="1" name="S"/><nvPr/></nvSpPr>
+          <spPr><blipFill/></spPr>
+        </sp>
+      `).fill!.localName,
+    ).toBe('blipFill');
+    expect(
+      shape(`
+        <sp>
+          <nvSpPr><cNvPr id="1" name="S"/><nvPr/></nvSpPr>
+          <spPr><pattFill prst="pct20"/></spPr>
+        </sp>
+      `).fill!.localName,
+    ).toBe('pattFill');
+    expect(
+      shape(`
+        <sp>
+          <nvSpPr><cNvPr id="1" name="S"/><nvPr/></nvSpPr>
+          <spPr><grpFill/></spPr>
+        </sp>
+      `).fill!.localName,
+    ).toBe('grpFill');
+  });
+
+  it('ignores adjustment guides with non-numeric formulas', () => {
+    const s = shape(`
+      <sp>
+        <nvSpPr><cNvPr id="1" name="S"/><nvPr/></nvSpPr>
+        <spPr>
+          <prstGeom prst="rect">
+            <avLst>
+              <gd name="adj" fmla="*/ w h ss"/>
+            </avLst>
+          </prstGeom>
+        </spPr>
+      </sp>
+    `);
+    expect(s.adjustments.has('adj')).toBe(false);
+  });
+
+  it('defaults adjustment guides with missing formula values to zero', () => {
+    const s = shape(`
+      <sp>
+        <nvSpPr><cNvPr id="1" name="S"/><nvPr/></nvSpPr>
+        <spPr>
+          <prstGeom prst="rect">
+            <avLst>
+              <gd name="adj"/>
+            </avLst>
+          </prstGeom>
+        </spPr>
+      </sp>
+    `);
+    expect(s.adjustments.get('adj')).toBe(0);
+  });
+
   it('parses line properties', () => {
     const s = shape(`
       <sp>
@@ -169,6 +228,19 @@ describe('parseShapeNode', () => {
         <spPr>
           <xfrm><off x="0" y="0"/><ext cx="914400" cy="0"/></xfrm>
           <ln><headEnd type="none"/><tailEnd type="none"/></ln>
+        </spPr>
+      </sp>
+    `);
+    expect(s.headEnd).toBeUndefined();
+    expect(s.tailEnd).toBeUndefined();
+  });
+
+  it('ignores arrowheads with no type attribute', () => {
+    const s = shape(`
+      <sp>
+        <nvSpPr><cNvPr id="1" name="S"/><nvPr/></nvSpPr>
+        <spPr>
+          <ln><headEnd w="med" len="med"/><tailEnd w="lg" len="sm"/></ln>
         </spPr>
       </sp>
     `);
@@ -225,6 +297,31 @@ describe('parseShapeNode', () => {
     expect(runs[1].text).toBe('\n');
     expect(runs[2].text).toBe('Line2');
     expect(runs[3].text).toBe('3');
+  });
+
+  it('preserves run properties on line breaks and fields', () => {
+    const s = shape(`
+      <sp>
+        <nvSpPr><cNvPr id="1" name="S"/><nvPr/></nvSpPr>
+        <spPr>
+          <xfrm><off x="0" y="0"/><ext cx="914400" cy="914400"/></xfrm>
+        </spPr>
+        <txBody>
+          <bodyPr/>
+          <p>
+            <r><t>Line1</t></r>
+            <br><rPr lang="zh-CN" sz="1800"/></br>
+            <fld type="slidenum"><rPr b="1"/><t>4</t></fld>
+          </p>
+        </txBody>
+      </sp>
+    `);
+
+    const runs = s.textBody!.paragraphs[0].runs;
+    expect(runs[1].text).toBe('\n');
+    expect(runs[1].properties?.attr('lang')).toBe('zh-CN');
+    expect(runs[2].text).toBe('4');
+    expect(runs[2].properties?.attr('b')).toBe('1');
   });
 
   it('preserves standalone tab elements in paragraph order', () => {
@@ -291,6 +388,38 @@ describe('parseShapeNode', () => {
         <nvSpPr><cNvPr id="1" name="S"/><nvPr/></nvSpPr>
         <spPr>
           <xfrm><off x="0" y="0"/><ext cx="0" cy="0"/></xfrm>
+        </spPr>
+        <txXfrm><off x="0" y="0"/><ext cx="914400" cy="457200"/></txXfrm>
+      </sp>
+    `);
+    expect(s.textBoxBounds).toBeUndefined();
+  });
+
+  it('uses zero defaults for incomplete txXfrm offsets and extents', () => {
+    const s = shape(`
+      <sp>
+        <nvSpPr><cNvPr id="1" name="S"/><nvPr/></nvSpPr>
+        <spPr>
+          <xfrm><off x="914400" y="457200"/><ext cx="1828800" cy="914400"/></xfrm>
+        </spPr>
+        <txXfrm><off/><ext/></txXfrm>
+      </sp>
+    `);
+    expect(s.textBoxBounds).toEqual({
+      x: -96,
+      y: -48,
+      w: 0,
+      h: 0,
+      rotation: 0,
+    });
+  });
+
+  it('returns no textBoxBounds when source xfrm extents are omitted', () => {
+    const s = shape(`
+      <sp>
+        <nvSpPr><cNvPr id="1" name="S"/><nvPr/></nvSpPr>
+        <spPr>
+          <xfrm><off/></xfrm>
         </spPr>
         <txXfrm><off x="0" y="0"/><ext cx="914400" cy="457200"/></txXfrm>
       </sp>

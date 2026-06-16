@@ -1,0 +1,13 @@
+{
+  "name": "oracle-pypptx-composite-0012-merged-table-callouts",
+  "generator": "python-pptx",
+  "slides": [
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    }
+  ]
+}

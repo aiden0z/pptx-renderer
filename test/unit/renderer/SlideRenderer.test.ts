@@ -86,6 +86,15 @@ function makeShape(id: string, name: string): ShapeNodeData {
   };
 }
 
+function makeTextShape(id: string, name: string, text: string): ShapeNodeData {
+  return {
+    ...makeShape(id, name),
+    textBody: {
+      paragraphs: [{ runs: [{ text }], level: 0 }],
+    },
+  };
+}
+
 describe('renderSlide', () => {
   it('creates container with correct dimensions', () => {
     const pres = makeMinimalPres();
@@ -649,5 +658,58 @@ describe('renderSlide', () => {
     const { element: el } = renderSlide(pres, slide);
     // Should have: master shape + layout shape + slide shape (+ possibly background)
     expect(el.children.length).toBeGreaterThanOrEqual(3);
+  });
+
+  it('keeps master, layout, and slide content in rendering z-order', () => {
+    const pres = makeMinimalPres();
+    const masterPath = 'ppt/slideMasters/slideMaster1.xml';
+    const layoutPath = 'ppt/slideLayouts/slideLayout1.xml';
+
+    pres.masters.get(masterPath)!.spTree = parseXml(`
+      <spTree xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+        <sp>
+          <nvSpPr><cNvPr id="10" name="master-text"/><nvPr/></nvSpPr>
+          <spPr>
+            <xfrm><off x="0" y="0"/><ext cx="914400" cy="914400"/></xfrm>
+            <prstGeom prst="rect"><avLst/></prstGeom>
+          </spPr>
+          <txBody>
+            <bodyPr/><lstStyle/>
+            <p><r><t>MASTER_LAYER</t></r></p>
+          </txBody>
+        </sp>
+      </spTree>
+    `);
+    pres.layouts.get(layoutPath)!.spTree = parseXml(`
+      <spTree xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+        <sp>
+          <nvSpPr><cNvPr id="20" name="layout-text"/><nvPr/></nvSpPr>
+          <spPr>
+            <xfrm><off x="0" y="0"/><ext cx="914400" cy="914400"/></xfrm>
+            <prstGeom prst="rect"><avLst/></prstGeom>
+          </spPr>
+          <txBody>
+            <bodyPr/><lstStyle/>
+            <p><r><t>LAYOUT_LAYER</t></r></p>
+          </txBody>
+        </sp>
+      </spTree>
+    `);
+
+    const slide: SlideData = {
+      index: 0,
+      nodes: [makeTextShape('30', 'slide-text', 'SLIDE_LAYER')],
+      rels: new Map(),
+      showMasterSp: true,
+    };
+    const { element: el } = renderSlide(pres, slide);
+    const children = Array.from(el.children);
+    const masterIndex = children.findIndex((child) => child.textContent?.includes('MASTER_LAYER'));
+    const layoutIndex = children.findIndex((child) => child.textContent?.includes('LAYOUT_LAYER'));
+    const slideIndex = children.findIndex((child) => child.textContent?.includes('SLIDE_LAYER'));
+
+    expect(masterIndex).toBeGreaterThanOrEqual(0);
+    expect(layoutIndex).toBeGreaterThan(masterIndex);
+    expect(slideIndex).toBeGreaterThan(layoutIndex);
   });
 });

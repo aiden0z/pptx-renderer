@@ -57,6 +57,21 @@ describe('parseChartNode', () => {
     expect(node!.chartPath).toBe('ppt/charts/Sales Chart.xml');
   });
 
+  it('accepts chart relationship id without a namespace prefix', () => {
+    const xml = parseXml(`
+      <graphicFrame xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"
+                    xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart">
+        <nvGraphicFramePr><cNvPr id="7" name="Chart 1"/><nvPr/></nvGraphicFramePr>
+        <xfrm><off x="0" y="0"/><ext cx="914400" cy="914400"/></xfrm>
+        <graphic><graphicData><chart id="rId1"/></graphicData></graphic>
+      </graphicFrame>
+    `);
+
+    const node = parseChartNode(xml, makeRels('../charts/chart3.xml'), 'ppt/slides/slide1.xml');
+
+    expect(node!.chartPath).toBe('ppt/charts/chart3.xml');
+  });
+
   it('returns undefined when chart rId not found in rels', () => {
     const emptyRels = new Map<string, RelEntry>();
     const node = parseChartNode(makeChartXml(), emptyRels, 'ppt/slides/slide1.xml');

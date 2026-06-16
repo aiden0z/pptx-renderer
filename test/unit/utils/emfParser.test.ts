@@ -100,6 +100,30 @@ function buildMultiformatsPdfComment(pdfData: Uint8Array): Uint8Array {
 }
 
 /**
+ * Build a MULTIFORMATS GDI Comment whose descriptor points at non-PDF data.
+ */
+function buildMultiformatsNonPdfComment(): Uint8Array {
+  const payload = new TextEncoder().encode('not a pdf payload');
+  const offData = 56;
+  const recordSize = Math.ceil((offData + payload.length) / 4) * 4;
+  const buf = new Uint8Array(recordSize);
+
+  writeU32(buf, 0, EMR_COMMENT);
+  writeU32(buf, 4, recordSize);
+  writeU32(buf, 8, recordSize - 8);
+  writeU32(buf, 12, GDIC_ID);
+  writeU32(buf, 16, MULTIFORMATS_TYPE);
+  writeU32(buf, 36, 1);
+  writeU32(buf, 40, 0x50444620);
+  writeU32(buf, 44, 1);
+  writeU32(buf, 48, payload.length);
+  writeU32(buf, 52, offData);
+  buf.set(payload, offData);
+
+  return buf;
+}
+
+/**
  * Build a GDI Comment record with BEGINGROUP containing embedded PDF.
  */
 function buildBegingroupPdfComment(pdfData: Uint8Array): Uint8Array {
@@ -281,6 +305,15 @@ describe('parseEmfContent', () => {
         expect(text.endsWith('%%EOF')).toBe(true);
       }
     });
+
+    it('continues when MULTIFORMATS descriptors contain no PDF payload', () => {
+      const comment = buildMultiformatsNonPdfComment();
+      const emf = concat(buildEmfHeader(), comment, buildEofRecord());
+
+      const result = parseEmfContent(emf);
+
+      expect(result.type).toBe('unsupported');
+    });
   });
 
   describe('PDF extraction via BEGINGROUP', () => {
@@ -312,6 +345,17 @@ describe('parseEmfContent', () => {
         const text = new TextDecoder().decode(result.data);
         expect(text).toContain('%PDF');
       }
+    });
+
+    it('returns unsupported for large non-GDIC comments without a PDF marker', () => {
+      const raw = new Uint8Array(140);
+      raw.fill(0x41);
+      const comment = buildRawPdfComment(raw);
+      const emf = concat(buildEmfHeader(), comment, buildEofRecord());
+
+      const result = parseEmfContent(emf);
+
+      expect(result.type).toBe('unsupported');
     });
   });
 

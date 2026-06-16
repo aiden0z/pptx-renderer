@@ -1560,6 +1560,90 @@ describe('renderTable', () => {
       expect(tds[0].style.backgroundColor).toBe('rgb(255, 255, 255)');
     });
 
+    it('applies lastCol style to the final visible cell after a horizontal merge', () => {
+      const ctx = makeCtxWithTableStyle(`
+        <tblStyleLst>
+          <tblStyle styleId="{MERGED_LASTCOL}">
+            <wholeTbl><tcStyle><fill><solidFill><srgbClr val="FFFFFF"/></solidFill></fill></tcStyle></wholeTbl>
+            <lastCol><tcStyle><fill><solidFill><srgbClr val="00B050"/></solidFill></fill></tcStyle></lastCol>
+          </tblStyle>
+        </tblStyleLst>
+      `);
+      const tblPr = parseXml('<tblPr lastCol="1"/>');
+      const rows: TableRow[] = [
+        {
+          height: 100,
+          cells: [
+            { gridSpan: 2, rowSpan: 1, hMerge: false, vMerge: false },
+            { gridSpan: 1, rowSpan: 1, hMerge: true, vMerge: false },
+            { gridSpan: 1, rowSpan: 1, hMerge: false, vMerge: false },
+          ],
+        },
+      ];
+
+      const el = renderTable(
+        makeTable({
+          columns: [100, 100, 100],
+          rows,
+          tableStyleId: '{MERGED_LASTCOL}',
+          properties: tblPr,
+        }),
+        ctx,
+      );
+      const tds = el.querySelectorAll('td');
+
+      expect(tds).toHaveLength(2);
+      expect(tds[0].colSpan).toBe(2);
+      expect(tds[0].style.backgroundColor).toBe('rgb(255, 255, 255)');
+      expect(tds[1].style.backgroundColor).toBe('rgb(0, 176, 80)');
+    });
+
+    it('lets direct cell fill and border overrides win together over banded table style', () => {
+      const ctx = makeCtxWithTableStyle(`
+        <tblStyleLst>
+          <tblStyle styleId="{BAND_WITH_BORDERS}">
+            <band1H>
+              <tcStyle>
+                <fill><solidFill><srgbClr val="D9EAF7"/></solidFill></fill>
+                <tcBdr>
+                  <top><ln w="25400"><solidFill><srgbClr val="4472C4"/></solidFill></ln></top>
+                  <bottom><ln w="25400"><solidFill><srgbClr val="4472C4"/></solidFill></ln></bottom>
+                </tcBdr>
+              </tcStyle>
+            </band1H>
+          </tblStyle>
+        </tblStyleLst>
+      `);
+      const tblPr = parseXml('<tblPr bandRow="1"/>');
+      const tcPrXml = parseXml(`
+        <tcPr>
+          <solidFill><srgbClr val="FF0000"/></solidFill>
+          <lnT><noFill/></lnT>
+        </tcPr>
+      `);
+      const rows: TableRow[] = [
+        {
+          height: 100,
+          cells: [{ gridSpan: 1, rowSpan: 1, hMerge: false, vMerge: false, properties: tcPrXml }],
+        },
+      ];
+
+      const el = renderTable(
+        makeTable({
+          columns: [300],
+          rows,
+          tableStyleId: '{BAND_WITH_BORDERS}',
+          properties: tblPr,
+        }),
+        ctx,
+      );
+      const td = el.querySelector('td')!;
+
+      expect(td.style.backgroundColor).toBe('rgb(255, 0, 0)');
+      expect(td.style.borderTop).toBe('');
+      expect(td.style.borderBottom).not.toBe('');
+    });
+
     // -----------------------------------------------------------------------
     // Band row/col styling
     // -----------------------------------------------------------------------
@@ -2171,6 +2255,105 @@ describe('renderTable', () => {
       expect(span).not.toBeNull();
       // tcTxStyle color FFFFFF should be applied (white), not inherited black
       expect(span!.style.color).toBe('rgb(255, 255, 255)');
+    });
+
+    it('tcTxStyle text color also colors table bullet markers when bullets follow text', () => {
+      const ctx = makeCtxWithTableStyle(`
+        <tblStyleLst>
+          <tblStyle styleId="{BULLET_TXSTYLE}">
+            <firstRow>
+              <tcTxStyle><srgbClr val="FFFFFF"/></tcTxStyle>
+              <tcStyle><fill><solidFill><srgbClr val="1F4E79"/></solidFill></fill></tcStyle>
+            </firstRow>
+          </tblStyle>
+        </tblStyleLst>
+      `);
+      const tblPr = parseXml('<tblPr firstRow="1"/>');
+      const rows: TableRow[] = [
+        {
+          height: 100,
+          cells: [
+            {
+              gridSpan: 1,
+              rowSpan: 1,
+              hMerge: false,
+              vMerge: false,
+              textBody: {
+                paragraphs: [
+                  {
+                    properties: parseXml('<pPr><buChar char="•"/></pPr>'),
+                    runs: [{ text: 'Bullet inherits table text color' }],
+                    level: 0,
+                  },
+                ],
+              } as any,
+            },
+          ],
+        },
+      ];
+
+      const el = renderTable(
+        makeTable({ columns: [400], rows, tableStyleId: '{BULLET_TXSTYLE}', properties: tblPr }),
+        ctx,
+      );
+      const spans = el.querySelectorAll('span');
+
+      expect(spans[0].textContent).toBe('• ');
+      expect(spans[0].style.color).toBe('rgb(255, 255, 255)');
+      expect(spans[1].style.color).toBe('rgb(255, 255, 255)');
+    });
+
+    it('explicit table bullet color overrides tcTxStyle color without changing run text color', () => {
+      const ctx = makeCtxWithTableStyle(`
+        <tblStyleLst>
+          <tblStyle styleId="{BULLET_CLR_OVERRIDE}">
+            <firstRow>
+              <tcTxStyle><srgbClr val="FFFFFF"/></tcTxStyle>
+              <tcStyle><fill><solidFill><srgbClr val="000000"/></solidFill></fill></tcStyle>
+            </firstRow>
+          </tblStyle>
+        </tblStyleLst>
+      `);
+      const tblPr = parseXml('<tblPr firstRow="1"/>');
+      const rows: TableRow[] = [
+        {
+          height: 100,
+          cells: [
+            {
+              gridSpan: 1,
+              rowSpan: 1,
+              hMerge: false,
+              vMerge: false,
+              textBody: {
+                paragraphs: [
+                  {
+                    properties: parseXml(
+                      '<pPr><buChar char="•"/><buClr><srgbClr val="FF0000"/></buClr></pPr>',
+                    ),
+                    runs: [{ text: 'Run remains white' }],
+                    level: 0,
+                  },
+                ],
+              } as any,
+            },
+          ],
+        },
+      ];
+
+      const el = renderTable(
+        makeTable({
+          columns: [400],
+          rows,
+          tableStyleId: '{BULLET_CLR_OVERRIDE}',
+          properties: tblPr,
+        }),
+        ctx,
+      );
+      const spans = el.querySelectorAll('span');
+
+      expect(spans[0].textContent).toBe('• ');
+      expect(spans[0].style.color).toBe('rgb(255, 0, 0)');
+      expect(spans[1].style.color).toBe('rgb(255, 255, 255)');
     });
 
     // -----------------------------------------------------------------------

@@ -1,0 +1,13 @@
+{
+  "name": "oracle-pypptx-composite-0016-dense-cjk-bullet-cards",
+  "generator": "python-pptx",
+  "slides": [
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    }
+  ]
+}

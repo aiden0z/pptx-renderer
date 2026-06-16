@@ -273,6 +273,44 @@ describe('buildTextIndex', () => {
     });
   });
 
+  it('keeps group child coordinates stable when childExtent is degenerate', () => {
+    const child = parseXml(templateShape('52', 'degenerate-group-label', 'Degenerate group label'));
+    const group: GroupNodeData = {
+      id: 'degenerate-group',
+      name: 'degenerate-group',
+      nodeType: 'group',
+      position: { x: 80, y: 60 },
+      size: { w: 300, h: 180 },
+      rotation: 0,
+      flipH: false,
+      flipV: false,
+      childOffset: { x: 0, y: 0 },
+      childExtent: { w: 0, h: 0 },
+      children: [child],
+      source: emptySource,
+    };
+    const pres = presentation();
+    pres.slides[0].nodes = [group];
+
+    const entry = buildTextIndex(pres).find((item) => item.text === 'Degenerate group label');
+
+    expect(entry?.bounds).toMatchObject({ x: 176, y: 108, w: 192, h: 48 });
+  });
+
+  it('ignores shapes without a text body while continuing to index later nodes', () => {
+    const noTextShape: ShapeNodeData = {
+      ...shape('empty-shape', ''),
+      textBody: undefined,
+    };
+    const pres = presentation();
+    pres.slides[0].nodes = [noTextShape, shape('later-shape', 'Later searchable text')];
+
+    const index = buildTextIndex(pres);
+
+    expect(index.map((entry) => entry.nodeId)).toContain('later-shape');
+    expect(index.map((entry) => entry.nodeId)).not.toContain('empty-shape');
+  });
+
   it('indexes inherited placeholder bounds for lazy group children', () => {
     const child = parseXml(`
       <p:sp xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
@@ -430,6 +468,60 @@ describe('buildTextIndex', () => {
 
     expect(buildTextIndex(pres).map((entry) => entry.text)).toContain('Searchable SmartArt label');
   });
+
+  it('respects includeShapes, includeTables, and includeGroups options independently', () => {
+    const pres = presentation();
+    pres.slides[0].nodes.push({
+      id: 'group',
+      name: 'group',
+      nodeType: 'group',
+      position: { x: 0, y: 0 },
+      size: { w: 100, h: 100 },
+      rotation: 0,
+      flipH: false,
+      flipV: false,
+      childOffset: { x: 0, y: 0 },
+      childExtent: { w: 100, h: 100 },
+      children: [parseXml(templateShape('91', 'nested', 'Grouped search text'))],
+      source: emptySource,
+    });
+
+    expect(buildTextIndex(pres, { includeShapes: false }).map((entry) => entry.text)).not.toContain(
+      'GPU 算力 overview',
+    );
+    expect(buildTextIndex(pres, { includeTables: false }).map((entry) => entry.text)).not.toContain(
+      'Region',
+    );
+    expect(buildTextIndex(pres, { includeGroups: false }).map((entry) => entry.text)).not.toContain(
+      'Grouped search text',
+    );
+  });
+
+  it('skips non-renderable group children without aborting text indexing', () => {
+    const pres = presentation();
+    pres.slides = [pres.slides[0]];
+    pres.slides[0].nodes = [
+      {
+        id: 'mixed-group',
+        name: 'mixed-group',
+        nodeType: 'group',
+        position: { x: 0, y: 0 },
+        size: { w: 100, h: 100 },
+        rotation: 0,
+        flipH: false,
+        flipV: false,
+        childOffset: { x: 0, y: 0 },
+        childExtent: { w: 100, h: 100 },
+        children: [
+          parseXml('<unknown/>'),
+          parseXml(templateShape('92', 'nested', 'Still indexed')),
+        ],
+        source: emptySource,
+      },
+    ];
+
+    expect(buildTextIndex(pres).map((entry) => entry.text)).toEqual(['Still indexed']);
+  });
 });
 
 describe('searchText', () => {
@@ -476,5 +568,25 @@ describe('searchText', () => {
 
     expect(results).toEqual([]);
     expect(searchPresentation(presentation(), 'capacity', { wholeWord: true })).toHaveLength(2);
+  });
+
+  it('returns no results for an empty string query', () => {
+    expect(searchText(buildTextIndex(presentation()), '')).toEqual([]);
+  });
+
+  it('advances zero-length regular expression matches without looping forever', () => {
+    const index = buildTextIndex(presentation()).slice(0, 1);
+
+    expect(searchText(index, /^/g)).toEqual([]);
+  });
+
+  it('supports regex strings and clipped snippets', () => {
+    const results = searchText(buildTextIndex(presentation()), 'GPU|cpu', {
+      useRegex: true,
+      snippetRadius: 4,
+    });
+
+    expect(results.map((result) => result.matchStart)).toEqual([0, 0, 0, 17]);
+    expect(results[3].snippet).toBe('...and gpu quo...');
   });
 });

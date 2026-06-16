@@ -122,6 +122,17 @@ describe('parsePicNode', () => {
     });
   });
 
+  it('parses bottom/right-only crop rect values and defaults top/left to zero', () => {
+    const node = parsePicNode(makePicXml({ srcRect: { b: 30000, r: 40000 } }));
+
+    expect(node.crop).toEqual({
+      top: 0,
+      bottom: 0.3,
+      left: 0,
+      right: 0.4,
+    });
+  });
+
   it('ignores empty srcRect with no crop attributes', () => {
     const node = parsePicNode(makePicXml({ srcRect: {} }));
 

@@ -79,6 +79,27 @@ describe('parseGroupNode', () => {
     expect(node.childOffset.y).toBe(0);
   });
 
+  it('defaults missing chOff attributes and non-positive chExt axes independently', () => {
+    const node = parseGroupNode(
+      parseXml(`
+        <grpSp xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+          <nvGrpSpPr><cNvPr id="20" name="Group 1"/><nvPr/></nvGrpSpPr>
+          <grpSpPr>
+            <xfrm>
+              <off x="0" y="0"/>
+              <ext cx="1828800" cy="914400"/>
+              <chOff/>
+              <chExt cx="0" cy="-1"/>
+            </xfrm>
+          </grpSpPr>
+        </grpSp>
+      `),
+    );
+
+    expect(node.childOffset).toEqual({ x: 0, y: 0 });
+    expect(node.childExtent).toEqual(node.size);
+  });
+
   it('ignores non-shape children (e.g. grpSpPr)', () => {
     // grpSpPr is NOT a shape child, should not be in children[]
     const node = parseGroupNode(makeGroupXml({ childCount: 0 }));

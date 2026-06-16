@@ -114,6 +114,145 @@ describe('parseMaster', () => {
     expect(master.placeholders).toHaveLength(1);
   });
 
+  it('recognizes graphicFrame and connector placeholders', () => {
+    const master = parseMaster(makeMasterXml({
+      shapes: `
+        <graphicFrame>
+          <nvGraphicFramePr><cNvPr id="6" name="Chart"/><nvPr><ph type="chart"/></nvPr></nvGraphicFramePr>
+          <xfrm><off x="0" y="0"/><ext cx="914400" cy="914400"/></xfrm>
+        </graphicFrame>
+        <cxnSp>
+          <nvCxnSpPr><cNvPr id="7" name="Connector"/><nvPr><ph type="body"/></nvPr></nvCxnSpPr>
+          <spPr><xfrm><off x="0" y="0"/><ext cx="457200" cy="457200"/></xfrm></spPr>
+        </cxnSp>
+      `,
+    }));
+
+    expect(master.placeholders).toHaveLength(2);
+    expect(master.placeholderEntries?.map((entry) => entry.absoluteXfrm?.size.w)).toEqual([
+      96,
+      48,
+    ]);
+  });
+
+  it('extracts grouped placeholder absolute transforms from master spTree', () => {
+    const master = parseMaster(makeMasterXml({
+      shapes: `
+        <grpSp>
+          <grpSpPr>
+            <xfrm>
+              <off x="914400" y="457200"/><ext cx="4572000" cy="2286000"/>
+              <chOff x="914400" y="0"/><chExt cx="9144000" cy="4572000"/>
+            </xfrm>
+          </grpSpPr>
+          <sp>
+            <nvSpPr><cNvPr id="8" name="Grouped"/><nvPr><ph type="body"/></nvPr></nvSpPr>
+            <spPr>
+              <xfrm><off x="1828800" y="914400"/><ext cx="914400" cy="914400"/></xfrm>
+            </spPr>
+          </sp>
+        </grpSp>
+      `,
+    }));
+
+    const entry = master.placeholderEntries![0];
+    expect(entry.absoluteXfrm?.position.x).toBeCloseTo(144, 0);
+    expect(entry.absoluteXfrm?.position.y).toBeCloseTo(96, 0);
+    expect(entry.absoluteXfrm?.size.w).toBeCloseTo(48, 0);
+    expect(entry.absoluteXfrm?.size.h).toBeCloseTo(48, 0);
+  });
+
+  it('keeps collecting master placeholders when group transforms are missing', () => {
+    const master = parseMaster(makeMasterXml({
+      shapes: `
+        <grpSp>
+          <sp>
+            <nvSpPr><cNvPr id="9" name="NoGroupXfrm"/><nvPr><ph type="body"/></nvPr></nvSpPr>
+            <spPr>
+              <xfrm><off x="0" y="0"/><ext cx="914400" cy="914400"/></xfrm>
+            </spPr>
+          </sp>
+        </grpSp>
+      `,
+    }));
+
+    expect(master.placeholders).toHaveLength(1);
+    expect(master.placeholderEntries![0].absoluteXfrm?.size.w).toBe(96);
+  });
+
+  it('guards zero child extents in master grouped placeholders', () => {
+    const master = parseMaster(makeMasterXml({
+      shapes: `
+        <grpSp>
+          <grpSpPr>
+            <xfrm>
+              <off x="0" y="0"/><ext cx="914400" cy="914400"/>
+              <chExt cx="0" cy="0"/>
+            </xfrm>
+          </grpSpPr>
+          <sp>
+            <nvSpPr><cNvPr id="10" name="ZeroChildExtent"/><nvPr><ph type="body"/></nvPr></nvSpPr>
+            <spPr>
+              <xfrm><off x="0" y="0"/><ext cx="1" cy="1"/></xfrm>
+            </spPr>
+          </sp>
+        </grpSp>
+      `,
+    }));
+
+    expect(master.placeholders).toHaveLength(1);
+    expect(master.placeholderEntries![0].absoluteXfrm?.size.w).toBeCloseTo(96, 0);
+  });
+
+  it('defaults missing placeholder xfrm attributes to zero', () => {
+    const master = parseMaster(makeMasterXml({
+      shapes: `
+        <sp>
+          <nvSpPr><cNvPr id="11" name="IncompleteXfrm"/><nvPr><ph type="body"/></nvPr></nvSpPr>
+          <spPr><xfrm><off/><ext/></xfrm></spPr>
+        </sp>
+      `,
+    }));
+
+    expect(master.placeholders).toHaveLength(1);
+    expect(master.placeholderEntries![0].absoluteXfrm).toEqual({
+      position: { x: 0, y: 0 },
+      size: { w: 0, h: 0 },
+    });
+  });
+
+  it('composes transforms for nested grouped placeholders with sparse group xfrm attrs', () => {
+    const master = parseMaster(makeMasterXml({
+      shapes: `
+        <grpSp>
+          <grpSpPr>
+            <xfrm>
+              <off x="914400" y="0"/><ext cx="1828800" cy="1828800"/>
+              <chOff/><chExt/>
+            </xfrm>
+          </grpSpPr>
+          <grpSp>
+            <grpSpPr>
+              <xfrm>
+                <off x="457200" y="457200"/><ext cx="914400" cy="914400"/>
+                <chOff x="0" y="0"/><chExt cx="914400" cy="914400"/>
+              </xfrm>
+            </grpSpPr>
+            <sp>
+              <nvSpPr><cNvPr id="12" name="Nested"/><nvPr><ph type="body"/></nvPr></nvSpPr>
+              <spPr><xfrm><off x="457200" y="0"/><ext cx="457200" cy="457200"/></xfrm></spPr>
+            </sp>
+          </grpSp>
+        </grpSp>
+      `,
+    }));
+
+    expect(master.placeholders).toHaveLength(1);
+    expect(master.placeholderEntries![0].absoluteXfrm!.position.x).toBeCloseTo(192, 0);
+    expect(master.placeholderEntries![0].absoluteXfrm!.position.y).toBeCloseTo(48, 0);
+    expect(master.placeholderEntries![0].absoluteXfrm!.size.w).toBeCloseTo(48, 0);
+  });
+
   it('returns empty color map when clrMap is absent', () => {
     const xml = parseXml(`
       <sldMaster>
