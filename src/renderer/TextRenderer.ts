@@ -314,6 +314,8 @@ interface MergedRunStyle {
   textOutlineColor?: string;
   /** Text outline CSS gradient (gradient fill on ln) — used as mask-image for fade effect. */
   textOutlineGradientCss?: string;
+  /** CSS text-shadow fragments from a:rPr/a:effectLst effects. */
+  textShadow?: string;
 }
 
 function getRunColorKind(rPr: SafeXmlNode | undefined): 'none' | 'defaultTextScheme' | 'explicit' {
@@ -446,6 +448,19 @@ function mergeRunProps(target: MergedRunStyle, rPr: SafeXmlNode, ctx: RenderCont
   const baseline = rPr.numAttr('baseline');
   if (baseline !== undefined) target.baseline = baseline;
 
+  const effectLst = rPr.child('effectLst');
+  const outerShdw = effectLst.child('outerShdw');
+  if (outerShdw.exists()) {
+    const textOuterShadow = resolveTextOuterShadow(outerShdw, ctx);
+    if (textOuterShadow) appendTextShadow(target, textOuterShadow);
+  }
+
+  const glow = effectLst.child('glow');
+  if (glow.exists()) {
+    const textGlowShadow = resolveTextGlowShadow(glow, ctx);
+    if (textGlowShadow) appendTextShadow(target, textGlowShadow);
+  }
+
   // Text noFill: a:noFill on rPr makes text interior transparent
   if (rPr.child('noFill').exists()) {
     delete target.color;
@@ -514,6 +529,33 @@ function colorToCssLocal(color: string, alpha: number): string {
   if (alpha >= 1) return hex;
   const { r, g, b } = hexToRgbInternal(hex);
   return `rgba(${r},${g},${b},${alpha.toFixed(3)})`;
+}
+
+function resolveTextGlowShadow(glow: SafeXmlNode, ctx: RenderContext): string | undefined {
+  const radiusPx = emuToPx(glow.numAttr('rad') ?? 0);
+  if (!(radiusPx > 0)) return undefined;
+
+  const { color, alpha } = resolveColor(glow, ctx);
+  if (!color || alpha <= 0) return undefined;
+
+  return `0px 0px ${radiusPx.toFixed(1)}px ${colorToCssLocal(color, alpha)}`;
+}
+
+function resolveTextOuterShadow(outerShdw: SafeXmlNode, ctx: RenderContext): string | undefined {
+  const distPx = emuToPx(outerShdw.numAttr('dist') ?? 0);
+  const blurPx = emuToPx(outerShdw.numAttr('blurRad') ?? 0);
+  const dirDeg = (outerShdw.numAttr('dir') ?? 0) / 60000;
+  const offsetX = distPx * Math.cos((dirDeg * Math.PI) / 180);
+  const offsetY = distPx * Math.sin((dirDeg * Math.PI) / 180);
+
+  const { color, alpha } = resolveColor(outerShdw, ctx);
+  if (!color || alpha <= 0) return undefined;
+
+  return `${offsetX.toFixed(1)}px ${offsetY.toFixed(1)}px ${blurPx.toFixed(1)}px ${colorToCssLocal(color, alpha)}`;
+}
+
+function appendTextShadow(target: MergedRunStyle, shadow: string): void {
+  target.textShadow = target.textShadow ? `${target.textShadow}, ${shadow}` : shadow;
 }
 
 function getResolvedRunColor(rPr: SafeXmlNode | undefined, ctx: RenderContext): string | undefined {
@@ -1177,6 +1219,9 @@ export function renderTextBody(
       }
       if (runStyle.underlineColor) {
         element.style.textDecorationColor = runStyle.underlineColor;
+      }
+      if (runStyle.textShadow) {
+        element.style.textShadow = runStyle.textShadow;
       }
 
       // Gradient text fill: use background-clip to paint text with gradient

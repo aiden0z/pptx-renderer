@@ -350,6 +350,11 @@ function applyPictureEffects(wrapper: HTMLElement, node: PicNodeData, ctx: Rende
     applyPictureOuterShadow(wrapper, node, outerShdw, ctx);
   }
 
+  const glow = effectLst.child('glow');
+  if (glow.exists()) {
+    applyPictureGlow(wrapper, glow, ctx);
+  }
+
   const reflection = effectLst.child('reflection');
   if (reflection.exists()) {
     applyPictureReflection(wrapper, reflection);
@@ -382,7 +387,10 @@ function applyPictureOuterShadow(
     return;
   }
 
-  wrapper.style.filter = `drop-shadow(${offsetX.toFixed(1)}px ${offsetY.toFixed(1)}px ${blurPx.toFixed(1)}px ${shadowColor})`;
+  appendCssFilter(
+    wrapper,
+    `drop-shadow(${offsetX.toFixed(1)}px ${offsetY.toFixed(1)}px ${blurPx.toFixed(1)}px ${shadowColor})`,
+  );
 }
 
 function resolveEffectColor(node: SafeXmlNode, ctx: RenderContext, fallback: string): string {
@@ -391,6 +399,26 @@ function resolveEffectColor(node: SafeXmlNode, ctx: RenderContext, fallback: str
   const hex = color.startsWith('#') ? color : `#${color}`;
   const { r, g, b } = hexToRgb(hex);
   return `rgba(${r},${g},${b},${alpha.toFixed(3)})`;
+}
+
+function appendCssFilter(el: HTMLElement, filter: string): void {
+  const current = el.style.filter.trim();
+  el.style.filter = current ? `${current} ${filter}` : filter;
+}
+
+function applyPictureGlow(wrapper: HTMLElement, glow: SafeXmlNode, ctx: RenderContext): void {
+  const radiusPx = emuToPx(glow.numAttr('rad') ?? 0);
+  if (!(radiusPx > 0)) return;
+
+  const { color, alpha } = resolveColor(glow, ctx);
+  if (!color || alpha <= 0) return;
+
+  const hex = color.startsWith('#') ? color : `#${color}`;
+  const { r, g, b } = hexToRgb(hex);
+  appendCssFilter(
+    wrapper,
+    `drop-shadow(0px 0px ${radiusPx.toFixed(1)}px rgba(${r},${g},${b},${alpha.toFixed(3)}))`,
+  );
 }
 
 function applyPictureReflection(wrapper: HTMLElement, reflection: SafeXmlNode): void {
@@ -650,7 +678,9 @@ function renderEmf(
       // Render nothing — transparent placeholder
       break;
     case 'unsupported':
-      renderUnsupportedPlaceholder(wrapper, mediaPath);
+      // Vector-only EMF cannot be faithfully rendered in the browser. A visible
+      // placeholder is worse than transparent fallback because it pollutes the
+      // slide with artifacts that are not present in PowerPoint/PDF exports.
       break;
   }
 }

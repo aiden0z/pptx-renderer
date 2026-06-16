@@ -5606,6 +5606,42 @@ describe('ChartRenderer', () => {
       expect(yAxis.interval).toBe(5);
     });
 
+    it('uses Office-like 1000-unit value axis ticks for 8390-scale bar charts (model-platform slide 3)', () => {
+      const xml = `<c:chartSpace
+        xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart"
+        xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+        <c:chart>
+          <c:autoTitleDeleted val="1"/>
+          <c:plotArea>
+            <c:barChart>
+              <c:barDir val="col"/>
+              <c:grouping val="clustered"/>
+              <c:ser>
+                <c:idx val="0"/><c:order val="0"/>
+                <c:tx><c:strRef><c:strCache><c:ptCount val="1"/><c:pt idx="0"><c:v>Apps</c:v></c:pt></c:strCache></c:strRef></c:tx>
+                <c:cat><c:strRef><c:strCache><c:ptCount val="6"/><c:pt idx="0"><c:v>2023</c:v></c:pt><c:pt idx="1"><c:v>2024</c:v></c:pt><c:pt idx="2"><c:v>2025</c:v></c:pt><c:pt idx="3"><c:v>2026</c:v></c:pt><c:pt idx="4"><c:v>2027</c:v></c:pt><c:pt idx="5"><c:v>2028</c:v></c:pt></c:strCache></c:strRef></c:cat>
+                <c:val><c:numRef><c:numCache><c:ptCount val="6"/><c:pt idx="0"><c:v>550</c:v></c:pt><c:pt idx="1"><c:v>688</c:v></c:pt><c:pt idx="2"><c:v>1718</c:v></c:pt><c:pt idx="3"><c:v>3222</c:v></c:pt><c:pt idx="4"><c:v>5372</c:v></c:pt><c:pt idx="5"><c:v>8390</c:v></c:pt></c:numCache></c:numRef></c:val>
+              </c:ser>
+              <c:ser>
+                <c:idx val="1"/><c:order val="1"/>
+                <c:tx><c:strRef><c:strCache><c:ptCount val="1"/><c:pt idx="0"><c:v>CAGR</c:v></c:pt></c:strCache></c:strRef></c:tx>
+                <c:cat><c:strRef><c:strCache><c:ptCount val="6"/><c:pt idx="0"><c:v>2023</c:v></c:pt><c:pt idx="1"><c:v>2024</c:v></c:pt><c:pt idx="2"><c:v>2025</c:v></c:pt><c:pt idx="3"><c:v>2026</c:v></c:pt><c:pt idx="4"><c:v>2027</c:v></c:pt><c:pt idx="5"><c:v>2028</c:v></c:pt></c:strCache></c:strRef></c:cat>
+                <c:val><c:numRef><c:numCache><c:ptCount val="6"/><c:pt idx="0"><c:v>4</c:v></c:pt><c:pt idx="1"><c:v>7.28</c:v></c:pt><c:pt idx="2"><c:v>17.16</c:v></c:pt><c:pt idx="3"><c:v>37.44</c:v></c:pt><c:pt idx="4"><c:v>69.92</c:v></c:pt><c:pt idx="5"><c:v>130.35</c:v></c:pt></c:numCache></c:numRef></c:val>
+              </c:ser>
+              <c:axId val="1"/><c:axId val="2"/>
+            </c:barChart>
+            <c:catAx><c:axId val="1"/><c:delete val="0"/><c:axPos val="b"/><c:crossAx val="2"/></c:catAx>
+            <c:valAx><c:axId val="2"/><c:scaling><c:orientation val="minMax"/></c:scaling><c:delete val="0"/><c:axPos val="l"/><c:majorGridlines/><c:crossAx val="1"/></c:valAx>
+          </c:plotArea>
+        </c:chart>
+      </c:chartSpace>`;
+
+      const { option } = parseChartOption(xml);
+      const yAxis = option.yAxis as any;
+      expect(yAxis.interval).toBe(1000);
+      expect(yAxis.max).toBe(9000);
+    });
+
     it('places category axis labels on the value-axis zero crossing when crosses=autoZero (oracle-pypptx-chart-0002)', () => {
       const xml = `<c:chartSpace
         xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart"

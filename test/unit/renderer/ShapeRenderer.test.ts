@@ -2815,6 +2815,31 @@ describe('ShapeRenderer', () => {
     expect(el.innerHTML).toContain('stdDeviation="2.10"');
   });
 
+  it('applies shape glow from spPr effectLst (ai-computing slide 27)', () => {
+    const xml = `
+      <p:sp xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
+            xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+        <p:nvSpPr><p:cNvPr id="72" name="文本框 72"/><p:cNvSpPr txBox="1"/><p:nvPr/></p:nvSpPr>
+        <p:spPr>
+          <a:xfrm><a:off x="0" y="0"/><a:ext cx="1000000" cy="600000"/></a:xfrm>
+          <a:prstGeom prst="rect"><a:avLst/></a:prstGeom>
+          <a:noFill/>
+          <a:effectLst>
+            <a:glow rad="127000">
+              <a:srgbClr val="C9D0F0"><a:alpha val="40000"/></a:srgbClr>
+            </a:glow>
+          </a:effectLst>
+        </p:spPr>
+      </p:sp>
+    `;
+
+    const el = renderShape(parseShapeNode(parseXml(xml)), createMockRenderContext());
+
+    expect(el.style.filter).toContain('drop-shadow');
+    expect(el.style.filter).toContain('13.3px');
+    expect(el.style.filter).toContain('rgba(201,208,240,0.400)');
+  });
+
   it('renders rect shape with solidFill color', () => {
     const xml = `
       <p:sp xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"

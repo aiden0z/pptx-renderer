@@ -3855,6 +3855,10 @@ function applyNiceAxisRange(option: echarts.EChartsOption): void {
   }
   allValues.push(...unstackedValues);
 
+  const hasBarSeries = seriesArr.some((s: { type?: string }) => s.type === 'bar');
+  const hasNonBarSeries = seriesArr.some((s: { type?: string }) => s.type && s.type !== 'bar');
+  const defaultDesiredTicks = hasBarSeries && !hasNonBarSeries ? 10 : 8;
+
   if (allValues.length === 0) return;
 
   const cartesianScatter =
@@ -3918,7 +3922,7 @@ function applyNiceAxisRange(option: echarts.EChartsOption): void {
       const dataMin = Math.min(...axisValues);
       const dataMax = Math.max(...axisValues);
 
-      const desiredTicks = 8;
+      const desiredTicks = defaultDesiredTicks;
       const interval = niceAxisInterval(dataMax, dataMin, desiredTicks);
 
       // Only set max when not already specified

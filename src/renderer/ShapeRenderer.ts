@@ -130,6 +130,29 @@ function appendTransform(el: HTMLElement, transform: string): void {
   el.style.transform = `${el.style.transform || ''} ${transform}`.trim();
 }
 
+function appendCssFilter(el: HTMLElement, filter: string): void {
+  const current = el.style.filter.trim();
+  el.style.filter = current ? `${current} ${filter}` : filter;
+}
+
+function resolveGlowFilter(glow: SafeXmlNode, ctx: RenderContext): string | undefined {
+  const radiusPx = emuToPx(glow.numAttr('rad') ?? 0);
+  if (!(radiusPx > 0)) return undefined;
+
+  const { color, alpha } = resolveColor(glow, ctx);
+  if (!color || alpha <= 0) return undefined;
+
+  const hex = color.startsWith('#') ? color : `#${color}`;
+  const { r, g, b } = hexToRgb(hex);
+  return `drop-shadow(0px 0px ${radiusPx.toFixed(1)}px rgba(${r},${g},${b},${alpha.toFixed(3)}))`;
+}
+
+function applyGlowFilter(el: HTMLElement, glow: SafeXmlNode, ctx: RenderContext): void {
+  const filter = resolveGlowFilter(glow, ctx);
+  if (!filter) return;
+  appendCssFilter(el, filter);
+}
+
 function expandCssLengthForScale(length: string, scale: number): string {
   if (!(scale > 0)) return length;
 
@@ -2353,9 +2376,17 @@ export function renderShape(node: ShapeNodeData, ctx: RenderContext): HTMLElemen
             opacity: shdAlpha,
           });
         } else {
-          wrapper.style.filter = `drop-shadow(${offsetX.toFixed(1)}px ${offsetY.toFixed(1)}px ${blurPx.toFixed(1)}px ${shadowColor})`;
+          appendCssFilter(
+            wrapper,
+            `drop-shadow(${offsetX.toFixed(1)}px ${offsetY.toFixed(1)}px ${blurPx.toFixed(1)}px ${shadowColor})`,
+          );
         }
       }
+    }
+
+    const glow = effectiveEffectLst.child('glow');
+    if (glow.exists()) {
+      applyGlowFilter(wrapper, glow, ctx);
     }
 
     // Reflection is not directly representable in standard CSS across browsers.

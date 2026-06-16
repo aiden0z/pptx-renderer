@@ -376,6 +376,32 @@ describe('renderImage', () => {
       expect(reflect).toContain('2.7px');
     });
 
+    it('applies picture glow from spPr effectLst', () => {
+      const ctx = createCtxWithMedia();
+      const source = xmlNode(
+        `<pic xmlns="http://schemas.openxmlformats.org/drawingml/2006/main"
+              xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+          <nvPicPr><cNvPr id="1" name="pic"/><nvPr/></nvPicPr>
+          <blipFill><blip r:embed="rId1"/></blipFill>
+          <spPr>
+            <xfrm><off x="0" y="0"/><ext cx="0" cy="0"/></xfrm>
+            <effectLst>
+              <glow rad="63500">
+                <srgbClr val="6AC346"><alpha val="40000"/></srgbClr>
+              </glow>
+            </effectLst>
+          </spPr>
+        </pic>`,
+      );
+      const node = createPicNode({ source });
+
+      const el = renderImage(node, ctx);
+
+      expect(el.style.filter).toContain('drop-shadow');
+      expect(el.style.filter).toContain('6.7px');
+      expect(el.style.filter).toContain('rgba(106,195,70,0.400)');
+    });
+
     it('navigates picture-level external hyperlinks through onNavigate', () => {
       const onNavigate = vi.fn();
       const ctx = createCtxWithMedia();
@@ -2902,7 +2928,7 @@ describe('renderImage', () => {
       spy.mockRestore();
     });
 
-    it('renders unsupported placeholder for unsupported EMF content', async () => {
+    it('renders nothing for unsupported vector-only EMF content', async () => {
       const emfModule = await import('../../../src/utils/emfParser');
       const spy = vi.spyOn(emfModule, 'parseEmfContent').mockReturnValue({
         type: 'unsupported',
@@ -2912,8 +2938,10 @@ describe('renderImage', () => {
       const node = createPicNode({ blipEmbed: 'rId1' });
       const el = renderImage(node, ctx);
 
-      expect(el.textContent).toContain('Unsupported format');
-      expect(el.textContent).toContain('EMF');
+      expect(el).toBeDefined();
+      expect(el.querySelector('img')).toBeNull();
+      expect(el.querySelector('div')).toBeNull();
+      expect(el.textContent).toBe('');
 
       spy.mockRestore();
     });

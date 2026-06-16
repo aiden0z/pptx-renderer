@@ -131,6 +131,68 @@ describe('TextRenderer — renderTextBody', () => {
       expect(span!.style.fontStyle).toBe('italic');
     });
 
+    it('applies text glow from rPr effectLst (ai-computing slide 27)', () => {
+      const body = makeTextBody({
+        paragraphs: [
+          {
+            runs: [
+              {
+                text: 'Glowing text',
+                properties: xmlNode(
+                  `<rPr>
+                    <effectLst>
+                      <glow rad="762000">
+                        <srgbClr val="C9D0F0"><alpha val="40000"/></srgbClr>
+                      </glow>
+                    </effectLst>
+                  </rPr>`,
+                ),
+              },
+            ],
+            level: 0,
+          },
+        ],
+      });
+
+      const container = renderToContainer(body);
+      const span = container.querySelector('span');
+
+      expect(span).not.toBeNull();
+      expect(span!.style.textShadow).toContain('80.0px');
+      expect(span!.style.textShadow.replace(/\s/g, '')).toContain('rgba(201,208,240,0.400)');
+    });
+
+    it('applies text outer shadow from rPr effectLst (xcloud-solution slide 26)', () => {
+      const body = makeTextBody({
+        paragraphs: [
+          {
+            runs: [
+              {
+                text: 'Shadowed text',
+                properties: xmlNode(
+                  `<rPr>
+                    <effectLst>
+                      <outerShdw blurRad="38100" dist="38100" dir="2700000" algn="tl">
+                        <srgbClr val="000000"><alpha val="43137"/></srgbClr>
+                      </outerShdw>
+                    </effectLst>
+                  </rPr>`,
+                ),
+              },
+            ],
+            level: 0,
+          },
+        ],
+      });
+
+      const container = renderToContainer(body);
+      const span = container.querySelector('span');
+
+      expect(span).not.toBeNull();
+      expect(span!.style.textShadow).toContain('2.8px 2.8px 4.0px');
+      expect(span!.style.textShadow.replace(/\s/g, '')).toContain('rgba(0,0,0,0.431)');
+    });
+
     it('applies underline from rPr', () => {
       const body = makeTextBody({
         paragraphs: [
