@@ -33,14 +33,21 @@ DEFAULT_OUTPUT_DIR = Path("docs/agent-tmp/perf-baseline")
 class BenchmarkResult:
     case_name: str = ""
     strategy: str = ""
+    lazy_media: bool = False
     bytes: int = 0
     slides: int = 0
     nodes: int = 0
     fetch_ms: float = 0.0
     parse_ms: float = 0.0
     build_ms: float = 0.0
+    first_slide_ms: float = 0.0
     render_ms: float = 0.0
     two_raf_ms: float = 0.0
+    heap_used_bytes: int = 0
+    media_bytes: int = 0
+    media_count: int = 0
+    blob_urls_created: int = 0
+    blob_urls_revoked: int = 0
     element_count: int = 0
     list_items: int = 0
     mounted_slides: int = 0
@@ -56,14 +63,21 @@ class BenchmarkResult:
         return cls(
             case_name=str(payload.get("caseName", "")),
             strategy=str(payload.get("strategy", "")),
+            lazy_media=bool(payload.get("lazyMedia", False)),
             bytes=int(payload.get("bytes", 0)),
             slides=int(payload.get("slides", 0)),
             nodes=int(payload.get("nodes", 0)),
             fetch_ms=float(payload.get("fetchMs", 0)),
             parse_ms=float(payload.get("parseMs", 0)),
             build_ms=float(payload.get("buildMs", 0)),
+            first_slide_ms=float(payload.get("firstSlideMs", 0)),
             render_ms=float(payload.get("renderMs", 0)),
             two_raf_ms=float(payload.get("twoRafMs", 0)),
+            heap_used_bytes=int(payload.get("heapUsedBytes", 0)),
+            media_bytes=int(payload.get("mediaBytes", 0)),
+            media_count=int(payload.get("mediaCount", 0)),
+            blob_urls_created=int(payload.get("blobUrlsCreated", 0)),
+            blob_urls_revoked=int(payload.get("blobUrlsRevoked", 0)),
             element_count=int(payload.get("elementCount", 0)),
             list_items=int(payload.get("listItems", 0)),
             mounted_slides=int(payload.get("mountedSlides", 0)),
@@ -81,14 +95,15 @@ def _round_ms(value: float) -> float:
 
 
 def format_bytes(num_bytes: int) -> str:
-    value = float(num_bytes)
+    sign = "-" if num_bytes < 0 else ""
+    value = float(abs(num_bytes))
     for unit in ("B", "KiB", "MiB", "GiB"):
         if value < 1024 or unit == "GiB":
             if unit == "B":
-                return f"{int(value)} B"
-            return f"{value:.1f} {unit}"
+                return f"{sign}{int(value)} B"
+            return f"{sign}{value:.1f} {unit}"
         value /= 1024
-    return f"{value:.1f} GiB"
+    return f"{sign}{value:.1f} GiB"
 
 
 def _result_to_json(result: BenchmarkResult) -> dict[str, Any]:
@@ -96,14 +111,21 @@ def _result_to_json(result: BenchmarkResult) -> dict[str, Any]:
     return {
         "caseName": raw.pop("case_name"),
         "strategy": raw.pop("strategy"),
+        "lazyMedia": raw.pop("lazy_media"),
         "bytes": raw.pop("bytes"),
         "slides": raw.pop("slides"),
         "nodes": raw.pop("nodes"),
         "fetchMs": raw.pop("fetch_ms"),
         "parseMs": raw.pop("parse_ms"),
         "buildMs": raw.pop("build_ms"),
+        "firstSlideMs": raw.pop("first_slide_ms"),
         "renderMs": raw.pop("render_ms"),
         "twoRafMs": raw.pop("two_raf_ms"),
+        "heapUsedBytes": raw.pop("heap_used_bytes"),
+        "mediaBytes": raw.pop("media_bytes"),
+        "mediaCount": raw.pop("media_count"),
+        "blobUrlsCreated": raw.pop("blob_urls_created"),
+        "blobUrlsRevoked": raw.pop("blob_urls_revoked"),
         "elementCount": raw.pop("element_count"),
         "listItems": raw.pop("list_items"),
         "mountedSlides": raw.pop("mounted_slides"),
@@ -136,8 +158,8 @@ def build_markdown_report(results: Iterable[BenchmarkResult], *, server_url: str
         f"- Generated: {datetime.now().isoformat(timespec='seconds')}",
         f"- Server: `{server_url}`",
         "",
-        "| Case | Strategy | Slides | Nodes | PPTX Size | Fetch ms | Parse ms | Build ms | Render ms | 2x RAF ms | DOM Elements | Mounted |",
-        "| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+        "| Case | Strategy | Lazy Media | Slides | Nodes | PPTX Size | Fetch ms | Parse ms | Build ms | First Slide ms | Render ms | 2x RAF ms | Heap Used | Media Bytes | Blob URLs | DOM Elements | Mounted |",
+        "| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
     ]
     for item in rows:
         lines.append(
@@ -146,14 +168,19 @@ def build_markdown_report(results: Iterable[BenchmarkResult], *, server_url: str
                 [
                     item.case_name,
                     item.strategy,
+                    "yes" if item.lazy_media else "no",
                     str(item.slides),
                     str(item.nodes),
                     format_bytes(item.bytes),
                     f"{item.fetch_ms:.1f}",
                     f"{item.parse_ms:.1f}",
                     f"{item.build_ms:.1f}",
+                    f"{item.first_slide_ms:.1f}",
                     f"{item.render_ms:.1f}",
                     f"{item.two_raf_ms:.1f}",
+                    format_bytes(item.heap_used_bytes),
+                    format_bytes(item.media_bytes),
+                    f"{item.blob_urls_created}/{item.blob_urls_revoked}",
                     str(item.element_count),
                     str(item.mounted_slides),
                 ]
@@ -206,14 +233,30 @@ def compare_results(
             if before_item.render_ms
             else 0.0
         )
+        first_slide_delta_ms = _round_ms(after_item.first_slide_ms - before_item.first_slide_ms)
+        first_slide_delta_pct = (
+            _round_ms((first_slide_delta_ms / before_item.first_slide_ms) * 100)
+            if before_item.first_slide_ms
+            else 0.0
+        )
         rows.append(
             {
                 "caseName": key[0],
                 "strategy": key[1],
+                "beforeFirstSlideMs": before_item.first_slide_ms,
+                "afterFirstSlideMs": after_item.first_slide_ms,
+                "firstSlideDeltaMs": first_slide_delta_ms,
+                "firstSlideDeltaPct": first_slide_delta_pct,
                 "beforeRenderMs": before_item.render_ms,
                 "afterRenderMs": after_item.render_ms,
                 "renderDeltaMs": render_delta_ms,
                 "renderDeltaPct": render_delta_pct,
+                "beforeHeapUsedBytes": before_item.heap_used_bytes,
+                "afterHeapUsedBytes": after_item.heap_used_bytes,
+                "heapDeltaBytes": after_item.heap_used_bytes - before_item.heap_used_bytes,
+                "beforeMediaBytes": before_item.media_bytes,
+                "afterMediaBytes": after_item.media_bytes,
+                "mediaDeltaBytes": after_item.media_bytes - before_item.media_bytes,
                 "beforeElementCount": before_item.element_count,
                 "afterElementCount": after_item.element_count,
                 "elementDelta": after_item.element_count - before_item.element_count,
@@ -236,8 +279,8 @@ def build_comparison_markdown_report(
         f"- Before: `{before_label}`",
         f"- After: `{after_label}`",
         "",
-        "| Case | Strategy | Before Render ms | After Render ms | Delta ms | Delta % | Before DOM | After DOM | DOM Delta |",
-        "| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+        "| Case | Strategy | Before First Slide ms | After First Slide ms | First Slide Delta ms | First Slide Delta % | Before Render ms | After Render ms | Render Delta ms | Render Delta % | Before Heap | After Heap | Heap Delta | Before Media | After Media | Media Delta | Before DOM | After DOM | DOM Delta |",
+        "| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
     ]
     for item in sorted_rows:
         lines.append(
@@ -246,10 +289,20 @@ def build_comparison_markdown_report(
                 [
                     str(item["caseName"]),
                     str(item["strategy"]),
+                    f"{float(item['beforeFirstSlideMs']):.1f}",
+                    f"{float(item['afterFirstSlideMs']):.1f}",
+                    f"{float(item['firstSlideDeltaMs']):.1f}",
+                    f"{float(item['firstSlideDeltaPct']):.1f}%",
                     f"{float(item['beforeRenderMs']):.1f}",
                     f"{float(item['afterRenderMs']):.1f}",
                     f"{float(item['renderDeltaMs']):.1f}",
                     f"{float(item['renderDeltaPct']):.1f}%",
+                    format_bytes(int(item["beforeHeapUsedBytes"])),
+                    format_bytes(int(item["afterHeapUsedBytes"])),
+                    format_bytes(int(item["heapDeltaBytes"])),
+                    format_bytes(int(item["beforeMediaBytes"])),
+                    format_bytes(int(item["afterMediaBytes"])),
+                    format_bytes(int(item["mediaDeltaBytes"])),
                     str(item["beforeElementCount"]),
                     str(item["afterElementCount"]),
                     str(item["elementDelta"]),
@@ -273,6 +326,7 @@ async def run_browser_benchmark(
     strategies: Iterable[str],
     viewport_width: int,
     viewport_height: int,
+    lazy_media: bool,
 ) -> list[BenchmarkResult]:
     try:
         from playwright.async_api import async_playwright
@@ -299,6 +353,7 @@ async def run_browser_benchmark(
                     list_options=list_options,
                     viewport_width=viewport_width,
                     viewport_height=viewport_height,
+                    lazy_media=lazy_media,
                 )
                 result = BenchmarkResult.from_browser_payload(payload)
                 results.append(result)
@@ -315,11 +370,12 @@ async def run_single_browser_case(
     list_options: dict[str, Any],
     viewport_width: int,
     viewport_height: int,
+    lazy_media: bool,
 ) -> dict[str, Any]:
     await page.goto(f"{server_url}/test/pages/index.html")
     return await page.evaluate(
         """
-        async ({ caseName, listOptions, viewportWidth, viewportHeight }) => {
+        async ({ caseName, listOptions, viewportWidth, viewportHeight, lazyMedia }) => {
           const mod = await import('/src/index.ts');
           document.body.innerHTML = '';
           document.body.style.margin = '0';
@@ -329,7 +385,9 @@ async def run_single_browser_case(
           if (!resp.ok) throw new Error(`Failed to fetch ${sourcePath}: ${resp.status}`);
           const buffer = await resp.arrayBuffer();
           const tFetch = performance.now();
-          const files = await mod.parseZip(buffer, mod.RECOMMENDED_ZIP_LIMITS);
+          const files = lazyMedia
+            ? await mod.parseZipLazyMedia(buffer, mod.RECOMMENDED_ZIP_LIMITS)
+            : await mod.parseZip(buffer, mod.RECOMMENDED_ZIP_LIMITS);
           const tParse = performance.now();
           const pres = mod.buildPresentation(files);
           const tBuild = performance.now();
@@ -344,36 +402,85 @@ async def run_single_browser_case(
           ].join(';');
           document.body.appendChild(container);
 
-          const viewer = new mod.PptxViewer(container, { fitMode: 'none', pdfjs: false });
-          viewer.load(pres);
-          await viewer.renderList(listOptions);
-          const tRender = performance.now();
-          await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-          const tAfterRaf = performance.now();
+          const originalCreateObjectURL = URL.createObjectURL;
+          const originalRevokeObjectURL = URL.revokeObjectURL;
+          let blobUrlsCreated = 0;
+          let blobUrlsRevoked = 0;
+          if (typeof originalCreateObjectURL === 'function') {
+            URL.createObjectURL = (value) => {
+              blobUrlsCreated += 1;
+              return originalCreateObjectURL.call(URL, value);
+            };
+          }
+          if (typeof originalRevokeObjectURL === 'function') {
+            URL.revokeObjectURL = (value) => {
+              blobUrlsRevoked += 1;
+              return originalRevokeObjectURL.call(URL, value);
+            };
+          }
 
-          const result = {
-            caseName,
-            strategy: listOptions.windowed ? 'windowed' : 'full',
-            sourcePath,
-            bytes: buffer.byteLength,
-            slides: pres.slides.length,
-            nodes: pres.slides.reduce((sum, slide) => sum + slide.nodes.length, 0),
-            fetchMs: Math.round((tFetch - t0) * 10) / 10,
-            parseMs: Math.round((tParse - tFetch) * 10) / 10,
-            buildMs: Math.round((tBuild - tParse) * 10) / 10,
-            renderMs: Math.round((tRender - tBuild) * 10) / 10,
-            twoRafMs: Math.round((tAfterRaf - tRender) * 10) / 10,
-            elementCount: container.querySelectorAll('*').length,
-            listItems: container.querySelectorAll('[data-slide-index]').length,
-            mountedSlides: container.querySelectorAll('[data-mounted="1"]').length,
-            svgCount: container.querySelectorAll('svg').length,
-            pathCount: container.querySelectorAll('path').length,
-            imgCount: container.querySelectorAll('img').length,
-            canvasCount: container.querySelectorAll('canvas').length,
-            textSpans: container.querySelectorAll('span').length,
-          };
-          viewer.destroy();
-          container.remove();
+          let firstSlideAt = 0;
+          let result;
+          let viewer;
+          try {
+            viewer = new mod.PptxViewer(container, {
+              fitMode: 'none',
+              pdfjs: false,
+              onSlideRendered: () => {
+                if (!firstSlideAt) firstSlideAt = performance.now();
+              },
+            });
+            viewer.load(pres);
+            await viewer.renderList(listOptions);
+            const handles = viewer.slideHandles ? Array.from(viewer.slideHandles.values()) : [];
+            await Promise.allSettled(handles.map((handle) => handle.ready));
+            const tRender = performance.now();
+            if (!firstSlideAt) firstSlideAt = tRender;
+            await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+            const tAfterRaf = performance.now();
+            const mediaEntries = Array.from(pres.media.values());
+            const mediaBytes = mediaEntries.reduce((sum, data) => sum + (data?.byteLength ?? 0), 0);
+            const performanceMemory = performance.memory;
+            const heapUsedBytes =
+              performanceMemory && typeof performanceMemory.usedJSHeapSize === 'number'
+                ? Math.round(performanceMemory.usedJSHeapSize)
+                : 0;
+
+            result = {
+              caseName,
+              strategy: listOptions.windowed ? 'windowed' : 'full',
+              lazyMedia,
+              sourcePath,
+              bytes: buffer.byteLength,
+              slides: pres.slides.length,
+              nodes: pres.slides.reduce((sum, slide) => sum + slide.nodes.length, 0),
+              fetchMs: Math.round((tFetch - t0) * 10) / 10,
+              parseMs: Math.round((tParse - tFetch) * 10) / 10,
+              buildMs: Math.round((tBuild - tParse) * 10) / 10,
+              firstSlideMs: Math.round((firstSlideAt - t0) * 10) / 10,
+              renderMs: Math.round((tRender - tBuild) * 10) / 10,
+              twoRafMs: Math.round((tAfterRaf - tRender) * 10) / 10,
+              heapUsedBytes,
+              mediaBytes,
+              mediaCount: pres.media.size,
+              blobUrlsCreated,
+              blobUrlsRevoked: 0,
+              elementCount: container.querySelectorAll('*').length,
+              listItems: container.querySelectorAll('[data-slide-index]').length,
+              mountedSlides: container.querySelectorAll('[data-mounted="1"]').length,
+              svgCount: container.querySelectorAll('svg').length,
+              pathCount: container.querySelectorAll('path').length,
+              imgCount: container.querySelectorAll('img').length,
+              canvasCount: container.querySelectorAll('canvas').length,
+              textSpans: container.querySelectorAll('span').length,
+            };
+          } finally {
+            if (viewer) viewer.destroy();
+            container.remove();
+            URL.createObjectURL = originalCreateObjectURL;
+            URL.revokeObjectURL = originalRevokeObjectURL;
+          }
+          result.blobUrlsRevoked = blobUrlsRevoked;
           return result;
         }
         """,
@@ -382,6 +489,7 @@ async def run_single_browser_case(
             "listOptions": list_options,
             "viewportWidth": viewport_width,
             "viewportHeight": viewport_height,
+            "lazyMedia": lazy_media,
         },
     )
 
@@ -424,6 +532,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--label", default=datetime.now().strftime("%Y%m%d-%H%M%S"))
     parser.add_argument("--viewport-width", type=int, default=1440)
     parser.add_argument("--viewport-height", type=int, default=900)
+    parser.add_argument("--lazy-media", action="store_true")
     parser.add_argument("--start-server", action="store_true")
     parser.add_argument("--compare-before", type=Path)
     parser.add_argument("--compare-after", type=Path)
@@ -469,6 +578,7 @@ async def async_main() -> None:
             strategies=strategies,
             viewport_width=args.viewport_width,
             viewport_height=args.viewport_height,
+            lazy_media=args.lazy_media,
         )
 
         args.output_dir.mkdir(parents=True, exist_ok=True)

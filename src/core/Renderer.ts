@@ -1,4 +1,4 @@
-import { parseZip } from '../parser/ZipParser';
+import { parseZip, parseZipLazyMedia } from '../parser/ZipParser';
 import type { ZipParseLimits } from '../parser/ZipParser';
 import { buildPresentation } from '../model/Presentation';
 import { PptxViewer, normalizePreviewInput } from './Viewer';
@@ -17,6 +17,8 @@ export interface RendererOptions {
   zoomPercent?: number;
   /** Optional ZIP parsing limits for controlling resource usage and DoS surface. */
   zipLimits?: ZipParseLimits;
+  /** Decode embedded media on demand instead of during ZIP parsing. Default `false`. */
+  lazyMedia?: boolean;
   /** Optional pdfjs URLs for EMF-embedded PDF fallback rendering. Use `false` to disable. */
   pdfjs?: PdfjsConfig;
   /**
@@ -55,6 +57,7 @@ export class PptxRenderer extends PptxViewer {
   private rendererMode: 'list' | 'slide';
   private rendererListOptions: ListRenderOptions;
   private rendererZipLimits?: ZipParseLimits;
+  private rendererLazyMedia: boolean;
   private previewAbortController: AbortController | null = null;
 
   constructor(container: HTMLElement, options: RendererOptions = {}) {
@@ -64,6 +67,7 @@ export class PptxRenderer extends PptxViewer {
       zoomPercent: options.zoomPercent,
       scrollContainer: options.scrollContainer,
       zipLimits: options.zipLimits,
+      lazyMedia: options.lazyMedia,
       pdfjs: options.pdfjs,
       onSlideChange: options.onSlideChange,
       onSlideRendered: options.onSlideRendered,
@@ -73,6 +77,7 @@ export class PptxRenderer extends PptxViewer {
     });
     this.rendererMode = options.mode ?? 'list';
     this.rendererZipLimits = options.zipLimits;
+    this.rendererLazyMedia = options.lazyMedia === true;
     this.rendererListOptions = {
       windowed: options.listMountStrategy === 'windowed',
       batchSize: options.listRenderBatchSize,
@@ -113,7 +118,9 @@ export class PptxRenderer extends PptxViewer {
     const buffer = await normalizePreviewInput(input);
     checkAborted();
 
-    const files = await parseZip(buffer, this.rendererZipLimits);
+    const files = this.rendererLazyMedia
+      ? await parseZipLazyMedia(buffer, this.rendererZipLimits)
+      : await parseZip(buffer, this.rendererZipLimits);
     checkAborted();
 
     const presentation = buildPresentation(files);

@@ -4,7 +4,7 @@
 
 - [Architecture](ARCHITECTURE.md) — Three-layer pipeline (Parse -> Model -> Render), search/highlight API boundaries, DOM construction strategy
 - [Testing](TESTING.md) — Unit tests (vitest), E2E visual comparison, dev-page model search and thumbnail navigation, two-layer metric system
-- [Performance](PERFORMANCE.md) — Windowed mounting, batch tuning, scaled preview guidance, large-deck optimization
+- [Performance](PERFORMANCE.md) — Windowed mounting, lazy media decoding, batch tuning, scaled preview guidance, large-deck optimization
 
 ## Quality & Process
 

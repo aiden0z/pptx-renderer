@@ -199,6 +199,39 @@ function getTemplateShapes(
   return nodes;
 }
 
+function temporarilyConnectForMeasurement(container: HTMLElement): () => void {
+  if (container.isConnected) return () => undefined;
+
+  const previous = {
+    position: container.style.position,
+    left: container.style.left,
+    top: container.style.top,
+    visibility: container.style.visibility,
+    pointerEvents: container.style.pointerEvents,
+    contain: container.style.contain,
+  };
+
+  container.style.position = 'fixed';
+  container.style.left = '-100000px';
+  container.style.top = '0';
+  container.style.visibility = 'hidden';
+  container.style.pointerEvents = 'none';
+  container.style.contain = 'layout style paint';
+  document.body.appendChild(container);
+
+  return () => {
+    if (container.parentNode === document.body) {
+      document.body.removeChild(container);
+    }
+    container.style.position = previous.position;
+    container.style.left = previous.left;
+    container.style.top = previous.top;
+    container.style.visibility = previous.visibility;
+    container.style.pointerEvents = previous.pointerEvents;
+    container.style.contain = previous.contain;
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Main Slide Render Function
 // ---------------------------------------------------------------------------
@@ -242,73 +275,80 @@ export function renderSlide(
   container.style.overflow = 'hidden';
   container.style.backgroundColor = '#FFFFFF';
 
-  // Render background
+  ctx.measurementRoot = container;
+  const restoreMeasurementMount = temporarilyConnectForMeasurement(container);
+
   try {
-    renderBackground(ctx, container);
-  } catch (e) {
-    options?.onNodeError?.('__background__', e);
-  }
-
-  // --- Render master template shapes (behind layout and slide) ---
-  // Respect showMasterSp flags:
-  //  - layout.showMasterSp === false  → skip master shapes
-  //  - slide.showMasterSp === false   → skip both master AND layout shapes
-  if (slide.showMasterSp && ctx.layout.showMasterSp) {
-    const masterCtx: RenderContext = {
-      ...ctx,
-      slide: { ...ctx.slide, rels: ctx.master.rels },
-      partPath: ctx.masterPath,
-      skipPlaceholderChildren: true,
-    };
-    const masterShapes = getTemplateShapes(
-      ctx.master.spTree,
-      ctx.master.rels,
-      ctx.masterPath,
-      presentation.diagramDrawings,
-    );
-    for (const node of masterShapes) {
-      try {
-        const el = renderNode(node, masterCtx);
-        container.appendChild(el);
-      } catch {
-        // Master shape errors are non-fatal
-      }
-    }
-  }
-
-  // --- Render layout template shapes ---
-  if (slide.showMasterSp) {
-    const layoutCtx: RenderContext = {
-      ...ctx,
-      slide: { ...ctx.slide, rels: ctx.layout.rels },
-      partPath: ctx.layoutPath,
-      skipPlaceholderChildren: true,
-    };
-    const layoutShapes = getTemplateShapes(
-      ctx.layout.spTree,
-      ctx.layout.rels,
-      ctx.layoutPath,
-      presentation.diagramDrawings,
-    );
-    for (const node of layoutShapes) {
-      try {
-        const el = renderNode(node, layoutCtx);
-        container.appendChild(el);
-      } catch {
-        // Layout shape errors are non-fatal
-      }
-    }
-  }
-
-  // --- Render slide shapes (on top) ---
-  for (const node of slide.nodes) {
+    // Render background
     try {
-      const el = renderNode(node, ctx);
-      container.appendChild(el);
+      renderBackground(ctx, container);
     } catch (e) {
-      options?.onNodeError?.(node.id, e);
-      container.appendChild(createErrorPlaceholder(node));
+      options?.onNodeError?.('__background__', e);
     }
+
+    // --- Render master template shapes (behind layout and slide) ---
+    // Respect showMasterSp flags:
+    //  - layout.showMasterSp === false  → skip master shapes
+    //  - slide.showMasterSp === false   → skip both master AND layout shapes
+    if (slide.showMasterSp && ctx.layout.showMasterSp) {
+      const masterCtx: RenderContext = {
+        ...ctx,
+        slide: { ...ctx.slide, rels: ctx.master.rels },
+        partPath: ctx.masterPath,
+        skipPlaceholderChildren: true,
+      };
+      const masterShapes = getTemplateShapes(
+        ctx.master.spTree,
+        ctx.master.rels,
+        ctx.masterPath,
+        presentation.diagramDrawings,
+      );
+      for (const node of masterShapes) {
+        try {
+          const el = renderNode(node, masterCtx);
+          container.appendChild(el);
+        } catch {
+          // Master shape errors are non-fatal
+        }
+      }
+    }
+
+    // --- Render layout template shapes ---
+    if (slide.showMasterSp) {
+      const layoutCtx: RenderContext = {
+        ...ctx,
+        slide: { ...ctx.slide, rels: ctx.layout.rels },
+        partPath: ctx.layoutPath,
+        skipPlaceholderChildren: true,
+      };
+      const layoutShapes = getTemplateShapes(
+        ctx.layout.spTree,
+        ctx.layout.rels,
+        ctx.layoutPath,
+        presentation.diagramDrawings,
+      );
+      for (const node of layoutShapes) {
+        try {
+          const el = renderNode(node, layoutCtx);
+          container.appendChild(el);
+        } catch {
+          // Layout shape errors are non-fatal
+        }
+      }
+    }
+
+    // --- Render slide shapes (on top) ---
+    for (const node of slide.nodes) {
+      try {
+        const el = renderNode(node, ctx);
+        container.appendChild(el);
+      } catch (e) {
+        options?.onNodeError?.(node.id, e);
+        container.appendChild(createErrorPlaceholder(node));
+      }
+    }
+  } finally {
+    restoreMeasurementMount();
   }
 
   // Build SlideHandle

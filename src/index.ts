@@ -15,8 +15,9 @@ export type {
 export { PptxRenderer } from './core/Renderer';
 export type { RendererOptions } from './core/Renderer';
 
-export { parseZip, RECOMMENDED_ZIP_LIMITS } from './parser/ZipParser';
+export { parseZip, parseZipLazyMedia, RECOMMENDED_ZIP_LIMITS } from './parser/ZipParser';
 export type { ZipParseLimits } from './parser/ZipParser';
+export type { MediaResolver, ResolvedMedia } from './utils/media';
 
 export { buildPresentation } from './model/Presentation';
 export type { PresentationData } from './model/Presentation';

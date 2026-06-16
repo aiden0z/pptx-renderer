@@ -20,6 +20,7 @@ const mockPresentation = {
 
 vi.mock('../../../src/parser/ZipParser', () => ({
   parseZip: vi.fn(async () => ({})),
+  parseZipLazyMedia: vi.fn(async () => ({ lazy: true })),
 }));
 
 vi.mock('../../../src/model/Presentation', () => ({
@@ -35,7 +36,7 @@ vi.mock('../../../src/renderer/SlideRenderer', () => ({
 }));
 
 import { PptxViewer } from '../../../src/core/Viewer';
-import { parseZip } from '../../../src/parser/ZipParser';
+import { parseZip, parseZipLazyMedia } from '../../../src/parser/ZipParser';
 import { buildPresentation } from '../../../src/model/Presentation';
 
 describe('PptxViewer.open() static factory', () => {
@@ -106,6 +107,16 @@ describe('PptxViewer.open() static factory', () => {
     await PptxViewer.open(new ArrayBuffer(4), container, { zipLimits });
 
     expect(parseZip).toHaveBeenCalledWith(expect.any(ArrayBuffer), zipLimits);
+  });
+
+  it('uses lazy media parsing when lazyMedia is enabled', async () => {
+    const container = document.createElement('div');
+
+    await PptxViewer.open(new ArrayBuffer(4), container, { lazyMedia: true });
+
+    expect(parseZipLazyMedia).toHaveBeenCalledOnce();
+    expect(parseZip).not.toHaveBeenCalled();
+    expect(buildPresentation).toHaveBeenCalledWith({ lazy: true });
   });
 
   it('accepts Uint8Array input', async () => {

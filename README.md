@@ -59,6 +59,16 @@ const viewer = await PptxViewer.open(await resp.arrayBuffer(), container, {
 });
 ```
 
+For large, media-heavy decks, combine windowed mounting with on-demand media decoding:
+
+```ts
+const viewer = await PptxViewer.open(buffer, container, {
+  zipLimits: RECOMMENDED_ZIP_LIMITS,
+  lazyMedia: true,
+  listOptions: { windowed: true, initialSlides: 4, batchSize: 4 },
+});
+```
+
 ### Optional PDF.js Fallback for SmartArt/EMF Preview Images
 
 PowerPoint often stores SmartArt or pasted vector artwork as EMF fallback images. This
@@ -116,6 +126,25 @@ viewer.load(presentation);
 await viewer.renderList({ windowed: true, batchSize: 8 });
 ```
 
+To delay media decompression until a rendered slide actually needs it, use
+`parseZipLazyMedia()` instead of `parseZip()`:
+
+```ts
+import {
+  PptxViewer,
+  parseZipLazyMedia,
+  buildPresentation,
+  RECOMMENDED_ZIP_LIMITS,
+} from '@aiden0z/pptx-renderer';
+
+const files = await parseZipLazyMedia(arrayBuffer, RECOMMENDED_ZIP_LIMITS);
+const presentation = buildPresentation(files);
+
+const viewer = new PptxViewer(container);
+viewer.load(presentation);
+await viewer.renderList({ windowed: true, initialSlides: 4 });
+```
+
 ## API
 
 ### `PptxViewer` (primary, extends `EventTarget`)
@@ -136,21 +165,22 @@ const viewer = await PptxViewer.open(buffer, container, {
 
 #### `new PptxViewer(container, options?)`
 
-| Option             | Type                       | Default     | Description                                                                                            |
-| ------------------ | -------------------------- | ----------- | ------------------------------------------------------------------------------------------------------ |
-| `width`            | `number`                   | --          | Container width hint (omit for auto-detect)                                                            |
-| `fitMode`          | `'contain' \| 'none'`      | `'contain'` | Responsive fit or fixed size                                                                           |
-| `zoomPercent`      | `number`                   | `100`       | Zoom level (10–400)                                                                                    |
-| `scrollContainer`  | `HTMLElement`              | --          | Scroll container for IntersectionObserver root                                                         |
-| `zipLimits`        | `ZipParseLimits`           | --          | Security limits for ZIP parsing (used by `.open()`). Use `RECOMMENDED_ZIP_LIMITS` for untrusted input. |
-| `pdfjs`            | `PdfjsConfig`              | --          | Optional PDF.js URLs for EMF-embedded PDF fallback rendering, or `false` to disable it.                |
-| `onSlideChange`    | `(index) => void`          | --          | Shorthand for `slidechange` event                                                                      |
-| `onSlideRendered`  | `(index, element) => void` | --          | Shorthand for `sliderendered` event                                                                    |
-| `onSlideError`     | `(index, error) => void`   | --          | Shorthand for `slideerror` event                                                                       |
-| `onSlideUnmounted` | `(index) => void`          | --          | Shorthand for `slideunmounted` event                                                                   |
-| `onNodeError`      | `(nodeId, error) => void`  | --          | Shorthand for `nodeerror` event                                                                        |
-| `onRenderStart`    | `() => void`               | --          | Shorthand for `renderstart` event                                                                      |
-| `onRenderComplete` | `() => void`               | --          | Shorthand for `rendercomplete` event                                                                   |
+| Option             | Type                       | Default     | Description                                                                                                       |
+| ------------------ | -------------------------- | ----------- | ----------------------------------------------------------------------------------------------------------------- |
+| `width`            | `number`                   | --          | Container width hint (omit for auto-detect)                                                                       |
+| `fitMode`          | `'contain' \| 'none'`      | `'contain'` | Responsive fit or fixed size                                                                                      |
+| `zoomPercent`      | `number`                   | `100`       | Zoom level (10–400)                                                                                               |
+| `scrollContainer`  | `HTMLElement`              | --          | Scroll container for IntersectionObserver root                                                                    |
+| `zipLimits`        | `ZipParseLimits`           | --          | Security limits for ZIP parsing (used by `.open()`). Use `RECOMMENDED_ZIP_LIMITS` for untrusted input.            |
+| `lazyMedia`        | `boolean`                  | `false`     | Decode embedded media on demand instead of during ZIP parsing. Best for large decks with windowed list rendering. |
+| `pdfjs`            | `PdfjsConfig`              | --          | Optional PDF.js URLs for EMF-embedded PDF fallback rendering, or `false` to disable it.                           |
+| `onSlideChange`    | `(index) => void`          | --          | Shorthand for `slidechange` event                                                                                 |
+| `onSlideRendered`  | `(index, element) => void` | --          | Shorthand for `sliderendered` event                                                                               |
+| `onSlideError`     | `(index, error) => void`   | --          | Shorthand for `slideerror` event                                                                                  |
+| `onSlideUnmounted` | `(index) => void`          | --          | Shorthand for `slideunmounted` event                                                                              |
+| `onNodeError`      | `(nodeId, error) => void`  | --          | Shorthand for `nodeerror` event                                                                                   |
+| `onRenderStart`    | `() => void`               | --          | Shorthand for `renderstart` event                                                                                 |
+| `onRenderComplete` | `() => void`               | --          | Shorthand for `rendercomplete` event                                                                              |
 
 All shorthand callbacks are also available as `EventTarget` events (e.g. `viewer.addEventListener('slidechange', ...)`).
 
@@ -353,6 +383,7 @@ users can enable or disable EMF-PDF fallback rendering without changing APIs.
 ```ts
 import {
   parseZip,
+  parseZipLazyMedia,
   buildPresentation,
   serializePresentation,
   buildTextIndex,
@@ -362,6 +393,7 @@ import {
 } from '@aiden0z/pptx-renderer';
 
 const files = await parseZip(arrayBuffer, RECOMMENDED_ZIP_LIMITS); // PptxFiles
+const lazyFiles = await parseZipLazyMedia(arrayBuffer, RECOMMENDED_ZIP_LIMITS); // media resolves on demand
 const presentation = buildPresentation(files); // PresentationData
 const json = serializePresentation(presentation); // SerializedPresentation (JSON-safe)
 const index = buildTextIndex(presentation); // TextIndexEntry[]
@@ -508,6 +540,7 @@ For large decks (50+ slides), use windowed mounting:
 ```ts
 const viewer = await PptxViewer.open(buffer, container, {
   zipLimits: RECOMMENDED_ZIP_LIMITS,
+  lazyMedia: true,
   listOptions: {
     windowed: true,
     batchSize: 8,

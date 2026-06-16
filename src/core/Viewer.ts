@@ -1,4 +1,4 @@
-import { parseZip } from '../parser/ZipParser';
+import { parseZip, parseZipLazyMedia } from '../parser/ZipParser';
 import type { ZipParseLimits } from '../parser/ZipParser';
 import { buildPresentation, PresentationData } from '../model/Presentation';
 import { renderSlide as renderSlideInternal } from '../renderer/SlideRenderer';
@@ -35,6 +35,8 @@ export interface ViewerOptions {
   scrollContainer?: HTMLElement;
   /** Optional ZIP parsing limits for controlling resource usage and DoS surface. */
   zipLimits?: ZipParseLimits;
+  /** Decode embedded media on demand instead of during ZIP parsing. Default `false`. */
+  lazyMedia?: boolean;
   /** Optional pdfjs URLs for EMF-embedded PDF fallback rendering. Use `false` to disable. */
   pdfjs?: PdfjsConfig;
   onSlideChange?: (index: number) => void;
@@ -269,6 +271,7 @@ export class PptxViewer extends EventTarget {
       renderMode?: 'list' | 'slide';
       listOptions?: ListRenderOptions;
       signal?: AbortSignal;
+      lazyMedia?: boolean;
     },
   ): Promise<void> {
     const signal = options?.signal;
@@ -286,7 +289,10 @@ export class PptxViewer extends EventTarget {
     const buffer = await normalizePreviewInput(input);
     checkAborted();
 
-    const files = await parseZip(buffer, this.viewerOptions.zipLimits);
+    const useLazyMedia = options?.lazyMedia ?? this.viewerOptions.lazyMedia ?? false;
+    const files = useLazyMedia
+      ? await parseZipLazyMedia(buffer, this.viewerOptions.zipLimits)
+      : await parseZip(buffer, this.viewerOptions.zipLimits);
     checkAborted();
 
     const presentation = buildPresentation(files);
@@ -315,6 +321,7 @@ export class PptxViewer extends EventTarget {
       renderMode?: 'list' | 'slide';
       listOptions?: ListRenderOptions;
       signal?: AbortSignal;
+      lazyMedia?: boolean;
     },
   ): Promise<PptxViewer> {
     const viewer = new PptxViewer(container, options);
@@ -322,6 +329,7 @@ export class PptxViewer extends EventTarget {
       renderMode: options?.renderMode,
       listOptions: options?.listOptions,
       signal: options?.signal,
+      lazyMedia: options?.lazyMedia,
     });
     return viewer;
   }

@@ -33,6 +33,8 @@ export interface RenderContext {
   chartInstances?: Set<ECharts>;
   /** Fill node from parent group's grpSpPr, used to resolve `a:grpFill` in children. */
   groupFillNode?: SafeXmlNode;
+  /** Connected root used for hidden text measurement while slide nodes are still detached. */
+  measurementRoot?: HTMLElement;
   /** Template rendering skips placeholder descendants inside groups as well as top-level shapes. */
   skipPlaceholderChildren?: boolean;
   /**

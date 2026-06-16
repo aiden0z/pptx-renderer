@@ -35,6 +35,55 @@ import { PptxViewer, RECOMMENDED_ZIP_LIMITS } from '@aiden0z/pptx-renderer';
 
 If JSZip metadata does not provide a trustworthy uncompressed size, parsing still checks the actual decoded entry size before accepting the entry. This fallback applies to XML/text entries and media entries, so the same limits remain effective for archives whose size metadata is unavailable.
 
+## Lazy Media Decoding
+
+Large decks often spend most memory on decompressed `ppt/media/*` entries. By default,
+`parseZip()` keeps backward-compatible eager behavior and decodes all package media during
+ZIP parsing. For media-heavy decks, enable `lazyMedia` so media entries are indexed during
+parse and decoded only when a rendered slide references them.
+
+```ts
+await PptxViewer.open(buffer, container, {
+  zipLimits: RECOMMENDED_ZIP_LIMITS,
+  lazyMedia: true,
+  listOptions: {
+    windowed: true,
+    initialSlides: 4,
+    batchSize: 4,
+  },
+});
+```
+
+If you use the manual parse/model/render pipeline, call `parseZipLazyMedia()`:
+
+```ts
+import {
+  PptxViewer,
+  parseZipLazyMedia,
+  buildPresentation,
+  RECOMMENDED_ZIP_LIMITS,
+} from '@aiden0z/pptx-renderer';
+
+const files = await parseZipLazyMedia(buffer, RECOMMENDED_ZIP_LIMITS);
+const presentation = buildPresentation(files);
+
+const viewer = new PptxViewer(container);
+viewer.load(presentation);
+await viewer.renderList({ windowed: true, initialSlides: 4 });
+```
+
+Use this when memory pressure is the bottleneck. In the current local benchmark,
+windowed rendering reduced decompressed media bytes by:
+
+- Large media-heavy deck: 70.9 MiB -> 3.5 MiB (95.0% lower)
+- Medium media-heavy deck: 30.9 MiB -> 0.9 MiB (97.1% lower)
+- Smaller image-heavy deck: 3.2 MiB -> 0.9 MiB (72.5% lower)
+
+This is primarily a memory optimization. It moves some media decompression from parse
+time to visible-slide render time, so small decks and full-DOM rendering may not get
+lower wall-clock render time. The best fit is `lazyMedia: true` plus `windowed: true`
+for large, media-heavy decks.
+
 ## Built-In Resource Guards
 
 These guards are applied by the renderer even when ZIP byte limits are configured, because some PPTX structures can be small on disk but expensive after parsing:
@@ -73,6 +122,7 @@ await PptxViewer.open(buffer, container, {
 ```ts
 await PptxViewer.open(buffer, container, {
   zipLimits: RECOMMENDED_ZIP_LIMITS,
+  lazyMedia: true,
   listOptions: {
     windowed: true,
     batchSize: 4,

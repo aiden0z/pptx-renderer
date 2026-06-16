@@ -120,7 +120,7 @@ import {
 import { emuToPx } from '../parser/units';
 import { applyTint, hexToRgb, rgbToHex } from '../utils/color';
 import { SafeXmlNode } from '../parser/XmlParser';
-import { findMediaByTarget, getOrCreateBlobUrl } from '../utils/media';
+import { findMediaByTarget, findMediaByTargetAsync, getOrCreateBlobUrl } from '../utils/media';
 import { isAllowedExternalMediaUrl, isAllowedExternalUrl } from '../utils/urlSafety';
 import { getEffectiveBodyPrChild } from './TextBodyProperties';
 import { cssFontFamilyStack, resolveThemeFontStack } from './fontResolver';
@@ -305,6 +305,30 @@ function resolveShapeBlipUrl(blipFill: SafeXmlNode, ctx: RenderContext): string 
   return getOrCreateBlobUrl(mediaPath, data, ctx.mediaUrlCache);
 }
 
+async function resolveShapeBlipUrlAsync(
+  blipFill: SafeXmlNode,
+  ctx: RenderContext,
+): Promise<string | null> {
+  const blip = blipFill.child('blip');
+  const embedId = blip.attr('embed') ?? blip.attr('r:embed');
+  const linkId = blip.attr('link') ?? blip.attr('r:link');
+  const relId = embedId ?? linkId;
+  if (!relId) return null;
+  const rel = ctx.slide.rels.get(relId);
+  if (!rel) return null;
+  if (isExternalTargetMode(rel.targetMode)) {
+    return isAllowedExternalMediaUrl(rel.target) ? rel.target : null;
+  }
+  const resolved = await findMediaByTargetAsync(
+    rel.target,
+    ctx.presentation.media,
+    ctx.presentation.mediaResolver,
+  );
+  if (!resolved) return null;
+  const { mediaPath, data } = resolved;
+  return getOrCreateBlobUrl(mediaPath, data, ctx.mediaUrlCache);
+}
+
 function pctAttr(node: SafeXmlNode, name: string): number {
   return (node.numAttr(name) ?? 0) / 1000;
 }
@@ -331,6 +355,44 @@ function getShapeBlipImagePlacement(
     h: bounds.h * ((100 - top - bottom) / 100),
     preserveAspectRatio: 'none',
   };
+}
+
+function appendShapeBlipImage(
+  svgNs: string,
+  svg: SVGSVGElement,
+  defs: SVGDefsElement,
+  blipFill: SafeXmlNode,
+  pathD: string,
+  bounds: { w: number; h: number },
+  blipUrl: string,
+  beforeNode?: ChildNode | null,
+): void {
+  const clipId = `shape-clip-${++gradientIdCounter}`;
+  const clipPath = document.createElementNS(svgNs, 'clipPath');
+  clipPath.setAttribute('id', clipId);
+  const clipPathPath = document.createElementNS(svgNs, 'path');
+  clipPathPath.setAttribute('d', pathD);
+  clipPath.appendChild(clipPathPath);
+  defs.appendChild(clipPath);
+
+  const image = document.createElementNS(svgNs, 'image');
+  const placement = getShapeBlipImagePlacement(blipFill, bounds);
+  image.setAttributeNS('http://www.w3.org/1999/xlink', 'href', blipUrl);
+  image.setAttribute('x', String(placement.x));
+  image.setAttribute('y', String(placement.y));
+  image.setAttribute('width', String(placement.w));
+  image.setAttribute('height', String(placement.h));
+  image.setAttribute('clip-path', `url(#${clipId})`);
+  image.setAttribute('preserveAspectRatio', placement.preserveAspectRatio);
+
+  if (!defs.parentNode) {
+    svg.appendChild(defs);
+  }
+  if (beforeNode?.parentNode === svg) {
+    svg.insertBefore(image, beforeNode);
+  } else {
+    svg.appendChild(image);
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -1210,24 +1272,7 @@ export function renderShape(node: ShapeNodeData, ctx: RenderContext): HTMLElemen
     // When shape has image fill (blipFill), render image clipped to path so complex graphics (e.g. slide 23 process) show
     if (blipUrl) {
       const defs = document.createElementNS(svgNs, 'defs');
-      const clipId = `shape-clip-${++gradientIdCounter}`;
-      const clipPath = document.createElementNS(svgNs, 'clipPath');
-      clipPath.setAttribute('id', clipId);
-      const clipPathPath = document.createElementNS(svgNs, 'path');
-      clipPathPath.setAttribute('d', pathD);
-      clipPath.appendChild(clipPathPath);
-      defs.appendChild(clipPath);
-      const image = document.createElementNS(svgNs, 'image');
-      const placement = getShapeBlipImagePlacement(blipFill, { w: svgW, h: svgH });
-      image.setAttributeNS('http://www.w3.org/1999/xlink', 'href', blipUrl);
-      image.setAttribute('x', String(placement.x));
-      image.setAttribute('y', String(placement.y));
-      image.setAttribute('width', String(placement.w));
-      image.setAttribute('height', String(placement.h));
-      image.setAttribute('clip-path', `url(#${clipId})`);
-      image.setAttribute('preserveAspectRatio', placement.preserveAspectRatio);
-      svg.appendChild(defs);
-      svg.appendChild(image);
+      appendShapeBlipImage(svgNs, svg, defs, blipFill, pathD, { w: svgW, h: svgH }, blipUrl);
 
       const mainPathStrokeSuppressed = multiPaths && multiPaths[0]?.stroke === false;
       if (
@@ -1658,6 +1703,28 @@ export function renderShape(node: ShapeNodeData, ctx: RenderContext): HTMLElemen
       }
 
       svg.appendChild(path);
+
+      if (blipFill.exists() && ctx.presentation.mediaResolver) {
+        const task = resolveShapeBlipUrlAsync(blipFill, ctx)
+          .then((lazyBlipUrl) => {
+            if (!lazyBlipUrl) return;
+            appendShapeBlipImage(
+              svgNs,
+              svg,
+              defs,
+              blipFill,
+              pathD,
+              { w: svgW, h: svgH },
+              lazyBlipUrl,
+              path,
+            );
+          })
+          .catch(() => {
+            // Keep the shape's fallback fill/stroke when lazy media cannot be decoded.
+          });
+        ctx.asyncTasks?.push(task);
+        if (!ctx.asyncTasks) void task;
+      }
 
       // --- Multi-path preset rendering ---
       // For complex shapes (scrolls, etc.) that have multiple sub-paths with different
@@ -2198,9 +2265,12 @@ export function renderShape(node: ShapeNodeData, ctx: RenderContext): HTMLElemen
           // The wrapper is not always in the DOM yet, so temporarily attach it offscreen to measure.
           const wasConnected = wrapper.isConnected;
           const savedWrapperVisibility = wrapper.style.visibility;
+          const measurementRoot = ctx.measurementRoot?.isConnected
+            ? ctx.measurementRoot
+            : document.body;
           if (!wasConnected) {
             wrapper.style.visibility = 'hidden';
-            document.body.appendChild(wrapper);
+            measurementRoot.appendChild(wrapper);
           }
 
           // Temporarily neutralise vertical alignment so content overflows downward
@@ -2259,7 +2329,9 @@ export function renderShape(node: ShapeNodeData, ctx: RenderContext): HTMLElemen
           }
           textContainer.style.justifyContent = savedJC;
           if (!wasConnected) {
-            document.body.removeChild(wrapper);
+            if (wrapper.parentNode === measurementRoot) {
+              measurementRoot.removeChild(wrapper);
+            }
             wrapper.style.visibility = savedWrapperVisibility;
           }
           let scale = 1;

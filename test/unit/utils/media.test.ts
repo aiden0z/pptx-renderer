@@ -4,6 +4,7 @@ import {
   resolveMediaPath,
   resolveMediaPathCandidates,
   findMediaByTarget,
+  findMediaByTargetAsync,
   getOrCreateBlobUrl,
 } from '../../../src/utils/media';
 
@@ -128,6 +129,18 @@ describe('resolveMediaPath', () => {
     expect(findMediaByTarget('../media/icons/logo.png', media)?.mediaPath).toBe(
       'ppt/media/icons/logo.png',
     );
+  });
+
+  it('resolves media through an async resolver when the eager media map is empty', async () => {
+    const data = new Uint8Array([1, 2, 3]);
+    const resolver = {
+      resolve: vi.fn(async () => ({ mediaPath: 'ppt/media/image1.png', data })),
+    };
+
+    const resolved = await findMediaByTargetAsync('../media/image1.png', new Map(), resolver);
+
+    expect(resolved).toEqual({ mediaPath: 'ppt/media/image1.png', data });
+    expect(resolver.resolve).toHaveBeenCalledWith('../media/image1.png');
   });
 });
 

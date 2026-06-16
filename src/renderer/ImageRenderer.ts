@@ -4,7 +4,12 @@
 
 import { PicNodeData } from '../model/nodes/PicNode';
 import { RenderContext } from './RenderContext';
-import { findMediaByTarget, getOrCreateBlobUrl, resolveMediaPath } from '../utils/media';
+import {
+  findMediaByTarget,
+  findMediaByTargetAsync,
+  getOrCreateBlobUrl,
+  resolveMediaPath,
+} from '../utils/media';
 import { isExternalTargetMode, RelEntry } from '../parser/RelParser';
 import { resolveColor, resolveFill, resolveLineStyle } from './StyleResolver';
 import { hexToRgb } from '../utils/color';
@@ -123,20 +128,33 @@ export function renderImage(node: PicNodeData, ctx: RenderContext): HTMLElement 
 
       const resolved = findMediaByTarget(rel.target, ctx.presentation.media);
       if (!resolved) {
+        if (ctx.presentation.mediaResolver) {
+          const task = findMediaByTargetAsync(
+            rel.target,
+            ctx.presentation.media,
+            ctx.presentation.mediaResolver,
+          )
+            .then((lazyResolved) => {
+              if (!lazyResolved) {
+                renderPlaceholder(wrapper, 'Image not found');
+                return;
+              }
+
+              renderResolvedImage(node, ctx, wrapper, lazyResolved.mediaPath, lazyResolved.data);
+            })
+            .catch(() => {
+              renderPlaceholder(wrapper, 'Image not found');
+            });
+          ctx.asyncTasks?.push(task);
+          if (!ctx.asyncTasks) void task;
+          return wrapper;
+        }
+
         renderPlaceholder(wrapper, 'Image not found');
         return wrapper;
       }
-      const { mediaPath, data } = resolved;
-
-      // Handle EMF images — extract embedded PDF/bitmap content
-      if (isEmfFormat(mediaPath)) {
-        const emfData = data instanceof Uint8Array ? data : new Uint8Array(data);
-        renderEmf(emfData, node, ctx, wrapper, mediaPath);
-        return wrapper;
-      }
-
-      // Create blob URL (with caching)
-      url = getOrCreateBlobUrl(mediaPath, data, ctx.mediaUrlCache);
+      renderResolvedImage(node, ctx, wrapper, resolved.mediaPath, resolved.data);
+      return wrapper;
     }
   } else if (node.blipLink) {
     url = resolveMediaUrl(node.blipLink, ctx);
@@ -149,6 +167,34 @@ export function renderImage(node: PicNodeData, ctx: RenderContext): HTMLElement 
     return wrapper;
   }
 
+  renderImageUrl(node, ctx, wrapper, url);
+  return wrapper;
+}
+
+function renderResolvedImage(
+  node: PicNodeData,
+  ctx: RenderContext,
+  wrapper: HTMLElement,
+  mediaPath: string,
+  data: Uint8Array,
+): void {
+  // Handle EMF images — extract embedded PDF/bitmap content
+  if (isEmfFormat(mediaPath)) {
+    const emfData = data instanceof Uint8Array ? data : new Uint8Array(data);
+    renderEmf(emfData, node, ctx, wrapper, mediaPath);
+    return;
+  }
+
+  const url = getOrCreateBlobUrl(mediaPath, data, ctx.mediaUrlCache);
+  renderImageUrl(node, ctx, wrapper, url);
+}
+
+function renderImageUrl(
+  node: PicNodeData,
+  ctx: RenderContext,
+  wrapper: HTMLElement,
+  url: string,
+): void {
   const blipFill = node.source.child('blipFill');
   const blip = blipFill.child('blip');
   const blipOpacity = resolveBlipOpacity(blip);
@@ -161,7 +207,7 @@ export function renderImage(node: PicNodeData, ctx: RenderContext): HTMLElement 
     if (blipOpacity < 1) {
       wrapper.style.opacity = `${Number(blipOpacity.toFixed(4))}`;
     }
-    return wrapper;
+    return;
   }
 
   // Create image element
@@ -230,7 +276,6 @@ export function renderImage(node: PicNodeData, ctx: RenderContext): HTMLElement 
   }
 
   wrapper.appendChild(img);
-  return wrapper;
 }
 
 function pctAttr(node: SafeXmlNode, name: string): number {

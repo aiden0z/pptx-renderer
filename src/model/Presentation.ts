@@ -4,6 +4,7 @@
  */
 
 import { PptxFiles } from '../parser/ZipParser';
+import type { MediaResolver } from '../utils/media';
 import { parseXml, SafeXmlNode } from '../parser/XmlParser';
 import { parseRels, RelEntry, resolveRelTarget } from '../parser/RelParser';
 import { emuToPx } from '../parser/units';
@@ -25,6 +26,7 @@ export interface PresentationData {
   layoutToMaster: Map<string, string>;
   masterToTheme: Map<string, string>;
   media: Map<string, Uint8Array>;
+  mediaResolver?: MediaResolver;
   tableStyles?: SafeXmlNode;
   /** Presentation-wide default text style from ppt/presentation.xml. */
   defaultTextStyle?: SafeXmlNode;
@@ -326,6 +328,7 @@ export function buildPresentation(files: PptxFiles): PresentationData {
     layoutToMaster,
     masterToTheme,
     media: files.media,
+    mediaResolver: files.mediaResolver,
     tableStyles,
     defaultTextStyle: defaultTextStyle.exists() ? defaultTextStyle : undefined,
     charts,

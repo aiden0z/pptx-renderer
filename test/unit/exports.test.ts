@@ -8,6 +8,7 @@ import {
   PptxViewer,
   PptxRenderer,
   parseZip,
+  parseZipLazyMedia,
   RECOMMENDED_ZIP_LIMITS,
   buildPresentation,
   serializePresentation,
@@ -66,6 +67,8 @@ import type {
   GroupNodeData,
   ChartNodeData,
   PptxFiles,
+  MediaResolver,
+  ResolvedMedia,
 } from '../../src/index';
 
 type _PdfjsOptionsCompileCheck = PdfjsOptions;
@@ -79,6 +82,8 @@ type _TextIndexEntryCompileCheck = TextIndexEntry;
 type _TextIndexOptionsCompileCheck = TextIndexOptions;
 type _TextSearchOptionsCompileCheck = TextSearchOptions;
 type _TextSearchResultCompileCheck = TextSearchResult;
+type _MediaResolverCompileCheck = MediaResolver;
+type _ResolvedMediaCompileCheck = ResolvedMedia;
 
 describe('package exports', () => {
   it('exports PptxViewer class', () => {
@@ -93,6 +98,10 @@ describe('package exports', () => {
 
   it('exports parseZip function', () => {
     expect(typeof parseZip).toBe('function');
+  });
+
+  it('exports parseZipLazyMedia function', () => {
+    expect(typeof parseZipLazyMedia).toBe('function');
   });
 
   it('exports recommended ZIP limits for untrusted PPTX input', () => {

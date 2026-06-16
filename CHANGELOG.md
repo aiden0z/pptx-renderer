@@ -81,7 +81,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - **Expanded python-pptx placeholder oracle coverage** — added a regression case for idx-only placeholder inheritance, covering layout/master text style resolution and bullet sizing.
 - **E2E comparison slide URL state** — the selected slide is now reflected in the `slide` query parameter so manual visual review survives refresh and shared URLs.
 - **Chart lifecycle regression coverage** — standalone `renderSlide()` chart instances are now covered to ensure charts are disposed when the returned slide handle is disposed.
-- **Rendering fidelity unit coverage** — added regression coverage for real-world `ai-computing`, `opentelemetry`, `model-platform`, and `xcloud-plan` rendering issues.
+- **Rendering fidelity unit coverage** — added regression coverage for real-world large-deck rendering issues.
 
 ### Changed
 

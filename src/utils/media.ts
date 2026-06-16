@@ -2,6 +2,19 @@
  * Media utilities — MIME type detection, path resolution, and blob URL management.
  */
 
+export interface ResolvedMedia {
+  mediaPath: string;
+  data: Uint8Array;
+}
+
+export interface MediaResolver {
+  resolve(target: string): Promise<ResolvedMedia | undefined>;
+  readonly loadedBytes?: number;
+  readonly loadedCount?: number;
+  readonly totalBytes?: number;
+  readonly totalCount?: number;
+}
+
 /**
  * Determine MIME type from file extension.
  * Covers images, video, and audio formats used in PPTX files.
@@ -96,12 +109,22 @@ export function resolveMediaPathCandidates(target: string): string[] {
 export function findMediaByTarget(
   target: string,
   media: Map<string, Uint8Array>,
-): { mediaPath: string; data: Uint8Array } | undefined {
+): ResolvedMedia | undefined {
   for (const mediaPath of resolveMediaPathCandidates(target)) {
     const data = media.get(mediaPath);
     if (data) return { mediaPath, data };
   }
   return undefined;
+}
+
+export async function findMediaByTargetAsync(
+  target: string,
+  media: Map<string, Uint8Array>,
+  resolver?: MediaResolver,
+): Promise<ResolvedMedia | undefined> {
+  const eager = findMediaByTarget(target, media);
+  if (eager) return eager;
+  return resolver?.resolve(target);
 }
 
 /**

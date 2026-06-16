@@ -7,7 +7,7 @@ import { RenderContext } from './RenderContext';
 import { resolveColor, resolveFill, resolveThemeBackgroundFillReference } from './StyleResolver';
 import { hexToRgb } from '../utils/color';
 import { isExternalTargetMode, RelEntry } from '../parser/RelParser';
-import { findMediaByTarget, getOrCreateBlobUrl } from '../utils/media';
+import { findMediaByTarget, findMediaByTargetAsync, getOrCreateBlobUrl } from '../utils/media';
 import { isAllowedExternalMediaUrl } from '../utils/urlSafety';
 
 /**
@@ -210,11 +210,38 @@ function renderBlipBackground(
     url = rel.target;
   } else {
     const resolved = findMediaByTarget(rel.target, ctx.presentation.media);
-    if (!resolved) return;
+    if (!resolved) {
+      if (ctx.presentation.mediaResolver) {
+        const task = findMediaByTargetAsync(
+          rel.target,
+          ctx.presentation.media,
+          ctx.presentation.mediaResolver,
+        )
+          .then((lazyResolved) => {
+            if (!lazyResolved) return;
+            const lazyUrl = getOrCreateBlobUrl(
+              lazyResolved.mediaPath,
+              lazyResolved.data,
+              ctx.mediaUrlCache,
+            );
+            applyBlipBackground(blipFill, container, lazyUrl);
+          })
+          .catch(() => {
+            // Leave the background unchanged when lazy media cannot be decoded.
+          });
+        ctx.asyncTasks?.push(task);
+        if (!ctx.asyncTasks) void task;
+      }
+      return;
+    }
     const { mediaPath, data } = resolved;
     url = getOrCreateBlobUrl(mediaPath, data, ctx.mediaUrlCache);
   }
 
+  applyBlipBackground(blipFill, container, url);
+}
+
+function applyBlipBackground(blipFill: SafeXmlNode, container: HTMLElement, url: string): void {
   container.style.backgroundImage = `url("${url}")`;
 
   // Check for stretch or tile mode

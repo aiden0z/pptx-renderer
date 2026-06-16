@@ -3693,6 +3693,46 @@ describe('ShapeRenderer', () => {
     expect(clipPath).toBeTruthy();
   });
 
+  it('renders shape blipFill after lazy media resolves asynchronously', async () => {
+    const xml = `
+      <p:sp xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
+            xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"
+            xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+        <p:nvSpPr><p:cNvPr id="205" name="LazyBlipShape"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+        <p:spPr>
+          <a:xfrm><a:off x="0" y="0"/><a:ext cx="2000000" cy="1000000"/></a:xfrm>
+          <a:prstGeom prst="rect"><a:avLst/></a:prstGeom>
+          <a:blipFill>
+            <a:blip r:embed="rId1"/>
+            <a:stretch><a:fillRect/></a:stretch>
+          </a:blipFill>
+        </p:spPr>
+      </p:sp>
+    `;
+    const ctx = createMockRenderContext();
+    ctx.asyncTasks = [];
+    ctx.slide.rels.set('rId1', { type: 'image', target: '../media/lazy-shape.png' });
+    ctx.presentation.mediaResolver = {
+      resolve: vi.fn(async () => ({
+        mediaPath: 'ppt/media/lazy-shape.png',
+        data: new Uint8Array([137, 80, 78, 71]),
+      })),
+    };
+
+    const el = renderShape(parseShapeNode(parseXml(xml)), ctx);
+
+    expect(el.querySelector('svg image')).toBeNull();
+    expect(ctx.asyncTasks).toHaveLength(1);
+
+    await Promise.all(ctx.asyncTasks);
+
+    const image = el.querySelector('svg image');
+    expect(ctx.presentation.mediaResolver.resolve).toHaveBeenCalledWith('../media/lazy-shape.png');
+    expect(ctx.mediaUrlCache.has('ppt/media/lazy-shape.png')).toBe(true);
+    expect(image).not.toBeNull();
+    expect(image!.getAttribute('preserveAspectRatio')).toBe('none');
+  });
+
   it('honors non-zero stretch fillRect insets for shape blipFill images', () => {
     const xml = `
       <p:sp xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"

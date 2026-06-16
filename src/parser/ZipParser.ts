@@ -5,6 +5,8 @@
 
 import JSZip from 'jszip';
 import type { JSZipObject } from 'jszip';
+import type { MediaResolver, ResolvedMedia } from '../utils/media';
+import { resolveMediaPathCandidates } from '../utils/media';
 
 export interface PptxFiles {
   contentTypes: string;
@@ -19,6 +21,7 @@ export interface PptxFiles {
   themes: Map<string, string>;
   themeOverrides?: Map<string, string>;
   media: Map<string, Uint8Array>;
+  mediaResolver?: MediaResolver;
   tableStyles?: string;
   charts: Map<string, string>; // ppt/charts/chart*.xml
   chartRels?: Map<string, string>; // ppt/charts/_rels/chart*.xml.rels
@@ -94,6 +97,73 @@ interface ZipLimitState {
   knownMediaBytes: number;
   unknownTotalBytes: number;
   unknownMediaBytes: number;
+}
+
+interface LazyMediaEntry {
+  path: string;
+  file: JSZipObject;
+}
+
+class ZipLazyMediaResolver implements MediaResolver {
+  private inflight = new Map<string, Promise<Uint8Array>>();
+  private loadedPaths = new Set<string>();
+  readonly totalCount: number;
+
+  constructor(
+    private readonly entries: Map<string, LazyMediaEntry>,
+    private readonly media: Map<string, Uint8Array>,
+    private readonly state: ZipLimitState,
+    readonly totalBytes: number,
+  ) {
+    this.totalCount = new Set(Array.from(entries.values(), (entry) => entry.path)).size;
+  }
+
+  get loadedBytes(): number {
+    let total = 0;
+    for (const path of this.loadedPaths) {
+      total += this.media.get(path)?.byteLength ?? 0;
+    }
+    return total;
+  }
+
+  get loadedCount(): number {
+    return this.loadedPaths.size;
+  }
+
+  async resolve(target: string): Promise<ResolvedMedia | undefined> {
+    for (const mediaPath of resolveMediaPathCandidates(target)) {
+      const data = this.media.get(mediaPath);
+      if (data) return { mediaPath, data };
+    }
+
+    for (const mediaPath of resolveMediaPathCandidates(target)) {
+      const entry = this.entries.get(mediaPath);
+      if (!entry) continue;
+
+      const data = await this.readEntry(entry);
+      return { mediaPath, data };
+    }
+
+    return undefined;
+  }
+
+  private async readEntry(entry: LazyMediaEntry): Promise<Uint8Array> {
+    let read = this.inflight.get(entry.path);
+    if (!read) {
+      read = readZipBinaryEntry(entry.path, entry.file, this.state).then((bytes) => {
+        setPathMapEntry(this.media, entry.path, bytes);
+        this.loadedPaths.add(entry.path);
+        return bytes;
+      });
+      this.inflight.set(entry.path, read);
+    }
+
+    try {
+      return await read;
+    } finally {
+      this.inflight.delete(entry.path);
+    }
+  }
 }
 
 function validateDecodedEntrySize(path: string, size: number, state: ZipLimitState): void {
@@ -194,6 +264,27 @@ export async function parseZip(
   buffer: ArrayBuffer,
   limits: ZipParseLimits = {},
 ): Promise<PptxFiles> {
+  return parseZipInternal(buffer, limits, { lazyMedia: false });
+}
+
+/**
+ * Parse a .pptx file while indexing media entries for on-demand decoding.
+ *
+ * This preserves the same XML categorisation as parseZip(), but leaves
+ * PptxFiles.media empty until mediaResolver.resolve(target) is called.
+ */
+export async function parseZipLazyMedia(
+  buffer: ArrayBuffer,
+  limits: ZipParseLimits = {},
+): Promise<PptxFiles> {
+  return parseZipInternal(buffer, limits, { lazyMedia: true });
+}
+
+async function parseZipInternal(
+  buffer: ArrayBuffer,
+  limits: ZipParseLimits,
+  options: { lazyMedia: boolean },
+): Promise<PptxFiles> {
   const maxConcurrency = limits.maxConcurrency ?? 8;
   if (!Number.isInteger(maxConcurrency) || maxConcurrency < 1) {
     throwZipLimitExceeded(`maxConcurrency ${limits.maxConcurrency} must be an integer >= 1`);
@@ -271,6 +362,7 @@ export async function parseZip(
     unknownTotalBytes: 0,
     unknownMediaBytes: 0,
   };
+  const lazyMediaEntries = new Map<string, LazyMediaEntry>();
 
   await mapWithConcurrency(entries, maxConcurrency, async ([path, file]) => {
     const normalizedPath = path.replace(/\\/g, '/');
@@ -301,6 +393,11 @@ export async function parseZip(
 
     // --- Media (binary) ---
     if (isMediaPath(normalizedPath)) {
+      if (options.lazyMedia) {
+        setPathMapEntry(lazyMediaEntries, normalizedPath, { path: normalizedPath, file });
+        return;
+      }
+
       const bytes = await readZipBinaryEntry(normalizedPath, file, limitState);
       setPathMapEntry(result.media, normalizedPath, bytes);
       return;
@@ -442,6 +539,15 @@ export async function parseZip(
 
     await countUncategorizedEntryIfNeeded(normalizedPath, file, limitState);
   });
+
+  if (options.lazyMedia) {
+    result.mediaResolver = new ZipLazyMediaResolver(
+      lazyMediaEntries,
+      result.media,
+      limitState,
+      knownMediaBytes,
+    );
+  }
 
   return result;
 }

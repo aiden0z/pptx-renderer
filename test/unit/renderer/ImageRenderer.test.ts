@@ -125,6 +125,29 @@ describe('renderImage', () => {
       expect(img!.src).toBe('https://example.com/linked-image.png');
       expect(el.textContent).not.toContain('No image data');
     });
+
+    it('renders an embedded image after lazy media resolves asynchronously', async () => {
+      const data = new Uint8Array([0x89, 0x50, 0x4e, 0x47]);
+      const ctx = createMockRenderContext();
+      ctx.asyncTasks = [];
+      ctx.slide.rels.set('rId1', {
+        type: 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/image',
+        target: '../media/image1.png',
+      });
+      ctx.presentation.mediaResolver = {
+        resolve: vi.fn(async () => ({ mediaPath: 'ppt/media/image1.png', data })),
+      };
+
+      const el = renderImage(createPicNode(), ctx);
+
+      expect(el.querySelector('img')).toBeNull();
+      expect(ctx.asyncTasks).toHaveLength(1);
+      await Promise.all(ctx.asyncTasks);
+
+      expect(el.querySelector('img')).not.toBeNull();
+      expect(ctx.presentation.mediaResolver.resolve).toHaveBeenCalledWith('../media/image1.png');
+      expect(ctx.mediaUrlCache.has('ppt/media/image1.png')).toBe(true);
+    });
   });
 
   describe('blipFill tile mode', () => {
