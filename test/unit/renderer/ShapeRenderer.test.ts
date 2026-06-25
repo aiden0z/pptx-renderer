@@ -40,6 +40,42 @@ function extractPathNumbers(path: string): number[] {
 }
 
 describe('ShapeRenderer', () => {
+  it('renders wordArtVert as upright stacked text instead of sideways vertical text', () => {
+    const xml = `
+      <p:sp xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
+            xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+        <p:nvSpPr>
+          <p:cNvPr id="34" name="WordArt Vertical"/>
+          <p:cNvSpPr txBox="1"/>
+          <p:nvPr/>
+        </p:nvSpPr>
+        <p:spPr>
+          <a:xfrm><a:off x="0" y="0"/><a:ext cx="914400" cy="1828800"/></a:xfrm>
+          <a:prstGeom prst="rect"><a:avLst/></a:prstGeom>
+        </p:spPr>
+        <p:txBody>
+          <a:bodyPr vert="wordArtVert" wrap="square" lIns="0" tIns="0" rIns="0" bIns="0">
+            <a:noAutofit/>
+          </a:bodyPr>
+          <a:lstStyle/>
+          <a:p><a:r><a:t>STACK</a:t></a:r></a:p>
+        </p:txBody>
+      </p:sp>
+    `;
+
+    const el = renderShape(parseShapeNode(parseXml(xml)), createMockRenderContext());
+    const span = Array.from(el.querySelectorAll('span')).find((node) =>
+      node.textContent?.includes('STACK'),
+    ) as HTMLElement | undefined;
+    const paragraph = span?.closest('div') as HTMLElement | undefined;
+    const textContainer = paragraph?.parentElement as HTMLElement | undefined;
+
+    expect(textContainer).toBeDefined();
+    expect(textContainer!.style.writingMode).toBe('vertical-lr');
+    expect(textContainer!.style.textOrientation).toBe('upright');
+    expect(textContainer!.style.whiteSpace).toBe('normal');
+  });
+
   it('keeps master text size for vertical text boxes without applying wide CSS line-height (ai-computing slide 22)', () => {
     const xml = `
       <p:sp xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"

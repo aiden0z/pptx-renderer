@@ -8,7 +8,9 @@ export function createLegendIcon(
   height: number,
   strokeWidth = 2,
   marker?: string,
-): SVGSVGElement {
+): SVGSVGElement | null {
+  if (icon === 'none') return null;
+
   const ns = 'http://www.w3.org/2000/svg';
   const svg = document.createElementNS(ns, 'svg');
   svg.setAttribute('width', String(width));
@@ -221,16 +223,15 @@ export function buildCustomLegendOverlay(
     row.style.alignItems = 'center';
     row.style.gap = '6px';
 
-    row.appendChild(
-      createLegendIcon(
-        entry.icon,
-        entry.color,
-        itemWidth,
-        itemHeight,
-        entry.lineWidth,
-        entry.marker,
-      ),
+    const icon = createLegendIcon(
+      entry.icon,
+      entry.color,
+      itemWidth,
+      itemHeight,
+      entry.lineWidth,
+      entry.marker,
     );
+    if (icon) row.appendChild(icon);
 
     const label = document.createElement('span');
     label.textContent = entry.name;

@@ -13,6 +13,12 @@ describe('chart legend overlay helpers', () => {
     expect(icon.querySelectorAll('path')).toHaveLength(2);
   });
 
+  it('does not render a marker when a legend item explicitly requests no icon', () => {
+    const icon = createLegendIcon('none', '#336699', 12, 12);
+
+    expect(icon === null).toBe(true);
+  });
+
   it('builds anchored legend overlay from ECharts legend option', () => {
     const overlay = buildCustomLegendOverlay(
       {

@@ -250,10 +250,19 @@ function expandCssLengthForScale(length: string, scale: number): string {
   return `${value / scale}${unit}`;
 }
 
-function applyVerticalTextFlow(el: HTMLElement, anchor: string | null | undefined): void {
-  el.style.writingMode = 'vertical-rl';
+function applyVerticalTextFlow(
+  el: HTMLElement,
+  anchor: string | null | undefined,
+  upright = false,
+  writingMode: 'vertical-rl' | 'vertical-lr' = 'vertical-rl',
+): void {
+  el.style.writingMode = writingMode;
   el.style.justifyContent = 'center';
   el.style.alignItems = anchor === 'b' ? 'flex-end' : anchor === 'ctr' ? 'center' : 'flex-start';
+  if (upright) {
+    el.style.textOrientation = 'upright';
+    el.style.whiteSpace = 'normal';
+  }
 }
 
 const WRAPPED_AUTOFIT_HEIGHT_TOLERANCE = 1.1;
@@ -2355,7 +2364,10 @@ export function renderShape(node: ShapeNodeData, ctx: RenderContext): HTMLElemen
         if (vert === 'eaVert') {
           applyVerticalTextFlow(textContainer, textAnchor);
           isVerticalText = true;
-        } else if (vert === 'vert' || vert === 'wordArtVert') {
+        } else if (vert === 'wordArtVert') {
+          applyVerticalTextFlow(textContainer, textAnchor, true, 'vertical-lr');
+          isVerticalText = true;
+        } else if (vert === 'vert') {
           applyVerticalTextFlow(textContainer, textAnchor);
           isVerticalText = true;
         } else if (vert === 'vert270') {

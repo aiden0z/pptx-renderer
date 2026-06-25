@@ -5064,6 +5064,7 @@ describe('ChartRenderer', () => {
         <c:chartSpace xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart"
                       xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
           <c:chart>
+            <c:legend><c:legendPos val="r"/></c:legend>
             <c:plotArea>
               <c:stockChart>
                 <c:ser>
@@ -5106,9 +5107,12 @@ describe('ChartRenderer', () => {
 
       const { option } = parseChartOption(xml);
       const series = option.series as any[];
+      const legend = option.legend as any;
       expect(series[0].type).toBe('custom');
       expect(typeof series[0].renderItem).toBe('function');
       expect(series[0].data[0]).toEqual([0, 50, 20, 35]);
+      expect(legend.icon).toBe('none');
+      expect(legend.data).toEqual(['High', 'Low', 'Close']);
 
       const rendered = series[0].renderItem(
         {},
