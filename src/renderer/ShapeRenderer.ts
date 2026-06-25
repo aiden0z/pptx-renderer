@@ -523,6 +523,113 @@ function applySvgDropShadowFilter(
   target.setAttribute('filter', `url(#${filterId})`);
 }
 
+function applySvgInnerShadowFilter(
+  svgNs: string,
+  defs: SVGDefsElement,
+  target: SVGElement,
+  bounds: { w: number; h: number },
+  shadow: {
+    dx: number;
+    dy: number;
+    blur: number;
+    color: { r: number; g: number; b: number };
+    opacity: number;
+  },
+): void {
+  const filterId = `shape-inner-shadow-${++gradientIdCounter}`;
+  const filter = document.createElementNS(svgNs, 'filter');
+  const margin = Math.max(Math.abs(shadow.dx), Math.abs(shadow.dy)) + shadow.blur * 4 + 4;
+  filter.setAttribute('id', filterId);
+  filter.setAttribute('filterUnits', 'userSpaceOnUse');
+  filter.setAttribute('x', String(-margin));
+  filter.setAttribute('y', String(-margin));
+  filter.setAttribute('width', String(bounds.w + margin * 2));
+  filter.setAttribute('height', String(bounds.h + margin * 2));
+
+  const offset = document.createElementNS(svgNs, 'feOffset');
+  offset.setAttribute('in', 'SourceAlpha');
+  offset.setAttribute('dx', shadow.dx.toFixed(1));
+  offset.setAttribute('dy', shadow.dy.toFixed(1));
+  offset.setAttribute('result', 'innerOffset');
+  filter.appendChild(offset);
+
+  const blur = document.createElementNS(svgNs, 'feGaussianBlur');
+  blur.setAttribute('in', 'innerOffset');
+  blur.setAttribute('stdDeviation', Math.max(0, shadow.blur / 2).toFixed(2));
+  blur.setAttribute('result', 'innerBlur');
+  filter.appendChild(blur);
+
+  const mask = document.createElementNS(svgNs, 'feComposite');
+  mask.setAttribute('in', 'innerBlur');
+  mask.setAttribute('in2', 'SourceAlpha');
+  mask.setAttribute('operator', 'in');
+  mask.setAttribute('result', 'innerMask');
+  filter.appendChild(mask);
+
+  const flood = document.createElementNS(svgNs, 'feFlood');
+  flood.setAttribute('flood-color', `rgb(${shadow.color.r},${shadow.color.g},${shadow.color.b})`);
+  flood.setAttribute('flood-opacity', shadow.opacity.toFixed(4));
+  flood.setAttribute('result', 'innerColor');
+  filter.appendChild(flood);
+
+  const coloredShadow = document.createElementNS(svgNs, 'feComposite');
+  coloredShadow.setAttribute('in', 'innerColor');
+  coloredShadow.setAttribute('in2', 'innerMask');
+  coloredShadow.setAttribute('operator', 'in');
+  coloredShadow.setAttribute('result', 'innerShadow');
+  filter.appendChild(coloredShadow);
+
+  const merge = document.createElementNS(svgNs, 'feMerge');
+  const sourceNode = document.createElementNS(svgNs, 'feMergeNode');
+  sourceNode.setAttribute('in', 'SourceGraphic');
+  const shadowNode = document.createElementNS(svgNs, 'feMergeNode');
+  shadowNode.setAttribute('in', 'innerShadow');
+  merge.appendChild(sourceNode);
+  merge.appendChild(shadowNode);
+  filter.appendChild(merge);
+
+  defs.appendChild(filter);
+  if (!defs.parentNode && target.ownerSVGElement) {
+    target.ownerSVGElement.insertBefore(defs, target.ownerSVGElement.firstChild);
+  }
+  target.setAttribute('filter', `url(#${filterId})`);
+}
+
+function applySvgSoftEdgeFilter(
+  svgNs: string,
+  defs: SVGDefsElement,
+  target: SVGElement,
+  bounds: { w: number; h: number },
+  radius: number,
+): void {
+  const filterId = `shape-soft-edge-${++gradientIdCounter}`;
+  const filter = document.createElementNS(svgNs, 'filter');
+  const margin = Math.max(radius * 4 + 4, bounds.w, bounds.h);
+  filter.setAttribute('id', filterId);
+  filter.setAttribute('filterUnits', 'userSpaceOnUse');
+  filter.setAttribute('x', String(-margin));
+  filter.setAttribute('y', String(-margin));
+  filter.setAttribute('width', String(bounds.w + margin * 2));
+  filter.setAttribute('height', String(bounds.h + margin * 2));
+
+  const blur = document.createElementNS(svgNs, 'feGaussianBlur');
+  blur.setAttribute('in', 'SourceGraphic');
+  blur.setAttribute('stdDeviation', Math.max(0, radius / 2).toFixed(2));
+  filter.appendChild(blur);
+
+  defs.appendChild(filter);
+  if (!defs.parentNode && target.ownerSVGElement) {
+    target.ownerSVGElement.insertBefore(defs, target.ownerSVGElement.firstChild);
+  }
+
+  const parent = target.parentNode;
+  if (!parent) return;
+  const group = document.createElementNS(svgNs, 'g');
+  group.setAttribute('filter', `url(#${filterId})`);
+  parent.insertBefore(group, target);
+  group.appendChild(target);
+}
+
 function svgDashArrayForKind(dashKind: string, strokeWidth: number): string | null {
   const w = Math.max(strokeWidth, 1);
   switch (dashKind) {
@@ -2663,6 +2770,35 @@ export function renderShape(node: ShapeNodeData, ctx: RenderContext): HTMLElemen
     const glow = effectiveEffectLst.child('glow');
     if (glow.exists()) {
       applyGlowFilter(wrapper, glow, ctx);
+    }
+
+    const softEdge = effectiveEffectLst.child('softEdge');
+    if (softEdge.exists() && !isLineLike && mainSvgNs && mainDefs && mainPath && mainSvgBounds) {
+      const radiusPx = emuToPx(softEdge.numAttr('rad') ?? 0);
+      if (radiusPx > 0) {
+        applySvgSoftEdgeFilter(mainSvgNs, mainDefs, mainPath, mainSvgBounds, radiusPx);
+      }
+    }
+
+    const innerShdw = effectiveEffectLst.child('innerShdw');
+    if (innerShdw.exists() && !isLineLike && mainSvgNs && mainDefs && mainPath && mainSvgBounds) {
+      const dir = innerShdw.numAttr('dir') ?? 0;
+      const distPx = emuToPx(innerShdw.numAttr('dist') ?? 0);
+      const blurPx = emuToPx(innerShdw.numAttr('blurRad') ?? 0);
+      const dirDeg = dir / 60000;
+      const offsetX = distPx * Math.cos((dirDeg * Math.PI) / 180);
+      const offsetY = distPx * Math.sin((dirDeg * Math.PI) / 180);
+      const { color, alpha } = resolveColor(innerShdw, ctx);
+      if (color && alpha > 0) {
+        const hex = color.startsWith('#') ? color : `#${color}`;
+        applySvgInnerShadowFilter(mainSvgNs, mainDefs, mainPath, mainSvgBounds, {
+          dx: offsetX,
+          dy: offsetY,
+          blur: blurPx,
+          color: hexToRgb(hex),
+          opacity: alpha,
+        });
+      }
     }
 
     // Reflection is not directly representable in standard CSS across browsers.

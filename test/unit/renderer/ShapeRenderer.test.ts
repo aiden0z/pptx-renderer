@@ -3122,6 +3122,88 @@ describe('ShapeRenderer', () => {
     expect(el.innerHTML).toContain('stdDeviation="2.10"');
   });
 
+  it('applies inner shadows to non-line SVG paths without blurring text (xcloud-solution slide 5)', () => {
+    const xml = `
+      <p:sp xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
+            xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+        <p:nvSpPr><p:cNvPr id="14" name="椭圆 13"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+        <p:spPr>
+          <a:xfrm><a:off x="0" y="0"/><a:ext cx="1167614" cy="1188194"/></a:xfrm>
+          <a:prstGeom prst="ellipse"><a:avLst/></a:prstGeom>
+          <a:solidFill><a:srgbClr val="FFFFFF"><a:alpha val="0"/></a:srgbClr></a:solidFill>
+          <a:ln w="19050">
+            <a:solidFill><a:srgbClr val="5C71CE"/></a:solidFill>
+          </a:ln>
+          <a:effectLst>
+            <a:innerShdw blurRad="190500" dist="698500">
+              <a:prstClr val="black"/>
+            </a:innerShdw>
+          </a:effectLst>
+        </p:spPr>
+        <p:txBody>
+          <a:bodyPr/>
+          <a:lstStyle/>
+          <a:p><a:r><a:t>Label</a:t></a:r></a:p>
+        </p:txBody>
+      </p:sp>
+    `;
+
+    const el = renderShape(parseShapeNode(parseXml(xml)), createMockRenderContext());
+    const path = el.querySelector('svg > path');
+    const filter = el.querySelector('filter[id^="shape-inner-shadow-"]');
+    const textContainer = Array.from(el.querySelectorAll('div')).find((div) =>
+      div.textContent?.includes('Label'),
+    ) as HTMLElement | undefined;
+
+    expect(path?.getAttribute('filter') ?? '').toContain('url(#shape-inner-shadow-');
+    expect(filter?.querySelector('feOffset')).toBeTruthy();
+    expect(filter?.querySelector('feGaussianBlur')).toBeTruthy();
+    expect(filter?.querySelector('feComposite[operator="in"]')).toBeTruthy();
+    expect(filter?.querySelector('feFlood')?.getAttribute('flood-color')).toBe('rgb(0,0,0)');
+    expect(filter?.querySelector('feMergeNode[in="SourceGraphic"]')).toBeTruthy();
+    expect(textContainer?.style.filter).toBe('');
+  });
+
+  it('applies soft edge as a path group filter without replacing outer shadow (ai-computing slide 13)', () => {
+    const xml = `
+      <p:sp xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
+            xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+        <p:nvSpPr><p:cNvPr id="104" name="同侧圆角矩形 104"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+        <p:spPr>
+          <a:xfrm><a:off x="0" y="0"/><a:ext cx="1524000" cy="762000"/></a:xfrm>
+          <a:prstGeom prst="roundRect"><a:avLst/></a:prstGeom>
+          <a:solidFill><a:srgbClr val="5C71CE"/></a:solidFill>
+          <a:effectLst>
+            <a:outerShdw blurRad="152400" dist="76200" dir="5400000">
+              <a:srgbClr val="000000"><a:alpha val="35000"/></a:srgbClr>
+            </a:outerShdw>
+            <a:softEdge rad="12700"/>
+          </a:effectLst>
+        </p:spPr>
+        <p:txBody>
+          <a:bodyPr/>
+          <a:lstStyle/>
+          <a:p><a:r><a:t>Soft edge label</a:t></a:r></a:p>
+        </p:txBody>
+      </p:sp>
+    `;
+
+    const el = renderShape(parseShapeNode(parseXml(xml)), createMockRenderContext());
+    const softGroup = el.querySelector('svg > g[filter^="url(#shape-soft-edge-"]');
+    const path = softGroup?.querySelector('path');
+    const softFilter = el.querySelector('filter[id^="shape-soft-edge-"]');
+    const shadowFilter = el.querySelector('filter[id^="shape-shadow-"]');
+    const textContainer = Array.from(el.querySelectorAll('div')).find((div) =>
+      div.textContent?.includes('Soft edge label'),
+    ) as HTMLElement | undefined;
+
+    expect(softGroup).toBeTruthy();
+    expect(path?.getAttribute('filter') ?? '').toContain('url(#shape-shadow-');
+    expect(softFilter?.querySelector('feGaussianBlur')?.getAttribute('stdDeviation')).toBe('0.67');
+    expect(shadowFilter?.querySelector('feDropShadow')).toBeTruthy();
+    expect(textContainer?.style.filter).toBe('');
+  });
+
   it('applies shape glow from spPr effectLst (ai-computing slide 27)', () => {
     const xml = `
       <p:sp xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
