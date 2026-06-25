@@ -8,6 +8,7 @@ export function createLegendIcon(
   height: number,
   strokeWidth = 2,
   marker?: string,
+  markerSizeOverride?: number,
 ): SVGSVGElement | null {
   if (icon === 'none') return null;
 
@@ -30,7 +31,13 @@ export function createLegendIcon(
     if (marker && marker !== 'none') {
       const cx = width / 2;
       const cy = height / 2;
-      const markerSize = Math.max(3, Math.min(width, height) * 0.55);
+      const markerSize = Math.min(
+        width,
+        height,
+        markerSizeOverride !== undefined
+          ? Math.max(3, markerSizeOverride)
+          : Math.max(3, height * 0.55),
+      );
       if (marker === 'diamond') {
         const markerPath = document.createElementNS(ns, 'path');
         markerPath.setAttribute(
@@ -134,6 +141,7 @@ export function buildCustomLegendOverlay(
     name: string;
     icon: string | undefined;
     marker: string | undefined;
+    markerSize: number | undefined;
     color: string;
     lineWidth: number;
   };
@@ -164,7 +172,19 @@ export function buildCustomLegendOverlay(
         typeof lineStyle.width === 'number' && Number.isFinite(lineStyle.width)
           ? Math.max(1, lineStyle.width)
           : 2;
-      return { name, icon: itemIcon ?? legend.icon, marker: itemMarker, color, lineWidth };
+      const symbolSize = visual?.symbolSize;
+      const markerSize =
+        typeof symbolSize === 'number' && Number.isFinite(symbolSize)
+          ? Math.max(3, symbolSize)
+          : undefined;
+      return {
+        name,
+        icon: itemIcon ?? legend.icon,
+        marker: itemMarker,
+        markerSize,
+        color,
+        lineWidth,
+      };
     })
     .filter((entry): entry is LegendOverlayEntry => entry !== null);
   if (entries.length === 0) return null;
@@ -223,13 +243,20 @@ export function buildCustomLegendOverlay(
     row.style.alignItems = 'center';
     row.style.gap = '6px';
 
+    const iconMarkerSize = entry.marker && entry.marker !== 'none' ? entry.markerSize : undefined;
+    const iconWidth =
+      iconMarkerSize !== undefined ? Math.max(itemWidth, Math.ceil(iconMarkerSize)) : itemWidth;
+    const iconHeight =
+      iconMarkerSize !== undefined ? Math.max(itemHeight, Math.ceil(iconMarkerSize)) : itemHeight;
+
     const icon = createLegendIcon(
       entry.icon,
       entry.color,
-      itemWidth,
-      itemHeight,
+      iconWidth,
+      iconHeight,
       entry.lineWidth,
       entry.marker,
+      iconMarkerSize,
     );
     if (icon) row.appendChild(icon);
 

@@ -37,4 +37,44 @@ describe('chart legend overlay helpers', () => {
     expect(overlay?.style.bottom).toBe('15px');
     expect(overlay?.textContent).toContain('Series A');
   });
+
+  it('uses the series symbol size for line legend markers', () => {
+    const overlay = buildCustomLegendOverlay(
+      {
+        color: ['#156082'],
+        legend: {
+          right: 20,
+          top: 'middle',
+          orient: 'vertical',
+          itemWidth: 24,
+          itemHeight: 9,
+          data: [
+            {
+              name: 'Y value',
+              icon: 'path://M2 4.5 L22 4.5',
+              marker: 'diamond',
+            },
+          ],
+          textStyle: { fontSize: 10, color: '#000000' },
+        },
+        series: [
+          {
+            type: 'line',
+            name: 'Y value',
+            symbolSize: 14,
+            lineStyle: { color: '#156082', width: 2 },
+            itemStyle: { color: '#156082' },
+            data: [[0.7, 2.7]],
+          },
+        ],
+      },
+      { w: 800, h: 450 },
+    );
+
+    const svg = overlay?.querySelector('svg');
+    const markerPath = svg?.querySelectorAll('path')[1];
+
+    expect(svg?.getAttribute('height')).toBe('14');
+    expect(markerPath?.getAttribute('d')).toBe('M12 0 L19 7 L12 14 L5 7 Z');
+  });
 });

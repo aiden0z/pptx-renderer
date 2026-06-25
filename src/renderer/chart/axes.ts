@@ -5,6 +5,7 @@ import { parseOoxmlBoolElement } from './ooxml';
 import { extractChartLineStyle, resolveColorToHex } from './style';
 import { extractTitleText, extractTitleTextStyle, extractTxPrStyle } from './text';
 import {
+  DEFAULT_CHART_AXIS_LINE_COLOR,
   DEFAULT_CHART_FOREGROUND_COLOR,
   DEFAULT_MAJOR_GRIDLINE_STYLE,
   type AxisInfo,
@@ -233,6 +234,15 @@ export function applyAxisInfo(
   if (info.majorTickMark === 'none') {
     const existingTick = (axisDef.axisTick as Record<string, unknown>) || {};
     axisDef.axisTick = { ...existingTick, show: false };
+  } else if (!info.deleted) {
+    const existingTick = (axisDef.axisTick as Record<string, unknown>) || {};
+    const existingLineStyle = (existingTick.lineStyle as Record<string, unknown>) || {};
+    if (existingLineStyle.color === undefined) {
+      axisDef.axisTick = {
+        ...existingTick,
+        lineStyle: { ...existingLineStyle, color: DEFAULT_CHART_AXIS_LINE_COLOR },
+      };
+    }
   }
 
   if (kind === 'value') {
@@ -292,7 +302,7 @@ export function applyAxisInfo(
     const existingLineStyle = (existingLine.lineStyle as Record<string, unknown>) || {};
     const color =
       info.lineColor ??
-      (existingLineStyle.color === undefined ? DEFAULT_CHART_FOREGROUND_COLOR : undefined);
+      (existingLineStyle.color === undefined ? DEFAULT_CHART_AXIS_LINE_COLOR : undefined);
     if (color) {
       axisDef.axisLine = {
         ...existingLine,

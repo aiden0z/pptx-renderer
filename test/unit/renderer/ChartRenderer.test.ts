@@ -4136,6 +4136,7 @@ describe('ChartRenderer', () => {
       expect(series?.smooth).toBe(false);
       expect(series?.showSymbol).toBe(true);
       expect(series?.symbol).toBe('diamond');
+      expect(series?.symbolSize).toBe(14);
       expect(series?.data?.length).toBe(3);
       expect(series?.data?.[0]).toEqual([10, 100]);
       expect(series?.data?.[1]).toEqual([20, 200]);
@@ -5427,7 +5428,7 @@ describe('ChartRenderer', () => {
       expect(yAxis.splitLine?.show).not.toBe(false);
     });
 
-    it('uses Office-style black major gridlines when c:majorGridlines has no explicit style', () => {
+    it('uses Office-style gray major gridlines when c:majorGridlines has no explicit style', () => {
       const xml = `<c:chartSpace
         xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart"
         xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
@@ -5456,7 +5457,7 @@ describe('ChartRenderer', () => {
       expect(yAxis.splitLine).toMatchObject({
         show: true,
         lineStyle: {
-          color: '#000000',
+          color: '#898989',
           width: 1,
           type: 'solid',
         },
@@ -5494,11 +5495,17 @@ describe('ChartRenderer', () => {
       expect(yAxis.axisLabel.color).toBe('#000000');
       expect(xAxis.axisLine).toMatchObject({
         show: true,
-        lineStyle: { color: '#000000' },
+        lineStyle: { color: '#898989' },
       });
       expect(yAxis.axisLine).toMatchObject({
         show: true,
-        lineStyle: { color: '#000000' },
+        lineStyle: { color: '#898989' },
+      });
+      expect(xAxis.axisTick).toMatchObject({
+        lineStyle: { color: '#898989' },
+      });
+      expect(yAxis.axisTick).toMatchObject({
+        lineStyle: { color: '#898989' },
       });
     });
 
@@ -5873,6 +5880,20 @@ describe('ChartRenderer', () => {
                 <c:val><c:numRef><c:numCache><c:formatCode>General</c:formatCode><c:ptCount val="3"/><c:pt idx="0"><c:v>110</c:v></c:pt><c:pt idx="1"><c:v>103</c:v></c:pt><c:pt idx="2"><c:v>93</c:v></c:pt></c:numCache></c:numRef></c:val>
                 <c:smooth val="0"/>
               </c:ser>
+              <c:ser>
+                <c:idx val="1"/><c:order val="1"/>
+                <c:tx><c:strRef><c:strCache><c:ptCount val="1"/><c:pt idx="0"><c:v>Target</c:v></c:pt></c:strCache></c:strRef></c:tx>
+                <c:cat><c:strRef><c:strCache><c:ptCount val="3"/><c:pt idx="0"><c:v>1</c:v></c:pt><c:pt idx="1"><c:v>2</c:v></c:pt><c:pt idx="2"><c:v>3</c:v></c:pt></c:strCache></c:strRef></c:cat>
+                <c:val><c:numRef><c:numCache><c:formatCode>General</c:formatCode><c:ptCount val="3"/><c:pt idx="0"><c:v>90</c:v></c:pt><c:pt idx="1"><c:v>88</c:v></c:pt><c:pt idx="2"><c:v>91</c:v></c:pt></c:numCache></c:numRef></c:val>
+                <c:smooth val="0"/>
+              </c:ser>
+              <c:ser>
+                <c:idx val="2"/><c:order val="2"/>
+                <c:tx><c:strRef><c:strCache><c:ptCount val="1"/><c:pt idx="0"><c:v>Forecast</c:v></c:pt></c:strCache></c:strRef></c:tx>
+                <c:cat><c:strRef><c:strCache><c:ptCount val="3"/><c:pt idx="0"><c:v>1</c:v></c:pt><c:pt idx="1"><c:v>2</c:v></c:pt><c:pt idx="2"><c:v>3</c:v></c:pt></c:strCache></c:strRef></c:cat>
+                <c:val><c:numRef><c:numCache><c:formatCode>General</c:formatCode><c:ptCount val="3"/><c:pt idx="0"><c:v>105</c:v></c:pt><c:pt idx="1"><c:v>94</c:v></c:pt><c:pt idx="2"><c:v>97</c:v></c:pt></c:numCache></c:numRef></c:val>
+                <c:smooth val="0"/>
+              </c:ser>
               <c:marker val="1"/>
               <c:smooth val="0"/>
               <c:axId val="1"/><c:axId val="2"/>
@@ -5884,10 +5905,10 @@ describe('ChartRenderer', () => {
       </c:chartSpace>`;
 
       const { option } = parseChartOption(xml);
-      const series = (option.series as any[])[0];
-      expect(series.showSymbol).toBe(true);
-      expect(series.symbol).toBe('diamond');
-      expect(series.symbolSize).toBeCloseTo(6.667, 3);
+      const series = option.series as any[];
+      expect(series.map((s) => s.showSymbol)).toEqual([true, true, true]);
+      expect(series.map((s) => s.symbol)).toEqual(['diamond', 'rect', 'triangle']);
+      expect(series.map((s) => s.symbolSize)).toEqual([12, 12, 12]);
     });
 
     it('adds one Office-like tick of headroom when line data nearly reaches the nice max (oracle-pypptx-chart-0008)', () => {
@@ -6161,10 +6182,12 @@ describe('ChartRenderer', () => {
       ]);
       expect(series.lineStyle).toBeUndefined();
       expect(series.symbol).toBe('diamond');
+      expect(series.symbolSize).toBe(14);
 
       const secondSeries = (option.series as any[])[1];
       expect(secondSeries.type).toBe('scatter');
       expect(secondSeries.symbol).toBe('rect');
+      expect(secondSeries.symbolSize).toBe(14);
 
       const xAxis = option.xAxis as any;
       const yAxis = option.yAxis as any;

@@ -167,6 +167,9 @@ function mapOoxmlSymbol(symbol: string | undefined): string | undefined {
 }
 
 const DEFAULT_LINE_MARKER_SCATTER_SYMBOLS = ['diamond', 'rect', 'triangle', 'circle'];
+const DEFAULT_SCATTER_MARKER_SIZE = 14;
+const DEFAULT_LINE_MARKER_SYMBOLS = ['diamond', 'square', 'triangle', 'circle'];
+const DEFAULT_LINE_MARKER_SIZE = markerSizeToPx(9);
 
 function defaultScatterSymbol(scatterStyle: string, seriesIndex: number): string {
   if (scatterStyle === 'lineMarker' || scatterStyle === 'smoothMarker') {
@@ -175,6 +178,10 @@ function defaultScatterSymbol(scatterStyle: string, seriesIndex: number): string
     ];
   }
   return 'circle';
+}
+
+function defaultLineMarkerSymbol(seriesIndex: number): string {
+  return DEFAULT_LINE_MARKER_SYMBOLS[seriesIndex % DEFAULT_LINE_MARKER_SYMBOLS.length];
 }
 
 function buildSmoothScatterLineData(data: number[][], stepsPerSegment = 24): number[][] {
@@ -766,11 +773,15 @@ function buildLineChartOption(
     .map((x) => x.ser);
   const chartMarkerNode = chartTypeNode.child('marker');
   const chartMarker = chartMarkerNode.exists() ? parseOoxmlBoolElement(chartMarkerNode) : undefined;
-  const chartMarkerSymbol =
-    chartMarker === true ? 'diamond' : chartMarker === false ? 'none' : undefined;
 
   const series: echarts.LineSeriesOption[] = seriesArr.map((s, idx) => {
-    const markerSymbol = s.markerSymbol ?? chartMarkerSymbol;
+    const markerSymbol =
+      s.markerSymbol ??
+      (chartMarker === true
+        ? defaultLineMarkerSymbol(idx)
+        : chartMarker === false
+          ? 'none'
+          : undefined);
     const echartsSymbol = mapOoxmlSymbol(markerSymbol);
     const showSymbol = echartsSymbol !== undefined ? echartsSymbol !== 'none' : undefined;
     const lineWidth = s.lineWidth ?? 3;
@@ -813,7 +824,9 @@ function buildLineChartOption(
     const symbolSize = forceSymbolForLabel
       ? 0
       : (s.markerSize ??
-        (s.markerSymbol === undefined && chartMarker === true ? markerSizeToPx(5) : undefined));
+        (s.markerSymbol === undefined && chartMarker === true
+          ? DEFAULT_LINE_MARKER_SIZE
+          : undefined));
     const resolvedShowSymbol = forceSymbolForLabel
       ? true
       : isArea && echartsSymbol === undefined
@@ -912,8 +925,15 @@ function buildLineChartOption(
       legendTopPx,
       isArea
         ? seriesArr.map((s) => s.name)
-        : seriesArr.map((s) => {
-            const marker = mapOoxmlSymbol(s.markerSymbol ?? chartMarkerSymbol);
+        : seriesArr.map((s, idx) => {
+            const markerSymbol =
+              s.markerSymbol ??
+              (chartMarker === true
+                ? defaultLineMarkerSymbol(idx)
+                : chartMarker === false
+                  ? 'none'
+                  : undefined);
+            const marker = mapOoxmlSymbol(markerSymbol);
             return marker && marker !== 'none'
               ? { name: s.name, icon: lineLegendIconPath(), marker }
               : { name: s.name, icon: lineLegendIconPath() };
@@ -1295,7 +1315,9 @@ function buildScatterChartOption(
         data: lineData,
         smooth: false,
         showSymbol,
-        ...(showSymbol ? { symbol: echartsSymbol, symbolSize: s.markerSize ?? 8 } : {}),
+        ...(showSymbol
+          ? { symbol: echartsSymbol, symbolSize: s.markerSize ?? DEFAULT_SCATTER_MARKER_SIZE }
+          : {}),
         ...(s.colorHex
           ? {
               lineStyle: {
@@ -1314,7 +1336,7 @@ function buildScatterChartOption(
       name: s.name,
       data,
       symbol: showSymbol ? echartsSymbol : 'none',
-      symbolSize: showSymbol ? (s.markerSize ?? 8) : 0,
+      symbolSize: showSymbol ? (s.markerSize ?? DEFAULT_SCATTER_MARKER_SIZE) : 0,
       itemStyle: s.colorHex ? { color: s.colorHex } : undefined,
     };
   });
