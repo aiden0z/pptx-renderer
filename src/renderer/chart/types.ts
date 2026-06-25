@@ -57,6 +57,7 @@ export interface AxisInfo {
   min?: number;
   max?: number;
   hasMajorGridlines: boolean;
+  majorTickMark?: string;
   orientation: string;
   title?: string;
   titleStyle?: ChartTextStyle;

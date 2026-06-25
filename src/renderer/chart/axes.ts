@@ -91,6 +91,7 @@ function parseAxisNode(ax: SafeXmlNode, ctx: RenderContext): AxisInfo {
   const min = minNode.exists() ? parseFloat(minNode.attr('val') || '') : undefined;
   const max = maxNode.exists() ? parseFloat(maxNode.attr('val') || '') : undefined;
   const hasMajorGridlines = ax.child('majorGridlines').exists();
+  const majorTickMark = ax.child('majorTickMark').attr('val');
   const orientation = scaling.child('orientation').attr('val') || 'minMax';
   const txStyle = extractTxPrStyle(ax, ctx);
   const labelColor = txStyle?.color ?? extractAxisLabelColor(ax, ctx);
@@ -106,6 +107,7 @@ function parseAxisNode(ax: SafeXmlNode, ctx: RenderContext): AxisInfo {
     min: min !== undefined && !isNaN(min) ? min : undefined,
     max: max !== undefined && !isNaN(max) ? max : undefined,
     hasMajorGridlines,
+    majorTickMark,
     orientation,
     ...axisTitle,
     labelColor,
@@ -226,6 +228,11 @@ export function applyAxisInfo(
 
   if (info.tickLblPos === 'none') {
     axisDef.axisLabel = { ...((axisDef.axisLabel as object) || {}), show: false };
+  }
+
+  if (info.majorTickMark === 'none') {
+    const existingTick = (axisDef.axisTick as Record<string, unknown>) || {};
+    axisDef.axisTick = { ...existingTick, show: false };
   }
 
   if (kind === 'value') {

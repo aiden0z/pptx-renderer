@@ -5563,6 +5563,47 @@ describe('ChartRenderer', () => {
       expect(yAxis.splitLine.show).toBe(false);
     });
 
+    it('hides category and value axis ticks when OOXML majorTickMark is none', () => {
+      const xml = `<c:chartSpace
+        xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart"
+        xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+        <c:chart>
+          <c:autoTitleDeleted val="1"/>
+          <c:plotArea>
+            <c:barChart>
+              <c:barDir val="col"/>
+              <c:grouping val="clustered"/>
+              <c:ser>
+                <c:idx val="0"/><c:order val="0"/>
+                <c:tx><c:strRef><c:strCache><c:ptCount val="1"/><c:pt idx="0"><c:v>A</c:v></c:pt></c:strCache></c:strRef></c:tx>
+                <c:cat><c:strRef><c:strCache><c:ptCount val="1"/><c:pt idx="0"><c:v>Q1</c:v></c:pt></c:strCache></c:strRef></c:cat>
+                <c:val><c:numRef><c:numCache><c:ptCount val="1"/><c:pt idx="0"><c:v>20</c:v></c:pt></c:numCache></c:numRef></c:val>
+              </c:ser>
+              <c:axId val="1"/><c:axId val="2"/>
+            </c:barChart>
+            <c:catAx>
+              <c:axId val="1"/><c:delete val="0"/><c:axPos val="b"/>
+              <c:majorTickMark val="none"/>
+              <c:crossAx val="2"/>
+            </c:catAx>
+            <c:valAx>
+              <c:axId val="2"/><c:delete val="0"/><c:axPos val="l"/>
+              <c:majorGridlines/>
+              <c:majorTickMark val="none"/>
+              <c:crossAx val="1"/>
+            </c:valAx>
+          </c:plotArea>
+        </c:chart>
+      </c:chartSpace>`;
+
+      const { option } = parseChartOption(xml);
+      const xAxis = option.xAxis as any;
+      const yAxis = option.yAxis as any;
+
+      expect(xAxis.axisTick.show).toBe(false);
+      expect(yAxis.axisTick.show).toBe(false);
+    });
+
     it('treats legend overlay without val as true', () => {
       const xml = `<c:chartSpace
         xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart"
