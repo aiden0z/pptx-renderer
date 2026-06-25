@@ -7,6 +7,19 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [1.2.1] - 2026-06-25
+
+### Fixed
+
+- Fixed grouped content with horizontal and vertical flips so child geometry, readable
+  text behavior, and connector arrow directions better match PowerPoint output.
+- Fixed flipped picture rendering when shape clipping and image crop metadata are both
+  present, preserving the image orientation inside the flipped clip shape.
+- Fixed table and chart frames inside flipped groups so their positions mirror with the
+  group while their table/chart content remains correctly oriented.
+- Improved compact column chart rendering by reducing over-dense default value-axis
+  ticks for small chart frames.
+
 ## [1.2.0] - 2026-06-16
 
 ### Added
