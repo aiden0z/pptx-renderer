@@ -872,6 +872,48 @@ describe('renderTable', () => {
       expect(parseFloat(paragraph.style.lineHeight)).toBeCloseTo(1.5, 3);
     });
 
+    it('trims outer paragraph spacing inside table cells', () => {
+      const rows: TableRow[] = [
+        {
+          height: 0,
+          cells: [
+            {
+              gridSpan: 1,
+              rowSpan: 1,
+              hMerge: false,
+              vMerge: false,
+              textBody: {
+                paragraphs: [
+                  {
+                    properties: parseXml(
+                      '<pPr><spcBef><spcPts val="1200"/></spcBef><spcAft><spcPts val="300"/></spcAft></pPr>',
+                    ),
+                    runs: [{ text: 'First paragraph' }],
+                    level: 0,
+                  },
+                  {
+                    properties: parseXml(
+                      '<pPr><spcBef><spcPts val="400"/></spcBef><spcAft><spcPts val="900"/></spcAft></pPr>',
+                    ),
+                    runs: [{ text: 'Last paragraph' }],
+                    level: 0,
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      ];
+
+      const el = renderTable(makeTable({ columns: [400], rows }), makeCtx());
+      const paragraphs = el.querySelectorAll('td div');
+
+      expect((paragraphs[0] as HTMLElement).style.marginTop).toBe('0px');
+      expect((paragraphs[0] as HTMLElement).style.marginBottom).toBe('3pt');
+      expect((paragraphs[1] as HTMLElement).style.marginTop).toBe('4pt');
+      expect((paragraphs[1] as HTMLElement).style.marginBottom).toBe('0px');
+    });
+
     // -----------------------------------------------------------------------
     // getEffectiveTableStyleTextColor — alpha < 1 branch (rgba return)
     // -----------------------------------------------------------------------

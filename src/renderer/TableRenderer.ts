@@ -568,6 +568,7 @@ export function renderTable(node: TableNodeData, ctx: RenderContext): HTMLElemen
         }
         const opts = {
           defaultLineHeight: '1',
+          trimOuterParagraphSpacing: true,
           ...(textProps
             ? {
                 cellTextColor: textProps.color,
