@@ -122,6 +122,7 @@ export function parsePointDataLabelOverrides(
     const txStyle = extractTxPrStyle(dLbl, ctx);
     const posNode = dLbl.child('dLblPos');
     const cfg: Partial<DataLabelConfig> = {};
+    const deleted = parseDlblBoolOptional(dLbl, 'delete');
     const showVal = parseDlblBoolOptional(dLbl, 'showVal');
     const showCatName = parseDlblBoolOptional(dLbl, 'showCatName');
     const showSerName = parseDlblBoolOptional(dLbl, 'showSerName');
@@ -132,6 +133,13 @@ export function parsePointDataLabelOverrides(
     if (showCatName !== undefined) cfg.showCatName = showCatName;
     if (showSerName !== undefined) cfg.showSerName = showSerName;
     if (showPercent !== undefined) cfg.showPercent = showPercent;
+    if (deleted === true) {
+      cfg.deleted = true;
+      cfg.showVal = false;
+      cfg.showCatName = false;
+      cfg.showSerName = false;
+      cfg.showPercent = false;
+    }
     if (showLeaderLines !== undefined) cfg.showLeaderLines = showLeaderLines;
     if (manualLayout) cfg.manualLayout = manualLayout;
     if (posNode.exists()) cfg.position = posNode.attr('val') || undefined;

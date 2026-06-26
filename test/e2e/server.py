@@ -77,6 +77,10 @@ VISUAL_EVAL_THRESHOLDS = {
 # (e.g. action button shrunken icons) that pixel metrics cannot reliably
 # distinguish from correct-but-complex renders (3D gradients, etc.).
 SSIM_WARNING_THRESHOLD = 0.99
+ORACLE_MISMATCH_CURRENT_SSIM_MAX = 0.50
+ORACLE_MISMATCH_CANDIDATE_SSIM_MIN = 0.70
+ORACLE_MISMATCH_MIN_DELTA = 0.20
+ORACLE_MISMATCH_NEIGHBOR_RADIUS = 2
 
 # ---------------------------------------------------------------------------
 # FastAPI app
@@ -240,6 +244,31 @@ def png_slide_to_image(png_path: Path) -> np.ndarray:
     """Load a PNG ground-truth image exported directly by PowerPoint via Slide.Export."""
     img = Image.open(png_path).convert("RGB")
     return np.array(img)
+
+
+def _classify_oracle_page_mismatch(
+    current_score: float,
+    pdf_page_idx: int,
+    candidate_scores: dict[int, float],
+) -> dict | None:
+    """Detect likely PDF/PPTX ground-truth page drift without masking renderer bugs."""
+    if current_score >= ORACLE_MISMATCH_CURRENT_SSIM_MAX:
+        return None
+    if not candidate_scores:
+        return None
+
+    candidate_page, candidate_score = max(candidate_scores.items(), key=lambda item: item[1])
+    if candidate_score < ORACLE_MISMATCH_CANDIDATE_SSIM_MIN:
+        return None
+    if candidate_score - current_score < ORACLE_MISMATCH_MIN_DELTA:
+        return None
+
+    return {
+        "currentPdfPage": pdf_page_idx,
+        "currentSsim": round(float(current_score), 4),
+        "candidatePdfPage": candidate_page,
+        "candidateSsim": round(float(candidate_score), 4),
+    }
 
 
 async def screenshot_slide(browser, test_file: str, slide_idx: int, source: str | None = None) -> np.ndarray:
@@ -436,6 +465,7 @@ async def evaluate_file(test_file: str, source: str | None = Query(None)):
     fg_iou_tolerant_scores = []
     chamfer_scores = []
     color_hist_corr_scores = []
+    oracle_mismatch_count = 0
 
     for slide_idx, pdf_page_idx in enumerate(slide_to_pdf):
         if pdf_page_idx is None:
@@ -453,8 +483,10 @@ async def evaluate_file(test_file: str, source: str | None = Query(None)):
             # Prefer PNG ground truth (direct PowerPoint export, no PDF intermediate)
             png_gt_path = tdp.slide_png(test_file, slide_idx + 1, source)
             if png_gt_path.exists():
+                using_png_ground_truth = True
                 gt_img = await asyncio.to_thread(png_slide_to_image, png_gt_path)
             else:
+                using_png_ground_truth = False
                 gt_img = await asyncio.to_thread(pdf_page_to_image, pdf_path, pdf_page_idx)
             html_img = await screenshot_slide(browser, test_file, slide_idx, source)
             visual = compute_visual_metrics(gt_img, html_img)
@@ -467,13 +499,6 @@ async def evaluate_file(test_file: str, source: str | None = Query(None)):
             fg_iou_tolerant = float(fg["fg_iou_tolerant"])
             chamfer = float(fg["chamfer_score"])
 
-            ssim_scores.append(score)
-            mae_scores.append(mae)
-            color_hist_corr_scores.append(color_hist_corr)
-            fg_iou_scores.append(fg_iou)
-            fg_iou_tolerant_scores.append(fg_iou_tolerant)
-            chamfer_scores.append(chamfer)
-
             # Save diff heatmap
             diff_img = make_diff_heatmap(gt_img, html_img)
             prefix = _report_prefix(test_file, source)
@@ -485,6 +510,51 @@ async def evaluate_file(test_file: str, source: str | None = Query(None)):
             pdf_img_path = REPORTS_DIR / f"{prefix}_slide{slide_idx}_pdf.png"
             _save_image(html_img, html_path)
             _save_image(gt_img, pdf_img_path)
+
+            oracle_mismatch = None
+            if (
+                not using_png_ground_truth
+                and pdf_path.exists()
+                and score < ORACLE_MISMATCH_CURRENT_SSIM_MAX
+            ):
+                candidate_scores: dict[int, float] = {}
+                for delta in range(-ORACLE_MISMATCH_NEIGHBOR_RADIUS, ORACLE_MISMATCH_NEIGHBOR_RADIUS + 1):
+                    candidate_page = pdf_page_idx + delta
+                    if candidate_page == pdf_page_idx or candidate_page < 0 or candidate_page >= num_pages:
+                        continue
+                    candidate_gt_img = await asyncio.to_thread(pdf_page_to_image, pdf_path, candidate_page)
+                    candidate_visual = compute_visual_metrics(candidate_gt_img, html_img)
+                    candidate_scores[candidate_page] = float(candidate_visual["ssim"])
+                oracle_mismatch = _classify_oracle_page_mismatch(
+                    score,
+                    pdf_page_idx,
+                    candidate_scores,
+                )
+
+            if oracle_mismatch:
+                oracle_mismatch_count += 1
+                per_slide.append({
+                    "slideIdx": slide_idx,
+                    "pdfPage": pdf_page_idx,
+                    "ssim": round(score, 4),
+                    "mae": round(mae, 4),
+                    "colorHistCorr": round(color_hist_corr, 4),
+                    "fgIou": round(fg_iou, 4),
+                    "fgIouTolerant": round(fg_iou_tolerant, 4),
+                    "chamferScore": round(chamfer, 4),
+                    "needsReview": True,
+                    "hidden": False,
+                    "oracleMismatch": oracle_mismatch,
+                    "excludedFromAverage": True,
+                })
+                continue
+
+            ssim_scores.append(score)
+            mae_scores.append(mae)
+            color_hist_corr_scores.append(color_hist_corr)
+            fg_iou_scores.append(fg_iou)
+            fg_iou_tolerant_scores.append(fg_iou_tolerant)
+            chamfer_scores.append(chamfer)
 
             per_slide.append({
                 "slideIdx": slide_idx,
@@ -546,6 +616,8 @@ async def evaluate_file(test_file: str, source: str | None = Query(None)):
     needs_review = avg_ssim < SSIM_WARNING_THRESHOLD
     if needs_review:
         warning_reasons.append("warn:ssim_below_review_threshold")
+    if oracle_mismatch_count:
+        warning_reasons.append("warn:oracle_ground_truth_mismatch")
 
     passed = len(hard_reasons) == 0
 
@@ -553,6 +625,7 @@ async def evaluate_file(test_file: str, source: str | None = Query(None)):
         "testFile": test_file,
         "slideCount": len(slide_to_pdf),
         "visibleSlideCount": sum(1 for s in slide_to_pdf if s is not None),
+        "oracleMismatchCount": oracle_mismatch_count,
         "avgSsim": round(avg_ssim, 4),
         "avgMae": round(avg_mae, 4),
         "avgColorHistCorr": round(avg_color_hist_corr, 4),

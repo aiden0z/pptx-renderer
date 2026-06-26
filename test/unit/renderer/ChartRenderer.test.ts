@@ -1057,6 +1057,43 @@ describe('ChartRenderer', () => {
       expect(series?.data?.[1]?.value).toBe(200);
       expect(series?.data?.[1]?.label?.fontWeight).toBe('bold');
     });
+
+    it('should suppress point-level deleted data labels over a shared bar label', () => {
+      const xml = `<c:chartSpace
+        xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart"
+        xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+        <c:chart>
+          <c:autoTitleDeleted val="1"/>
+          <c:plotArea>
+            <c:barChart>
+              <c:barDir val="col"/>
+              <c:grouping val="stacked"/>
+              <c:ser>
+                <c:idx val="0"/><c:order val="0"/>
+                <c:tx><c:strRef><c:strCache><c:ptCount val="1"/><c:pt idx="0"><c:v>S1</c:v></c:pt></c:strCache></c:strRef></c:tx>
+                <c:dLbls>
+                  <c:showVal val="1"/>
+                  <c:dLbl><c:idx val="1"/><c:delete val="1"/></c:dLbl>
+                </c:dLbls>
+                <c:cat><c:strRef><c:strCache><c:ptCount val="2"/><c:pt idx="0"><c:v>A</c:v></c:pt><c:pt idx="1"><c:v>B</c:v></c:pt></c:strCache></c:strRef></c:cat>
+                <c:val><c:numRef><c:numCache><c:formatCode>0</c:formatCode><c:ptCount val="2"/><c:pt idx="0"><c:v>100</c:v></c:pt><c:pt idx="1"><c:v>200</c:v></c:pt></c:numCache></c:numRef></c:val>
+              </c:ser>
+              <c:axId val="1"/><c:axId val="2"/>
+            </c:barChart>
+            <c:catAx><c:axId val="1"/><c:delete val="0"/><c:crossAx val="2"/></c:catAx>
+            <c:valAx><c:axId val="2"/><c:delete val="1"/><c:crossAx val="1"/></c:valAx>
+          </c:plotArea>
+        </c:chart>
+      </c:chartSpace>`;
+
+      const { option } = parseChartOption(xml);
+      const series = (option.series as any[])?.[0];
+
+      expect(series?.label?.show).toBe(true);
+      expect(series?.data?.[0]).toBe(100);
+      expect(series?.data?.[1]?.value).toBe(200);
+      expect(series?.data?.[1]?.label).toEqual({ show: false });
+    });
   });
 
   describe('title txPr style', () => {
@@ -1644,6 +1681,43 @@ describe('ChartRenderer', () => {
       expect(series?.label?.show).toBe(false);
       expect(series?.radius).toBe('82%');
       expect(series?.center).toEqual(['50%', '55%']);
+    });
+
+    it('maps OOXML firstSliceAng to ECharts startAngle for pie charts', () => {
+      const xml = `
+        <c:chartSpace xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart"
+                      xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+          <c:chart>
+            <c:plotArea>
+              <c:pieChart>
+                <c:firstSliceAng val="30"/>
+                <c:ser>
+                  <c:idx val="0"/><c:order val="0"/>
+                  <c:tx>
+                    <c:strRef><c:strCache><c:ptCount val="1"/><c:pt idx="0"><c:v>Sales</c:v></c:pt></c:strCache></c:strRef>
+                  </c:tx>
+                  <c:cat>
+                    <c:strRef><c:strCache><c:ptCount val="2"/>
+                      <c:pt idx="0"><c:v>A</c:v></c:pt>
+                      <c:pt idx="1"><c:v>B</c:v></c:pt>
+                    </c:strCache></c:strRef>
+                  </c:cat>
+                  <c:val>
+                    <c:numRef><c:numCache><c:formatCode>0</c:formatCode><c:ptCount val="2"/>
+                      <c:pt idx="0"><c:v>60</c:v></c:pt>
+                      <c:pt idx="1"><c:v>40</c:v></c:pt>
+                    </c:numCache></c:numRef>
+                  </c:val>
+                </c:ser>
+              </c:pieChart>
+            </c:plotArea>
+          </c:chart>
+        </c:chartSpace>`;
+
+      const { option } = parseChartOption(xml);
+      const series = (option.series as any[])?.[0];
+      expect(series?.startAngle).toBe(60);
+      expect(series?.clockwise).toBe(true);
     });
 
     it('should enlarge and left-shift pie when legend is on the right', () => {
@@ -7189,6 +7263,47 @@ describe('ChartRenderer', () => {
       expect(series.label.position).toBe(expected);
     });
 
+    it('applies point-level line data label overrides and manual layout', () => {
+      const xml = `
+        <c:chartSpace xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart"
+                      xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+          <c:chart>
+            <c:plotArea>
+              <c:lineChart>
+                <c:grouping val="standard"/>
+                <c:dLbls>
+                  <c:showVal val="1"/>
+                  <c:dLbl>
+                    <c:idx val="1"/>
+                    <c:dLblPos val="r"/>
+                    <c:layout><c:manualLayout><c:x val="0.2"/><c:y val="0.3"/></c:manualLayout></c:layout>
+                    <c:showVal val="1"/>
+                  </c:dLbl>
+                </c:dLbls>
+                <c:ser>
+                  <c:idx val="0"/><c:order val="0"/>
+                  <c:tx><c:v>S</c:v></c:tx>
+                  <c:cat><c:strRef><c:strCache><c:ptCount val="2"/><c:pt idx="0"><c:v>A</c:v></c:pt><c:pt idx="1"><c:v>B</c:v></c:pt></c:strCache></c:strRef></c:cat>
+                  <c:val><c:numRef><c:numCache><c:ptCount val="2"/><c:pt idx="0"><c:v>1</c:v></c:pt><c:pt idx="1"><c:v>2</c:v></c:pt></c:numCache></c:numRef></c:val>
+                </c:ser>
+                <c:axId val="1"/><c:axId val="2"/>
+              </c:lineChart>
+              <c:catAx><c:axId val="1"/><c:crossAx val="2"/></c:catAx>
+              <c:valAx><c:axId val="2"/><c:crossAx val="1"/></c:valAx>
+            </c:plotArea>
+          </c:chart>
+        </c:chartSpace>`;
+
+      const { option } = parseChartOption(xml);
+      const series = (option.series as any[])[0];
+
+      expect(series.label.position).toBe('top');
+      expect(series.data[0]).toBe(1);
+      expect(series.data[1].value).toBe(2);
+      expect(series.data[1].label.position).toBe('right');
+      expect(series.labelLayout({ dataIndex: 1 })).toEqual({ x: '20%', y: '30%' });
+    });
+
     it.each([
       ['r', ['38%', '55%'], '82%'],
       ['l', ['62%', '55%'], '82%'],
@@ -7284,6 +7399,36 @@ describe('ChartRenderer', () => {
           width: 60,
           height: 40,
         });
+    });
+
+    it('suppresses point-level deleted pie labels over shared labels', () => {
+      const xml = `
+        <c:chartSpace xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart"
+                      xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+          <c:chart>
+            <c:plotArea>
+              <c:pieChart>
+                <c:ser>
+                  <c:idx val="0"/><c:order val="0"/>
+                  <c:tx><c:v>Series One</c:v></c:tx>
+                  <c:dLbls>
+                    <c:showVal val="1"/>
+                    <c:dLbl><c:idx val="1"/><c:delete val="1"/></c:dLbl>
+                  </c:dLbls>
+                  <c:cat><c:strRef><c:strCache><c:ptCount val="2"/><c:pt idx="0"><c:v>A</c:v></c:pt><c:pt idx="1"><c:v>B</c:v></c:pt></c:strCache></c:strRef></c:cat>
+                  <c:val><c:numRef><c:numCache><c:formatCode>0</c:formatCode><c:ptCount val="2"/><c:pt idx="0"><c:v>25</c:v></c:pt><c:pt idx="1"><c:v>75</c:v></c:pt></c:numCache></c:numRef></c:val>
+                </c:ser>
+              </c:pieChart>
+            </c:plotArea>
+          </c:chart>
+        </c:chartSpace>`;
+
+      const { option } = parseChartOption(xml);
+      const series = (option.series as any[])?.[0];
+
+      expect(series.label.show).toBe(true);
+      expect(series.data[0].label).toBeUndefined();
+      expect(series.data[1].label).toEqual({ show: false });
     });
 
     it.each([

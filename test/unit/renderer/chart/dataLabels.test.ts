@@ -57,4 +57,25 @@ describe('chart data label helpers', () => {
       showCatName: true,
     });
   });
+
+  it('parses per-point deleted data labels as an explicit hidden override', () => {
+    const dLbls = parseXml(`
+      <c:dLbls xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart">
+        <c:showVal val="1"/>
+        <c:dLbl>
+          <c:idx val="3"/>
+          <c:delete val="1"/>
+        </c:dLbl>
+      </c:dLbls>
+    `);
+
+    const overrides = parsePointDataLabelOverrides(dLbls, createMockRenderContext());
+    expect(overrides.get(3)).toMatchObject({
+      deleted: true,
+      showVal: false,
+      showCatName: false,
+      showSerName: false,
+      showPercent: false,
+    });
+  });
 });

@@ -579,6 +579,39 @@ describe('renderImage', () => {
       expect(renderImage(createPicNode({ source: transparent }), ctx).style.filter).toBe('');
     });
 
+    it('applies picture softEdge from spPr effectLst as an edge fade mask', () => {
+      const ctx = createCtxWithMedia();
+      const source = xmlNode(
+        `<pic xmlns="http://schemas.openxmlformats.org/drawingml/2006/main"
+              xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+          <nvPicPr><cNvPr id="1" name="pic"/><nvPr/></nvPicPr>
+          <blipFill><blip r:embed="rId1"/></blipFill>
+          <spPr>
+            <xfrm><off x="0" y="0"/><ext cx="0" cy="0"/></xfrm>
+            <effectLst><softEdge rad="127000"/></effectLst>
+          </spPr>
+        </pic>`,
+      );
+
+      const el = renderImage(createPicNode({ source }), ctx);
+      const style = el.style as CSSStyleDeclaration & {
+        webkitMaskImage?: string;
+        webkitMaskComposite?: string;
+        maskImage?: string;
+      };
+
+      expect(el.style.getPropertyValue('--pptx-soft-edge-radius')).toBe('13.3333px');
+      expect(el.style.getPropertyValue('-webkit-mask-image') || style.webkitMaskImage).toContain(
+        'linear-gradient',
+      );
+      expect(el.style.getPropertyValue('mask-image') || style.maskImage).toContain(
+        'linear-gradient',
+      );
+      expect(
+        el.style.getPropertyValue('-webkit-mask-composite') || style.webkitMaskComposite,
+      ).toContain('source-in');
+    });
+
     it('ignores picture hyperlinks when navigation is unavailable or unsafe', () => {
       const noNavigation = createCtxWithMedia();
       const missingRid = createCtxWithMedia();

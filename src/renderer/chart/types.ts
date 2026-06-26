@@ -70,6 +70,7 @@ export interface AxisInfo {
 }
 
 export interface DataLabelConfig {
+  deleted?: boolean;
   showVal: boolean;
   showCatName: boolean;
   showSerName: boolean;

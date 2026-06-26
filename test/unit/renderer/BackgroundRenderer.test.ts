@@ -373,6 +373,80 @@ describe('renderBackground', () => {
     expect(container.style.backgroundRepeat).toBe('no-repeat');
   });
 
+  it('applies alphaModFix opacity to blipFill backgrounds', () => {
+    const mediaPath = 'ppt/media/alpha-bg.png';
+    const rId = 'rIdAlpha';
+
+    const bg = bgPrXml(`
+      <a:blipFill>
+        <a:blip r:embed="${rId}"
+                xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+          <a:alphaModFix amt="35000"/>
+        </a:blip>
+        <a:stretch><a:fillRect/></a:stretch>
+      </a:blipFill>
+    `);
+    const slideRels = new Map([[rId, { type: 'image', target: '../media/alpha-bg.png' }]]);
+    const media = new Map([[mediaPath, new Uint8Array([0x89, 0x50, 0x4e, 0x47])]]);
+    const ctx = createMockRenderContext({
+      slide: { rels: slideRels, background: bg } as any,
+      presentation: {
+        ...createMockRenderContext().presentation,
+        media,
+      },
+    });
+
+    renderBackground(ctx, container);
+
+    expect(container.style.opacity).toBe('');
+    expect(container.style.backgroundImage).toBe('');
+    const layer = container.querySelector('[data-pptx-background-image="true"]') as HTMLElement;
+    expect(layer).toBeTruthy();
+    expect(layer.style.backgroundImage).toMatch(/^url\(/);
+    expect(layer.style.backgroundSize).toBe('100% 100%');
+    expect(layer.style.opacity).toBe('0.35');
+  });
+
+  it('combines srcRect crop with fillRect destination insets for blipFill backgrounds', () => {
+    const mediaPath = 'ppt/media/cropped-bg.png';
+    const rId = 'rIdCropped';
+
+    const bg = bgPrXml(`
+      <a:blipFill>
+        <a:blip r:embed="${rId}"
+                xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"/>
+        <a:srcRect l="10000" t="20000" r="10000" b="20000"/>
+        <a:stretch><a:fillRect l="25000" t="10000" r="25000" b="10000"/></a:stretch>
+      </a:blipFill>
+    `);
+    const slideRels = new Map([[rId, { type: 'image', target: '../media/cropped-bg.png' }]]);
+    const media = new Map([[mediaPath, new Uint8Array([0x89, 0x50, 0x4e, 0x47])]]);
+    const ctx = createMockRenderContext({
+      slide: { rels: slideRels, background: bg } as any,
+      presentation: {
+        ...createMockRenderContext().presentation,
+        media,
+      },
+    });
+
+    renderBackground(ctx, container);
+
+    expect(container.style.backgroundImage).toBe('');
+    const layer = container.querySelector('[data-pptx-background-image="true"]') as HTMLElement;
+    const cropLayer = layer.querySelector('[data-pptx-background-crop="true"]') as HTMLElement;
+    expect(layer).toBeTruthy();
+    expect(layer.style.left).toBe('25%');
+    expect(layer.style.top).toBe('10%');
+    expect(layer.style.width).toBe('50%');
+    expect(layer.style.height).toBe('80%');
+    expect(layer.style.overflow).toBe('hidden');
+    expect(cropLayer).toBeTruthy();
+    expect(parseFloat(cropLayer.style.width)).toBeCloseTo(125, 1);
+    expect(parseFloat(cropLayer.style.height)).toBeCloseTo(166.667, 1);
+    expect(parseFloat(cropLayer.style.left)).toBeCloseTo(-12.5, 1);
+    expect(parseFloat(cropLayer.style.top)).toBeCloseTo(-33.333, 1);
+  });
+
   // -------------------------------------------------------------------------
   // Case 9: blipFill with tile mode
   // -------------------------------------------------------------------------

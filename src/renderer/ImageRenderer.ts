@@ -515,6 +515,11 @@ function applyPictureEffects(wrapper: HTMLElement, node: PicNodeData, ctx: Rende
     applyPictureGlow(wrapper, glow, ctx);
   }
 
+  const softEdge = effectLst.child('softEdge');
+  if (softEdge.exists()) {
+    applyPictureSoftEdge(wrapper, node, softEdge);
+  }
+
   const reflection = effectLst.child('reflection');
   if (reflection.exists()) {
     applyPictureReflection(wrapper, reflection);
@@ -579,6 +584,44 @@ function applyPictureGlow(wrapper: HTMLElement, glow: SafeXmlNode, ctx: RenderCo
     wrapper,
     `drop-shadow(0px 0px ${radiusPx.toFixed(1)}px rgba(${r},${g},${b},${alpha.toFixed(3)}))`,
   );
+}
+
+function applyPictureSoftEdge(
+  wrapper: HTMLElement,
+  node: PicNodeData,
+  softEdge: SafeXmlNode,
+): void {
+  const radiusPx = emuToPx(softEdge.numAttr('rad') ?? 0);
+  if (!(radiusPx > 0)) return;
+
+  const maxRadius = Math.max(0, Math.min(node.size.w, node.size.h) / 2);
+  const clampedRadiusPx = maxRadius > 0 ? Math.min(radiusPx, maxRadius) : radiusPx;
+  const radiusCss = `${Number(clampedRadiusPx.toFixed(4))}px`;
+  const radiusVar = 'var(--pptx-soft-edge-radius)';
+  const maskImage = [
+    `linear-gradient(to right, transparent 0, black ${radiusVar}, black calc(100% - ${radiusVar}), transparent 100%)`,
+    `linear-gradient(to bottom, transparent 0, black ${radiusVar}, black calc(100% - ${radiusVar}), transparent 100%)`,
+  ].join(', ');
+
+  wrapper.style.setProperty('--pptx-soft-edge-radius', radiusCss);
+  wrapper.style.setProperty('-webkit-mask-image', maskImage);
+  wrapper.style.setProperty('mask-image', maskImage);
+  wrapper.style.setProperty('-webkit-mask-size', '100% 100%');
+  wrapper.style.setProperty('mask-size', '100% 100%');
+  wrapper.style.setProperty('-webkit-mask-repeat', 'no-repeat');
+  wrapper.style.setProperty('mask-repeat', 'no-repeat');
+  wrapper.style.setProperty('-webkit-mask-composite', 'source-in');
+  wrapper.style.setProperty('mask-composite', 'intersect');
+  const style = wrapper.style as CSSStyleDeclaration & {
+    webkitMaskImage?: string;
+    webkitMaskComposite?: string;
+    maskImage?: string;
+    maskComposite?: string;
+  };
+  style.webkitMaskImage = maskImage;
+  style.maskImage = maskImage;
+  style.webkitMaskComposite = 'source-in';
+  style.maskComposite = 'intersect';
 }
 
 function applyPictureReflection(wrapper: HTMLElement, reflection: SafeXmlNode): void {

@@ -448,6 +448,12 @@ function renderBlipBackground(
 }
 
 function applyBlipBackground(blipFill: SafeXmlNode, container: HTMLElement, url: string): void {
+  const blipOpacity = resolveBlipOpacity(blipFill.child('blip'));
+  if (blipOpacity < 1 || blipFill.child('srcRect').exists()) {
+    applyBlipBackgroundLayer(blipFill, container, url, blipOpacity);
+    return;
+  }
+
   container.style.backgroundImage = `url("${url}")`;
 
   // Check for stretch or tile mode
@@ -464,6 +470,137 @@ function applyBlipBackground(blipFill: SafeXmlNode, container: HTMLElement, url:
     container.style.backgroundRepeat = 'repeat';
     container.style.backgroundSize = 'auto';
   }
+}
+
+function applyBlipBackgroundLayer(
+  blipFill: SafeXmlNode,
+  container: HTMLElement,
+  url: string,
+  opacity: number,
+): void {
+  if (!container.style.position) {
+    container.style.position = 'relative';
+  }
+  container.style.backgroundImage = '';
+  container.querySelectorAll('[data-pptx-background-image="true"]').forEach((el) => {
+    el.remove();
+  });
+
+  const layer = document.createElement('div');
+  layer.setAttribute('data-pptx-background-image', 'true');
+  layer.style.position = 'absolute';
+  layer.style.pointerEvents = 'none';
+  layer.style.opacity = `${Number(opacity.toFixed(4))}`;
+
+  const stretch = blipFill.child('stretch');
+  const fillRect = stretch.exists() ? stretch.child('fillRect') : new SafeXmlNode(null);
+  applyBackgroundLayerDestination(layer, fillRect);
+
+  const srcRect = blipFill.child('srcRect');
+  if (srcRect.exists()) {
+    layer.style.overflow = 'hidden';
+    const cropLayer = document.createElement('div');
+    cropLayer.setAttribute('data-pptx-background-crop', 'true');
+    cropLayer.style.position = 'absolute';
+    cropLayer.style.backgroundImage = `url("${url}")`;
+    cropLayer.style.backgroundSize = '100% 100%';
+    cropLayer.style.backgroundRepeat = 'no-repeat';
+    applySourceCropLayer(cropLayer, srcRect);
+    layer.appendChild(cropLayer);
+    container.insertBefore(layer, container.firstChild);
+    return;
+  }
+
+  layer.style.backgroundImage = `url("${url}")`;
+  if (stretch.exists()) {
+    layer.style.backgroundSize = '100% 100%';
+    layer.style.backgroundRepeat = 'no-repeat';
+  }
+
+  const tile = blipFill.child('tile');
+  if (tile.exists()) {
+    layer.style.backgroundRepeat = 'repeat';
+    layer.style.backgroundSize = 'auto';
+  }
+
+  container.insertBefore(layer, container.firstChild);
+}
+
+interface PercentRect {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+}
+
+function getStretchFillRectBox(fillRect: SafeXmlNode): PercentRect {
+  if (!fillRect.exists()) {
+    return { left: 0, top: 0, width: 100, height: 100 };
+  }
+
+  const left = pctAttr(fillRect, 'l');
+  const top = pctAttr(fillRect, 't');
+  const right = pctAttr(fillRect, 'r');
+  const bottom = pctAttr(fillRect, 'b');
+  return {
+    left,
+    top,
+    width: 100 - left - right,
+    height: 100 - top - bottom,
+  };
+}
+
+function applyBackgroundLayerDestination(layer: HTMLElement, fillRect: SafeXmlNode): void {
+  const box = getStretchFillRectBox(fillRect);
+  layer.style.left = `${box.left}%`;
+  layer.style.top = `${box.top}%`;
+  layer.style.width = `${box.width}%`;
+  layer.style.height = `${box.height}%`;
+}
+
+function applySourceCropLayer(cropLayer: HTMLElement, srcRect: SafeXmlNode): void {
+  const left = pctAttr(srcRect, 'l') / 100;
+  const top = pctAttr(srcRect, 't') / 100;
+  const right = pctAttr(srcRect, 'r') / 100;
+  const bottom = pctAttr(srcRect, 'b') / 100;
+  const visibleW = 1 - left - right;
+  const visibleH = 1 - top - bottom;
+
+  if (visibleW <= 0.001 || visibleH <= 0.001) {
+    cropLayer.style.left = '0%';
+    cropLayer.style.top = '0%';
+    cropLayer.style.width = '100%';
+    cropLayer.style.height = '100%';
+    return;
+  }
+
+  const scaleX = 1 / visibleW;
+  const scaleY = 1 / visibleH;
+  cropLayer.style.left = `${-left * scaleX * 100}%`;
+  cropLayer.style.top = `${-top * scaleY * 100}%`;
+  cropLayer.style.width = `${scaleX * 100}%`;
+  cropLayer.style.height = `${scaleY * 100}%`;
+}
+
+function resolveBlipOpacity(blip: SafeXmlNode): number {
+  let alpha = 1;
+
+  const alphaModFix = blip.child('alphaModFix');
+  if (alphaModFix.exists()) {
+    alpha *= (alphaModFix.numAttr('amt') ?? 100000) / 100000;
+  }
+
+  const alphaMod = blip.child('alphaMod');
+  if (alphaMod.exists()) {
+    alpha *= (alphaMod.numAttr('val') ?? 100000) / 100000;
+  }
+
+  const alphaOff = blip.child('alphaOff');
+  if (alphaOff.exists()) {
+    alpha += (alphaOff.numAttr('val') ?? 0) / 100000;
+  }
+
+  return Math.max(0, Math.min(1, alpha));
 }
 
 function pctAttr(node: SafeXmlNode, name: string): number {

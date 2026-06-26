@@ -146,6 +146,11 @@ function pieExplosionToOffset(explosion: number): number {
   return explosion;
 }
 
+function mapFirstSliceAngle(firstSliceAng: number | undefined): number | undefined {
+  if (firstSliceAng === undefined || !Number.isFinite(firstSliceAng)) return undefined;
+  return (((90 - firstSliceAng) % 360) + 360) % 360;
+}
+
 /** Map OOXML c:marker > c:symbol values to ECharts symbol names. */
 const OOXML_SYMBOL_MAP: Record<string, string> = {
   circle: 'circle',
@@ -408,8 +413,18 @@ function mergeDataLabelConfig(
   };
 }
 
+function getDataLabelsNode(
+  serNode: SafeXmlNode | undefined,
+  chartTypeNode: SafeXmlNode,
+): SafeXmlNode {
+  const seriesDlbls = serNode?.child('dLbls');
+  return seriesDlbls?.exists() ? seriesDlbls : chartTypeNode.child('dLbls');
+}
+
 function dataLabelShowsContent(cfg: DataLabelConfig | undefined): boolean {
-  return Boolean(cfg && (cfg.showVal || cfg.showCatName || cfg.showSerName || cfg.showPercent));
+  return Boolean(
+    cfg && !cfg.deleted && (cfg.showVal || cfg.showCatName || cfg.showSerName || cfg.showPercent),
+  );
 }
 
 function buildPieLabelOption(
@@ -579,7 +594,7 @@ function buildBarChartOption(
 
     // Per-series label config (override shared)
     const label: echarts.BarSeriesOption['label'] = buildLabel(perSeriesLabels);
-    const dLblsNode = (serNodesByOrder[idx] ?? chartTypeNode).child('dLbls');
+    const dLblsNode = getDataLabelsNode(serNodesByOrder[idx], chartTypeNode);
     const pointOverrides = parsePointDataLabelOverrides(dLblsNode, ctx);
     const seriesValues = percentStackedValues?.[idx] ?? s.values;
     const data: echarts.BarSeriesOption['data'] = seriesValues.map((v, pointIdx) => {
@@ -601,7 +616,9 @@ function buildBarChartOption(
       }
 
       let pointLabel: echarts.BarSeriesOption['label'];
-      if (ov) {
+      if (ov?.deleted) {
+        pointLabel = { show: false };
+      } else if (ov) {
         const merged: DataLabelConfig = {
           showVal: perSeriesLabels?.showVal ?? false,
           showCatName: perSeriesLabels?.showCatName ?? false,
@@ -795,26 +812,52 @@ function buildLineChartOption(
     const fc = s.formatCode;
     const perSeriesLabels =
       parseDataLabels(serNodesByOrder[idx] ?? chartTypeNode, ctx) ?? sharedLabels;
-    let label: echarts.LineSeriesOption['label'];
-    if (perSeriesLabels?.showVal) {
-      label = {
+    const buildLineLabel = (
+      cfg: DataLabelConfig | Partial<DataLabelConfig> | undefined,
+    ): echarts.LineSeriesOption['label'] => {
+      if (!cfg || !dataLabelShowsContent(cfg as DataLabelConfig)) return undefined;
+      const labelCfg = cfg as DataLabelConfig;
+      const lineLabel = {
         show: true,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        position: mapLineLabelPosition(perSeriesLabels.position) as any,
-        fontSize: perSeriesLabels.fontSize ?? 9,
-        ...(perSeriesLabels.color ? { color: perSeriesLabels.color } : {}),
-        ...(perSeriesLabels.bold === true ? { fontWeight: 'bold' as const } : {}),
-        ...dataLabelBoxProps(perSeriesLabels),
+        position: mapLineLabelPosition(labelCfg.position) as any,
+        fontSize: labelCfg.fontSize ?? 9,
+        ...(labelCfg.color ? { color: labelCfg.color } : {}),
+        ...(labelCfg.bold === true ? { fontWeight: 'bold' as const } : {}),
+        ...dataLabelBoxProps(labelCfg),
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         formatter: (params: any) => {
           const rawVal = params?.value;
           const val =
             rawVal && typeof rawVal === 'object' && 'value' in rawVal ? rawVal.value : rawVal;
-          return formatValue(val, isPercentStacked ? '0%' : fc);
+          const parts: string[] = [];
+          if (labelCfg.showSerName && params?.seriesName) parts.push(params.seriesName);
+          if (labelCfg.showCatName && params?.name) parts.push(params.name);
+          if (labelCfg.showVal) parts.push(formatValue(val, isPercentStacked ? '0%' : fc));
+          if (labelCfg.showPercent && typeof params?.percent === 'number') {
+            parts.push(`${params.percent}%`);
+          }
+          return parts.join(' ');
         },
       };
-      if (perSeriesLabels.fontSize !== undefined) markExplicitFontSize(label);
-    }
+      return labelCfg.fontSize !== undefined ? markExplicitFontSize(lineLabel) : lineLabel;
+    };
+    const label = buildLineLabel(perSeriesLabels);
+    const dLblsNode = getDataLabelsNode(serNodesByOrder[idx], chartTypeNode);
+    const pointOverrides = parsePointDataLabelOverrides(dLblsNode, ctx);
+    const manualLayouts = new Map<number, DataLabelManualLayout>();
+    const seriesValues = percentStackedValues?.[idx] ?? s.values;
+    const data: echarts.LineSeriesOption['data'] = seriesValues.map((v, pointIdx) => {
+      const ov = pointOverrides.get(pointIdx);
+      if (!ov) return v;
+      if (ov.manualLayout) manualLayouts.set(pointIdx, ov.manualLayout);
+      const pointLabel = ov.deleted
+        ? ({ show: false } as echarts.LineSeriesOption['label'])
+        : buildLineLabel(mergeDataLabelConfig(perSeriesLabels, ov));
+      if (!pointLabel) return v;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return { value: v, label: pointLabel } as any;
+    });
     const forceSymbolForLabel = Boolean(label?.show && echartsSymbol === 'none');
     const symbol = forceSymbolForLabel
       ? 'circle'
@@ -835,12 +878,13 @@ function buildLineChartOption(
     return {
       type: 'line' as const,
       name: s.name,
-      data: percentStackedValues?.[idx] ?? s.values,
+      data,
       stack: isStacked ? 'total' : undefined,
       areaStyle: isArea ? { ...(s.colorHex ? { color: s.colorHex } : {}), opacity: 1 } : undefined,
       itemStyle: s.colorHex ? { color: s.colorHex } : undefined,
       lineStyle,
       label,
+      labelLayout: buildPieLabelLayout(manualLayouts) as echarts.LineSeriesOption['labelLayout'],
       ...(s.smooth ? { smooth: true } : {}),
       ...(s.formatCode
         ? {
@@ -984,7 +1028,7 @@ function buildPieChartOption(
     const sharedLabels =
       (serNode?.exists() ? parseDataLabels(serNode, ctx) : undefined) ??
       parseDataLabels(chartTypeNode, ctx);
-    const dLblsNode = serNode?.exists() ? serNode.child('dLbls') : chartTypeNode.child('dLbls');
+    const dLblsNode = getDataLabelsNode(serNode, chartTypeNode);
     const hasDLblsNode =
       (serNode?.exists() && serNode.child('dLbls').exists()) ||
       chartTypeNode.child('dLbls').exists();
@@ -1012,6 +1056,7 @@ function buildPieChartOption(
   );
   const holeSizePct = isDoughnut ? (chartTypeNode.child('holeSize').numAttr('val') ?? 50) : 50;
   const pieLayout = computePieLayout(legendInfo, isDoughnut, showLabel, holeSizePct);
+  const startAngle = mapFirstSliceAngle(chartTypeNode.child('firstSliceAng').numAttr('val'));
 
   const series: echarts.PieSeriesOption[] = seriesLabelMeta.map((meta, idx) => {
     const manualLayouts = new Map<number, DataLabelManualLayout>();
@@ -1040,7 +1085,9 @@ function buildPieChartOption(
         item.selected = true;
         item.selectedOffset = pieExplosionToOffset(meta.explosions[i]);
       }
-      if (override && dataLabelShowsContent(pointLabel)) {
+      if (override?.deleted) {
+        item.label = { show: false };
+      } else if (override && dataLabelShowsContent(pointLabel)) {
         item.label = buildPieLabelOption(pointLabel, meta.series.formatCode, meta.series.name);
       }
       return item;
@@ -1063,6 +1110,7 @@ function buildPieChartOption(
       data: pieData,
       selectedMode: meta.explosions ? 'multiple' : false,
       ...(selectedOffset ? { selectedOffset } : {}),
+      ...(startAngle !== undefined ? { startAngle, clockwise: true } : {}),
       label: label ?? { show: false },
       labelLine: { show: hasLeaderLines },
       labelLayout: buildPieLabelLayout(manualLayouts),
