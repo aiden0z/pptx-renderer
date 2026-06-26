@@ -100,8 +100,12 @@ function darkenHexColor(hex: string, factor: number): string {
     .join('')}`;
 }
 
-export function getVaryColorPointPalette(ctx: RenderContext): string[] {
-  return getThemeAccentPalette(ctx).map((color) => darkenHexColor(color, 0.88));
+export function getVaryColorPointPalette(
+  ctx: RenderContext,
+  options: { darken?: boolean } = {},
+): string[] {
+  const accents = getThemeAccentPalette(ctx);
+  return options.darken === false ? accents : accents.map((color) => darkenHexColor(color, 0.88));
 }
 
 export function buildChartPalette(

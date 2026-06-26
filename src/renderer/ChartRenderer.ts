@@ -630,7 +630,7 @@ function buildBarChartOption(
   const varyColors = varyColorsNode.exists()
     ? parseOoxmlBoolElement(varyColorsNode)
     : defaultVaryColors;
-  const pointPalette = getVaryColorPointPalette(ctx);
+  const pointPalette = getVaryColorPointPalette(ctx, { darken: !isHorizontal });
 
   // Parse data labels: in OOXML they can be on chart type (barChart) or on series (ser); try both
   let sharedLabels = parseDataLabels(chartTypeNode, ctx);

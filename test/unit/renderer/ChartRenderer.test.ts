@@ -6083,6 +6083,46 @@ describe('ChartRenderer', () => {
       expect(yAxis.interval).toBe(5);
     });
 
+    it('uses raw accent colors for single-series horizontal bars (oracle-pypptx-chart-0005)', () => {
+      const xml = `<c:chartSpace
+        xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart"
+        xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+        <c:chart>
+          <c:autoTitleDeleted val="0"/>
+          <c:plotArea>
+            <c:barChart>
+              <c:barDir val="bar"/>
+              <c:grouping val="clustered"/>
+              <c:ser>
+                <c:idx val="0"/><c:order val="0"/>
+                <c:tx><c:strRef><c:strCache><c:ptCount val="1"/><c:pt idx="0"><c:v>Headcount</c:v></c:pt></c:strCache></c:strRef></c:tx>
+                <c:cat><c:strRef><c:strCache><c:ptCount val="5"/><c:pt idx="0"><c:v>Engineering</c:v></c:pt><c:pt idx="1"><c:v>Sales</c:v></c:pt><c:pt idx="2"><c:v>Marketing</c:v></c:pt><c:pt idx="3"><c:v>Support</c:v></c:pt><c:pt idx="4"><c:v>HR</c:v></c:pt></c:strCache></c:strRef></c:cat>
+                <c:val><c:numRef><c:numCache><c:formatCode>General</c:formatCode><c:ptCount val="5"/><c:pt idx="0"><c:v>45</c:v></c:pt><c:pt idx="1"><c:v>32</c:v></c:pt><c:pt idx="2"><c:v>18</c:v></c:pt><c:pt idx="3"><c:v>25</c:v></c:pt><c:pt idx="4"><c:v>8</c:v></c:pt></c:numCache></c:numRef></c:val>
+              </c:ser>
+              <c:axId val="1"/><c:axId val="2"/>
+            </c:barChart>
+            <c:catAx><c:axId val="1"/><c:delete val="0"/><c:axPos val="l"/><c:crossAx val="2"/></c:catAx>
+            <c:valAx><c:axId val="2"/><c:scaling/><c:delete val="0"/><c:axPos val="b"/><c:majorGridlines/><c:crossAx val="1"/></c:valAx>
+          </c:plotArea>
+        </c:chart>
+      </c:chartSpace>`;
+
+      const { option } = parseChartOption(xml);
+      const series = (option.series as any[])[0];
+      expect(series.data[0]).toMatchObject({
+        value: 45,
+        itemStyle: { color: '#4472C4' },
+      });
+      expect(series.data[1]).toMatchObject({
+        value: 32,
+        itemStyle: { color: '#ED7D31' },
+      });
+      expect(series.data[3]).toMatchObject({
+        value: 25,
+        itemStyle: { color: '#FFC000' },
+      });
+    });
+
     it('uses Office-like 1000-unit value axis ticks for 8390-scale bar charts (model-platform slide 3)', () => {
       const xml = `<c:chartSpace
         xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart"
