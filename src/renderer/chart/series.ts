@@ -1,6 +1,11 @@
 import { SafeXmlNode } from '../../parser/XmlParser';
 import { RenderContext } from '../RenderContext';
-import { extractFormatCode, extractNumericValues, extractStringValues } from './format';
+import {
+  extractFormatCode,
+  extractNumericValues,
+  extractNumericValuesWithBlanks,
+  extractStringValues,
+} from './format';
 import { parseOoxmlBoolElement } from './ooxml';
 import {
   extractDataPointStyles,
@@ -61,17 +66,20 @@ export function parseSeries(chartTypeNode: SafeXmlNode, ctx: RenderContext): Ser
     const categories = extractStringValues(cat);
 
     const val = ser.child('val');
-    const values = extractNumericValues(val);
+    const numericValues = extractNumericValuesWithBlanks(val);
+    const values = numericValues.values;
+    let blankIndices = numericValues.blankIndices;
     const formatCode = extractFormatCode(val);
 
     const xValNode = ser.child('xVal');
     const yValNode = ser.child('yVal');
     let xValues: number[] | undefined;
     if (yValNode.exists()) {
-      const yVals = extractNumericValues(yValNode);
-      if (yVals.length > 0) {
+      const yVals = extractNumericValuesWithBlanks(yValNode);
+      if (yVals.values.length > 0) {
         values.length = 0;
-        values.push(...yVals);
+        values.push(...yVals.values);
+        blankIndices = yVals.blankIndices;
       }
     }
     if (xValNode.exists()) {
@@ -113,6 +121,7 @@ export function parseSeries(chartTypeNode: SafeXmlNode, ctx: RenderContext): Ser
       dataPointColors,
       dataPointStyles,
       formatCode,
+      blankIndices,
       invertIfNegative,
       markerSymbol,
       markerSize,

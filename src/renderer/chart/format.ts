@@ -107,24 +107,39 @@ export function formatValue(value: number, formatCode: string | undefined): stri
 }
 
 export function extractNumericValues(refNode: SafeXmlNode): number[] {
+  return extractNumericValuesWithBlanks(refNode).values;
+}
+
+export interface NumericValuesWithBlanks {
+  values: number[];
+  blankIndices: Set<number>;
+}
+
+export function extractNumericValuesWithBlanks(refNode: SafeXmlNode): NumericValuesWithBlanks {
   const cache = refNode.child('numRef').exists()
     ? refNode.child('numRef').child('numCache')
     : refNode.child('numCache');
 
-  if (!cache.exists()) return [];
+  if (!cache.exists()) return { values: [], blankIndices: new Set() };
 
   const pointLimit = getCachePointLimit(cache);
   const values: number[] = new Array(pointLimit).fill(0);
+  const blankIndices = new Set<number>();
+  for (let i = 0; i < pointLimit; i++) blankIndices.add(i);
 
   for (const pt of cache.children('pt')) {
     const idx = pt.numAttr('idx');
     if (isCachePointInRange(idx, pointLimit)) {
-      const v = parseFloat(pt.child('v').text());
-      values[idx] = isNaN(v) ? 0 : v;
+      const raw = pt.child('v').text().trim();
+      const v = parseFloat(raw);
+      if (raw !== '' && !isNaN(v)) {
+        values[idx] = v;
+        blankIndices.delete(idx);
+      }
     }
   }
 
-  return values;
+  return { values, blankIndices };
 }
 
 function extractNumericValuesAsStrings(cache: SafeXmlNode): string[] {

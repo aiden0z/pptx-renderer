@@ -13,6 +13,7 @@ export interface SeriesData {
   dataPointColors?: (string | undefined)[];
   dataPointStyles?: (DataPointStyle | undefined)[];
   formatCode?: string;
+  blankIndices?: Set<number>;
   invertIfNegative?: boolean;
   markerSymbol?: string;
   markerSize?: number;

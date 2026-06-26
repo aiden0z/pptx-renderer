@@ -338,15 +338,22 @@ function forcePercentAxis(axisDef: Record<string, unknown>): void {
 }
 
 function collectSeriesValues(seriesArr: SeriesData[], stacked: boolean): number[] {
-  if (!stacked) return seriesArr.flatMap((series) => series.values);
+  if (!stacked) {
+    return seriesArr.flatMap((series) =>
+      series.values.filter((_, idx) => !series.blankIndices?.has(idx)),
+    );
+  }
   const pointCount = Math.max(0, ...seriesArr.map((series) => series.values.length));
   const sums: number[] = [];
   for (let i = 0; i < pointCount; i++) {
     let sum = 0;
+    let hasValue = false;
     for (const series of seriesArr) {
+      if (series.blankIndices?.has(i)) continue;
       sum += series.values[i] ?? 0;
+      hasValue = true;
     }
-    sums.push(sum);
+    if (hasValue) sums.push(sum);
   }
   return sums;
 }
@@ -425,6 +432,23 @@ function dataLabelShowsContent(cfg: DataLabelConfig | undefined): boolean {
   return Boolean(
     cfg && !cfg.deleted && (cfg.showVal || cfg.showCatName || cfg.showSerName || cfg.showPercent),
   );
+}
+
+type DispBlanksAs = 'gap' | 'zero' | 'span';
+
+function getDispBlanksAs(chartNode: SafeXmlNode): DispBlanksAs {
+  const val = chartNode.child('dispBlanksAs').attr('val');
+  return val === 'zero' || val === 'span' ? val : 'gap';
+}
+
+function resolveBlankDisplayValue(
+  series: SeriesData,
+  pointIdx: number,
+  value: number,
+  dispBlanksAs: DispBlanksAs,
+): number | null {
+  if (!series.blankIndices?.has(pointIdx)) return value;
+  return dispBlanksAs === 'zero' ? 0 : null;
 }
 
 function buildPieLabelOption(
@@ -538,6 +562,7 @@ function buildBarChartOption(
   const percentStackedValues = isPercentStacked
     ? normalizePercentStackedValues(seriesArr)
     : undefined;
+  const dispBlanksAs = getDispBlanksAs(chartNode);
   const varyColorsNode = chartTypeNode.child('varyColors');
   const defaultVaryColors =
     seriesArr.length === 1 &&
@@ -600,6 +625,7 @@ function buildBarChartOption(
     const data: echarts.BarSeriesOption['data'] = seriesValues.map((v, pointIdx) => {
       const ov = pointOverrides.get(pointIdx);
       const rawValue = s.values[pointIdx] ?? v;
+      const displayValue = resolveBlankDisplayValue(s, pointIdx, v, dispBlanksAs);
       const pointStyle = s.dataPointStyles?.[pointIdx];
       let itemStyle: Record<string, unknown> | undefined;
       if (pointStyle) {
@@ -639,9 +665,9 @@ function buildBarChartOption(
         pointLabel = buildLabel(merged);
       }
 
-      if (!itemStyle && !pointLabel) return v;
+      if (!itemStyle && !pointLabel) return displayValue;
       return {
-        value: v,
+        value: displayValue,
         ...(itemStyle ? { itemStyle } : {}),
         ...(pointLabel ? { label: pointLabel } : {}),
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -778,6 +804,7 @@ function buildLineChartOption(
   const percentStackedValues = isPercentStacked
     ? normalizePercentStackedValues(seriesArr)
     : undefined;
+  const dispBlanksAs = getDispBlanksAs(chartNode);
   let sharedLabels = parseDataLabels(chartTypeNode, ctx);
   if (!sharedLabels) {
     const firstSer = chartTypeNode.children('ser')[0];
@@ -833,7 +860,9 @@ function buildLineChartOption(
           const parts: string[] = [];
           if (labelCfg.showSerName && params?.seriesName) parts.push(params.seriesName);
           if (labelCfg.showCatName && params?.name) parts.push(params.name);
-          if (labelCfg.showVal) parts.push(formatValue(val, isPercentStacked ? '0%' : fc));
+          if (labelCfg.showVal && typeof val === 'number') {
+            parts.push(formatValue(val, isPercentStacked ? '0%' : fc));
+          }
           if (labelCfg.showPercent && typeof params?.percent === 'number') {
             parts.push(`${params.percent}%`);
           }
@@ -848,15 +877,16 @@ function buildLineChartOption(
     const manualLayouts = new Map<number, DataLabelManualLayout>();
     const seriesValues = percentStackedValues?.[idx] ?? s.values;
     const data: echarts.LineSeriesOption['data'] = seriesValues.map((v, pointIdx) => {
+      const displayValue = resolveBlankDisplayValue(s, pointIdx, v, dispBlanksAs);
       const ov = pointOverrides.get(pointIdx);
-      if (!ov) return v;
+      if (!ov) return displayValue;
       if (ov.manualLayout) manualLayouts.set(pointIdx, ov.manualLayout);
       const pointLabel = ov.deleted
         ? ({ show: false } as echarts.LineSeriesOption['label'])
         : buildLineLabel(mergeDataLabelConfig(perSeriesLabels, ov));
-      if (!pointLabel) return v;
+      if (!pointLabel) return displayValue;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return { value: v, label: pointLabel } as any;
+      return { value: displayValue, label: pointLabel } as any;
     });
     const forceSymbolForLabel = Boolean(label?.show && echartsSymbol === 'none');
     const symbol = forceSymbolForLabel
@@ -885,6 +915,7 @@ function buildLineChartOption(
       lineStyle,
       label,
       labelLayout: buildPieLabelLayout(manualLayouts) as echarts.LineSeriesOption['labelLayout'],
+      connectNulls: dispBlanksAs === 'span',
       ...(s.smooth ? { smooth: true } : {}),
       ...(s.formatCode
         ? {
