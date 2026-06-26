@@ -6259,11 +6259,13 @@ describe('ChartRenderer', () => {
             <c:catAx><c:axId val="1"/><c:delete val="0"/><c:axPos val="b"/><c:crossAx val="2"/><c:crosses val="autoZero"/></c:catAx>
             <c:valAx><c:axId val="2"/><c:scaling/><c:delete val="0"/><c:axPos val="l"/><c:majorGridlines/><c:crossAx val="1"/><c:crosses val="autoZero"/></c:valAx>
           </c:plotArea>
+          <c:legend><c:legendPos val="r"/><c:layout/><c:overlay val="0"/></c:legend>
         </c:chart>
       </c:chartSpace>`;
 
       const { option } = parseChartOption(xml);
       expect((option.xAxis as any).axisLabel.rotate).toBe(0);
+      expect((option.grid as any).right).toBe(108);
     });
 
     it('uses the chart-level line marker default when series markers are omitted (oracle-pypptx-chart-0021)', () => {

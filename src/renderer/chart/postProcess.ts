@@ -207,7 +207,19 @@ export function applyLegendGridMargins(
       if (w > maxTextPx) maxTextPx = w;
     }
     const estimatedLegendPx = iconWidth + 8 + maxTextPx + 14;
-    const gridMarginPx = Math.max(84, Math.round(estimatedLegendPx + 18));
+    const plotArea = chartNode.child('plotArea');
+    const seriesCount = Array.isArray(opt.series) ? opt.series.length : opt.series ? 1 : 0;
+    const xAxis = Array.isArray(opt.xAxis) ? opt.xAxis[0] : opt.xAxis;
+    const categoryCount = Array.isArray(xAxis?.data) ? xAxis.data.length : 0;
+    const isDenseSingleSeriesLineRightLegend =
+      posVal === 'r' &&
+      plotArea.child('lineChart').exists() &&
+      seriesCount === 1 &&
+      categoryCount >= 20;
+    const gridMarginPx = Math.max(
+      84,
+      Math.round(estimatedLegendPx + (isDenseSingleSeriesLineRightLegend ? -10 : 18)),
+    );
 
     if (typeof opt.grid.left === 'string' && opt.grid.left.includes('%')) return;
     if (typeof opt.grid.right === 'string' && opt.grid.right.includes('%')) return;
