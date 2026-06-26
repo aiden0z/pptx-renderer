@@ -31,6 +31,7 @@ export interface ChartLineStyle {
 }
 
 export const DEFAULT_CHART_FOREGROUND_COLOR = '#000000';
+export const DEFAULT_CHART_AXIS_LABEL_FONT_SIZE = 10;
 export const DEFAULT_CHART_AXIS_LINE_COLOR = '#898989';
 export const DEFAULT_MAJOR_GRIDLINE_STYLE: Required<ChartLineStyle> = {
   color: DEFAULT_CHART_AXIS_LINE_COLOR,

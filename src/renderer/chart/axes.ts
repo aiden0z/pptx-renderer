@@ -5,6 +5,7 @@ import { parseOoxmlBoolElement } from './ooxml';
 import { extractChartLineStyle, resolveColorToHex } from './style';
 import { extractTitleText, extractTitleTextStyle, extractTxPrStyle } from './text';
 import {
+  DEFAULT_CHART_AXIS_LABEL_FONT_SIZE,
   DEFAULT_CHART_AXIS_LINE_COLOR,
   DEFAULT_CHART_FOREGROUND_COLOR,
   DEFAULT_MAJOR_GRIDLINE_STYLE,
@@ -277,6 +278,16 @@ export function applyAxisInfo(
       axisDef.axisLabel = {
         ...existingLabel,
         formatter: (val: number) => formatValue(val, nf),
+      };
+    }
+  }
+
+  if (!info.deleted && info.tickLblPos !== 'none') {
+    const existingLabel = (axisDef.axisLabel as Record<string, unknown>) || {};
+    if (existingLabel.fontSize === undefined) {
+      axisDef.axisLabel = {
+        ...existingLabel,
+        fontSize: DEFAULT_CHART_AXIS_LABEL_FONT_SIZE,
       };
     }
   }

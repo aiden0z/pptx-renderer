@@ -5775,6 +5775,7 @@ describe('ChartRenderer', () => {
           type: 'solid',
         },
       });
+      expect(yAxis.axisLabel.fontSize).toBe(10);
     });
 
     it('uses legacy Office black axis and gridline defaults for old theme charts (oracle-pypptx-chart-0005)', () => {
@@ -5851,6 +5852,8 @@ describe('ChartRenderer', () => {
       expect(yAxis.axisLabel.formatter(1600)).toBe('1600');
       expect(xAxis.axisLabel.color).toBe('#000000');
       expect(yAxis.axisLabel.color).toBe('#000000');
+      expect(xAxis.axisLabel.fontSize).toBe(10);
+      expect(yAxis.axisLabel.fontSize).toBe(10);
       expect(xAxis.axisLine).toMatchObject({
         show: true,
         lineStyle: { color: '#898989' },
