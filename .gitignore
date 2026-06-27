@@ -56,7 +56,15 @@ references/
 docs/agent-tmp/
 docs/plans/
 .claude/
-.agents/
+.agents/*
+!.agents/skills/
+.agents/skills/*
+!.agents/skills/pptx-render-review/
+!.agents/skills/pptx-render-review/**
+!.agents/skills/pptx-oracle-eval/
+!.agents/skills/pptx-oracle-eval/**
+!.agents/skills/pptx-chart-forensics/
+!.agents/skills/pptx-chart-forensics/**
 .agent/
 .codegraph/
 test/e2e/testdata/

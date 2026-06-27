@@ -7,6 +7,17 @@ This file provides guidance to Codex (Codex.ai/code) when working with code in t
 ## Attention
 
 - Temporary plan files and any other analysis output should be written to `docs/agent-tmp/` unless a specific path is given.
+- Repo-local workflow skills live under `.agents/skills/`. For renderer review, oracle evaluation, and chart forensics, prefer the project skills below before copying long runbook steps into chat.
+
+## Repo-Local Skills
+
+Use these tracked project skills for recurring PPTX renderer workflows:
+
+| Skill                  | Use when                                                                                                                     |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `pptx-render-review`   | Reviewing visual fidelity, failed/needs-review oracle cases, PDF/PNG vs HTML screenshots, or manual verdicts.                |
+| `pptx-oracle-eval`     | Running or summarizing shape, SmartArt, chart, table, connector, fillstroke, python-pptx, or windows oracle eval reports.    |
+| `pptx-chart-forensics` | Diagnosing or fixing chart oracle failures, ECharts option drift, OOXML chart XML parsing gaps, axis/legend/plotArea issues. |
 
 TypeScript library that parses Office Open XML (.pptx) files and renders them as HTML/SVG in the browser.
 

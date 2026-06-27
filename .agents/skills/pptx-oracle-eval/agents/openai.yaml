@@ -1,0 +1,4 @@
+interface:
+  display_name: "PPTX Oracle Eval"
+  short_description: "Run and summarize oracle evals"
+  default_prompt: "Use $pptx-oracle-eval to run the PPTX oracle evaluation loop."

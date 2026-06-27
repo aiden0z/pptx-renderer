@@ -1,0 +1,4 @@
+interface:
+  display_name: "PPTX Render Review"
+  short_description: "Review PPTX render fidelity queues"
+  default_prompt: "Use $pptx-render-review to triage PPTX render review cases."

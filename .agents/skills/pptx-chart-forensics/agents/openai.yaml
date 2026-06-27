@@ -1,0 +1,4 @@
+interface:
+  display_name: "PPTX Chart Forensics"
+  short_description: "Diagnose PPTX chart fidelity bugs"
+  default_prompt: "Use $pptx-chart-forensics to diagnose a PPTX chart rendering mismatch."
