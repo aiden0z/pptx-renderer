@@ -1642,7 +1642,7 @@ function buildBubbleChartOption(
   const legendTopPx = getLegendTopPx(!!titleOption, legendInfo);
   const manualGrid = extractManualLayoutGrid(chartNode);
   const containLabel = !hasManualGrid(manualGrid);
-  const scatterGridLeft = yAxisInfo.deleted ? 4 : 24;
+  const scatterGridLeft = yAxisInfo.deleted ? 4 : 18;
   const scatterGridTop = gridTop;
   const scatterGridBottom = Math.max(getGridBottomPx(legendInfo), 20);
 

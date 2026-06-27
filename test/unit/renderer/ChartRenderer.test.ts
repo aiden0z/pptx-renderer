@@ -5265,6 +5265,8 @@ describe('ChartRenderer', () => {
       const { option } = parseChartOption(xml);
       const xAxis = option.xAxis as any;
       const yAxis = option.yAxis as any;
+      const grid = option.grid as any;
+      expect(grid.left).toBe(18);
       expect(xAxis.max).toBe(6);
       expect(xAxis.interval).toBe(1);
       expect(yAxis.max).toBe(5);
