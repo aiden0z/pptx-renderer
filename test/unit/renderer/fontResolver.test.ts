@@ -85,8 +85,17 @@ describe('fontResolver', () => {
   });
 
   it('serializes CSS font family stacks with aliases, CJK fallbacks, generics, and escaping', () => {
+    expect(cssFontFamilyStack('Calibri')).toBe(
+      '"Calibri", "Aptos", "Carlito", system-ui, "Arial", "Helvetica", sans-serif',
+    );
     expect(cssFontFamilyStack(['Calibri', 'sans-serif'])).toBe(
-      '"Calibri", "Aptos", "Arial", "Helvetica", sans-serif',
+      '"Calibri", "Aptos", "Carlito", system-ui, "Arial", "Helvetica", sans-serif',
+    );
+    expect(cssFontFamilyStack('Calibri Light')).toBe(
+      '"Calibri Light", "Aptos Display", "Aptos", "Carlito", system-ui, "Arial", "Helvetica", sans-serif',
+    );
+    expect(cssFontFamilyStack('Aptos')).toBe(
+      '"Aptos", system-ui, "Arial", "Helvetica", sans-serif',
     );
     expect(cssFontFamilyStack('微软雅黑')).toContain('"PingFang SC"');
     expect(cssFontFamilyStack('A "Quoted" \\ Font')).toBe('"A \\"Quoted\\" \\\\ Font"');

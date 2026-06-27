@@ -134,10 +134,19 @@ const CJK_FONT_FAMILY_ALIAS_KEYS = new Set([
 ]);
 
 const FONT_FAMILY_ALIASES: Record<string, string[]> = {
-  calibri: ['Calibri', 'Aptos', 'Arial', 'Helvetica', 'sans-serif'],
-  'calibri light': ['Calibri Light', 'Aptos Display', 'Aptos', 'Arial', 'Helvetica', 'sans-serif'],
-  aptos: ['Aptos', 'Arial', 'Helvetica', 'sans-serif'],
-  'aptos display': ['Aptos Display', 'Aptos', 'Arial', 'Helvetica', 'sans-serif'],
+  calibri: ['Calibri', 'Aptos', 'Carlito', 'system-ui', 'Arial', 'Helvetica', 'sans-serif'],
+  'calibri light': [
+    'Calibri Light',
+    'Aptos Display',
+    'Aptos',
+    'Carlito',
+    'system-ui',
+    'Arial',
+    'Helvetica',
+    'sans-serif',
+  ],
+  aptos: ['Aptos', 'system-ui', 'Arial', 'Helvetica', 'sans-serif'],
+  'aptos display': ['Aptos Display', 'Aptos', 'system-ui', 'Arial', 'Helvetica', 'sans-serif'],
   'microsoft yahei': ['Microsoft YaHei', '微软雅黑'],
   'microsoft yahei ui': ['Microsoft YaHei UI', 'Microsoft YaHei', '微软雅黑'],
   微软雅黑: ['微软雅黑', 'Microsoft YaHei'],

@@ -1293,7 +1293,7 @@ describe('TextRenderer — renderTextBody', () => {
       expect(span!.style.fontFamily).toContain('sans-serif');
     });
 
-    it('adds sans-serif fallbacks for Calibri when the Office font is unavailable (xcloud-intro slide 8)', () => {
+    it('prefers system-ui before Arial for missing Office default Latin fonts (line-spacing oracle)', () => {
       const body = makeTextBody({
         paragraphs: [
           {
@@ -1311,8 +1311,12 @@ describe('TextRenderer — renderTextBody', () => {
       const span = container.querySelector('span');
 
       expect(span!.style.fontFamily).toContain('Calibri');
-      expect(span!.style.fontFamily).toContain('Arial');
-      expect(span!.style.fontFamily).toContain('sans-serif');
+      expect(span!.style.fontFamily).toContain('Aptos');
+      expect(span!.style.fontFamily).toContain('Carlito');
+      expect(span!.style.fontFamily).toContain('system-ui');
+      expect(span!.style.fontFamily.indexOf('system-ui')).toBeLessThan(
+        span!.style.fontFamily.indexOf('Arial'),
+      );
       expect(span!.style.fontFamily).not.toContain('PingFang SC');
     });
 
