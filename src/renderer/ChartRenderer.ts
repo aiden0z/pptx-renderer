@@ -2184,7 +2184,7 @@ function applyCategoryLabelZeroOffset(
 
   const zeroOffsetFromMin = plotSpan * ((0 - valueAxis.min!) / (valueAxis.max! - valueAxis.min!));
   const axisLabel = categoryAxis.axisLabel ?? (categoryAxis.axisLabel = {});
-  const labelGap = Math.max(6, Math.round((axisLabel.fontSize ?? 10) * 0.6));
+  const labelGap = Math.max(6, Math.round(axisLabel.fontSize ?? 10));
   axisLabel.margin = -Math.round(Math.max(0, zeroOffsetFromMin - labelGap));
   categoryAxis.z = Math.max(categoryAxis.z ?? 0, 20);
   return true;

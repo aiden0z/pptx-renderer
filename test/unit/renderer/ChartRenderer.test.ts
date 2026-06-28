@@ -6223,7 +6223,7 @@ describe('ChartRenderer', () => {
 
       applyZeroCrossingAxisLabelLayout(option, { w: 400, h: 300 });
 
-      expect(option.xAxis.axisLabel.margin).toBe(-96);
+      expect(option.xAxis.axisLabel.margin).toBe(-92);
       expect(option.xAxis.z).toBeGreaterThan(10);
       expect(option.grid.containLabel).toBe(false);
       expect(option.grid.left).toBeGreaterThanOrEqual(48);
