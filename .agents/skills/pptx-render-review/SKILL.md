@@ -7,7 +7,7 @@ description: Use when reviewing PPTX renderer visual fidelity, triaging failed o
 
 ## Overview
 
-Turn renderer screenshots and oracle metrics into a human review queue. Stay read-only unless the user asks for a fix.
+Use renderer screenshots, diff images, and oracle metrics to make fast visual fidelity judgments. Start from side-by-side review, then use diff-first as a diagnostic lens; stay read-only unless the user asks for a fix.
 
 ## Required Context
 
@@ -55,26 +55,28 @@ pnpm dev:e2e
 
 If servers already run, reuse them.
 
-3. Build an attention queue:
+3. Pick a review set for the changed rendering area:
 
-```bash
-jq -r '.results
-  | sort_by((if .passed then 1 else 0 end), (if .needs_review then 0 else 1 end), .summary.ssim)
-  | .[:30][]
-  | [.case, .summary.ssim, .summary.color_hist_corr, .passed, .needs_review, ((.reasons // []) | join(";")), ((.warnings // []) | join(";"))]
-  | @tsv' test/e2e/reports/oracle-failures/<report>.json
-```
+| Area           | Prefer samples                                            |
+| -------------- | --------------------------------------------------------- |
+| Shape geometry | target shape id, related presets, adjustment variants     |
+| Fill/stroke    | gradient, scheme color, alpha, connector, multi-path      |
+| Chart          | axis, legend, marker, combo, stock, doughnut, data labels |
+| Text/table     | pypptx text, table alignment, composite cases             |
+| SmartArt       | layout family, generated PNG ground truth, edge-heavy     |
 
 4. Prioritize:
 
-| Priority | Meaning                                         |
-| -------- | ----------------------------------------------- |
-| P0       | `passed=false`, especially chart/text/composite |
-| P1       | `passed=true`, `needs_review=true`              |
-| P2       | stale/missing manual verdict                    |
-| P3       | supported sample                                |
+| Priority | Meaning                                      |
+| -------- | -------------------------------------------- |
+| P0       | large diff in changed rendering area         |
+| P1       | `passed=false` or semantic mismatch          |
+| P2       | `passed=true`, `needs_review=true`           |
+| P3       | representative supported sample for baseline |
 
-5. Inspect selected cases in triple view. Prefer PNG ground truth; use PDF only when PNG is unavailable or requested.
+5. Inspect selected cases in side-by-side view first. Use diff-first to locate suspicious regions, then confirm in ground-truth/rendered side-by-side before making a verdict. Prefer PNG ground truth; use PDF only when PNG is unavailable or requested.
+
+Default to decision metrics first: auto gate (`PASS`, `REVIEW`, `FAIL`), SSIM, color correlation, and `needs_review`. Open Diagnostics only when locating a mismatch or explaining why a case needs review; diagnostic metrics include foreground IoU, chamfer, MAE, text coverage, word counts, and shape count.
 
 6. Save verdicts only after per-slide visual inspection:
 
@@ -89,13 +91,14 @@ Use `supported`, `unsupported`, or `unsure`. Notes name visible mismatch, not gu
 ## Red Flags
 
 - Bulk-marking from metrics alone.
-- `needs_review=true` without screenshot/triple-view inspection.
+- Treating diagnostic metrics as top-level verdict gates.
+- `needs_review=true` without expanding from diff into side-by-side inspection.
 - Old `generated_at` or wrong corpus/source.
 - Notes guess code cause instead of visible mismatch.
 
 ## Reporting Back
 
-Report the report path, `generated_at`, counts, top queue items, saved verdicts, and stale/missing data.
+Report the report path, `generated_at`, selected review set, auto gate summary, diff observations, saved verdicts, and stale/missing data. Keep diagnostic metrics secondary unless they explain a visible issue.
 
 ## Common Mistakes
 

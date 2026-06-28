@@ -23,4 +23,10 @@ describe('e2e compare page lifecycle cleanup', () => {
   it('destroys the pdfjs document after extracting pages and text', () => {
     expect(html).toContain('pdfDoc.destroy()');
   });
+
+  it('resets expanded diff-first cards when the view mode changes', () => {
+    expect(html).toContain(
+      "viewMode.addEventListener('change', () => {\n        expandedDiffCards.clear();\n        writeViewModeToUrl();\n        applyViewAndFilter();",
+    );
+  });
 });

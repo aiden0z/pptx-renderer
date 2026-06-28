@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  resolveComparePanelState,
   mergeServerMetricsIntoSlides,
   resolveComparablePdfPages,
   resolveCompareSlideCounts,
@@ -51,6 +52,54 @@ describe('resolveComparablePdfPages', () => {
     const pages = resolveComparablePdfPages([{ hidden: false }, { hidden: true }], Number.NaN);
 
     expect(pages).toEqual([null, null]);
+  });
+});
+
+describe('resolveComparePanelState', () => {
+  it('shows only the diff panel by default in diff-first mode when a diff exists', () => {
+    expect(resolveComparePanelState('diff-first', true, false)).toEqual({
+      truth: false,
+      render: false,
+      diff: true,
+      compact: true,
+      expanded: false,
+      fallback: false,
+    });
+  });
+
+  it('expands diff-first cards into truth and render panels while keeping diff visible', () => {
+    expect(resolveComparePanelState('diff-first', true, true)).toEqual({
+      truth: true,
+      render: true,
+      diff: true,
+      compact: false,
+      expanded: true,
+      fallback: false,
+    });
+  });
+
+  it('falls back to side-by-side in diff-first mode when no diff exists', () => {
+    expect(resolveComparePanelState('diff-first', false, false)).toEqual({
+      truth: true,
+      render: true,
+      diff: false,
+      compact: false,
+      expanded: false,
+      fallback: true,
+    });
+  });
+
+  it('preserves side-by-side and triple view behavior', () => {
+    expect(resolveComparePanelState('side-by-side', true, false)).toMatchObject({
+      truth: true,
+      render: true,
+      diff: false,
+    });
+    expect(resolveComparePanelState('triple', true, false)).toMatchObject({
+      truth: true,
+      render: true,
+      diff: true,
+    });
   });
 });
 

@@ -26,6 +26,17 @@ export interface ServerPerSlideMetrics {
   needsReview?: boolean | null;
 }
 
+export type CompareViewMode = 'diff-first' | 'side-by-side' | 'triple';
+
+export interface ComparePanelState {
+  truth: boolean;
+  render: boolean;
+  diff: boolean;
+  compact: boolean;
+  expanded: boolean;
+  fallback: boolean;
+}
+
 function normalizeNonNegativeInt(value: number): number {
   if (!Number.isFinite(value)) return 0;
   const normalized = Math.floor(value);
@@ -66,6 +77,51 @@ export function resolveCompareSlideCounts(
   const displaySlideCount = normalizeNonNegativeInt(pptxSlideCount);
   const comparableSlideCount = Math.min(displaySlideCount, normalizeNonNegativeInt(pdfPageCount));
   return { displaySlideCount, comparableSlideCount };
+}
+
+export function resolveComparePanelState(
+  mode: CompareViewMode,
+  hasDiff: boolean,
+  expanded: boolean,
+): ComparePanelState {
+  if (mode === 'triple') {
+    return {
+      truth: true,
+      render: true,
+      diff: hasDiff,
+      compact: false,
+      expanded: false,
+      fallback: false,
+    };
+  }
+  if (mode === 'side-by-side' || !hasDiff) {
+    return {
+      truth: true,
+      render: true,
+      diff: false,
+      compact: false,
+      expanded: false,
+      fallback: mode === 'diff-first' && !hasDiff,
+    };
+  }
+  if (expanded) {
+    return {
+      truth: true,
+      render: true,
+      diff: true,
+      compact: false,
+      expanded: true,
+      fallback: false,
+    };
+  }
+  return {
+    truth: false,
+    render: false,
+    diff: true,
+    compact: true,
+    expanded: false,
+    fallback: false,
+  };
 }
 
 type MergeableSlide = {

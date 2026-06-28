@@ -83,8 +83,46 @@
         display: flex;
         align-items: center;
         gap: 5px;
-        margin-left: auto;
+        margin-left: 0;
         flex-shrink: 0;
+      }
+      .summary-diagnostics {
+        flex-shrink: 0;
+        color: var(--text-dim);
+      }
+      .summary-diagnostics[open] {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .summary-diagnostics summary {
+        cursor: pointer;
+        user-select: none;
+        white-space: nowrap;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 5px 10px;
+        background: var(--bg-raised);
+        color: var(--text-dim);
+        font-size: 11px;
+        font-weight: 600;
+      }
+      .summary-diagnostics-grid {
+        display: flex;
+        align-items: center;
+        flex-wrap: nowrap;
+        gap: 12px;
+        margin-top: 6px;
+        padding: 8px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        background: var(--bg-surface);
+      }
+      .summary-diagnostics[open] .summary-diagnostics-grid {
+        margin-top: 0;
+        padding: 0;
+        border: 0;
+        background: transparent;
       }
       .metric-guide-pill {
         font-size: 11px;
@@ -105,6 +143,7 @@
       .metric-guide-threshold {
         font-size: 11px;
         color: var(--text-muted);
+        white-space: nowrap;
       }
       .controls input[type='search'] {
         background: var(--bg-raised);
@@ -202,6 +241,54 @@
       .log-section.expanded .log-panel {
         display: block;
       }
+      .review-toggle {
+        background: var(--blue-dim);
+        color: var(--blue);
+        border: 1px solid var(--border-strong);
+        border-radius: var(--radius);
+        padding: 4px 10px;
+        font-family: var(--font);
+        font-size: 11px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+      .review-toggle:hover {
+        background: rgba(108, 140, 255, 0.2);
+        border-color: var(--blue);
+      }
+      .slide-panels.diff-only {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .slide-card.compact-review .slide-detail,
+      .slide-card.compact-review .manual-review {
+        display: none;
+      }
+      .slide-diagnostics {
+        margin-top: 8px;
+        border-top: 1px dashed var(--border);
+        padding-top: 7px;
+      }
+      .slide-diagnostics summary {
+        cursor: pointer;
+        user-select: none;
+        color: var(--text-muted);
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .slide-diagnostics-grid {
+        margin-top: 6px;
+      }
+      .diff-fallback-notice {
+        border-top: 1px solid var(--border);
+        padding: 7px 14px;
+        color: var(--orange);
+        background: var(--orange-dim);
+        font-size: 12px;
+        font-weight: 500;
+      }
     </style>
   </head>
   <body>
@@ -235,6 +322,7 @@
         <button id="btn-eval-all" class="primary">Evaluate All Files</button>
         <select id="view-mode">
           <option value="side-by-side">Side by Side</option>
+          <option value="diff-first">Diff First</option>
           <option value="triple">Triple (+Diff)</option>
         </select>
         <select id="page-select">
@@ -265,41 +353,47 @@
         <div class="value" id="sum-color-hist">-</div>
         <div class="label">Color ↑ <small style="color: #4fc3f7">P/F</small></div>
       </div>
-      <div class="summary-stat" id="sum-text-cov-wrap" style="border-bottom: 2px solid #4fc3f7">
-        <div class="value" id="sum-text-cov">-</div>
-        <div class="label">Text ↑ <small style="color: #4fc3f7">P/F</small></div>
-      </div>
-      <div class="summary-divider"></div>
-      <div class="summary-stat" id="sum-fg-iou-wrap">
-        <div class="value" id="sum-fg-iou">-</div>
-        <div class="label">FG IoU (±1px)</div>
-      </div>
-      <div class="summary-stat" id="sum-fg-iou-raw-wrap">
-        <div class="value" id="sum-fg-iou-raw">-</div>
-        <div class="label">FG IoU (raw)</div>
-      </div>
-      <div class="summary-stat" id="sum-mae-wrap">
-        <div class="value" id="sum-mae">-</div>
-        <div class="label">MAE ↓</div>
-      </div>
       <div class="summary-divider"></div>
       <div class="summary-stat" id="sum-verdict-wrap">
         <div class="value" id="sum-verdict">-</div>
-        <div class="label">Visual Verdict</div>
-      </div>
-      <div class="summary-stat info">
-        <div class="value" id="sum-shape-count">-</div>
-        <div class="label">Shapes</div>
+        <div class="label">Auto Gate</div>
       </div>
       <div class="summary-stat info">
         <div class="value" id="sum-time">-</div>
         <div class="label">Render ms</div>
       </div>
-      <div class="summary-legend" id="metric-guide">
-        <span class="metric-guide-pill up">↑ Higher</span>
-        <span class="metric-guide-pill down">↓ Lower: MAE</span>
-        <span class="metric-guide-threshold" id="metric-thresholds">Pass: SSIM≥95% Color≥80%</span>
-      </div>
+      <details class="summary-diagnostics" id="summary-diagnostics">
+        <summary>Diagnostics</summary>
+        <div class="summary-diagnostics-grid">
+          <div class="summary-stat" id="sum-text-cov-wrap" style="border-bottom: 2px solid #4fc3f7">
+            <div class="value" id="sum-text-cov">-</div>
+            <div class="label">Text ↑ <small style="color: #4fc3f7">P/F</small></div>
+          </div>
+          <div class="summary-stat" id="sum-fg-iou-wrap">
+            <div class="value" id="sum-fg-iou">-</div>
+            <div class="label">FG IoU (±1px)</div>
+          </div>
+          <div class="summary-stat" id="sum-fg-iou-raw-wrap">
+            <div class="value" id="sum-fg-iou-raw">-</div>
+            <div class="label">FG IoU (raw)</div>
+          </div>
+          <div class="summary-stat" id="sum-mae-wrap">
+            <div class="value" id="sum-mae">-</div>
+            <div class="label">MAE ↓</div>
+          </div>
+          <div class="summary-stat info">
+            <div class="value" id="sum-shape-count">-</div>
+            <div class="label">Shapes</div>
+          </div>
+          <div class="summary-legend" id="metric-guide">
+            <span class="metric-guide-pill up">↑ Higher</span>
+            <span class="metric-guide-pill down">↓ Lower: MAE</span>
+            <span class="metric-guide-threshold" id="metric-thresholds"
+              >Pass: SSIM≥95% Color≥80%</span
+            >
+          </div>
+        </div>
+      </details>
     </div>
 
     <div class="log-section" id="log-section">
@@ -326,6 +420,7 @@
       import { computePanelScale } from '../../src/utils/previewScale.ts';
       import {
         mergeServerMetricsIntoSlides,
+        resolveComparePanelState,
         resolveComparablePdfPages,
         resolveCompareSlideCounts,
       } from '../../src/utils/e2eCompare.ts';
@@ -370,6 +465,9 @@
       const params = new URLSearchParams(location.search);
       let currentSource = params.get('source') || '';
       if (currentSource) sourceSelect.value = currentSource;
+      const validViewModes = new Set(['diff-first', 'side-by-side', 'triple']);
+      const requestedViewMode = params.get('view');
+      if (validViewModes.has(requestedViewMode)) viewMode.value = requestedViewMode;
       let requestedSlideNumber = parseRequestedSlideNumber(params.get('slide'));
       const listStrategyParam = params.get('listStrategy');
       const listBatchSizeParam = Number(params.get('listBatchSize'));
@@ -428,6 +526,16 @@
       function clearSlideFilterUrlParam() {
         const url = new URL(location);
         url.searchParams.delete('slide');
+        history.replaceState(null, '', url);
+      }
+
+      function writeViewModeToUrl() {
+        const url = new URL(location);
+        if (viewMode.value === 'side-by-side') {
+          url.searchParams.delete('view');
+        } else {
+          url.searchParams.set('view', viewMode.value);
+        }
         history.replaceState(null, '', url);
       }
 
@@ -705,6 +813,19 @@
       function fmtNum(v, digits = 4) {
         return typeof v === 'number' ? v.toFixed(digits) : 'N/A';
       }
+      function autoGateBadge(gate) {
+        return `<span class="score-badge ${gate.cls}">${gate.label}</span>`;
+      }
+      function resolveSlideAutoGate(r) {
+        const ssimPct = pct(r.ssim);
+        const colorPct = pct(r.colorHistCorr);
+        if (ssimPct === null || colorPct === null || r.needsReview === null) {
+          return { label: 'N/A', cls: 'bad' };
+        }
+        if (ssimPct < 95 || colorPct < 80) return { label: 'FAIL', cls: 'bad' };
+        if (r.needsReview) return { label: 'REVIEW', cls: 'warn' };
+        return { label: 'PASS', cls: 'good' };
+      }
       function updateMetricThresholdGuide(quality) {
         const el = document.getElementById('metric-thresholds');
         if (!el) return;
@@ -769,7 +890,7 @@
         const verdictEl = document.getElementById('sum-verdict');
         const verdictWrap = document.getElementById('sum-verdict-wrap');
         if (quality) {
-          let verdict = quality.passed ? 'SUPPORTED' : 'UNSUPPORTED';
+          let verdict = quality.passed ? 'PASS' : 'FAIL';
           let cls = quality.passed ? 'good' : 'bad';
           if (quality.passed && (quality.needsReview || (quality.warnings || []).length > 0)) {
             verdict = 'REVIEW';
@@ -1205,7 +1326,8 @@
       // Render slide cards
       // -----------------------------------------------------------------------
       // Cache built card elements so we don't rebuild DOM on view/page changes
-      let builtCards = null; // Map<index, {card, panels, diffPanel, pptxWrapper, pptxEl}>
+      let builtCards = null; // Map<index, {card, panels, gtPanel, pptxPanel, diffPanel, fallbackNotice, toggleBtn, pptxWrapper, pptxEl}>
+      const expandedDiffCards = new Set();
 
       function getElementSize(el) {
         const styleW = Number.parseFloat(el.style.width || '');
@@ -1243,6 +1365,7 @@
 
       function buildSlideCards(slideResults) {
         builtCards = new Map();
+        expandedDiffCards.clear();
         main.innerHTML = '';
 
         for (const r of slideResults) {
@@ -1252,20 +1375,17 @@
 
           // Header
           const ssimPct = r.ssim !== null ? r.ssim * 100 : null;
-          const fgIouTolerantPct = pct(r.fgIouTolerant);
           const colorPct = pct(r.colorHistCorr);
           const ssimBadge =
             ssimPct !== null
               ? scoreBadge(ssimPct, [95, 85, 70])
               : '<span class="score-badge bad">N/A</span>';
-          const fgBadge =
-            fgIouTolerantPct !== null
-              ? scoreBadge(fgIouTolerantPct, [85, 65, 45])
-              : '<span class="score-badge bad">N/A</span>';
           const colorBadge =
             colorPct !== null
               ? scoreBadge(colorPct, [85, 60, 40])
               : '<span class="score-badge bad">N/A</span>';
+          const slideGate = resolveSlideAutoGate(r);
+          const gateBadge = autoGateBadge(slideGate);
           const hdr = document.createElement('div');
           hdr.className = 'slide-card-header';
           const encodedTestFile = r.testFile ? encodeURIComponent(r.testFile) : '';
@@ -1275,15 +1395,35 @@
           const openBtn = renderLink
             ? `<a href="${renderLink}" target="_blank" style="color:#8ab4f8;font-size:11px;text-decoration:none;margin-left:8px;opacity:0.7" title="Open in Single Slide view">↗ Open</a>`
             : '';
-          hdr.innerHTML = `
-          <span class="slide-title">Slide ${r.index + 1}${openBtn}</span>
-          <span class="slide-scores">
-            ${ssimBadge} ssim↑
-            ${fgBadge} fgIoU↑
-            ${colorBadge} color↑
-            ${scoreBadge(r.textCoverage)} text↑
-            <span style="color:#888">${r.shapeCount} shapes</span>
-          </span>`;
+          const title = document.createElement('span');
+          title.className = 'slide-title';
+          title.innerHTML = `Slide ${r.index + 1}${openBtn}`;
+          hdr.appendChild(title);
+
+          const headerActions = document.createElement('span');
+          headerActions.className = 'slide-scores';
+          const toggleBtn = document.createElement('button');
+          toggleBtn.type = 'button';
+          toggleBtn.className = 'review-toggle';
+          toggleBtn.textContent = 'Compare';
+          toggleBtn.title = 'Expand ground truth and rendered slide';
+          toggleBtn.addEventListener('click', () => {
+            if (expandedDiffCards.has(r.index)) {
+              expandedDiffCards.delete(r.index);
+            } else {
+              expandedDiffCards.add(r.index);
+            }
+            applyViewAndFilter();
+          });
+          headerActions.appendChild(toggleBtn);
+
+          const scores = document.createElement('span');
+          scores.innerHTML = `
+              ${ssimBadge} ssim↑
+              ${colorBadge} color↑
+              ${gateBadge} gate`;
+          headerActions.appendChild(scores);
+          hdr.appendChild(headerActions);
           card.appendChild(hdr);
 
           // Panels — always build both 2-panel and diff panel; toggle visibility
@@ -1390,6 +1530,7 @@
           // Diff panel (always built, shown only in triple mode)
           const diffPanel = document.createElement('div');
           diffPanel.className = 'panel';
+          diffPanel.dataset.hasDiff = r.hasDiff && r.testFile ? 'true' : 'false';
           diffPanel.innerHTML = '<div class="panel-label">Diff Heatmap</div>';
           if (r.hasDiff && r.testFile) {
             const img = document.createElement('img');
@@ -1406,25 +1547,40 @@
 
           card.appendChild(panels);
 
+          const fallbackNotice = document.createElement('div');
+          fallbackNotice.className = 'diff-fallback-notice';
+          fallbackNotice.textContent =
+            'Diff is not available yet, showing ground truth and rendered slide.';
+          fallbackNotice.style.display = 'none';
+          card.appendChild(fallbackNotice);
+
           // Detail
           const detail = document.createElement('div');
           detail.className = 'slide-detail';
           const reviewLabel = r.needsReview === null ? 'N/A' : r.needsReview ? 'yes' : 'no';
           detail.innerHTML = `
           <h4 style="margin:4px 0 2px;font-size:11px;color:#8899aa;text-transform:uppercase;letter-spacing:0.5px">Pass / Fail</h4>
+          <div class="detail-kv"><span class="k">Auto Gate</span><span>${slideGate.label}</span></div>
           <div class="detail-kv"><span class="k">SSIM ↑</span><span>${fmtPct(r.ssim)}</span></div>
           <div class="detail-kv"><span class="k">Color Corr ↑</span><span>${fmtPct(r.colorHistCorr)}</span></div>
           <div class="detail-kv"><span class="k">Needs Review</span><span>${reviewLabel}</span></div>
-          <h4 style="margin:8px 0 2px;font-size:11px;color:#8899aa;text-transform:uppercase;letter-spacing:0.5px">Diagnostic</h4>
-          <div class="detail-kv"><span class="k">FG IoU (±1px) ↑</span><span>${fmtPct(r.fgIouTolerant)}</span></div>
-          <div class="detail-kv"><span class="k">FG IoU (raw) ↑</span><span>${fmtPct(r.fgIou)}</span></div>
-          <div class="detail-kv"><span class="k">Chamfer Score ↑</span><span>${fmtPct(r.chamferScore)}</span></div>
-          <div class="detail-kv"><span class="k">MAE ↓</span><span>${fmtPct(r.mae)}</span></div>
-          <div class="detail-kv"><span class="k">Text Coverage</span><span>${r.textCoverage.toFixed(1)}%</span></div>
-          <div class="detail-kv"><span class="k">Model Words</span><span>${r.modelWordCount}</span></div>
-          <div class="detail-kv"><span class="k">PDF Words</span><span>${r.pdfWordCount}</span></div>
-          <div class="detail-kv"><span class="k">Shape Count</span><span>${r.shapeCount}</span></div>
         `;
+          const diagnostics = document.createElement('details');
+          diagnostics.className = 'slide-diagnostics';
+          diagnostics.innerHTML = `
+            <summary>Diagnostics</summary>
+            <div class="slide-diagnostics-grid">
+              <div class="detail-kv"><span class="k">FG IoU (±1px) ↑</span><span>${fmtPct(r.fgIouTolerant)}</span></div>
+              <div class="detail-kv"><span class="k">FG IoU (raw) ↑</span><span>${fmtPct(r.fgIou)}</span></div>
+              <div class="detail-kv"><span class="k">Chamfer Score ↑</span><span>${fmtPct(r.chamferScore)}</span></div>
+              <div class="detail-kv"><span class="k">MAE ↓</span><span>${fmtPct(r.mae)}</span></div>
+              <div class="detail-kv"><span class="k">Text Coverage</span><span>${r.textCoverage.toFixed(1)}%</span></div>
+              <div class="detail-kv"><span class="k">Model Words</span><span>${r.modelWordCount}</span></div>
+              <div class="detail-kv"><span class="k">PDF Words</span><span>${r.pdfWordCount}</span></div>
+              <div class="detail-kv"><span class="k">Shape Count</span><span>${r.shapeCount}</span></div>
+            </div>
+          `;
+          detail.appendChild(diagnostics);
           card.appendChild(detail);
 
           if (r.testFile && serverAvailable) {
@@ -1519,7 +1675,11 @@
           builtCards.set(r.index, {
             card,
             panels,
+            gtPanel,
+            pptxPanel,
             diffPanel,
+            fallbackNotice,
+            toggleBtn,
             pptxWrapper: r.pptxEl ? pptxPanel.querySelector('.pptx-scale-wrapper') : null,
             pptxEl: r.pptxEl || null,
           });
@@ -1534,14 +1694,25 @@
         const mode = viewMode.value;
         const selectedPage = pageSelect.value;
 
-        for (const [index, { card, panels, diffPanel }] of builtCards) {
+        for (const [
+          index,
+          { card, panels, gtPanel, pptxPanel, diffPanel, fallbackNotice, toggleBtn },
+        ] of builtCards) {
           // Page filter: show/hide cards
           const visible = selectedPage === 'all' || String(index) === selectedPage;
           card.style.display = visible ? '' : 'none';
 
-          // View mode: toggle triple vs two-panel layout
-          panels.className = `slide-panels ${mode === 'triple' ? 'three' : 'two'}`;
-          diffPanel.style.display = mode === 'triple' ? '' : 'none';
+          const hasDiff = diffPanel.dataset.hasDiff === 'true';
+          const state = resolveComparePanelState(mode, hasDiff, expandedDiffCards.has(index));
+
+          panels.className = `slide-panels ${state.compact ? 'diff-only' : state.diff ? 'three' : 'two'}`;
+          gtPanel.style.display = state.truth ? '' : 'none';
+          pptxPanel.style.display = state.render ? '' : 'none';
+          diffPanel.style.display = state.diff ? '' : 'none';
+          fallbackNotice.style.display = state.fallback ? '' : 'none';
+          card.classList.toggle('compact-review', state.compact);
+          toggleBtn.style.display = mode === 'diff-first' && hasDiff ? '' : 'none';
+          toggleBtn.textContent = state.expanded ? 'Collapse' : 'Compare';
         }
         requestAnimationFrame(rescaleVisiblePptxPanels);
       }
@@ -1670,7 +1841,7 @@
           <th rowspan="2">File</th><th rowspan="2">Slides</th>
           <th colspan="3" style="background:#1a2a3a;border-bottom:2px solid #4fc3f7;font-size:10px;letter-spacing:1px">PASS / FAIL</th>
           <th colspan="4" style="background:#1a2a2a;border-bottom:2px solid #555;font-size:10px;letter-spacing:1px;color:#889">DIAGNOSTIC</th>
-          <th rowspan="2">Verdict</th><th rowspan="2">Render (ms)</th>
+          <th rowspan="2">Auto Gate</th><th rowspan="2">Render (ms)</th>
         </tr>
         <tr>
           <th style="background:#1a2a3a">SSIM ↑</th><th style="background:#1a2a3a">Color ↑</th><th style="background:#1a2a3a">Text ↑</th>
@@ -1693,9 +1864,9 @@
           colorHistCount = 0,
           maeCount = 0,
           count = 0;
-        let verdictSupported = 0,
-          verdictReview = 0,
-          verdictUnsupported = 0;
+        let gatePass = 0,
+          gateReview = 0,
+          gateFail = 0;
         for (const r of allResults) {
           if (r.error) {
             const errorRow = document.createElement('tr');
@@ -1743,24 +1914,24 @@
           const fgIouRawDisplay =
             r.avgFgIou !== null ? scoreBadge(r.avgFgIou, [85, 65, 45]) : 'N/A';
           const maeDisplay = r.avgMae !== null ? scoreBadgeLow(r.avgMae, [5, 10, 18]) : 'N/A';
-          let verdictLabel = 'N/A';
-          let verdictCls = 'warn';
+          let gateLabel = 'N/A';
+          let gateCls = 'warn';
           if (r.quality) {
             if (!r.quality.passed) {
-              verdictLabel = 'UNSUPPORTED';
-              verdictCls = 'bad';
-              verdictUnsupported += 1;
+              gateLabel = 'FAIL';
+              gateCls = 'bad';
+              gateFail += 1;
             } else if (r.quality.needsReview || (r.quality.warnings || []).length > 0) {
-              verdictLabel = 'REVIEW';
-              verdictCls = 'warn';
-              verdictReview += 1;
+              gateLabel = 'REVIEW';
+              gateCls = 'warn';
+              gateReview += 1;
             } else {
-              verdictLabel = 'SUPPORTED';
-              verdictCls = 'good';
-              verdictSupported += 1;
+              gateLabel = 'PASS';
+              gateCls = 'good';
+              gatePass += 1;
             }
           }
-          const verdictDisplay = `<span class="score-badge ${verdictCls}">${verdictLabel}</span>`;
+          const gateDisplay = `<span class="score-badge ${gateCls}">${gateLabel}</span>`;
           const row = document.createElement('tr');
           appendTextCell(row, r.label);
           appendTextCell(row, r.slideCount);
@@ -1771,7 +1942,7 @@
           appendHtmlCell(row, chamferDisplay);
           appendHtmlCell(row, fgIouRawDisplay);
           appendHtmlCell(row, maeDisplay);
-          appendHtmlCell(row, verdictDisplay);
+          appendHtmlCell(row, gateDisplay);
           appendTextCell(row, r.renderMs.toFixed(0));
           tbody.appendChild(row);
         }
@@ -1790,7 +1961,7 @@
             fgIouCount > 0 ? scoreBadge(totalFgIou / fgIouCount, [85, 65, 45]) : 'N/A';
           const avgMaeDisplay =
             maeCount > 0 ? scoreBadgeLow(totalMae / maeCount, [5, 10, 18]) : 'N/A';
-          const verdictSummary = `<span class="score-badge good">S:${verdictSupported}</span> <span class="score-badge warn">R:${verdictReview}</span> <span class="score-badge bad">U:${verdictUnsupported}</span>`;
+          const verdictSummary = `<span class="score-badge good">P:${gatePass}</span> <span class="score-badge warn">R:${gateReview}</span> <span class="score-badge bad">F:${gateFail}</span>`;
           tbody.innerHTML += `<tr style="font-weight:700; border-top:2px solid #533483">
           <td>AVERAGE</td><td>-</td>
           <td style="background:#0d1a2a">${avgSsimDisplay}</td>
@@ -1862,6 +2033,8 @@
       });
 
       viewMode.addEventListener('change', () => {
+        expandedDiffCards.clear();
+        writeViewModeToUrl();
         applyViewAndFilter();
       });
 
