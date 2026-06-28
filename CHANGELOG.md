@@ -7,6 +7,34 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [1.2.2] - 2026-06-28
+
+### Added
+
+- Improved the E2E comparison review UI so manual PDF-vs-HTML inspection has clearer
+  metrics and review state handling.
+
+### Fixed
+
+- Improved chart fidelity across axis density, tick visibility, label sizing, legend
+  order, legend margins, marker defaults, blank data points, data table semantics, rich
+  chart titles, text shadows, plot-area backgrounds, and radar manual layout.
+- Improved pie, doughnut, radar, scatter, bubble, horizontal bar, stacked, stock, and
+  dense line chart defaults so compact and Office-authored charts render closer to
+  PowerPoint.
+- Fixed gradient rendering for path and background fills, including themed path
+  gradients, focus rectangles, pixel-space radial radii, and subpixel gradient strokes.
+- Fixed picture and shape effects including clipped picture fills, grayscale picture
+  effects, inner shadows, soft edges, and scaled-down shape shadows.
+- Fixed table and text edge cases for outer paragraph spacing, paragraph tab defaults,
+  vertical WordArt, and Office-like font fallback behavior.
+- Fixed shape and SmartArt edge cases including fillable brace presets, flowchart
+  storage guide alignment, and SmartArt cycle pie offsets.
+
+### Migration Notes
+
+- No migration is required.
+
 ## [1.2.1] - 2026-06-25
 
 ### Fixed

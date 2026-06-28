@@ -7,11 +7,11 @@ import { resolveColor } from '../StyleResolver';
 import { resolveColorToHex } from './style';
 import { EXPLICIT_FONT_SIZE, type ChartTextStyle } from './types';
 
-export type EChartsTextStyle = ChartTextStyle & {
+type EChartsTextStyle = ChartTextStyle & {
   fontWeight?: 'normal' | 'bold' | 'bolder' | 'lighter' | number;
 };
 
-export interface ChartRichText {
+interface ChartRichText {
   text: string;
   rich: Record<string, EChartsTextStyle>;
 }

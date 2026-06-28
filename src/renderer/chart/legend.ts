@@ -11,7 +11,7 @@ import {
   type LegendInfo,
 } from './types';
 
-export type LegendDataItem =
+type LegendDataItem =
   | string
   | {
       name: string;

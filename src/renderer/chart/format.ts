@@ -192,7 +192,7 @@ export function extractNumericValues(refNode: SafeXmlNode): number[] {
   return extractNumericValuesWithBlanks(refNode).values;
 }
 
-export interface NumericValuesWithBlanks {
+interface NumericValuesWithBlanks {
   values: number[];
   blankIndices: Set<number>;
 }
