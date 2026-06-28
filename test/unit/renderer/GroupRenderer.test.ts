@@ -1599,7 +1599,15 @@ describe('renderGroup — cycle diagram (3 pie + 3 circularArrow reordering)', (
    * childXml.child('spPr').child('prstGeom').attr('prst') directly on
    * the raw SafeXmlNode children, not on the parsed node.
    */
-  function makeSpWithPreset(prst: string, id: string): SafeXmlNode {
+  function makeSpWithPreset(
+    prst: string,
+    id: string,
+    opts: { x?: number; y?: number; w?: number; h?: number } = {},
+  ): SafeXmlNode {
+    const x = opts.x ?? 0;
+    const y = opts.y ?? 0;
+    const w = opts.w ?? 914400;
+    const h = opts.h ?? 914400;
     return xml(`
       <p:sp xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
             xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
@@ -1609,7 +1617,7 @@ describe('renderGroup — cycle diagram (3 pie + 3 circularArrow reordering)', (
           <p:nvPr/>
         </p:nvSpPr>
         <p:spPr>
-          <a:xfrm><a:off x="0" y="0"/><a:ext cx="914400" cy="914400"/></a:xfrm>
+          <a:xfrm><a:off x="${x}" y="${y}"/><a:ext cx="${w}" cy="${h}"/></a:xfrm>
           <a:prstGeom prst="${prst}"><a:avLst/></a:prstGeom>
         </p:spPr>
       </p:sp>
@@ -1683,6 +1691,43 @@ describe('renderGroup — cycle diagram (3 pie + 3 circularArrow reordering)', (
       w: 48,
       h: 48,
     });
+  });
+
+  it('preserves subtle pie offsets so SmartArt cycle separators keep their Office spacing', () => {
+    const px = 9525;
+    const children = [
+      makeSpWithPreset('pie', '1', { x: 55 * px, y: 45 * px, w: 100 * px, h: 100 * px }),
+      makeSpWithPreset('pie', '2', { x: 50 * px, y: 55 * px, w: 100 * px, h: 100 * px }),
+      makeSpWithPreset('pie', '3', { x: 45 * px, y: 45 * px, w: 100 * px, h: 100 * px }),
+      makeSpWithPreset('circularArrow', '4'),
+      makeSpWithPreset('circularArrow', '5'),
+      makeSpWithPreset('circularArrow', '6'),
+    ];
+    const group = makeGroup(children, {
+      w: 200,
+      h: 200,
+      childOffsetX: 0,
+      childOffsetY: 0,
+      childExtentW: 200,
+      childExtentH: 200,
+    });
+
+    const el = renderGroup(group, createMockRenderContext(), stubRenderNode);
+    const piePositions = Array.from(
+      el.querySelectorAll('[data-node-id="1"], [data-node-id="2"], [data-node-id="3"]'),
+    )
+      .map((child) => ({
+        id: child.getAttribute('data-node-id'),
+        left: (child as HTMLElement).style.left,
+        top: (child as HTMLElement).style.top,
+      }))
+      .sort((a, b) => Number(a.id) - Number(b.id));
+
+    expect(piePositions).toEqual([
+      { id: '1', left: '55px', top: '45px' },
+      { id: '2', left: '50px', top: '55px' },
+      { id: '3', left: '45px', top: '45px' },
+    ]);
   });
 
   it('does not reorder children when pattern is not 3-pie + 3-circularArrow', () => {

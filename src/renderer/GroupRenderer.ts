@@ -188,6 +188,7 @@ export function renderGroup(
   };
 
   let pieCommon: { x: number; y: number; w: number; h: number } | null = null;
+  let pieCenterOffsets: Map<number, { x: number; y: number }> | null = null;
   if (node.children.length === 6 && chExt.w > 0 && chExt.h > 0) {
     const prst = (c: (typeof node.children)[0]) => c.child('spPr').child('prstGeom').attr('prst');
     const firstPie = node.children.slice(0, 3).every((c) => prst(c) === 'pie');
@@ -209,6 +210,24 @@ export function renderGroup(
           w: (circleSize / chExt.w) * groupW,
           h: (circleSize / chExt.h) * groupH,
         };
+
+        const firstPieSize = pieNodes[0]!.size;
+        const samePieSize = pieNodes.every(
+          (n) =>
+            Math.abs(n!.size.w - firstPieSize.w) < 0.01 &&
+            Math.abs(n!.size.h - firstPieSize.h) < 0.01,
+        );
+        if (samePieSize) {
+          pieCenterOffsets = new Map(
+            pieNodes.map((n, i) => [
+              i,
+              {
+                x: ((n!.position.x + n!.size.w / 2 - centerX) / chExt.w) * groupW,
+                y: ((n!.position.y + n!.size.h / 2 - centerY) / chExt.h) * groupH,
+              },
+            ]),
+          );
+        }
       }
     }
   }
@@ -277,7 +296,8 @@ export function renderGroup(
       if (pieCommon && index < 3 && childNode.nodeType === 'shape') {
         const origW = childNode.size.w;
         const origH = childNode.size.h;
-        childNode.position = { x: pieCommon.x, y: pieCommon.y };
+        const pieOffset = pieCenterOffsets?.get(index) ?? { x: 0, y: 0 };
+        childNode.position = { x: pieCommon.x + pieOffset.x, y: pieCommon.y + pieOffset.y };
         childNode.size = { w: pieCommon.w, h: pieCommon.h };
         // Scale text box so labels stay in the right sector (txXfrm was in original shape space)
         const shapeNode = childNode as ShapeNodeData;
