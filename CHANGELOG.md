@@ -7,6 +7,19 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [1.2.3] - 2026-07-01
+
+### Fixed
+
+- Fixed connector arrowhead direction, sizing, and placement for flipped or transformed
+  connector paths so arrow markers better match PowerPoint output.
+- Fixed compact numeric text such as `80%` and adjacent numeric/unit runs so browser
+  wrapping no longer splits the number from its percent or unit marker.
+
+### Migration Notes
+
+- No migration is required.
+
 ## [1.2.2] - 2026-06-28
 
 ### Added
