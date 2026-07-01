@@ -8,9 +8,6 @@ importers:
 
   .:
     dependencies:
-      echarts:
-        specifier: ^6.0.0
-        version: 6.0.0
       jszip:
         specifier: ^3.10.1
         version: 3.10.1
@@ -36,6 +33,9 @@ importers:
       canvas:
         specifier: ^3.2.1
         version: 3.2.1
+      echarts:
+        specifier: ^6.0.0
+        version: 6.0.0
       eslint:
         specifier: ^10.0.2
         version: 10.0.2(jiti@2.6.1)

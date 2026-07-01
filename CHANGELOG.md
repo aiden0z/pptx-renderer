@@ -7,6 +7,16 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed
+
+- Moved `echarts` to a peer dependency and externalized it from the library bundle so
+  host applications can reuse their own ECharts installation.
+
+### Migration Notes
+
+- Install `echarts` alongside the renderer if your app does not already provide a
+  compatible version: `npm install @aiden0z/pptx-renderer echarts`.
+
 ## [1.2.2] - 2026-06-28
 
 ### Added

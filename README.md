@@ -34,13 +34,16 @@ Every rendering capability is automatically verified against PowerPoint output. 
 ## Install
 
 ```bash
-npm install @aiden0z/pptx-renderer
+npm install @aiden0z/pptx-renderer echarts
 # or
-pnpm add @aiden0z/pptx-renderer
+pnpm add @aiden0z/pptx-renderer echarts
 
 # Optional: only needed for SmartArt / EMF files with embedded PDF fallback previews
 pnpm add pdfjs-dist
 ```
+
+`echarts` is a peer dependency used for PPTX chart rendering. Install it alongside
+the renderer, or reuse the compatible ECharts version already present in your app.
 
 Requires Node.js 20+ for development. Runtime is browser-only.
 
