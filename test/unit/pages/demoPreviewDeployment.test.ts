@@ -15,6 +15,8 @@ describe('demo preview deployment surface', () => {
     expect(workflow).toContain('fix/**');
     expect(workflow).toContain('target_dir=test');
     expect(workflow).toContain('demo_base=/pptx-renderer/test/');
+    expect(workflow).toContain('pages_environment=github-pages-preview');
+    expect(workflow).toContain('pages_environment=github-pages');
     expect(workflow).toContain('DEMO_BUILD_CHANNEL: ${{ steps.meta.outputs.channel }}');
     expect(workflow).toContain('DEMO_BASE: ${{ steps.meta.outputs.demo_base }}');
   });
@@ -25,6 +27,12 @@ describe('demo preview deployment surface', () => {
     expect(workflow).toContain('find pages-site -mindepth 1 -maxdepth 1');
     expect(workflow).toContain("! -name 'test'");
     expect(workflow).toContain('cp -R dist-demo/. pages-site/test/');
+  });
+
+  it('uses a separate deployment environment for fix branch previews', () => {
+    expect(workflow).toContain('pages_environment: ${{ steps.meta.outputs.pages_environment }}');
+    expect(workflow).toContain('name: ${{ needs.build.outputs.pages_environment }}');
+    expect(workflow).toContain('github-pages-preview');
   });
 
   it('configures demo base path and build metadata through Vite env', () => {

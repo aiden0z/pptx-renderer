@@ -29,6 +29,8 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      pages_environment: ${{ steps.meta.outputs.pages_environment }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -65,10 +67,12 @@ jobs:
             echo "channel=test" >> "${GITHUB_OUTPUT}"
             echo "target_dir=test" >> "${GITHUB_OUTPUT}"
             echo "demo_base=/pptx-renderer/test/" >> "${GITHUB_OUTPUT}"
+            echo "pages_environment=github-pages-preview" >> "${GITHUB_OUTPUT}"
           else
             echo "channel=release" >> "${GITHUB_OUTPUT}"
             echo "target_dir=." >> "${GITHUB_OUTPUT}"
             echo "demo_base=/pptx-renderer/" >> "${GITHUB_OUTPUT}"
+            echo "pages_environment=github-pages" >> "${GITHUB_OUTPUT}"
           fi
 
           echo "build_time=${build_time}" >> "${GITHUB_OUTPUT}"
@@ -177,7 +181,7 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     environment:
-      name: github-pages
+      name: ${{ needs.build.outputs.pages_environment }}
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - id: deployment
