@@ -2,8 +2,10 @@ import { createReadStream, readFileSync } from 'node:fs';
 import { defineConfig } from 'vite';
 import type { Plugin } from 'vite';
 import { resolve } from 'node:path';
+import { createDemoBuildInfo, getDemoBase } from './demo/buildInfo';
 
-const demoBase = '/pptx-renderer/';
+const demoBase = getDemoBase(process.env);
+const demoBuildInfo = createDemoBuildInfo(process.env);
 const samplePublicFile = 'samples/chart-and-complex.pptx';
 const sampleRequestPath = `/${samplePublicFile}`;
 const baseSampleRequestPath = `${demoBase.replace(/\/$/, '')}${sampleRequestPath}`;
@@ -37,6 +39,9 @@ const demoSampleFromDocsExample = (): Plugin => ({
 export default defineConfig({
   root: resolve(__dirname, 'demo'),
   base: demoBase,
+  define: {
+    __PPTX_RENDERER_DEMO_BUILD__: JSON.stringify(demoBuildInfo),
+  },
   publicDir: false,
   plugins: [demoSampleFromDocsExample()],
   build: {

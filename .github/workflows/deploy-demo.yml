@@ -4,22 +4,35 @@ on:
   push:
     tags:
       - 'v*'
+    branches:
+      - 'fix/**'
   workflow_dispatch:
+    inputs:
+      channel:
+        description: 'Deployment channel'
+        required: true
+        default: 'test'
+        type: choice
+        options:
+          - test
+          - release
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
 concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: pnpm/action-setup@v4
         with:
@@ -32,13 +45,133 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      - run: pnpm build:demo
+      - name: Resolve demo channel
+        id: meta
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
+            channel="${{ inputs.channel }}"
+          elif [[ "${GITHUB_REF}" == refs/heads/fix/* ]]; then
+            channel="test"
+          else
+            channel="release"
+          fi
+
+          build_time="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+
+          if [[ "${channel}" == "test" ]]; then
+            echo "channel=test" >> "${GITHUB_OUTPUT}"
+            echo "target_dir=test" >> "${GITHUB_OUTPUT}"
+            echo "demo_base=/pptx-renderer/test/" >> "${GITHUB_OUTPUT}"
+          else
+            echo "channel=release" >> "${GITHUB_OUTPUT}"
+            echo "target_dir=." >> "${GITHUB_OUTPUT}"
+            echo "demo_base=/pptx-renderer/" >> "${GITHUB_OUTPUT}"
+          fi
+
+          echo "build_time=${build_time}" >> "${GITHUB_OUTPUT}"
+
+      - name: Build demo
+        run: pnpm build:demo
+        env:
+          DEMO_BASE: ${{ steps.meta.outputs.demo_base }}
+          DEMO_BUILD_CHANNEL: ${{ steps.meta.outputs.channel }}
+          DEMO_BUILD_REF_NAME: ${{ github.ref_name }}
+          DEMO_BUILD_SHA: ${{ github.sha }}
+          DEMO_BUILD_TIME: ${{ steps.meta.outputs.build_time }}
+          DEMO_BUILD_RUN_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+      - name: Restore published Pages tree
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          rm -rf pages-site
+
+          if git ls-remote --exit-code --heads origin gh-pages >/dev/null 2>&1; then
+            git clone --depth 1 --branch gh-pages \
+              "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" \
+              pages-site
+          else
+            mkdir pages-site
+            git -C pages-site init
+            git -C pages-site checkout --orphan gh-pages
+            git -C pages-site remote add origin \
+              "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          fi
+
+      - name: Bootstrap release demo when Pages tree is empty
+        if: steps.meta.outputs.target_dir == 'test'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ -f pages-site/index.html ]]; then
+            exit 0
+          fi
+
+          latest_tag="$(git tag -l 'v*' --sort=-v:refname | head -n 1)"
+          if [[ -z "${latest_tag}" ]]; then
+            echo "No release tag found; preview deployment will only populate /test/."
+            exit 0
+          fi
+
+          rm -rf release-source
+          git worktree add --detach release-source "${latest_tag}"
+          pnpm --dir release-source install --frozen-lockfile
+          DEMO_BASE=/pptx-renderer/ DEMO_BUILD_CHANNEL=release pnpm --dir release-source build:demo
+          cp -R release-source/dist-demo/. pages-site/
+          git worktree remove release-source --force
+
+      - name: Update Pages tree
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          touch pages-site/.nojekyll
+
+          if [[ "${{ steps.meta.outputs.target_dir }}" == "." ]]; then
+            find pages-site -mindepth 1 -maxdepth 1 \
+              ! -name '.git' \
+              ! -name '.nojekyll' \
+              ! -name 'test' \
+              -exec rm -rf {} +
+            cp -R dist-demo/. pages-site/
+          else
+            rm -rf pages-site/test
+            mkdir -p pages-site/test
+            cp -R dist-demo/. pages-site/test/
+          fi
+
+      - name: Save Pages tree
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          git -C pages-site config user.name "github-actions[bot]"
+          git -C pages-site config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git -C pages-site add -A
+
+          if git -C pages-site diff --cached --quiet; then
+            echo "No Pages changes to commit."
+            exit 0
+          fi
+
+          git -C pages-site commit -m "deploy demo ${{ steps.meta.outputs.channel }} ${GITHUB_SHA::7}"
+          git -C pages-site push origin HEAD:gh-pages
+
+      - name: Prepare Pages artifact
+        shell: bash
+        run: rm -rf pages-site/.git
 
       - uses: actions/configure-pages@v5
 
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: dist-demo
+          path: pages-site
 
   deploy:
     needs: build

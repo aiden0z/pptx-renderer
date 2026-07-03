@@ -26,6 +26,20 @@ Use semantic versioning:
 4. Tag release (`vX.Y.Z`).
 5. Publish release notes with migration notes if needed.
 
+## Demo Preview Channel
+
+Use the preview channel when a bug fix needs reporter confirmation before a formal release.
+
+- Push branches named `fix/**` to automatically deploy the latest test demo.
+- Test URL: `https://aiden0z.github.io/pptx-renderer/test/`
+- The test demo displays `TEST BUILD` with the source branch, commit, and build time.
+- The preview channel does not publish npm, create tags, or update release notes.
+
+The release demo remains at `https://aiden0z.github.io/pptx-renderer/` and is updated by the
+normal `v*` tag deployment. The workflow keeps the full Pages tree on `gh-pages` so release
+deployments update the root path while preserving `/test/`, and fix deployments update `/test/`
+while preserving the release demo.
+
 ## Command Scenario (GitHub + npm)
 
 Use this sequence for an actual release:

@@ -89,6 +89,27 @@
       .version-badge-link:hover {
         color: #86efac;
       }
+      .test-build-banner {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 28px;
+        border-bottom: 1px solid rgba(245, 158, 11, 0.28);
+        background: rgba(245, 158, 11, 0.12);
+        color: #fcd34d;
+        font-size: 12px;
+        font-weight: 600;
+      }
+      .test-build-banner[hidden] {
+        display: none;
+      }
+      .test-build-banner strong {
+        color: #f97316;
+        letter-spacing: 0.08em;
+      }
+      .test-build-details {
+        color: #fde68a;
+      }
       .github-link {
         color: var(--text-dim);
         text-decoration: none;
@@ -1011,6 +1032,11 @@
       </a>
     </div>
 
+    <div class="test-build-banner" id="test-build-banner" hidden>
+      <strong>TEST BUILD</strong>
+      <span class="test-build-details" id="test-build-details"></span>
+    </div>
+
     <div class="toolbar">
       <label class="upload-area" id="upload-area">
         <span class="upload-icon">&#8682;</span>
@@ -1126,6 +1152,18 @@
     <script type="module">
       import { PptxViewer, RECOMMENDED_ZIP_LIMITS } from '../src/index.ts';
 
+      const demoBuildInfo =
+        typeof __PPTX_RENDERER_DEMO_BUILD__ === 'undefined'
+          ? {
+              channel: 'release',
+              refName: '',
+              sha: '',
+              shortSha: '',
+              buildTime: '',
+              runUrl: '',
+              repository: 'aiden0z/pptx-renderer',
+            }
+          : __PPTX_RENDERER_DEMO_BUILD__;
       const container = document.getElementById('pptx-container');
       const fileInput = document.getElementById('file-input');
       const uploadArea = document.getElementById('upload-area');
@@ -1145,6 +1183,8 @@
       const searchPosition = document.getElementById('search-position');
       const searchMatchCase = document.getElementById('search-match-case');
       const thumbnailList = document.getElementById('thumbnail-list');
+      const testBuildBanner = document.getElementById('test-build-banner');
+      const testBuildDetails = document.getElementById('test-build-details');
       const statSeps = [
         document.getElementById('stat-sep-1'),
         document.getElementById('stat-sep-2'),
@@ -1185,12 +1225,33 @@
 
       // Version from npm registry (no background, green text)
       const versionBadge = document.getElementById('version-badge');
-      fetch('https://registry.npmjs.org/@aiden0z/pptx-renderer/latest')
-        .then((r) => r.json())
-        .then((d) => {
-          if (d.version) versionBadge.textContent = 'Version ' + d.version;
-        })
-        .catch(() => {});
+
+      function renderDemoBuildInfo() {
+        if (demoBuildInfo.channel !== 'test') return false;
+
+        const details = [
+          demoBuildInfo.refName,
+          demoBuildInfo.shortSha,
+          demoBuildInfo.buildTime,
+        ].filter(Boolean);
+        testBuildDetails.textContent = details.join(' · ');
+        testBuildBanner.hidden = false;
+        versionBadge.textContent = `Test ${demoBuildInfo.shortSha || 'build'}`;
+        versionBadge.title = 'View test build source';
+        versionBadge.href = demoBuildInfo.sha
+          ? `https://github.com/${demoBuildInfo.repository}/commit/${demoBuildInfo.sha}`
+          : demoBuildInfo.runUrl || `https://github.com/${demoBuildInfo.repository}`;
+        return true;
+      }
+
+      if (!renderDemoBuildInfo()) {
+        fetch('https://registry.npmjs.org/@aiden0z/pptx-renderer/latest')
+          .then((r) => r.json())
+          .then((d) => {
+            if (d.version) versionBadge.textContent = 'Version ' + d.version;
+          })
+          .catch(() => {});
+      }
 
       function formatFileSize(bytes) {
         if (bytes < 1024) return bytes + ' B';
