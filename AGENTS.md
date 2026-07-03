@@ -568,6 +568,22 @@ Examples of effective assertions:
 
 This is faster and more stable than relying only on end-to-end screenshots.
 
+When a fix changes browser layout behavior, build a small interaction matrix before editing
+production code. Do not test only the leaf renderer that changed. For each source XML feature
+involved, add at least:
+
+- the positive case that reproduces the user-visible bug
+- the inverse/opt-out case that must keep old behavior
+- the parent-container case that can expose CSS side effects
+- a browser-level screenshot or DOM check when scrollbars, clipping, wrapping, scaling, or
+  overflow visibility is involved
+
+Text fixes are especially cross-layer. If the change touches wrapping, whitespace, font metrics,
+paragraph layout, or compact tokens, inspect `a:bodyPr` first and cover relevant combinations of
+`wrap`, `horzOverflow`, `vertOverflow`, `spAutoFit`, `normAutofit`, `noAutofit`, insets, vertical
+text, bullets, multi-paragraph text, and adjacent runs. A `TextRenderer` unit test is not enough
+when the observable bug depends on the `ShapeRenderer` text container.
+
 #### 9. Verify the metric source before trusting a reported regression
 
 There are multiple report surfaces:

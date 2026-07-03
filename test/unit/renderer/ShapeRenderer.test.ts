@@ -1100,6 +1100,8 @@ describe('ShapeRenderer', () => {
       expect(textContainer).toBeDefined();
       expect(textContainer!.style.transform).toContain('rotate(180deg)');
       expect(textContainer!.style.transform).toContain('scale(0.5)');
+      expect(textContainer!.style.overflowX).toBe('hidden');
+      expect(textContainer!.style.overflowY).toBe('hidden');
     } finally {
       clientHeightSpy.mockRestore();
       scrollHeightSpy.mockRestore();
@@ -1301,6 +1303,7 @@ describe('ShapeRenderer', () => {
       expect(scale).toBeGreaterThan(0.98);
       expect(scale).toBeLessThan(1);
       expect(textContainer!.style.whiteSpace).toBe('nowrap');
+      expect(textContainer!.style.overflowX).toBe('hidden');
       expect(textContainer!.style.overflowY).toBe('hidden');
     } finally {
       clientWidthSpy.mockRestore();
@@ -1407,6 +1410,7 @@ describe('ShapeRenderer', () => {
 
       expect(textContainer).toBeDefined();
       expect(textContainer!.style.transform).not.toContain('scale(');
+      expect(textContainer!.style.overflowX).toBe('visible');
       expect(textContainer!.style.overflowY).toBe('visible');
       expect(textContainer!.style.paddingTop).toBe('0px');
       expect(textContainer!.style.paddingBottom).toBe('0px');
@@ -1416,6 +1420,40 @@ describe('ShapeRenderer', () => {
       scrollWidthSpy.mockRestore();
       scrollHeightSpy.mockRestore();
     }
+  });
+
+  it('preserves explicit horizontal overflow for spAutoFit text boxes', () => {
+    const xml = `
+      <p:sp xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
+            xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+        <p:nvSpPr>
+          <p:cNvPr id="64" name="Explicit horizontal overflow"/>
+          <p:cNvSpPr txBox="1"/>
+          <p:nvPr/>
+        </p:nvSpPr>
+        <p:spPr>
+          <a:xfrm><a:off x="0" y="0"/><a:ext cx="90000" cy="700000"/></a:xfrm>
+          <a:prstGeom prst="rect"><a:avLst/></a:prstGeom>
+          <a:noFill/>
+        </p:spPr>
+        <p:txBody>
+          <a:bodyPr horzOverflow="overflow" wrap="square" lIns="0" tIns="0" rIns="0" bIns="0">
+            <a:spAutoFit/>
+          </a:bodyPr>
+          <a:lstStyle/>
+          <a:p><a:r><a:rPr sz="800"/><a:t>Overflow allowed</a:t></a:r></a:p>
+        </p:txBody>
+      </p:sp>
+    `;
+
+    const el = renderShape(parseShapeNode(parseXml(xml)), createMockRenderContext());
+    const textContainer = Array.from(el.querySelectorAll('div')).find(
+      (div) => div.textContent?.includes('Overflow allowed') && div.style.flexDirection === 'column',
+    ) as HTMLElement | undefined;
+
+    expect(textContainer).toBeDefined();
+    expect(textContainer!.style.overflowX).toBe('visible');
+    expect(textContainer!.style.overflowY).toBe('hidden');
   });
 
   it('auto-shrinks single-line shape text when bodyPr omits an autofit mode (ai-computing slide 12)', () => {
@@ -1474,6 +1512,7 @@ describe('ShapeRenderer', () => {
       ) as HTMLElement | undefined;
 
       expect(textContainer).toBeDefined();
+      expect(textContainer!.style.overflowX).toBe('hidden');
       expect(textContainer!.style.overflowY).toBe('hidden');
       expect(textContainer!.style.transform).toContain('scale(');
       const scale = Number(textContainer!.style.transform.match(/scale\(([^)]+)\)/)?.[1]);
@@ -2146,6 +2185,8 @@ describe('ShapeRenderer', () => {
       expect(textContainer).toBeDefined();
       expect(textContainer!.style.whiteSpace).toBe('nowrap');
       expect(textContainer!.style.transform).not.toContain('scale(');
+      expect(textContainer!.style.overflowX).toBe('hidden');
+      expect(textContainer!.style.overflowY).toBe('hidden');
       expect(textContainer!.style.width).toBe('100%');
       expect(textContainer!.style.height).toBe('100%');
     } finally {
@@ -2462,6 +2503,7 @@ describe('ShapeRenderer', () => {
 
       expect(textContainer).toBeDefined();
       expect(textContainer!.style.transform).not.toContain('scale(');
+      expect(textContainer!.style.overflowX).toBe('hidden');
       expect(firstParagraph?.style.lineHeight).toBe('1.1');
       expect(emptyParagraph?.style.fontSize).toBe('10.5pt');
     } finally {
@@ -3356,6 +3398,46 @@ describe('ShapeRenderer', () => {
 
     expect(textContainer).toBeTruthy();
     expect(textContainer?.style.overflowY).toBe('hidden');
+  });
+
+  it('hides horizontal overflow for bounded spAutoFit text so nowrap tokens do not show scrollbars', () => {
+    const xml = `
+      <p:sp xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
+            xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+        <p:nvSpPr>
+          <p:cNvPr id="301" name="spAutoFit nowrap scrollbar regression"/>
+          <p:cNvSpPr/>
+          <p:nvPr/>
+        </p:nvSpPr>
+        <p:spPr>
+          <a:xfrm><a:off x="0" y="0"/><a:ext cx="1371600" cy="1569720"/></a:xfrm>
+          <a:prstGeom prst="rect"><a:avLst/></a:prstGeom>
+          <a:noFill/><a:ln><a:noFill/></a:ln>
+        </p:spPr>
+        <p:txBody>
+          <a:bodyPr wrap="square" anchor="t"><a:spAutoFit/></a:bodyPr>
+          <a:lstStyle/>
+          <a:p>
+            <a:r><a:rPr sz="4800"/><a:t>80% </a:t></a:r>
+          </a:p>
+        </p:txBody>
+      </p:sp>
+    `;
+
+    const shapeNode = parseShapeNode(parseXml(xml));
+    const el = renderShape(shapeNode, createMockRenderContext());
+    const textContainer = Array.from(el.querySelectorAll('div')).find(
+      (d) => (d as HTMLDivElement).style.flexDirection === 'column',
+    ) as HTMLDivElement | undefined;
+    const outerRun = textContainer?.querySelector('span') as HTMLSpanElement | undefined;
+    const token = outerRun?.querySelector('span') as HTMLSpanElement | undefined;
+
+    expect(textContainer).toBeTruthy();
+    expect(outerRun?.style.whiteSpace).not.toBe('nowrap');
+    expect(token?.textContent).toBe('80%');
+    expect(token?.style.whiteSpace).toBe('nowrap');
+    expect(textContainer?.style.overflowY).toBe('hidden');
+    expect(textContainer?.style.overflowX).toBe('hidden');
   });
 
   it('applies theme effectRef outer shadow when shape has no explicit effectLst', () => {
@@ -5421,6 +5503,7 @@ describe('ShapeRenderer', () => {
     // Line spacing reduction should be applied
     expect(textContainer?.style.lineHeight).toBeTruthy();
     // Text should be clipped at container boundary
+    expect(textContainer?.style.overflowX).toBe('hidden');
     expect(textContainer?.style.overflowY).toBe('hidden');
   });
 
@@ -5452,6 +5535,7 @@ describe('ShapeRenderer', () => {
     // fontScale=100000 means full size — no scale transform should be applied
     expect(textContainer?.style.transform ?? '').not.toContain('scale(');
     // Still clipped
+    expect(textContainer?.style.overflowX).toBe('hidden');
     expect(textContainer?.style.overflowY).toBe('hidden');
   });
 
@@ -5483,6 +5567,8 @@ describe('ShapeRenderer', () => {
       (d) => (d as HTMLDivElement).style.flexDirection === 'column',
     ) as HTMLDivElement | undefined;
     expect(textContainer).toBeTruthy();
+    expect(textContainer?.style.overflowX).toBe('hidden');
+    expect(textContainer?.style.overflowY).toBe('hidden');
     // Visibility must be restored (not left hidden)
     expect(el.style.visibility).not.toBe('hidden');
   });

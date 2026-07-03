@@ -76,7 +76,7 @@ describe('TextRenderer — renderTextBody', () => {
     });
 
     it('keeps compact numeric percentage tokens on one line (issue #4)', () => {
-      for (const text of ['80% ', '15 %']) {
+      for (const text of ['80%', '15 %']) {
         const body = makeTextBody({
           paragraphs: [
             {
@@ -97,6 +97,31 @@ describe('TextRenderer — renderTextBody', () => {
         expect(span?.textContent).toBe(text);
         expect(span?.style.whiteSpace).toBe('nowrap');
       }
+    });
+
+    it('keeps only the compact numeric token nowrap while leaving trailing space breakable', () => {
+      const body = makeTextBody({
+        paragraphs: [
+          {
+            runs: [
+              {
+                text: '80% ',
+                properties: xmlNode('<rPr lang="en-US" sz="4800"/>'),
+              },
+            ],
+            level: 0,
+          },
+        ],
+      });
+
+      const container = renderToContainer(body);
+      const outerRun = container.querySelector('div > span');
+      const token = outerRun?.querySelector('span');
+
+      expect(outerRun?.textContent).toBe('80% ');
+      expect(outerRun?.style.whiteSpace).not.toBe('nowrap');
+      expect(token?.textContent).toBe('80%');
+      expect(token?.style.whiteSpace).toBe('nowrap');
     });
 
     it('does not create arbitrary wrap points between adjacent numeric percentage runs', () => {
@@ -1593,6 +1618,43 @@ describe('TextRenderer — renderTextBody', () => {
       expect(span.textContent).toBe('Gradient text');
       expect(span.style.background).toContain('linear-gradient');
       expect(span.style.color).toBe('transparent');
+      expect(span.style.webkitBackgroundClip).toBe('text');
+    });
+
+    it('keeps compact numeric gradient runs unsplit so background-clip still paints text', () => {
+      const body = makeTextBody({
+        paragraphs: [
+          {
+            runs: [
+              {
+                text: '80% ',
+                properties: xmlNode(`
+                  <rPr>
+                    <gradFill>
+                      <gsLst>
+                        <gs pos="0"><srgbClr val="FFFFFF"/></gs>
+                        <gs pos="100000"><srgbClr val="0070C0"/></gs>
+                      </gsLst>
+                      <lin ang="2700000"/>
+                    </gradFill>
+                  </rPr>
+                `),
+              },
+            ],
+            level: 0,
+          },
+        ],
+      });
+
+      const container = renderToContainer(body);
+      const span = container.querySelector('div > span') as HTMLElement & {
+        style: CSSStyleDeclaration & { webkitBackgroundClip?: string };
+      };
+
+      expect(span.textContent).toBe('80% ');
+      expect(span.querySelector('span')).toBeNull();
+      expect(span.style.whiteSpace).toBe('nowrap');
+      expect(span.style.background).toContain('linear-gradient');
       expect(span.style.webkitBackgroundClip).toBe('text');
     });
 

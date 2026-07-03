@@ -1,6 +1,6 @@
 ---
 name: pptx-render-review
-description: Use when reviewing PPTX renderer visual fidelity, triaging failed or needs-review oracle cases, inspecting PDF/PNG versus HTML screenshots, or saving manual support verdicts in this repository.
+description: Use when reviewing PPTX renderer visual fidelity, triaging failed or needs-review oracle cases, inspecting PDF/PNG versus HTML screenshots, checking renderer bugfix side effects, planning regression coverage, or saving manual support verdicts in this repository.
 ---
 
 # PPTX Render Review
@@ -65,7 +65,15 @@ If servers already run, reuse them.
 | Text/table     | pypptx text, table alignment, composite cases             |
 | SmartArt       | layout family, generated PNG ground truth, edge-heavy     |
 
-4. Prioritize:
+4. For renderer fixes, build a small interaction matrix before changing code or declaring the
+   fix complete. Include the user-visible positive case, the inverse/opt-out case, and the parent
+   container or browser behavior that could expose a side effect. For text layout changes, inspect
+   `a:bodyPr` and cover relevant combinations of `wrap`, `horzOverflow`, `vertOverflow`,
+   `spAutoFit`, `normAutofit`, `noAutofit`, insets, vertical text, bullets, multi-paragraph text,
+   and adjacent runs. A leaf `TextRenderer` test is insufficient when the visible behavior depends
+   on the `ShapeRenderer` text container.
+
+5. Prioritize:
 
 | Priority | Meaning                                      |
 | -------- | -------------------------------------------- |
@@ -74,11 +82,11 @@ If servers already run, reuse them.
 | P2       | `passed=true`, `needs_review=true`           |
 | P3       | representative supported sample for baseline |
 
-5. Inspect selected cases in side-by-side view first. Use diff-first to locate suspicious regions, then confirm in ground-truth/rendered side-by-side before making a verdict. Prefer PNG ground truth; use PDF only when PNG is unavailable or requested.
+6. Inspect selected cases in side-by-side view first. Use diff-first to locate suspicious regions, then confirm in ground-truth/rendered side-by-side before making a verdict. Prefer PNG ground truth; use PDF only when PNG is unavailable or requested.
 
 Default to decision metrics first: auto gate (`PASS`, `REVIEW`, `FAIL`), SSIM, color correlation, and `needs_review`. Open Diagnostics only when locating a mismatch or explaining why a case needs review; diagnostic metrics include foreground IoU, chamfer, MAE, text coverage, word counts, and shape count.
 
-6. Save verdicts only after per-slide visual inspection:
+7. Save verdicts only after per-slide visual inspection:
 
 ```bash
 curl -sS -X POST http://127.0.0.1:8080/api/manual-review \
@@ -95,6 +103,8 @@ Use `supported`, `unsupported`, or `unsure`. Notes name visible mismatch, not gu
 - `needs_review=true` without expanding from diff into side-by-side inspection.
 - Old `generated_at` or wrong corpus/source.
 - Notes guess code cause instead of visible mismatch.
+- Text/layout fixes tested only at the run/span layer without the shape text container.
+- Missing inverse coverage for explicit opt-outs such as `horzOverflow="overflow"`.
 
 ## Reporting Back
 

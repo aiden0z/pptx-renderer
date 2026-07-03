@@ -2649,6 +2649,7 @@ export function renderShape(node: ShapeNodeData, ctx: RenderContext): HTMLElemen
       // Apply it as a CSS transform to shrink text so it fits the shape.
       let needsDynamicAutofit = false;
       if (hasNormAutofit && normAutofit) {
+        textContainer.style.overflowX = 'hidden';
         textContainer.style.overflowY = 'hidden';
         const lnSpcReduction = normAutofit.numAttr('lnSpcReduction') ?? 0;
         // renderTextBody applies normAutofit@fontScale to run and paragraph font sizes.
@@ -2663,6 +2664,9 @@ export function renderShape(node: ShapeNodeData, ctx: RenderContext): HTMLElemen
       // resize the absolutely positioned shape like PowerPoint editor behavior,
       // so use bounded dynamic scaling to prevent bleed across neighboring nodes.
       if (hasSpAutoFit && !hasNormAutofit) {
+        if (!spAutoFitAllowsHorizontalOverflow) {
+          textContainer.style.overflowX = 'hidden';
+        }
         if (!spAutoFitAllowsVerticalOverflow) {
           textContainer.style.overflowY = 'hidden';
         }
@@ -2673,6 +2677,7 @@ export function renderShape(node: ShapeNodeData, ctx: RenderContext): HTMLElemen
       // single-line shape labels within the shape bounds instead of wrapping them
       // into neighboring content. Measure and apply the same bounded shrink.
       if (usesImplicitSingleLineFit) {
+        textContainer.style.overflowX = 'hidden';
         textContainer.style.overflowY = 'hidden';
         needsDynamicAutofit = true;
       }

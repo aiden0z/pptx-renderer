@@ -20,13 +20,24 @@ import { resolveSlideNavigationIndex, slideJumpTitle } from './navigation';
 // Style Inheritance Helpers
 // ---------------------------------------------------------------------------
 
-function isCompactNumericToken(text: string | undefined): boolean {
-  if (!text) return false;
+function compactNumericTokenText(text: string | undefined): string | undefined {
+  if (!text) return undefined;
   const token = text.trim();
-  if (token.length === 0 || token.length > 32) return false;
+  if (token.length === 0 || token.length > 32) return undefined;
   return /^[+-]?(?:\d+(?:[.,]\d+)?|\d{1,3}(?:,\d{3})+(?:\.\d+)?)\s*(?:%|[A-Za-z]{1,4})?$/.test(
     token,
-  );
+  )
+    ? token
+    : undefined;
+}
+
+function isCompactNumericToken(text: string | undefined): boolean {
+  return compactNumericTokenText(text) !== undefined;
+}
+
+function appendWhitespacePreservingText(parent: HTMLElement, text: string): void {
+  if (!text) return;
+  parent.appendChild(document.createTextNode(text.replace(/ {2}/g, ' \u00a0')));
 }
 
 function findCompactNumericRunGroups(runs: TextRun[]): Map<number, number> {
@@ -1178,9 +1189,31 @@ export function renderTextBody(
       // Preserve consecutive spaces by alternating with &nbsp; so they survive
       // HTML whitespace collapse without being stretched by text-align:justify.
       // Tabs still need white-space:pre for tab-stop rendering.
+      const compactNumericToken = compactNumericTokenText(run.text);
+      const usesElementLevelTextPaint =
+        !!runStyle.textGradientCss ||
+        !!runStyle.textPatternCss ||
+        !!runStyle.textNoFill ||
+        runStyle.textOutlineWidth !== undefined ||
+        !!runStyle.textOutlineColor ||
+        !!runStyle.textOutlineGradientCss;
+      const shouldSplitCompactNumericToken =
+        !!run.text &&
+        !!compactNumericToken &&
+        run.text !== compactNumericToken &&
+        !usesElementLevelTextPaint;
       if (run.text && run.text.includes('\t')) {
         element.textContent = run.text;
         element.style.whiteSpace = 'pre';
+      } else if (shouldSplitCompactNumericToken) {
+        const tokenStart = run.text.indexOf(compactNumericToken);
+        const tokenEnd = tokenStart + compactNumericToken.length;
+        appendWhitespacePreservingText(element, run.text.slice(0, tokenStart));
+        const tokenSpan = document.createElement('span');
+        tokenSpan.textContent = compactNumericToken;
+        tokenSpan.style.whiteSpace = 'nowrap';
+        element.appendChild(tokenSpan);
+        appendWhitespacePreservingText(element, run.text.slice(tokenEnd));
       } else if (run.text && / {2}/.test(run.text)) {
         // Replace pairs of spaces with " &nbsp;" so browsers cannot collapse them,
         // while normal spaces between words remain stretchable for justify.
@@ -1193,7 +1226,11 @@ export function renderTextBody(
       } else {
         element.textContent = run.text;
       }
-      if (isCompactNumericToken(run.text)) {
+      if (
+        compactNumericToken &&
+        (run.text === compactNumericToken ||
+          (!!run.text && run.text !== compactNumericToken && usesElementLevelTextPaint))
+      ) {
         // Office keeps compact number/unit tokens together, e.g. "80%" or "15 %".
         element.style.whiteSpace = 'nowrap';
       }
