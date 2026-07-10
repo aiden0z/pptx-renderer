@@ -11,6 +11,7 @@
 - [Contributing](CONTRIBUTING.md) — PR checklist, code style, test requirements
 - [Security](SECURITY.md) — ZIP parse limits, URL filtering, vulnerability reporting
 - [Releasing](RELEASING.md) — Release checklist and versioning
+- [v1.2.4 Release Notes](releases/v1.2.4.md) — Browser distribution, optional runtime lifecycle, parser hardening, and compact text overflow fixes
 - [v1.2.3 Release Notes](releases/v1.2.3.md) — Connector marker and compact numeric text wrapping fixes
 - [v1.2.2 Release Notes](releases/v1.2.2.md) — Chart, gradient, picture effect, table, text, shape, and SmartArt fidelity fixes
 - [v1.2.1 Release Notes](releases/v1.2.1.md) — Flipped grouped content and compact chart fixes

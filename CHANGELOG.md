@@ -7,6 +7,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [1.2.4] - 2026-07-10
+
 ### Added
 
 - Added a standalone `./browser` ESM entry and real Chromium package tests covering PPTX
@@ -22,6 +24,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Fixed
 
+- Fixed compact no-wrap text runs creating horizontal scrollbars when their rendered
+  width exceeded narrow PowerPoint text boxes.
 - Fixed isolated PDF.js cleanup on loading failure and guaranteed Worker termination on
   success, error, timeout, or cancellation.
 - Fixed late EMF-PDF results mutating disposed slide DOM or repopulating shared blob URL
@@ -32,7 +36,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ### Migration Notes
 
 - No API migration is required. Applications with a restrictive CSP that enable
-  EMF-PDF fallback must allow the configured PDF.js origin and `blob:` Workers.
+  EMF-PDF fallback must allow the configured PDF.js module source and `blob:` Workers.
 
 ## [1.2.3] - 2026-07-01
 
