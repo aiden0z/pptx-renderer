@@ -139,6 +139,26 @@ describe('renderSlide standalone chart lifecycle', () => {
     expect(mockChartInstance.dispose).toHaveBeenCalled();
   });
 
+  it('preserves the default chart animation behavior', () => {
+    const pres = makePresentation();
+    const slide = pres.slides[0];
+    slide.nodes = [makeChartNode()];
+    const handle = renderSlide(pres, slide);
+    const chartWrapper = handle.element.firstElementChild as HTMLElement;
+    const chartDiv = chartWrapper.firstElementChild as HTMLElement;
+    mockChartInstance.getDom.mockReturnValue(chartDiv);
+    Object.defineProperty(chartDiv, 'offsetWidth', { value: 400, configurable: true });
+    Object.defineProperty(chartDiv, 'offsetHeight', { value: 300, configurable: true });
+    document.body.appendChild(handle.element);
+    for (const callback of rafCallbacks.splice(0)) callback();
+
+    const option = mockChartInstance.setOption.mock.lastCall?.[0] as
+      | { animation?: boolean }
+      | undefined;
+    expect(option?.animation).toBeUndefined();
+    handle.dispose();
+  });
+
   it('keeps SlideHandle.ready pending until chart RAF initialization runs', async () => {
     const pres = makePresentation();
     const slide = pres.slides[0];

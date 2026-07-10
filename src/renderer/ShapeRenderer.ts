@@ -2501,11 +2501,15 @@ export function renderShape(node: ShapeNodeData, ctx: RenderContext): HTMLElemen
       // resize the absolutely positioned shape like PowerPoint editor behavior,
       // so use bounded dynamic scaling to prevent bleed across neighboring nodes.
       if (hasSpAutoFit && !hasNormAutofit) {
-        if (!spAutoFitAllowsHorizontalOverflow) {
-          textContainer.style.overflowX = 'hidden';
-        }
-        if (!spAutoFitAllowsVerticalOverflow) {
-          textContainer.style.overflowY = 'hidden';
+        if (spAutoFitAllowsHorizontalOverflow === spAutoFitAllowsVerticalOverflow) {
+          const overflow = spAutoFitAllowsHorizontalOverflow ? 'visible' : 'hidden';
+          textContainer.style.overflowX = overflow;
+          textContainer.style.overflowY = overflow;
+        } else {
+          // CSS computes visible/hidden to auto/hidden (and the inverse), which creates
+          // a scroll container. `clip` bounds one axis without changing the visible axis.
+          textContainer.style.overflowX = spAutoFitAllowsHorizontalOverflow ? 'visible' : 'clip';
+          textContainer.style.overflowY = spAutoFitAllowsVerticalOverflow ? 'visible' : 'clip';
         }
         needsDynamicAutofit =
           !spAutoFitAllowsHorizontalOverflow || !spAutoFitAllowsVerticalOverflow;

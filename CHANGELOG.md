@@ -12,12 +12,13 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ### Added
 
 - Added a standalone `./browser` ESM entry and real Chromium package tests covering PPTX
-  rendering, all supported ECharts series, and PDF.js 5/6 Worker compatibility.
+  rendering, all supported ECharts series, text overflow combinations, and PDF.js 5/6
+  Worker compatibility.
 
 ### Changed
 
 - ECharts now uses modular `echarts/core` registration, reducing the standalone browser
-  bundle while preserving the renderer's chart support matrix.
+  bundle while preserving the renderer's chart support matrix and existing behavior.
 - Production builds now use a cross-platform Node build script.
 - PDF.js remains optional and external; no-bundler integrations should use pinned module
   and worker URLs and allow blob Workers in their CSP.
@@ -26,6 +27,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 - Fixed compact no-wrap text runs creating horizontal scrollbars when their rendered
   width exceeded narrow PowerPoint text boxes.
+- Fixed mixed horizontal/vertical overflow settings being converted by browsers into an
+  unintended scroll container.
 - Fixed isolated PDF.js cleanup on loading failure and guaranteed Worker termination on
   success, error, timeout, or cancellation.
 - Fixed late EMF-PDF results mutating disposed slide DOM or repopulating shared blob URL

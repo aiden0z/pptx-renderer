@@ -1448,12 +1448,13 @@ describe('ShapeRenderer', () => {
 
     const el = renderShape(parseShapeNode(parseXml(xml)), createMockRenderContext());
     const textContainer = Array.from(el.querySelectorAll('div')).find(
-      (div) => div.textContent?.includes('Overflow allowed') && div.style.flexDirection === 'column',
+      (div) =>
+        div.textContent?.includes('Overflow allowed') && div.style.flexDirection === 'column',
     ) as HTMLElement | undefined;
 
     expect(textContainer).toBeDefined();
     expect(textContainer!.style.overflowX).toBe('visible');
-    expect(textContainer!.style.overflowY).toBe('hidden');
+    expect(textContainer!.style.overflowY).toBe('clip');
   });
 
   it('auto-shrinks single-line shape text when bodyPr omits an autofit mode (ai-computing slide 12)', () => {

@@ -2394,10 +2394,6 @@ export function parseChartXml(
       }
     }
 
-    // PPTX slides are static unless OOXML animations are explicitly implemented.
-    // Disabling ECharts transitions keeps first paint, screenshots, and exports deterministic.
-    option.animation = false;
-
     const dataTableSeries =
       index === 0 && chartTypeEntries.length > 1 && isCartesianComboCapable(entry.typeName)
         ? chartTypeEntries

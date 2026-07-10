@@ -24,9 +24,10 @@ pnpm test:browser
 ```
 
 These tests load the built standalone browser artifact with a tracked PPTX, initialize
-every renderer-supported ECharts series through the modular runtime, and execute the
-actual outer-Worker plus PDF.js-worker path. CI runs the PDF test against both supported
-PDF.js major lines; Node-only imports are not accepted as browser compatibility evidence.
+every renderer-supported ECharts series through the modular runtime, verify computed
+overflow behavior for all text-axis combinations, and execute the actual outer-Worker
+plus PDF.js-worker path. CI runs the PDF test against both supported PDF.js major lines;
+Node-only imports are not accepted as browser compatibility evidence.
 
 Coverage areas:
 

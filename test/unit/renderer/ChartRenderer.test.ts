@@ -241,10 +241,10 @@ function parseChartOption(xml: string, ctx?: RenderContext): ParseChartResult {
 // ---------------------------------------------------------------------------
 
 describe('ChartRenderer', () => {
-  it('disables ECharts animation for deterministic static slide rendering', () => {
+  it('preserves the ECharts default animation behavior', () => {
     const { option } = parseChartOption(buildChartSpaceXml({}));
 
-    expect(option.animation).toBe(false);
+    expect(option.animation).toBeUndefined();
   });
 
   describe('chart data safety', () => {
