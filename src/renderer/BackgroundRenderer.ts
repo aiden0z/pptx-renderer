@@ -16,6 +16,7 @@ import { hexToRgb } from '../utils/color';
 import { isExternalTargetMode, RelEntry } from '../parser/RelParser';
 import { findMediaByTarget, findMediaByTargetAsync, getOrCreateBlobUrl } from '../utils/media';
 import { isAllowedExternalMediaUrl } from '../utils/urlSafety';
+import { splitTiledPatternFillCss } from './cssValues';
 
 let backgroundGradientIdCounter = 0;
 
@@ -33,13 +34,12 @@ function compositeOnWhite(r: number, g: number, b: number, a: number): string {
 
 function applyBackgroundFillCss(container: HTMLElement, fillCss: string): void {
   if (fillCss.includes('gradient') && fillCss.includes(' 0 0 / ')) {
-    const bgMatch = fillCss.match(/,\s*(#[0-9a-fA-F]{3,8}|rgba?\([^)]+\)|[a-zA-Z]+)\s*$/);
-    if (bgMatch && bgMatch.index !== undefined) {
-      const imageLayers = fillCss.slice(0, bgMatch.index).replace(/\s+0 0\s*\/\s*8px 8px/g, '');
-      container.style.backgroundImage = imageLayers;
+    const tiled = splitTiledPatternFillCss(fillCss);
+    if (tiled) {
+      container.style.backgroundImage = tiled.imageLayers;
       container.style.backgroundSize = '8px 8px';
       container.style.backgroundRepeat = 'repeat';
-      container.style.backgroundColor = bgMatch[1];
+      container.style.backgroundColor = tiled.color;
       return;
     }
   }

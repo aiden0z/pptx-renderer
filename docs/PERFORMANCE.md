@@ -140,6 +140,25 @@ These guards are applied by the renderer even when ZIP byte limits are configure
 - Chart cache point indexes are capped at `10,000` per cache. Oversized `c:ptCount` values do not drive array allocation.
 - EMF bitmap previews are rejected above `16,777,216` decoded pixels, above `8192x8192` dimensions, or when the declared bitmap payload is truncated.
 - External audio/video media is not preloaded automatically; rendered media elements use `preload="none"`.
+- EMF-PDF fallback Workers are short-lived and have a 15-second deadline. Disposing the
+  slide cancels the work immediately. At most four PDF fallback Workers run concurrently;
+  callers should dispose off-screen slide and thumbnail handles so queued work is removed.
+
+## Browser Bundle and Charts
+
+The standalone `./browser` entry uses ECharts' tree-shakeable core API and bundles only
+the chart types/components used by the renderer. The regular package entry keeps
+`echarts/*` external so the host bundler can deduplicate it. Do not replace the central
+runtime registration with `import * as echarts from 'echarts'`; that restores the full
+ECharts bundle and bypasses the standalone size budget.
+
+Chart animation is disabled because the renderer produces static slide content and does
+not implement OOXML animation timelines. This makes first paint and screenshot/export
+timing deterministic while avoiding transition work that cannot match PowerPoint.
+
+Chart registrations and the standalone package are exercised in Chromium by
+`pnpm test:browser`. Run it together with `pnpm size` after changing chart imports,
+package side-effect metadata, or Vite configuration.
 
 ## Recommended Presets
 

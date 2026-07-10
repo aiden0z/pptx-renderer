@@ -1,13 +1,13 @@
 /**
  * Tests for ECharts instance lifecycle management (registration/disposal).
- * Separate file because vi.mock('echarts') must be hoisted and would affect other tests.
+ * Separate file because the runtime mock must be hoisted and would affect other tests.
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import * as echarts from 'echarts';
-import type { ECharts } from 'echarts';
+import { echarts } from '../../../src/renderer/chart/echartsRuntime';
+import type { EChartsType } from 'echarts/core';
 
-// Mock echarts before importing modules that use it
+// Mock the registered runtime before importing modules that use it.
 const mockChartInstance = {
   setOption: vi.fn(),
   resize: vi.fn(),
@@ -16,8 +16,8 @@ const mockChartInstance = {
   getDom: vi.fn(() => document.createElement('div')),
 };
 
-vi.mock('echarts', () => ({
-  init: vi.fn(() => mockChartInstance),
+vi.mock('../../../src/renderer/chart/echartsRuntime', () => ({
+  echarts: { init: vi.fn(() => mockChartInstance) },
 }));
 
 import { renderChart } from '../../../src/renderer/ChartRenderer';
@@ -205,7 +205,7 @@ describe('ChartRenderer chartInstances lifecycle', () => {
   });
 
   it('registers ECharts instance into chartInstances set', () => {
-    const chartInstances = new Set<ECharts>();
+    const chartInstances = new Set<EChartsType>();
     const ctx = createMockRenderContext({ chartInstances });
     ctx.presentation.charts = new Map([['ppt/charts/chart1.xml', parseXml(buildSimpleChartXml())]]);
 
@@ -226,7 +226,7 @@ describe('ChartRenderer chartInstances lifecycle', () => {
 
   it('initializes chart when ResizeObserver is unavailable', () => {
     const originalResizeObserver = window.ResizeObserver;
-    const chartInstances = new Set<ECharts>();
+    const chartInstances = new Set<EChartsType>();
     const ctx = createMockRenderContext({ chartInstances });
     ctx.presentation.charts = new Map([['ppt/charts/chart1.xml', parseXml(buildSimpleChartXml())]]);
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
@@ -261,7 +261,7 @@ describe('ChartRenderer chartInstances lifecycle', () => {
 
   it('does not initialize deferred chart after the container is removed', () => {
     const originalResizeObserver = window.ResizeObserver;
-    const chartInstances = new Set<ECharts>();
+    const chartInstances = new Set<EChartsType>();
     const ctx = createMockRenderContext({ chartInstances });
     ctx.presentation.charts = new Map([['ppt/charts/chart1.xml', parseXml(buildSimpleChartXml())]]);
     let roCallback: ResizeObserverCallback | undefined;
@@ -303,7 +303,7 @@ describe('ChartRenderer chartInstances lifecycle', () => {
   });
 
   it('registered instances can be disposed via set iteration (disposeAllCharts pattern)', () => {
-    const chartInstances = new Set<ECharts>();
+    const chartInstances = new Set<EChartsType>();
     const ctx = createMockRenderContext({ chartInstances });
     ctx.presentation.charts = new Map([['ppt/charts/chart1.xml', parseXml(buildSimpleChartXml())]]);
 
@@ -350,7 +350,7 @@ describe('ChartRenderer chartInstances lifecycle', () => {
 
   it('resizes while connected and disposes observer-owned charts after container removal', () => {
     const originalResizeObserver = window.ResizeObserver;
-    const chartInstances = new Set<ECharts>();
+    const chartInstances = new Set<EChartsType>();
     const ctx = createMockRenderContext({ chartInstances });
     ctx.presentation.charts = new Map([['ppt/charts/chart1.xml', parseXml(buildSimpleChartXml())]]);
     const disconnectSpy = vi.fn();

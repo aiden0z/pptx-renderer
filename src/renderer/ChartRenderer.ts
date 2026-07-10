@@ -2,7 +2,8 @@
  * Chart renderer — converts OOXML chart XML into ECharts visualizations.
  */
 
-import * as echarts from 'echarts';
+import type * as EChartsTypes from 'echarts';
+import type { EChartsType } from 'echarts/core';
 import { ChartNodeData } from '../model/nodes/ChartNode';
 import { RenderContext } from './RenderContext';
 import { SafeXmlNode } from '../parser/XmlParser';
@@ -27,6 +28,7 @@ import {
   getVaryColorPointPalette,
 } from './chart/palette';
 import { numToPct } from './chart/layout';
+import { echarts } from './chart/echartsRuntime';
 import {
   buildLegendOption,
   extractLegendInfo,
@@ -109,7 +111,7 @@ function buildChartTitleOption(
   seriesArr: SeriesData[],
   ctx: RenderContext,
   fontSize: number,
-): echarts.EChartsOption['title'] | undefined {
+): EChartsTypes.EChartsOption['title'] | undefined {
   const title = extractChartTitle(chartNode, seriesArr);
   if (!title) return undefined;
 
@@ -561,7 +563,7 @@ function buildPieLabelOption(
 
 function buildPieLabelLayout(
   layouts: Map<number, DataLabelManualLayout>,
-): echarts.PieSeriesOption['labelLayout'] {
+): EChartsTypes.PieSeriesOption['labelLayout'] {
   if (layouts.size === 0) return undefined;
   const labelLayout = (params: {
     dataIndex?: number;
@@ -582,7 +584,7 @@ function buildPieLabelLayout(
     }
     return out;
   };
-  return labelLayout as echarts.PieSeriesOption['labelLayout'];
+  return labelLayout as EChartsTypes.PieSeriesOption['labelLayout'];
 }
 
 function uniquePieLegendCategories(seriesArr: SeriesData[]): string[] {
@@ -619,7 +621,7 @@ function buildBarChartOption(
   chartNode: SafeXmlNode,
   seriesArr: SeriesData[],
   ctx: RenderContext,
-): echarts.EChartsOption {
+): EChartsTypes.EChartsOption {
   const barDir = chartTypeNode.child('barDir').attr('val') || chartTypeNode.attr('barDir') || 'col';
   const grouping = chartGrouping(chartTypeNode);
   const isHorizontal = barDir === 'bar';
@@ -666,7 +668,7 @@ function buildBarChartOption(
     .sort((a, b) => a.order - b.order)
     .map((x) => x.ser);
 
-  const series: echarts.BarSeriesOption[] = seriesArr.map((s, idx) => {
+  const series: EChartsTypes.BarSeriesOption[] = seriesArr.map((s, idx) => {
     // Capture formatCode for use in label formatter closure
     const fc = s.formatCode;
     const perSeriesLabels =
@@ -674,7 +676,7 @@ function buildBarChartOption(
 
     const buildLabel = (
       cfg: DataLabelConfig | Partial<DataLabelConfig> | undefined,
-    ): echarts.BarSeriesOption['label'] => {
+    ): EChartsTypes.BarSeriesOption['label'] => {
       if (!cfg?.showVal) return undefined;
       const label = {
         show: true,
@@ -697,11 +699,11 @@ function buildBarChartOption(
     };
 
     // Per-series label config (override shared)
-    const label: echarts.BarSeriesOption['label'] = buildLabel(perSeriesLabels);
+    const label: EChartsTypes.BarSeriesOption['label'] = buildLabel(perSeriesLabels);
     const dLblsNode = getDataLabelsNode(serNodesByOrder[idx], chartTypeNode);
     const pointOverrides = parsePointDataLabelOverrides(dLblsNode, ctx);
     const seriesValues = percentStackedValues?.[idx] ?? s.values;
-    const data: echarts.BarSeriesOption['data'] = seriesValues.map((v, pointIdx) => {
+    const data: EChartsTypes.BarSeriesOption['data'] = seriesValues.map((v, pointIdx) => {
       const ov = pointOverrides.get(pointIdx);
       const rawValue = s.values[pointIdx] ?? v;
       const displayValue = resolveBlankDisplayValue(s, pointIdx, v, dispBlanksAs);
@@ -720,7 +722,7 @@ function buildBarChartOption(
         itemStyle = { color: pointPalette[pointIdx % pointPalette.length] };
       }
 
-      let pointLabel: echarts.BarSeriesOption['label'];
+      let pointLabel: EChartsTypes.BarSeriesOption['label'];
       if (ov?.deleted) {
         pointLabel = { show: false };
       } else if (ov) {
@@ -854,7 +856,7 @@ function buildBarChartOption(
     xAxis: isHorizontal ? valueAxisDef : categoryAxisDef,
     yAxis: isHorizontal ? categoryAxisDef : valueAxisDef,
     series,
-  } as echarts.EChartsOption;
+  } as EChartsTypes.EChartsOption;
 }
 
 function buildLineChartOption(
@@ -864,7 +866,7 @@ function buildLineChartOption(
   ctx: RenderContext,
   isArea: boolean,
   chartPalette?: string[],
-): echarts.EChartsOption {
+): EChartsTypes.EChartsOption {
   const categories = seriesArr.find((s) => s.categories.length > 0)?.categories || [];
   const titleOption = buildChartTitleOption(chartNode, seriesArr, ctx, 14);
   const legendInfo = extractLegendInfo(chartNode, ctx);
@@ -896,7 +898,7 @@ function buildLineChartOption(
     return typeof color === 'string' ? color : undefined;
   };
 
-  const series: echarts.LineSeriesOption[] = seriesArr.map((s, idx) => {
+  const series: EChartsTypes.LineSeriesOption[] = seriesArr.map((s, idx) => {
     const color = seriesColor(s, idx);
     const markerSymbol =
       s.markerSymbol ??
@@ -920,7 +922,7 @@ function buildLineChartOption(
       parseDataLabels(serNodesByOrder[idx] ?? chartTypeNode, ctx) ?? sharedLabels;
     const buildLineLabel = (
       cfg: DataLabelConfig | Partial<DataLabelConfig> | undefined,
-    ): echarts.LineSeriesOption['label'] => {
+    ): EChartsTypes.LineSeriesOption['label'] => {
       if (!cfg || !dataLabelShowsContent(cfg as DataLabelConfig)) return undefined;
       const labelCfg = cfg as DataLabelConfig;
       const lineLabel = {
@@ -955,13 +957,13 @@ function buildLineChartOption(
     const pointOverrides = parsePointDataLabelOverrides(dLblsNode, ctx);
     const manualLayouts = new Map<number, DataLabelManualLayout>();
     const seriesValues = percentStackedValues?.[idx] ?? s.values;
-    const data: echarts.LineSeriesOption['data'] = seriesValues.map((v, pointIdx) => {
+    const data: EChartsTypes.LineSeriesOption['data'] = seriesValues.map((v, pointIdx) => {
       const displayValue = resolveBlankDisplayValue(s, pointIdx, v, dispBlanksAs);
       const ov = pointOverrides.get(pointIdx);
       if (!ov) return displayValue;
       if (ov.manualLayout) manualLayouts.set(pointIdx, ov.manualLayout);
       const pointLabel = ov.deleted
-        ? ({ show: false } as echarts.LineSeriesOption['label'])
+        ? ({ show: false } as EChartsTypes.LineSeriesOption['label'])
         : buildLineLabel(mergeDataLabelConfig(perSeriesLabels, ov));
       if (!pointLabel) return displayValue;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -995,7 +997,9 @@ function buildLineChartOption(
       itemStyle: color ? { color } : undefined,
       lineStyle,
       label,
-      labelLayout: buildPieLabelLayout(manualLayouts) as echarts.LineSeriesOption['labelLayout'],
+      labelLayout: buildPieLabelLayout(
+        manualLayouts,
+      ) as EChartsTypes.LineSeriesOption['labelLayout'],
       connectNulls: dispBlanksAs === 'span',
       ...(s.smooth ? { smooth: true } : {}),
       ...(s.formatCode
@@ -1118,7 +1122,7 @@ function buildPieChartOption(
   seriesArr: SeriesData[],
   isDoughnut: boolean,
   ctx: RenderContext,
-): echarts.EChartsOption {
+): EChartsTypes.EChartsOption {
   const titleOption = buildChartTitleOption(chartNode, seriesArr, ctx, 12);
   const legendInfo = extractLegendInfo(chartNode, ctx);
   const legendOpt = legendInfo?.option;
@@ -1173,7 +1177,7 @@ function buildPieChartOption(
   const pieLayout = computePieLayout(legendInfo, isDoughnut, showLabel, holeSizePct, hasExplosion);
   const startAngle = mapFirstSliceAngle(chartTypeNode.child('firstSliceAng').numAttr('val'));
 
-  const series: echarts.PieSeriesOption[] = seriesLabelMeta.map((meta, idx) => {
+  const series: EChartsTypes.PieSeriesOption[] = seriesLabelMeta.map((meta, idx) => {
     const manualLayouts = new Map<number, DataLabelManualLayout>();
     const pieData = meta.series.categories.map((cat, i) => {
       const override = meta.pointOverrides.get(i);
@@ -1264,7 +1268,7 @@ function buildRadarChartOption(
   ctx: RenderContext,
   chartPalette?: string[],
   chartSize?: ChartPixelSize,
-): echarts.EChartsOption {
+): EChartsTypes.EChartsOption {
   const titleOption = buildChartTitleOption(chartNode, seriesArr, ctx, 12);
   const legendInfo = extractLegendInfo(chartNode, ctx);
   const legendOpt = legendInfo?.option;
@@ -1454,7 +1458,7 @@ function buildScatterChartOption(
   chartNode: SafeXmlNode,
   seriesArr: SeriesData[],
   ctx: RenderContext,
-): echarts.EChartsOption {
+): EChartsTypes.EChartsOption {
   const titleOption = buildChartTitleOption(chartNode, seriesArr, ctx, 14);
   const legendInfo = extractLegendInfo(chartNode, ctx);
   const legendOpt = legendInfo?.option;
@@ -1613,7 +1617,7 @@ function buildBubbleChartOption(
   chartNode: SafeXmlNode,
   seriesArr: SeriesData[],
   ctx: RenderContext,
-): echarts.EChartsOption {
+): EChartsTypes.EChartsOption {
   const titleOption = buildChartTitleOption(chartNode, seriesArr, ctx, 14);
   const legendInfo = extractLegendInfo(chartNode, ctx);
   const legendOpt = legendInfo?.option;
@@ -1633,7 +1637,7 @@ function buildBubbleChartOption(
   }
   const safeMaxBubbleSize = maxSize > 0 ? maxSize : 1;
 
-  const series: echarts.ScatterSeriesOption[] = seriesArr.map((s) => {
+  const series: EChartsTypes.ScatterSeriesOption[] = seriesArr.map((s) => {
     const data = s.values.map((v, i) => {
       const x = s.xValues && i < s.xValues.length ? s.xValues[i] : i;
       const bub = s.bubbleSizes && i < s.bubbleSizes.length ? s.bubbleSizes[i] : 0;
@@ -1745,7 +1749,7 @@ function buildStockChartOption(
   chartNode: SafeXmlNode,
   seriesArr: SeriesData[],
   ctx: RenderContext,
-): echarts.EChartsOption {
+): EChartsTypes.EChartsOption {
   const titleOption = buildChartTitleOption(chartNode, seriesArr, ctx, 14);
   const legendInfo = extractLegendInfo(chartNode, ctx);
 
@@ -1847,7 +1851,7 @@ function buildStockChartOption(
       }))
     : seriesArr.map((s) => s.name);
 
-  const series: echarts.SeriesOption[] = isHlc
+  const series: EChartsTypes.SeriesOption[] = isHlc
     ? [
         {
           type: 'custom',
@@ -1908,7 +1912,7 @@ function buildStockChartOption(
             };
           },
           silent: true,
-        } as echarts.SeriesOption,
+        } as EChartsTypes.SeriesOption,
       ]
     : [
         {
@@ -2036,7 +2040,7 @@ function buildPlotAreaBackgroundGraphic(
 }
 
 function prependGraphicOption(
-  option: echarts.EChartsOption,
+  option: EChartsTypes.EChartsOption,
   graphic: Record<string, unknown>,
 ): void {
   const current = option.graphic;
@@ -2050,7 +2054,7 @@ function prependGraphicOption(
 
 /** Result of parsing chart XML: option for ECharts, optional data table info. */
 export interface ParseChartResult {
-  option: echarts.EChartsOption;
+  option: EChartsTypes.EChartsOption;
   dataTable?: DataTableInfo;
   chartFrameStyle?: ChartFrameStyle;
 }
@@ -2063,7 +2067,7 @@ function buildOptionForChartType(
   ctx: RenderContext,
   chartPalette?: string[],
   chartSize?: ChartPixelSize,
-): echarts.EChartsOption | undefined {
+): EChartsTypes.EChartsOption | undefined {
   switch (typeName) {
     case 'barChart':
     case 'bar3DChart':
@@ -2114,9 +2118,9 @@ function isCartesianComboCapable(typeName: OoxmlChartType): boolean {
 }
 
 function mergeLegendData(
-  primaryLegend: echarts.EChartsOption['legend'],
-  secondaryLegend: echarts.EChartsOption['legend'],
-): echarts.EChartsOption['legend'] {
+  primaryLegend: EChartsTypes.EChartsOption['legend'],
+  secondaryLegend: EChartsTypes.EChartsOption['legend'],
+): EChartsTypes.EChartsOption['legend'] {
   const primary = getLegendOptionObject(primaryLegend);
   const secondary = getLegendOptionObject(secondaryLegend);
   if (!primary) return secondaryLegend;
@@ -2203,7 +2207,7 @@ function applyCategoryLabelZeroOffset(
 }
 
 export function applyZeroCrossingAxisLabelLayout(
-  option: echarts.EChartsOption,
+  option: EChartsTypes.EChartsOption,
   chartSize: { w: number; h: number },
 ): void {
   const grid = normalizeOptionArray<Record<string, unknown>>(
@@ -2237,11 +2241,11 @@ function getValueAxisId(chartTypeNode: SafeXmlNode): string | undefined {
 }
 
 function mergeCartesianComboOptions(
-  primary: echarts.EChartsOption,
-  secondary: echarts.EChartsOption,
+  primary: EChartsTypes.EChartsOption,
+  secondary: EChartsTypes.EChartsOption,
   primaryChartTypeNode: SafeXmlNode,
   secondaryChartTypeNode: SafeXmlNode,
-): echarts.EChartsOption {
+): EChartsTypes.EChartsOption {
   const primarySeries = Array.isArray(primary.series) ? primary.series : [];
   const secondarySeries = Array.isArray(secondary.series) ? secondary.series : [];
   const primaryValueAxisId = getValueAxisId(primaryChartTypeNode);
@@ -2389,6 +2393,10 @@ export function parseChartXml(
         if (graphic) prependGraphicOption(option, graphic);
       }
     }
+
+    // PPTX slides are static unless OOXML animations are explicitly implemented.
+    // Disabling ECharts transitions keeps first paint, screenshots, and exports deterministic.
+    option.animation = false;
 
     const dataTableSeries =
       index === 0 && chartTypeEntries.length > 1 && isCartesianComboCapable(entry.typeName)
@@ -2540,8 +2548,8 @@ export function renderChart(node: ChartNodeData, ctx: RenderContext): HTMLElemen
 /** Actually create ECharts instance, set option, and wire up resize + dispose. */
 function initChart(
   container: HTMLElement,
-  option: echarts.EChartsOption,
-  chartInstances?: Set<echarts.ECharts>,
+  option: EChartsTypes.EChartsOption,
+  chartInstances?: Set<EChartsType>,
 ): void {
   try {
     const chart = echarts.init(container);

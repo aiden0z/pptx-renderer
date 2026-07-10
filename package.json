@@ -1,6 +1,7 @@
 {
   "name": "@aiden0z/pptx-renderer",
   "version": "1.2.3",
+  "packageManager": "pnpm@9.15.9",
   "description": "Parse and render PPTX files in the browser with a TypeScript-first engine.",
   "license": "Apache-2.0",
   "homepage": "https://github.com/aiden0z/pptx-renderer#readme",
@@ -32,6 +33,11 @@
         "types": "./dist/types/index.d.cts",
         "default": "./dist/aiden0z-pptx-renderer.cjs"
       }
+    },
+    "./browser": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/aiden0z-pptx-renderer.browser.es.js",
+      "default": "./dist/aiden0z-pptx-renderer.browser.es.js"
     }
   },
   "files": [
@@ -40,7 +46,12 @@
     "CHANGELOG.md",
     "LICENSE"
   ],
-  "sideEffects": false,
+  "sideEffects": [
+    "./src/renderer/chart/echartsRuntime.ts",
+    "./dist/aiden0z-pptx-renderer.es.js",
+    "./dist/aiden0z-pptx-renderer.cjs",
+    "./dist/aiden0z-pptx-renderer.browser.es.js"
+  ],
   "publishConfig": {
     "access": "public"
   },
@@ -48,10 +59,13 @@
     "dev": "vite",
     "dev:api": "cd test/e2e && .venv/bin/python server.py",
     "dev:e2e": "bash ./scripts/dev-e2e.sh",
-    "build": "rm -rf dist && vite build && tsc --emitDeclarationOnly --declarationMap false --outDir dist/types && cp dist/types/index.d.ts dist/types/index.d.cts",
+    "build": "node scripts/build.mjs",
     "build:demo": "vite build --config vite.config.demo.ts",
     "preview": "vite preview",
     "test": "vitest run",
+    "test:package": "node scripts/verify-package.mjs",
+    "test:browser": "playwright test --config test/browser/playwright.config.ts",
+    "test:pdfjs-contract": "node scripts/verify-pdfjs-contract.mjs",
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest",
     "lint": "eslint src/",
@@ -70,6 +84,11 @@
       "path": "dist/aiden0z-pptx-renderer.es.js",
       "limit": "1400 kB",
       "gzip": true
+    },
+    {
+      "path": "dist/aiden0z-pptx-renderer.browser.es.js",
+      "limit": "500 kB",
+      "gzip": true
     }
   ],
   "lint-staged": {
@@ -86,7 +105,7 @@
     "jszip": "^3.10.1"
   },
   "peerDependencies": {
-    "pdfjs-dist": "^5.0.0"
+    "pdfjs-dist": ">=5 <7"
   },
   "peerDependenciesMeta": {
     "pdfjs-dist": {
@@ -97,6 +116,7 @@
     "@commitlint/cli": "^20.4.2",
     "@commitlint/config-conventional": "^20.4.2",
     "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.61.1",
     "@size-limit/file": "^12.0.0",
     "@vitest/coverage-v8": "^3.2.4",
     "canvas": "^3.2.1",
@@ -106,6 +126,7 @@
     "jsdom": "^26.0.0",
     "knip": "^5.85.0",
     "lint-staged": "^16.2.7",
+    "pdfjs-dist": "^5.4.624",
     "pixelmatch": "^7.1.0",
     "pngjs": "^7.0.0",
     "prettier": "^3.8.1",

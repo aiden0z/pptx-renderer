@@ -96,8 +96,13 @@ function resolvePdfWorkerUrl(config?: PdfjsConfig): string | null {
  * pdfjs's own workerSrc is configured inside this isolated worker, so host
  * applications can keep their main-thread pdfjs settings untouched.
  */
-const WORKER_SRC = /* js */ `
+export const PDFJS_WORKER_SOURCE = /* js */ `
 let pdfjsLib = null;
+
+// PDF.js resolves its nested worker through browser window APIs. Aliasing
+// this isolated worker global keeps it on the real-worker path; otherwise its
+// fake-worker fallback would bind to this worker's message port.
+globalThis.window = globalThis;
 
 self.onmessage = async (e) => {
   const { id, pdfData, width, height, pdfjsUrl, pdfWorkerUrl } = e.data;
@@ -107,8 +112,10 @@ self.onmessage = async (e) => {
       pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
     }
 
-    const doc = await pdfjsLib.getDocument({ data: pdfData }).promise;
+    const loadingTask = pdfjsLib.getDocument({ data: pdfData });
+    let doc = null;
     try {
+      doc = await loadingTask.promise;
       if (doc.numPages < 1) {
         self.postMessage({ id, error: 'no pages' });
         return;
@@ -125,7 +132,11 @@ self.onmessage = async (e) => {
       const blob = await canvas.convertToBlob({ type: 'image/png' });
       self.postMessage({ id, blob });
     } finally {
-      doc.destroy();
+      if (typeof loadingTask.destroy === 'function') {
+        await loadingTask.destroy();
+      } else if (doc && typeof doc.destroy === 'function') {
+        await doc.destroy();
+      }
     }
   } catch (err) {
     self.postMessage({ id, error: String(err) });
@@ -133,70 +144,67 @@ self.onmessage = async (e) => {
 };
 `;
 
-interface WorkerState {
-  worker: Worker | null;
-  failed: boolean;
-  msgId: number;
-  pending: Map<number, { resolve: (b: Blob | null) => void; reject: (e: Error) => void }>;
+const PDF_RENDER_TIMEOUT_MS = 15_000;
+const PDF_RENDER_MAX_CONCURRENCY = 4;
+
+interface QueuedPdfRender {
+  start: () => void;
+  cancel: () => void;
 }
 
-const _workers = new Map<string, WorkerState>();
+let activePdfRenders = 0;
+const queuedPdfRenders: QueuedPdfRender[] = [];
 
-function getWorkerState(workerKey: string): WorkerState {
-  let state = _workers.get(workerKey);
-  if (!state) {
-    state = {
-      worker: null,
-      failed: false,
-      msgId: 0,
-      pending: new Map(),
-    };
-    _workers.set(workerKey, state);
+function drainPdfRenderQueue(): void {
+  while (activePdfRenders < PDF_RENDER_MAX_CONCURRENCY) {
+    const next = queuedPdfRenders.shift();
+    if (!next) return;
+    next.start();
   }
-  return state;
 }
 
-function getWorker(workerKey: string): Worker | null {
-  const state = getWorkerState(workerKey);
-  if (state.failed) return null;
-  if (state.worker) return state.worker;
+function schedulePdfRender(
+  task: () => Promise<Blob | null>,
+  signal?: AbortSignal,
+): Promise<Blob | null> {
+  if (signal?.aborted) return Promise.resolve(null);
 
-  try {
-    const blob = new Blob([WORKER_SRC], { type: 'text/javascript' });
-    const url = URL.createObjectURL(blob);
-    try {
-      state.worker = new Worker(url, { type: 'module' });
-    } finally {
-      URL.revokeObjectURL(url);
-    }
+  return new Promise((resolve) => {
+    let started = false;
+    let settled = false;
 
-    state.worker.onmessage = (e: MessageEvent) => {
-      const { id, blob, error } = e.data;
-      const entry = state.pending.get(id);
-      if (!entry) return;
-      state.pending.delete(id);
-      if (error) {
-        entry.resolve(null); // Treat worker-side errors as "no result"
-      } else {
-        entry.resolve(blob ?? null);
-      }
+    const finish = (result: Blob | null): void => {
+      if (settled) return;
+      settled = true;
+      resolve(result);
+    };
+    const entry: QueuedPdfRender = {
+      start: () => {
+        if (settled) return;
+        started = true;
+        signal?.removeEventListener('abort', entry.cancel);
+        activePdfRenders += 1;
+        void Promise.resolve()
+          .then(task)
+          .then(finish, () => finish(null))
+          .finally(() => {
+            activePdfRenders -= 1;
+            drainPdfRenderQueue();
+          });
+      },
+      cancel: () => {
+        if (started || settled) return;
+        const index = queuedPdfRenders.indexOf(entry);
+        if (index >= 0) queuedPdfRenders.splice(index, 1);
+        signal?.removeEventListener('abort', entry.cancel);
+        finish(null);
+      },
     };
 
-    state.worker.onerror = () => {
-      // Worker failed to initialize (e.g. module import blocked by CSP)
-      state.failed = true;
-      state.worker = null;
-      for (const [, entry] of state.pending) {
-        entry.resolve(null);
-      }
-      state.pending.clear();
-    };
-
-    return state.worker;
-  } catch {
-    state.failed = true;
-    return null;
-  }
+    signal?.addEventListener('abort', entry.cancel, { once: true });
+    queuedPdfRenders.push(entry);
+    drainPdfRenderQueue();
+  });
 }
 
 function renderInWorker(
@@ -205,33 +213,54 @@ function renderInWorker(
   height: number,
   pdfjsUrl: string,
   pdfWorkerUrl: string,
+  signal?: AbortSignal,
 ): Promise<Blob | null> {
+  if (signal?.aborted) return Promise.resolve(null);
+
   return new Promise((resolve) => {
-    const workerKey = `${pdfjsUrl}\n${pdfWorkerUrl}`;
-    const state = getWorkerState(workerKey);
-    const worker = getWorker(workerKey);
-    if (!worker) {
-      resolve(null);
-      return;
-    }
+    let worker: Worker | null = null;
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+    let settled = false;
 
-    const id = ++state.msgId;
-    state.pending.set(id, {
-      resolve,
-      reject: () => resolve(null),
-    });
-
-    // Transfer the buffer to avoid copying
-    const copy = pdfData.slice(); // copy so caller retains original
-    worker.postMessage({ id, pdfData: copy, width, height, pdfjsUrl, pdfWorkerUrl }, [copy.buffer]);
-
-    // Timeout: if worker doesn't respond in 15s, give up
-    setTimeout(() => {
-      if (state.pending.has(id)) {
-        state.pending.delete(id);
-        resolve(null);
+    const finish = (result: Blob | null): void => {
+      if (settled) return;
+      settled = true;
+      if (timeoutId !== undefined) clearTimeout(timeoutId);
+      signal?.removeEventListener('abort', onAbort);
+      if (worker) {
+        worker.onmessage = null;
+        worker.onerror = null;
+        worker.terminate();
+        worker = null;
       }
-    }, 15000);
+      resolve(result);
+    };
+    const onAbort = (): void => finish(null);
+
+    try {
+      const sourceBlob = new Blob([PDFJS_WORKER_SOURCE], { type: 'text/javascript' });
+      const sourceUrl = URL.createObjectURL(sourceBlob);
+      try {
+        worker = new Worker(sourceUrl, { type: 'module' });
+      } finally {
+        URL.revokeObjectURL(sourceUrl);
+      }
+
+      worker.onmessage = (event: MessageEvent) => {
+        const { blob, error } = event.data;
+        finish(error ? null : (blob ?? null));
+      };
+      worker.onerror = () => finish(null);
+      signal?.addEventListener('abort', onAbort, { once: true });
+
+      const copy = pdfData.slice();
+      worker.postMessage({ id: 1, pdfData: copy, width, height, pdfjsUrl, pdfWorkerUrl }, [
+        copy.buffer,
+      ]);
+      timeoutId = setTimeout(() => finish(null), PDF_RENDER_TIMEOUT_MS);
+    } catch {
+      finish(null);
+    }
   });
 }
 
@@ -253,7 +282,10 @@ export async function renderPdfToImage(
   width: number,
   height: number,
   pdfjs?: PdfjsConfig,
+  signal?: AbortSignal,
 ): Promise<string | null> {
+  if (signal?.aborted) return null;
+
   const pdfjsUrl = resolvePdfjsUrl(pdfjs);
   const pdfWorkerUrl = resolvePdfWorkerUrl(pdfjs);
 
@@ -267,8 +299,11 @@ export async function renderPdfToImage(
   }
 
   try {
-    const blob = await renderInWorker(pdfData, width, height, pdfjsUrl, pdfWorkerUrl);
-    if (blob) return URL.createObjectURL(blob);
+    const blob = await schedulePdfRender(
+      () => renderInWorker(pdfData, width, height, pdfjsUrl, pdfWorkerUrl, signal),
+      signal,
+    );
+    if (blob && !signal?.aborted) return URL.createObjectURL(blob);
   } catch {
     // Worker failed — no fallback, return null
   }

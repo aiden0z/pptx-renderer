@@ -20,7 +20,7 @@ import { BaseNodeData } from '../model/nodes/BaseNode';
 import { SafeXmlNode } from '../parser/XmlParser';
 import type { RelEntry } from '../parser/RelParser';
 import { isPlaceholderNode, parseRenderableChild } from '../model/RenderableChild';
-import type { ECharts } from 'echarts';
+import type { EChartsType } from 'echarts/core';
 import type { PdfjsConfig } from '../utils/pdfRenderer';
 
 // ---------------------------------------------------------------------------
@@ -41,7 +41,7 @@ export interface SlideRendererOptions {
   /** Optional pdfjs URLs for EMF-embedded PDF fallback rendering. */
   pdfjs?: PdfjsConfig;
   /** Shared set of live ECharts instances for explicit disposal. */
-  chartInstances?: Set<ECharts>;
+  chartInstances?: Set<EChartsType>;
 }
 
 /**
@@ -253,8 +253,9 @@ export function renderSlide(
   materializeSlideNodes(presentation, slide);
 
   const isSharedCache = !!options?.mediaUrlCache;
-  const chartInstances = options?.chartInstances ?? new Set<ECharts>();
+  const chartInstances = options?.chartInstances ?? new Set<EChartsType>();
   const asyncTasks: Promise<void>[] = [];
+  const abortController = new AbortController();
 
   // Create render context (resolves slide -> layout -> master -> theme chain)
   const ctx = createRenderContext(
@@ -263,6 +264,7 @@ export function renderSlide(
     options?.mediaUrlCache,
     chartInstances,
     options?.pdfjs,
+    abortController.signal,
   );
   ctx.asyncTasks = asyncTasks;
   if (options?.onNavigate) {
@@ -361,6 +363,7 @@ export function renderSlide(
   const dispose = (): void => {
     if (disposed) return;
     disposed = true;
+    abortController.abort();
 
     // Dispose chart instances whose DOM is inside this slide container
     if (chartInstances) {

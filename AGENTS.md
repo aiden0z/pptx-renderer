@@ -25,8 +25,8 @@ TypeScript library that parses Office Open XML (.pptx) files and renders them as
 
 - **Runtime:** TypeScript + Vite (ESM)
 - **Dependencies:** jszip (zip extraction), echarts (charts). **Optional peer dep:** pdfjs-dist (SmartArt PDF fallback rendering)
-- **E2E Tests:** Python (pytest + Playwright + scikit-image), not bundled with the library
-- **Build:** `pnpm build` → `dist/aiden0z-pptx-renderer.{es,cjs}.js`
+- **Tests:** Vitest unit tests, Playwright browser-package tests, and Python visual E2E tests
+- **Build:** cross-platform `pnpm build` → ESM, CJS, standalone browser ESM, and types
 
 ## Architecture
 
@@ -637,7 +637,9 @@ pnpm format:check        # prettier --check (CI)
 pnpm typecheck           # tsc --noEmit
 pnpm knip                # dead code / unused exports detection
 pnpm publint             # package.json exports correctness
-pnpm size                # size-limit check (gzip ≤ 1400 kB)
+pnpm test:browser        # Chromium standalone/ECharts/PDF.js compatibility
+pnpm test:package        # ESM/CJS/standalone package entry checks
+pnpm size                # gzip budgets for primary and standalone entries
 ```
 
 **Git hooks** (husky + lint-staged): `pre-commit` runs `eslint --fix` + `prettier --write` on staged `src/**/*.ts`; `commit-msg` enforces [Conventional Commits](https://www.conventionalcommits.org/) via commitlint.

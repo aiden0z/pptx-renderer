@@ -3,6 +3,9 @@ import { resolve } from 'path';
 import fs from 'fs';
 
 export default defineConfig({
+  define: {
+    'process.env.NODE_ENV': '"production"',
+  },
   resolve: {
     alias: {
       'pptxjs-reference': resolve(__dirname, 'references/pptxjs/src/index.ts'),
@@ -10,7 +13,7 @@ export default defineConfig({
   },
   server: {
     fs: {
-      allow: ['..'],
+      allow: ['..', ...(process.env.PDFJS_DIST_DIR ? [process.env.PDFJS_DIST_DIR] : [])],
     },
     proxy: {
       '/api': {
@@ -34,10 +37,11 @@ export default defineConfig({
             res.end('[]');
             return;
           }
-          const dirs = fs.readdirSync(casesDir, { withFileTypes: true })
-            .filter(d => d.isDirectory())
-            .map(d => d.name)
-            .filter(name => fs.existsSync(resolve(casesDir, name, 'source.pptx')))
+          const dirs = fs
+            .readdirSync(casesDir, { withFileTypes: true })
+            .filter((d) => d.isDirectory())
+            .map((d) => d.name)
+            .filter((name) => fs.existsSync(resolve(casesDir, name, 'source.pptx')))
             .sort();
           res.setHeader('Content-Type', 'application/json');
           res.end(JSON.stringify(dirs));
@@ -49,9 +53,13 @@ export default defineConfig({
           if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
             const ext = filePath.split('.').pop()?.toLowerCase();
             const mimeTypes: Record<string, string> = {
-              png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg',
-              pdf: 'application/pdf', pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-              json: 'application/json', xml: 'text/xml',
+              png: 'image/png',
+              jpg: 'image/jpeg',
+              jpeg: 'image/jpeg',
+              pdf: 'application/pdf',
+              pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+              json: 'application/json',
+              xml: 'text/xml',
             };
             if (ext && mimeTypes[ext]) res.setHeader('Content-Type', mimeTypes[ext]);
             const stream = fs.createReadStream(filePath);
@@ -68,12 +76,14 @@ export default defineConfig({
       entry: resolve(__dirname, 'src/index.ts'),
       name: 'PptxRenderer',
       formats: ['es', 'cjs'],
-      fileName: (format) => format === 'es' ? 'aiden0z-pptx-renderer.es.js' : 'aiden0z-pptx-renderer.cjs',
+      fileName: (format) =>
+        format === 'es' ? 'aiden0z-pptx-renderer.es.js' : 'aiden0z-pptx-renderer.cjs',
     },
     rollupOptions: {
-      external: ['jszip', 'pdfjs-dist'],
+      external: (id) =>
+        id === 'echarts' || id.startsWith('echarts/') || id === 'jszip' || id === 'pdfjs-dist',
       output: {
-        globals: { jszip: 'JSZip', 'pdfjs-dist': 'pdfjsLib' },
+        globals: { echarts: 'echarts', jszip: 'JSZip', 'pdfjs-dist': 'pdfjsLib' },
       },
     },
   },

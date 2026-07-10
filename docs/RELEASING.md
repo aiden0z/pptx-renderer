@@ -5,6 +5,8 @@
 - [ ] Update changelog/release notes
 - [ ] Verify tests pass: `pnpm test`
 - [ ] Verify build passes: `pnpm build`
+- [ ] Verify package entries and real browser paths: `pnpm test:package && pnpm test:browser`
+- [ ] Verify PDF.js contracts: `pnpm test:pdfjs-contract` and the CI PDF.js 6 matrix job
 - [ ] Verify lint/types/exports: `pnpm lint && pnpm typecheck && pnpm knip && pnpm publint`
 - [ ] Verify bundle size: `pnpm size`
 - [ ] Confirm `README` and docs are up to date
@@ -22,7 +24,7 @@ Use semantic versioning:
 
 1. Create release branch or prepare release commit on `main`.
 2. Bump version in `package.json`.
-3. Run full verification (`pnpm test`, `pnpm build`).
+3. Run full verification (`pnpm test`, `pnpm build`, `pnpm test:package`, `pnpm test:browser`).
 4. Tag release (`vX.Y.Z`).
 5. Publish release notes with migration notes if needed.
 
@@ -33,6 +35,9 @@ Use this sequence for an actual release:
 1. Verify and build:
    - `pnpm test`
    - `pnpm build`
+   - `pnpm test:package`
+   - `pnpm test:browser`
+   - `pnpm size`
 2. Commit release metadata:
    - `git add -A`
    - `git commit -m "chore: release vX.Y.Z"`

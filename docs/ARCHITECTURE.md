@@ -61,6 +61,29 @@ Responsibilities:
 - Render common EMF fallback previews when the file contains embedded bitmap data or,
   with optional `pdfjs` URLs, an embedded PDF preview.
 
+### Async Resource Lifecycle
+
+Each `renderSlide()` call owns an `AbortController`. `SlideHandle.dispose()` aborts
+in-flight EMF-PDF work before disposing chart instances and owned blob URLs. Async
+renderers must check the context signal before mutating DOM or shared caches, and must
+revoke any blob URL that arrives after cancellation. `PptxViewer.destroy()` disposes its
+slide handles before clearing the viewer-level media cache.
+
+PDF.js runs inside a short-lived isolated Worker, with PDF.js using its own nested Worker.
+Success, worker error, timeout, and cancellation share one cleanup path that terminates
+the outer Worker. No PDF.js module state is imported or configured on the host page.
+
+### Chart Runtime and Distribution
+
+`src/renderer/chart/echartsRuntime.ts` is the only runtime ECharts registration point. It
+imports from `echarts/core`, registers every supported chart/component plus
+`CanvasRenderer`, and is explicitly declared as side-effectful package code. Type-only
+imports may still come from `echarts` without pulling the full runtime into the bundle.
+
+The normal ESM/CJS builds externalize `echarts/*` and JSZip for application bundlers. The
+`./browser` entry bundles JSZip and the registered ECharts subset while keeping PDF.js
+optional and external.
+
 ## Rendering Strategies
 
 `renderList()` supports:

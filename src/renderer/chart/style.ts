@@ -1,4 +1,4 @@
-import * as echarts from 'echarts';
+import { echarts } from './echartsRuntime';
 import { SafeXmlNode } from '../../parser/XmlParser';
 import { ptToPx } from '../../parser/units';
 import { resolveColor, resolveLineStyle } from '../StyleResolver';

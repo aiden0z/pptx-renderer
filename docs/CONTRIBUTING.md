@@ -14,6 +14,7 @@ Thanks for contributing to `@aiden0z/pptx-renderer`.
 
 ```bash
 pnpm install
+pnpm exec playwright install chromium
 pnpm dev
 pnpm test
 ```
@@ -76,8 +77,20 @@ pnpm lint          # ESLint (src/ only)
 pnpm format:check  # Prettier check
 pnpm typecheck     # tsc --noEmit
 pnpm test          # vitest unit tests
+pnpm test:browser  # Chromium package/runtime/PDF.js smoke tests
+pnpm test:package  # ESM, CJS, and standalone export checks
 pnpm knip          # detect unused exports/dependencies
+pnpm size          # enforce primary and standalone gzip budgets
 ```
+
+`pnpm build` is implemented by `scripts/build.mjs` with Node file and process APIs so the
+same build runs on macOS, Linux, and Windows. Do not reintroduce shell-only `rm`, `cp`, or
+command chaining into the package script.
+
+Renderer fixes must cover interacting states, not only the reported happy path. For
+async rendering, include success, failure, timeout, cancellation, late completion, shared
+cache, and disposal cases where applicable. Changes to browser distribution, ECharts
+registration, or PDF.js compatibility also require `pnpm test:browser`.
 
 Auto-fix shortcuts: `pnpm lint:fix`, `pnpm format`.
 

@@ -24,18 +24,18 @@ import { hexToRgb } from '../utils/color';
 import { SafeXmlNode } from '../parser/XmlParser';
 import { getPredefinedTableStyle } from './predefinedTableStyles';
 import { resolveThemeFontStack } from './fontResolver';
+import { splitTiledPatternFillCss } from './cssValues';
 
 function applyCssFillBackground(el: HTMLElement, fillCss: string): void {
   clearCssFillBackground(el);
 
   if (fillCss.includes('gradient') && fillCss.includes(' 0 0 / ')) {
-    const bgMatch = fillCss.match(/,\s*(#[0-9a-fA-F]{3,8}|rgba?\([^)]+\)|[a-zA-Z]+)\s*$/);
-    if (bgMatch && bgMatch.index !== undefined) {
-      const imageLayers = fillCss.slice(0, bgMatch.index).replace(/\s+0 0\s*\/\s*8px 8px/g, '');
-      el.style.backgroundImage = imageLayers;
+    const tiled = splitTiledPatternFillCss(fillCss);
+    if (tiled) {
+      el.style.backgroundImage = tiled.imageLayers;
       el.style.backgroundSize = '8px 8px';
       el.style.backgroundRepeat = 'repeat';
-      el.style.backgroundColor = bgMatch[1];
+      el.style.backgroundColor = tiled.color;
       return;
     }
   }

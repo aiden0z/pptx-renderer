@@ -3,6 +3,8 @@ import { renderSlide } from '../../../src/renderer/SlideRenderer';
 import { SafeXmlNode } from '../../../src/parser/XmlParser';
 import type { PresentationData } from '../../../src/model/Presentation';
 import type { SlideData } from '../../../src/model/Slide';
+import type { PicNodeData } from '../../../src/model/nodes/PicNode';
+import { xmlNode } from '../helpers/xmlNode';
 
 const emptyXml = new SafeXmlNode(null);
 
@@ -16,31 +18,40 @@ function makeMinimalPres(): PresentationData {
     height: 540,
     slides: [],
     layouts: new Map([
-      [layoutPath, {
-        placeholders: [],
-        spTree: emptyXml,
-        rels: new Map(),
-        showMasterSp: true,
-      }],
+      [
+        layoutPath,
+        {
+          placeholders: [],
+          spTree: emptyXml,
+          rels: new Map(),
+          showMasterSp: true,
+        },
+      ],
     ]),
     masters: new Map([
-      [masterPath, {
-        colorMap: new Map(),
-        textStyles: {},
-        placeholders: [],
-        spTree: emptyXml,
-        rels: new Map(),
-      }],
+      [
+        masterPath,
+        {
+          colorMap: new Map(),
+          textStyles: {},
+          placeholders: [],
+          spTree: emptyXml,
+          rels: new Map(),
+        },
+      ],
     ]),
     themes: new Map([
-      [themePath, {
-        colorScheme: new Map(),
-        majorFont: { latin: 'Calibri', ea: '', cs: '' },
-        minorFont: { latin: 'Calibri', ea: '', cs: '' },
-        fillStyles: [],
-        lineStyles: [],
-        effectStyles: [],
-      }],
+      [
+        themePath,
+        {
+          colorScheme: new Map(),
+          majorFont: { latin: 'Calibri', ea: '', cs: '' },
+          minorFont: { latin: 'Calibri', ea: '', cs: '' },
+          fillStyles: [],
+          lineStyles: [],
+          effectStyles: [],
+        },
+      ],
     ]),
     slideToLayout: new Map([[0, layoutPath]]),
     layoutToMaster: new Map([[layoutPath, masterPath]]),
@@ -193,5 +204,58 @@ describe('SlideHandle lifecycle', () => {
     expect(mockChart.dispose).not.toHaveBeenCalled();
     // Already-disposed chart stays in the set (not removed by this handle)
     expect(chartInstances.size).toBe(1);
+  });
+
+  it('aborts async EMF-PDF rendering and rejects late writes after dispose()', async () => {
+    const emfModule = await import('../../../src/utils/emfParser');
+    const pdfModule = await import('../../../src/utils/pdfRenderer');
+    const emfSpy = vi.spyOn(emfModule, 'parseEmfContent').mockReturnValue({
+      type: 'pdf',
+      data: new Uint8Array([0x25, 0x50, 0x44, 0x46]),
+    });
+    let resolvePdf!: (url: string | null) => void;
+    const pdfSpy = vi.spyOn(pdfModule, 'renderPdfToImage').mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolvePdf = resolve;
+        }),
+    );
+    const revokeSpy = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
+    const pres = makeMinimalPres();
+    const sharedCache = new Map<string, string>();
+    pres.media.set('ppt/media/image1.emf', new Uint8Array([1]));
+    const slide = makeSlide();
+    slide.rels.set('rId1', { type: 'image', target: 'ppt/media/image1.emf' });
+    slide.nodes = [
+      {
+        id: '1',
+        name: 'EMF picture',
+        nodeType: 'picture',
+        position: { x: 0, y: 0 },
+        size: { w: 100, h: 80 },
+        rotation: 0,
+        flipH: false,
+        flipV: false,
+        blipEmbed: 'rId1',
+        source: xmlNode('<pic/>'),
+      } as PicNodeData,
+    ];
+
+    const handle = renderSlide(pres, slide, { mediaUrlCache: sharedCache });
+    const signal = pdfSpy.mock.calls[0]?.[4];
+    expect(signal?.aborted).toBe(false);
+
+    handle.dispose();
+    expect(signal?.aborted).toBe(true);
+    resolvePdf('blob:late-slide-pdf');
+    await handle.ready;
+
+    expect(revokeSpy).toHaveBeenCalledWith('blob:late-slide-pdf');
+    expect(sharedCache.size).toBe(0);
+    expect(handle.element.querySelector('img')).toBeNull();
+
+    emfSpy.mockRestore();
+    pdfSpy.mockRestore();
+    revokeSpy.mockRestore();
   });
 });

@@ -3,6 +3,8 @@
 This project uses layered verification across two test ecosystems:
 
 - **Unit tests** (vitest): parser/model/renderer behavior in isolation.
+- **Browser package tests** (Playwright): built standalone entry, ECharts registration
+  matrix, and isolated PDF.js Worker rendering in Chromium.
 - **E2E tests** (pytest + Playwright): structural validation, visual comparison against PowerPoint PDF output, and baseline-driven shape/SmartArt regression.
 
 ## Unit Tests
@@ -12,6 +14,19 @@ pnpm test              # Run all unit tests
 pnpm test -- --watch   # Watch mode
 pnpm test:coverage     # With v8 coverage report → coverage/
 ```
+
+## Browser Package Tests
+
+```bash
+pnpm build
+pnpm exec playwright install chromium
+pnpm test:browser
+```
+
+These tests load the built standalone browser artifact with a tracked PPTX, initialize
+every renderer-supported ECharts series through the modular runtime, and execute the
+actual outer-Worker plus PDF.js-worker path. CI runs the PDF test against both supported
+PDF.js major lines; Node-only imports are not accepted as browser compatibility evidence.
 
 Coverage areas:
 

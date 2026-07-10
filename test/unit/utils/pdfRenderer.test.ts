@@ -19,10 +19,23 @@ const pdfjsMock = {
 vi.mock('pdfjs-dist', () => pdfjsMock);
 
 afterEach(() => {
+  vi.useRealTimers();
   vi.clearAllMocks();
 });
 
 describe('pdfRenderer', () => {
+  it('retains the loading task so PDF.js v5 and v6 documents can be destroyed', async () => {
+    const mod = await import('../../../src/utils/pdfRenderer');
+
+    expect(mod.PDFJS_WORKER_SOURCE).toContain('const loadingTask = pdfjsLib.getDocument');
+    expect(mod.PDFJS_WORKER_SOURCE).toContain('let doc = null');
+    expect(
+      mod.PDFJS_WORKER_SOURCE.indexOf('try {', mod.PDFJS_WORKER_SOURCE.indexOf('let doc = null')),
+    ).toBeLessThan(mod.PDFJS_WORKER_SOURCE.indexOf('await loadingTask.promise'));
+    expect(mod.PDFJS_WORKER_SOURCE).toContain("typeof loadingTask.destroy === 'function'");
+    expect(mod.PDFJS_WORKER_SOURCE).toContain("typeof doc.destroy === 'function'");
+  });
+
   it('returns null when Worker is unavailable (jsdom)', async () => {
     const mod = await import('../../../src/utils/pdfRenderer');
 
@@ -174,6 +187,7 @@ describe('pdfRenderer', () => {
     const originalWorker = globalThis.Worker;
     const originalOffscreenCanvas = globalThis.OffscreenCanvas;
     let postedMessage: Record<string, unknown> | undefined;
+    const terminate = vi.fn();
 
     class MockWorker {
       onmessage: ((event: MessageEvent) => void) | null = null;
@@ -192,6 +206,8 @@ describe('pdfRenderer', () => {
           } as MessageEvent);
         }, 0);
       }
+
+      terminate = terminate;
     }
 
     try {
@@ -221,6 +237,7 @@ describe('pdfRenderer', () => {
       expect(postedMessage?.pdfWorkerUrl).toBe('/assets/pdf.worker.min.mjs');
       expect(revokeObjectUrlSpy).toHaveBeenCalledWith('blob:renderer-worker');
       expect(revokeObjectUrlSpy).not.toHaveBeenCalledWith('blob:rendered-pdf');
+      expect(terminate).toHaveBeenCalledOnce();
 
       createObjectUrlSpy.mockRestore();
       revokeObjectUrlSpy.mockRestore();
@@ -229,6 +246,223 @@ describe('pdfRenderer', () => {
         configurable: true,
         value: originalWorker,
       });
+      Object.defineProperty(globalThis, 'OffscreenCanvas', {
+        configurable: true,
+        value: originalOffscreenCanvas,
+      });
+      vi.resetModules();
+    }
+  });
+
+  it('terminates a timed-out worker instead of leaving PDF rendering alive', async () => {
+    vi.useFakeTimers();
+    vi.resetModules();
+
+    const originalWorker = globalThis.Worker;
+    const originalOffscreenCanvas = globalThis.OffscreenCanvas;
+    const terminate = vi.fn();
+
+    class MockWorker {
+      onmessage: ((event: MessageEvent) => void) | null = null;
+      onerror: ((event: ErrorEvent) => void) | null = null;
+      postMessage(): void {}
+      terminate = terminate;
+    }
+
+    try {
+      Object.defineProperty(globalThis, 'Worker', { configurable: true, value: MockWorker });
+      Object.defineProperty(globalThis, 'OffscreenCanvas', {
+        configurable: true,
+        value: class MockOffscreenCanvas {},
+      });
+      vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:renderer-worker');
+      vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
+
+      const mod = await import('../../../src/utils/pdfRenderer');
+      const result = mod.renderPdfToImage(new Uint8Array([1]), 32, 24, {
+        moduleUrl: '/assets/pdf.min.mjs',
+        workerUrl: '/assets/pdf.worker.min.mjs',
+      });
+
+      await vi.advanceTimersByTimeAsync(15_000);
+
+      await expect(result).resolves.toBeNull();
+      expect(terminate).toHaveBeenCalledOnce();
+    } finally {
+      Object.defineProperty(globalThis, 'Worker', { configurable: true, value: originalWorker });
+      Object.defineProperty(globalThis, 'OffscreenCanvas', {
+        configurable: true,
+        value: originalOffscreenCanvas,
+      });
+      vi.resetModules();
+    }
+  });
+
+  it('terminates an in-flight worker when rendering is aborted', async () => {
+    vi.resetModules();
+
+    const originalWorker = globalThis.Worker;
+    const originalOffscreenCanvas = globalThis.OffscreenCanvas;
+    const terminate = vi.fn();
+
+    class MockWorker {
+      onmessage: ((event: MessageEvent) => void) | null = null;
+      onerror: ((event: ErrorEvent) => void) | null = null;
+      postMessage(): void {}
+      terminate = terminate;
+    }
+
+    try {
+      Object.defineProperty(globalThis, 'Worker', { configurable: true, value: MockWorker });
+      Object.defineProperty(globalThis, 'OffscreenCanvas', {
+        configurable: true,
+        value: class MockOffscreenCanvas {},
+      });
+      vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:renderer-worker');
+      vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
+
+      const controller = new AbortController();
+      const mod = await import('../../../src/utils/pdfRenderer');
+      const result = mod.renderPdfToImage(
+        new Uint8Array([1]),
+        32,
+        24,
+        {
+          moduleUrl: '/assets/pdf.min.mjs',
+          workerUrl: '/assets/pdf.worker.min.mjs',
+        },
+        controller.signal,
+      );
+
+      await Promise.resolve();
+      await Promise.resolve();
+
+      controller.abort();
+
+      await expect(result).resolves.toBeNull();
+      expect(terminate).toHaveBeenCalledOnce();
+    } finally {
+      Object.defineProperty(globalThis, 'Worker', { configurable: true, value: originalWorker });
+      Object.defineProperty(globalThis, 'OffscreenCanvas', {
+        configurable: true,
+        value: originalOffscreenCanvas,
+      });
+      vi.resetModules();
+    }
+  });
+
+  it('does not create a worker when the signal is already aborted', async () => {
+    vi.resetModules();
+    const originalWorker = globalThis.Worker;
+    const originalOffscreenCanvas = globalThis.OffscreenCanvas;
+    const workerCreated = vi.fn();
+
+    class MockWorker {
+      constructor() {
+        workerCreated();
+      }
+    }
+
+    try {
+      Object.defineProperty(globalThis, 'Worker', { configurable: true, value: MockWorker });
+      Object.defineProperty(globalThis, 'OffscreenCanvas', {
+        configurable: true,
+        value: class MockOffscreenCanvas {},
+      });
+      const controller = new AbortController();
+      controller.abort();
+
+      const mod = await import('../../../src/utils/pdfRenderer');
+      const result = await mod.renderPdfToImage(
+        new Uint8Array([1]),
+        32,
+        24,
+        { moduleUrl: '/assets/pdf.min.mjs', workerUrl: '/assets/pdf.worker.min.mjs' },
+        controller.signal,
+      );
+
+      expect(result).toBeNull();
+      expect(workerCreated).not.toHaveBeenCalled();
+    } finally {
+      Object.defineProperty(globalThis, 'Worker', { configurable: true, value: originalWorker });
+      Object.defineProperty(globalThis, 'OffscreenCanvas', {
+        configurable: true,
+        value: originalOffscreenCanvas,
+      });
+      vi.resetModules();
+    }
+  });
+
+  it('caps concurrent PDF workers and starts queued renders as slots are released', async () => {
+    vi.resetModules();
+    const originalWorker = globalThis.Worker;
+    const originalOffscreenCanvas = globalThis.OffscreenCanvas;
+    const workers: MockWorker[] = [];
+
+    class MockWorker {
+      onmessage: ((event: MessageEvent) => void) | null = null;
+      onerror: ((event: ErrorEvent) => void) | null = null;
+      terminate = vi.fn();
+      lastMessage?: Record<string, unknown>;
+
+      constructor() {
+        workers.push(this);
+      }
+
+      postMessage(message: Record<string, unknown>): void {
+        this.lastMessage = message;
+      }
+
+      succeed(): void {
+        this.onmessage?.({
+          data: {
+            id: this.lastMessage?.id,
+            blob: new Blob(['png'], { type: 'image/png' }),
+          },
+        } as MessageEvent);
+      }
+    }
+
+    try {
+      Object.defineProperty(globalThis, 'Worker', { configurable: true, value: MockWorker });
+      Object.defineProperty(globalThis, 'OffscreenCanvas', {
+        configurable: true,
+        value: class MockOffscreenCanvas {},
+      });
+      vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:pdf');
+      vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
+
+      const mod = await import('../../../src/utils/pdfRenderer');
+      const renders = Array.from({ length: 5 }, () =>
+        mod.renderPdfToImage(new Uint8Array([1]), 32, 24, {
+          moduleUrl: '/assets/pdf.min.mjs',
+          workerUrl: '/assets/pdf.worker.min.mjs',
+        }),
+      );
+      const queuedController = new AbortController();
+      const cancelledRender = mod.renderPdfToImage(
+        new Uint8Array([1]),
+        32,
+        24,
+        { moduleUrl: '/assets/pdf.min.mjs', workerUrl: '/assets/pdf.worker.min.mjs' },
+        queuedController.signal,
+      );
+
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(workers).toHaveLength(4);
+      queuedController.abort();
+      await expect(cancelledRender).resolves.toBeNull();
+      workers[0].succeed();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(workers).toHaveLength(5);
+
+      for (const worker of workers.slice(1)) worker.succeed();
+      await expect(Promise.all(renders)).resolves.toEqual(Array(5).fill('blob:pdf'));
+      expect(workers.every((worker) => worker.terminate.mock.calls.length === 1)).toBe(true);
+    } finally {
+      Object.defineProperty(globalThis, 'Worker', { configurable: true, value: originalWorker });
       Object.defineProperty(globalThis, 'OffscreenCanvas', {
         configurable: true,
         value: originalOffscreenCanvas,

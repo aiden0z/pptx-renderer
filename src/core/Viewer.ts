@@ -12,7 +12,7 @@ import {
   type TextSearchOptions,
   type TextSearchResult,
 } from '../search/TextSearch';
-import type { ECharts } from 'echarts';
+import type { EChartsType } from 'echarts/core';
 import type { PdfjsConfig } from '../utils/pdfRenderer';
 
 export type { SlideHandle } from '../renderer/SlideRenderer';
@@ -113,7 +113,7 @@ export class PptxViewer extends EventTarget {
   private viewerOptions: ViewerOptions;
   private presentation: PresentationData | null = null;
   private mediaUrlCache = new Map<string, string>();
-  private chartInstances = new Set<ECharts>();
+  private chartInstances = new Set<EChartsType>();
   private currentSlide = 0;
   private _fitMode: FitMode;
   private _isRendering = false;

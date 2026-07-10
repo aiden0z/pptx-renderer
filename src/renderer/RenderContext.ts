@@ -8,7 +8,7 @@ import { ThemeData } from '../model/Theme';
 import { MasterData } from '../model/Master';
 import { LayoutData } from '../model/Layout';
 import { SafeXmlNode } from '../parser/XmlParser';
-import type { ECharts } from 'echarts';
+import type { EChartsType } from 'echarts/core';
 import type { PdfjsConfig } from '../utils/pdfRenderer';
 
 export interface RenderContext {
@@ -27,10 +27,12 @@ export interface RenderContext {
   colorCache: Map<string, { color: string; alpha: number }>;
   /** Async media/rendering work that callers may await before screenshot/export. */
   asyncTasks?: Promise<void>[];
+  /** Aborted when the owning slide is disposed; async renderers must stop late writes. */
+  signal?: AbortSignal;
   /** Optional pdfjs URLs for EMF-embedded PDF fallback rendering. */
   pdfjs?: PdfjsConfig;
   /** Shared set of live ECharts instances for explicit disposal. */
-  chartInstances?: Set<ECharts>;
+  chartInstances?: Set<EChartsType>;
   /** Fill node from parent group's grpSpPr, used to resolve `a:grpFill` in children. */
   groupFillNode?: SafeXmlNode;
   /** Connected root used for hidden text measurement while slide nodes are still detached. */
@@ -49,8 +51,9 @@ export function createRenderContext(
   presentation: PresentationData,
   slide: SlideData,
   mediaUrlCache?: Map<string, string>,
-  chartInstances?: Set<ECharts>,
+  chartInstances?: Set<EChartsType>,
   pdfjs?: PdfjsConfig,
+  signal?: AbortSignal,
 ): RenderContext {
   // Resolve the chain: slide -> layout -> master -> theme
   const layoutPath = presentation.slideToLayout.get(slide.index) || '';
@@ -96,6 +99,7 @@ export function createRenderContext(
     mediaUrlCache: mediaUrlCache ?? new Map(),
     colorCache: new Map(),
     pdfjs,
+    signal,
     chartInstances,
   };
 }

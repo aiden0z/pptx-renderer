@@ -3,7 +3,8 @@ import type { KnipConfig } from 'knip';
 const config: KnipConfig = {
   entry: ['src/index.ts'],
   project: ['src/**/*.ts'],
-  ignoreDependencies: ['pixelmatch', 'pngjs'],
+  // PDF.js is an optional runtime URL resolved inside a Web Worker, so Knip cannot see the import.
+  ignoreDependencies: ['pdfjs-dist', 'pixelmatch', 'pngjs'],
   // Keep this allow-list narrow so Knip still reports new accidental type exports.
   ignoreIssues: {
     'src/core/Renderer.ts': ['types'],

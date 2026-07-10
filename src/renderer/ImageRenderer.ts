@@ -21,6 +21,7 @@ import { isAllowedExternalMediaUrl, isAllowedExternalUrl } from '../utils/urlSaf
 import { resolveSlideNavigationIndex, slideJumpTitle } from './navigation';
 import { renderCustomGeometry } from '../shapes/customGeometry';
 import { getPresetShapePath } from '../shapes/presets';
+import { splitTiledPatternFillCss } from './cssValues';
 
 /**
  * Check if a file extension is an unsupported legacy format (WMF only now; EMF is handled).
@@ -448,13 +449,12 @@ function applyCssFillBackground(el: HTMLElement, fillCss: string): void {
   clearCssFillBackground(el);
 
   if (fillCss.includes('gradient') && fillCss.includes(' 0 0 / ')) {
-    const bgMatch = fillCss.match(/,\s*(#[0-9a-fA-F]{3,8}|rgba?\([^)]+\)|[a-zA-Z]+)\s*$/);
-    if (bgMatch && bgMatch.index !== undefined) {
-      const imageLayers = fillCss.slice(0, bgMatch.index).replace(/\s+0 0\s*\/\s*8px 8px/g, '');
-      el.style.backgroundImage = imageLayers;
+    const tiled = splitTiledPatternFillCss(fillCss);
+    if (tiled) {
+      el.style.backgroundImage = tiled.imageLayers;
       el.style.backgroundSize = '8px 8px';
       el.style.backgroundRepeat = 'repeat';
-      el.style.backgroundColor = bgMatch[1];
+      el.style.backgroundColor = tiled.color;
       return;
     }
   }
@@ -906,12 +906,15 @@ function renderEmfPdf(
     return;
   }
 
-  const task = renderPdfToImage(pdfData, node.size.w, node.size.h, ctx.pdfjs)
+  const task = renderPdfToImage(pdfData, node.size.w, node.size.h, ctx.pdfjs, ctx.signal)
     .then((url) => {
-      if (url) {
-        ctx.mediaUrlCache.set(cacheKey, url);
-        wrapper.appendChild(createFillImage(url));
+      if (!url) return;
+      if (ctx.signal?.aborted) {
+        URL.revokeObjectURL(url);
+        return;
       }
+      ctx.mediaUrlCache.set(cacheKey, url);
+      wrapper.appendChild(createFillImage(url));
     })
     .catch(() => {
       // PDF rendering failed — leave wrapper empty (transparent)

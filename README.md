@@ -46,6 +46,8 @@ Requires Node.js 20+ for development. Runtime is browser-only.
 
 ## Quick Start
 
+For bundlers and npm-based apps:
+
 ```ts
 import { PptxViewer, RECOMMENDED_ZIP_LIMITS } from '@aiden0z/pptx-renderer';
 
@@ -58,6 +60,30 @@ const viewer = await PptxViewer.open(await resp.arrayBuffer(), container, {
   listOptions: { windowed: true },
 });
 ```
+
+For direct browser usage without a bundler, import the standalone browser ESM build. This
+entry bundles JSZip and ECharts, and replaces Node-style `process.env` checks at build time.
+PDF.js remains optional and is only needed for EMF-embedded PDF fallback previews:
+
+```html
+<script type="module">
+  import {
+    PptxViewer,
+    RECOMMENDED_ZIP_LIMITS,
+  } from '/vendor/pptx-renderer/aiden0z-pptx-renderer.browser.es.js';
+
+  const container = document.getElementById('pptx-container');
+  const resp = await fetch('/slides/demo.pptx');
+  await PptxViewer.open(await resp.arrayBuffer(), container, {
+    zipLimits: RECOMMENDED_ZIP_LIMITS,
+  });
+</script>
+```
+
+Copy the standalone artifact from the published package into your application's versioned
+static assets. The entry bundles JSZip and the ECharts chart types supported by this
+renderer; PDF.js remains an optional external asset. A pinned CDN URL can also be used,
+but the project does not depend on or deploy through a CDN provider.
 
 For large decks, combine windowed mounting with on-demand slide parsing and media decoding:
 
@@ -107,6 +133,28 @@ type PdfjsConfig =
     }
   | false;
 ```
+
+For a no-bundler deployment, copy the two PDF.js files into your application's static
+assets and pass absolute self-hosted URLs:
+
+```ts
+const pdfjs = {
+  moduleUrl: '/vendor/pdfjs/pdf.min.mjs',
+  workerUrl: '/vendor/pdfjs/pdf.worker.min.mjs',
+};
+```
+
+The PDF fallback uses short-lived blob Workers. A restrictive Content Security Policy
+must allow the chosen asset origin and `blob:` Workers, for example:
+
+```text
+script-src 'self';
+worker-src 'self' blob:;
+img-src 'self' data: blob:;
+```
+
+If a CDN is used instead, pin exact package versions and add only that origin to the
+relevant CSP directives.
 
 Or with more control over each step:
 
@@ -425,7 +473,7 @@ document.body.appendChild(handle.element);
 // Await async media such as EMF-PDF fallback previews before screenshots/exports.
 await handle.ready;
 
-// Clean up when done (disposes charts + blob URLs in standalone mode)
+// Cancels pending PDF fallbacks and disposes charts + owned blob URLs.
 handle.dispose();
 ```
 
@@ -503,6 +551,10 @@ Full OOXML text cascade: master → layout → shape → paragraph → run. Supp
 ### Charts via ECharts
 
 Powered by [ECharts](https://echarts.apache.org/). Supports Bar/Column (clustered, stacked, 100% stacked), Line/Area (standard, stacked, 100% stacked), Pie, multi-ring Doughnut, Radar, Scatter, Bubble, and Stock/Candlestick charts, with axis labels, legends, data labels, grid lines, chart color-style palettes, marker symbols, and custom number formats.
+
+The renderer registers only the ECharts charts, components, features, and Canvas renderer
+that it uses. Bundler consumers keep ECharts external; the standalone browser entry
+contains this same tree-shakeable runtime.
 
 OOXML 3D chart elements such as `bar3DChart`, `line3DChart`, `pie3DChart`, `area3DChart`, and `surface3DChart` are parsed as graceful 2D fallbacks where possible. True 3D perspective, depth walls, and surface meshes are not PowerPoint-perfect.
 
@@ -608,6 +660,8 @@ pnpm dev          # Vite dev server
 pnpm test         # Unit tests (vitest)
 pnpm test:coverage # Coverage report → coverage/
 pnpm build        # Production build
+pnpm test:package # Verify ESM, CJS, and standalone package entries
+pnpm test:browser # Real Chromium checks for standalone, charts, and PDF.js
 pnpm dev:e2e      # Dev server + Python E2E API server
 pnpm lint         # ESLint
 pnpm typecheck    # tsc --noEmit

@@ -126,6 +126,14 @@ import { isAllowedExternalMediaUrl, isAllowedExternalUrl } from '../utils/urlSaf
 import { getEffectiveBodyPrChild } from './TextBodyProperties';
 import { cssFontFamilyStack, resolveThemeFontStack } from './fontResolver';
 import { resolveSlideNavigationIndex, slideJumpTitle } from './navigation';
+import { scaleCssLengthForTransform } from './cssValues';
+import {
+  flipAbsoluteSvgPathData,
+  parseMoveArcPathData,
+  parseMoveCubicPathData,
+  parseMoveLinePathData,
+  parseSimpleMoveLinePathData,
+} from './pathData';
 
 function appendTransform(el: HTMLElement, transform: string): void {
   el.style.transform = `${el.style.transform || ''} ${transform}`.trim();
@@ -136,85 +144,8 @@ function appendCssFilter(el: HTMLElement, filter: string): void {
   el.style.filter = current ? `${current} ${filter}` : filter;
 }
 
-function flipPoint(
-  x: number,
-  y: number,
-  w: number,
-  h: number,
-  flipH: boolean,
-  flipV: boolean,
-): [number, number] {
-  return [flipH ? w - x : x, flipV ? h - y : y];
-}
-
 function formatPathNumber(value: number): string {
   return Number.isInteger(value) ? String(value) : String(Number(value.toFixed(6)));
-}
-
-function flipAbsolutePath(
-  pathD: string,
-  w: number,
-  h: number,
-  flipH: boolean,
-  flipV: boolean,
-): string {
-  if (!pathD || (!flipH && !flipV)) return pathD;
-
-  const tokens = pathD.match(/[A-Za-z]|-?\d*\.?\d+(?:e[-+]?\d+)?/gi) ?? [];
-  const out: string[] = [];
-  let i = 0;
-  const read = (): number => Number(tokens[i++]);
-  const pointString = (x: number, y: number): string => {
-    const [nextX, nextY] = flipPoint(x, y, w, h, flipH, flipV);
-    return `${formatPathNumber(nextX)},${formatPathNumber(nextY)}`;
-  };
-
-  while (i < tokens.length) {
-    const cmd = tokens[i++];
-
-    switch (cmd) {
-      case 'M':
-      case 'L': {
-        out.push(`${cmd}${pointString(read(), read())}`);
-        break;
-      }
-      case 'C': {
-        out.push(
-          `C${pointString(read(), read())} ${pointString(read(), read())} ${pointString(read(), read())}`,
-        );
-        break;
-      }
-      case 'Q': {
-        out.push(`Q${pointString(read(), read())} ${pointString(read(), read())}`);
-        break;
-      }
-      case 'A': {
-        const rx = read();
-        const ry = read();
-        const axisRotation = read();
-        const largeArc = read();
-        let sweep = read();
-        const x = read();
-        const y = read();
-        if (flipH !== flipV) sweep = sweep ? 0 : 1;
-        const [nextX, nextY] = flipPoint(x, y, w, h, flipH, flipV);
-        out.push(
-          `A${formatPathNumber(rx)},${formatPathNumber(ry)} ${formatPathNumber(
-            flipH !== flipV ? -axisRotation : axisRotation,
-          )} ${largeArc},${sweep} ${formatPathNumber(nextX)},${formatPathNumber(nextY)}`,
-        );
-        break;
-      }
-      case 'Z':
-      case 'z':
-        out.push('Z');
-        break;
-      default:
-        return pathD;
-    }
-  }
-
-  return out.join(' ');
 }
 
 function resolveGlowFilter(glow: SafeXmlNode, ctx: RenderContext): string | undefined {
@@ -236,19 +167,7 @@ function applyGlowFilter(el: HTMLElement, glow: SafeXmlNode, ctx: RenderContext)
 }
 
 function expandCssLengthForScale(length: string, scale: number): string {
-  if (!(scale > 0)) return length;
-
-  const trimmed = length.trim();
-  if (!trimmed) return `${100 / scale}%`;
-
-  const match = trimmed.match(/^(-?\d*\.?\d+(?:e[-+]?\d+)?)([a-z%]*)$/i);
-  if (!match) return length;
-
-  const value = Number(match[1]);
-  if (!Number.isFinite(value)) return length;
-
-  const unit = match[2] || '%';
-  return `${value / scale}${unit}`;
+  return scaleCssLengthForTransform(length, scale);
 }
 
 function applyVerticalTextFlow(
@@ -986,33 +905,7 @@ function approximateCubicLength(p0: Point, p1: Point, p2: Point, p3: Point, tEnd
 }
 
 function parseMoveCubicPath(pathD: string): { start: Point; segments: CubicSegment[] } | null {
-  const tokens = pathD.match(/[A-Za-z]|-?\d*\.?\d+(?:e[-+]?\d+)?/gi) ?? [];
-  if (tokens.length < 8 || tokens[0] !== 'M') return null;
-
-  let i = 1;
-  const readPoint = (): Point | null => {
-    if (i + 1 >= tokens.length) return null;
-    const x = Number(tokens[i++]);
-    const y = Number(tokens[i++]);
-    if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
-    return { x, y };
-  };
-
-  const start = readPoint();
-  if (!start) return null;
-
-  const segments: CubicSegment[] = [];
-  while (i < tokens.length) {
-    const cmd = tokens[i++];
-    if (cmd !== 'C') return null;
-    const c1 = readPoint();
-    const c2 = readPoint();
-    const end = readPoint();
-    if (!c1 || !c2 || !end) return null;
-    segments.push({ c1, c2, end });
-  }
-
-  return segments.length > 0 ? { start, segments } : null;
+  return parseMoveCubicPathData(pathD);
 }
 
 function formatMoveCubicPath(start: Point, segments: CubicSegment[]): string {
@@ -1030,32 +923,7 @@ function formatMoveCubicPath(start: Point, segments: CubicSegment[]): string {
 }
 
 function parseMoveArcPath(pathD: string): { start: Point; arc: ArcSegment } | null {
-  const tokens = pathD.match(/[A-Za-z]|-?\d*\.?\d+(?:e[-+]?\d+)?/gi) ?? [];
-  if (tokens.length !== 11 || tokens[0] !== 'M') return null;
-  if (tokens[3] !== 'A') return null;
-
-  const start = { x: Number(tokens[1]), y: Number(tokens[2]) };
-  const arc: ArcSegment = {
-    rx: Number(tokens[4]),
-    ry: Number(tokens[5]),
-    xAxisRotation: Number(tokens[6]),
-    largeArc: Number(tokens[7]) ? 1 : 0,
-    sweep: Number(tokens[8]) ? 1 : 0,
-    end: { x: Number(tokens[9]), y: Number(tokens[10]) },
-  };
-  if (
-    !Number.isFinite(start.x) ||
-    !Number.isFinite(start.y) ||
-    !Number.isFinite(arc.rx) ||
-    !Number.isFinite(arc.ry) ||
-    !Number.isFinite(arc.xAxisRotation) ||
-    !Number.isFinite(arc.end.x) ||
-    !Number.isFinite(arc.end.y)
-  ) {
-    return null;
-  }
-
-  return { start, arc };
+  return parseMoveArcPathData(pathD);
 }
 
 function vectorAngle(ux: number, uy: number, vx: number, vy: number): number {
@@ -1152,17 +1020,14 @@ function formatMoveArcPath(
 }
 
 function insetCubicPathStart(pathD: string, inset: number): string {
-  const n = '-?\\d*\\.?\\d+(?:e[-+]?\\d+)?';
-  const match = pathD.match(
-    new RegExp(`^M(${n}),(${n}) C(${n}),(${n}) (${n}),(${n}) (${n}),(${n})(?: (.*))?$`, 'i'),
-  );
-  if (!match) return pathD;
+  const parsed = parseMoveCubicPath(pathD);
+  if (!parsed) return pathD;
 
-  const p0 = { x: Number(match[1]), y: Number(match[2]) };
-  const p1 = { x: Number(match[3]), y: Number(match[4]) };
-  const p2 = { x: Number(match[5]), y: Number(match[6]) };
-  const p3 = { x: Number(match[7]), y: Number(match[8]) };
-  const rest = match[9];
+  const p0 = parsed.start;
+  const first = parsed.segments[0];
+  const p1 = first.c1;
+  const p2 = first.c2;
+  const p3 = first.end;
   const totalLength = approximateCubicLength(p0, p1, p2, p3, 1);
   if (!(totalLength > 0)) return pathD;
 
@@ -1182,8 +1047,9 @@ function insetCubicPathStart(pathD: string, inset: number): string {
   const d = lerpPoint(a, b, t);
   const e = lerpPoint(b, c, t);
   const start = lerpPoint(d, e, t);
-  const trimmed = `M${start.x},${start.y} C${e.x},${e.y} ${c.x},${c.y} ${p3.x},${p3.y}`;
-  return rest ? `${trimmed} ${rest}` : trimmed;
+  const nextSegments = parsed.segments.slice();
+  nextSegments[0] = { c1: e, c2: c, end: p3 };
+  return formatMoveCubicPath(start, nextSegments);
 }
 
 function insetArcPathStart(pathD: string, inset: number): string | null {
@@ -1262,10 +1128,8 @@ function insetArcPathEnd(pathD: string, inset: number): string | null {
 function insetPathStart(pathD: string, inset: number): string {
   if (!(inset > 0)) return pathD;
 
-  const match = pathD.match(
-    /^M(-?\d*\.?\d+(?:e[-+]?\d+)?),(-?\d*\.?\d+(?:e[-+]?\d+)?) L(-?\d*\.?\d+(?:e[-+]?\d+)?),(-?\d*\.?\d+(?:e[-+]?\d+)?)$/i,
-  );
-  if (!match) {
+  const simpleLine = parseSimpleMoveLinePathData(pathD);
+  if (!simpleLine) {
     return (
       insetMoveLinePathStart(pathD, inset) ??
       insetArcPathStart(pathD, inset) ??
@@ -1273,10 +1137,10 @@ function insetPathStart(pathD: string, inset: number): string {
     );
   }
 
-  const x1 = Number(match[1]);
-  const y1 = Number(match[2]);
-  const x2 = Number(match[3]);
-  const y2 = Number(match[4]);
+  const x1 = simpleLine.start.x;
+  const y1 = simpleLine.start.y;
+  const x2 = simpleLine.end.x;
+  const y2 = simpleLine.end.y;
   const dx = x2 - x1;
   const dy = y2 - y1;
   const length = Math.hypot(dx, dy);
@@ -1291,10 +1155,8 @@ function insetPathStart(pathD: string, inset: number): string {
 function insetPathEnd(pathD: string, inset: number): string {
   if (!(inset > 0)) return pathD;
 
-  const match = pathD.match(
-    /^M(-?\d*\.?\d+(?:e[-+]?\d+)?),(-?\d*\.?\d+(?:e[-+]?\d+)?) L(-?\d*\.?\d+(?:e[-+]?\d+)?),(-?\d*\.?\d+(?:e[-+]?\d+)?)$/i,
-  );
-  if (!match) {
+  const simpleLine = parseSimpleMoveLinePathData(pathD);
+  if (!simpleLine) {
     return (
       insetMoveLinePathEnd(pathD, inset) ??
       insetCubicPathEnd(pathD, inset) ??
@@ -1303,10 +1165,10 @@ function insetPathEnd(pathD: string, inset: number): string {
     );
   }
 
-  const x1 = Number(match[1]);
-  const y1 = Number(match[2]);
-  const x2 = Number(match[3]);
-  const y2 = Number(match[4]);
+  const x1 = simpleLine.start.x;
+  const y1 = simpleLine.start.y;
+  const x2 = simpleLine.end.x;
+  const y2 = simpleLine.end.y;
   const dx = x2 - x1;
   const dy = y2 - y1;
   const length = Math.hypot(dx, dy);
@@ -1319,32 +1181,7 @@ function insetPathEnd(pathD: string, inset: number): string {
 }
 
 function parseMoveLinePath(pathD: string): Point[] | null {
-  const tokens = pathD.match(/[A-Za-z]|-?\d*\.?\d+(?:e[-+]?\d+)?/gi) ?? [];
-  if (tokens.length < 3 || tokens[0] !== 'M') return null;
-
-  const points: Point[] = [];
-  let i = 1;
-  const readPoint = (): Point | null => {
-    if (i + 1 >= tokens.length) return null;
-    const x = Number(tokens[i++]);
-    const y = Number(tokens[i++]);
-    if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
-    return { x, y };
-  };
-
-  const first = readPoint();
-  if (!first) return null;
-  points.push(first);
-
-  while (i < tokens.length) {
-    const cmd = tokens[i++];
-    if (cmd !== 'L') return null;
-    const point = readPoint();
-    if (!point) return null;
-    points.push(point);
-  }
-
-  return points.length >= 2 ? points : null;
+  return parseMoveLinePathData(pathD);
 }
 
 function formatMoveLinePath(points: Point[]): string {
@@ -1706,7 +1543,7 @@ export function renderShape(node: ShapeNodeData, ctx: RenderContext): HTMLElemen
     );
   }
   if (pathD && isLineLike && (node.flipH || node.flipV)) {
-    pathD = flipAbsolutePath(pathD, pathW, pathH, node.flipH, node.flipV);
+    pathD = flipAbsoluteSvgPathData(pathD, pathW, pathH, node.flipH, node.flipV);
   }
 
   // ---- Resolve fill and line styles ----

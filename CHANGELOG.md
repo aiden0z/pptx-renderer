@@ -7,6 +7,33 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added
+
+- Added a standalone `./browser` ESM entry and real Chromium package tests covering PPTX
+  rendering, all supported ECharts series, and PDF.js 5/6 Worker compatibility.
+
+### Changed
+
+- ECharts now uses modular `echarts/core` registration, reducing the standalone browser
+  bundle while preserving the renderer's chart support matrix.
+- Production builds now use a cross-platform Node build script.
+- PDF.js remains optional and external; no-bundler integrations should use pinned module
+  and worker URLs and allow blob Workers in their CSP.
+
+### Fixed
+
+- Fixed isolated PDF.js cleanup on loading failure and guaranteed Worker termination on
+  success, error, timeout, or cancellation.
+- Fixed late EMF-PDF results mutating disposed slide DOM or repopulating shared blob URL
+  caches after `SlideHandle.dispose()` or `PptxViewer.destroy()`.
+- Replaced unsafe backtracking parsers for untrusted CSS and SVG path values with bounded
+  parsing paths.
+
+### Migration Notes
+
+- No API migration is required. Applications with a restrictive CSP that enable
+  EMF-PDF fallback must allow the configured PDF.js origin and `blob:` Workers.
+
 ## [1.2.3] - 2026-07-01
 
 ### Fixed

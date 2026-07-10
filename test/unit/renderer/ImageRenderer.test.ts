@@ -3351,10 +3351,51 @@ describe('renderImage', () => {
         node.size.w,
         node.size.h,
         ctx.pdfjs,
+        undefined,
       );
 
       emfSpy.mockRestore();
       pdfSpy.mockRestore();
+    });
+
+    it('drops and revokes a late PDF result after the render context is aborted', async () => {
+      const emfModule = await import('../../../src/utils/emfParser');
+      const pdfModule = await import('../../../src/utils/pdfRenderer');
+      const emfSpy = vi.spyOn(emfModule, 'parseEmfContent').mockReturnValue({
+        type: 'pdf',
+        data: new Uint8Array([0x25, 0x50, 0x44, 0x46]),
+      });
+      let resolvePdf!: (url: string | null) => void;
+      const pdfSpy = vi.spyOn(pdfModule, 'renderPdfToImage').mockImplementation(
+        () =>
+          new Promise((resolve) => {
+            resolvePdf = resolve;
+          }),
+      );
+      const revokeSpy = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
+      const controller = new AbortController();
+      const ctx = createEmfCtx();
+      ctx.signal = controller.signal;
+
+      const el = renderImage(createPicNode({ blipEmbed: 'rId1' }), ctx);
+      controller.abort();
+      resolvePdf('blob:late-pdf-url');
+      await Promise.all(ctx.asyncTasks ?? []);
+
+      expect(pdfSpy).toHaveBeenCalledWith(
+        expect.any(Uint8Array),
+        expect.any(Number),
+        expect.any(Number),
+        undefined,
+        controller.signal,
+      );
+      expect(revokeSpy).toHaveBeenCalledWith('blob:late-pdf-url');
+      expect(ctx.mediaUrlCache.has('ppt/media/image1.emf:emf-pdf')).toBe(false);
+      expect(el.querySelector('img')).toBeNull();
+
+      emfSpy.mockRestore();
+      pdfSpy.mockRestore();
+      revokeSpy.mockRestore();
     });
 
     it('leaves wrapper empty when renderPdfToImage returns null', async () => {

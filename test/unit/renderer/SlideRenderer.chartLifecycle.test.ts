@@ -1,12 +1,12 @@
 /**
  * Tests for standalone renderSlide() chart disposal.
  *
- * Separate file because vi.mock('echarts') must be hoisted before SlideRenderer
+ * Separate file because the ECharts runtime mock must be hoisted before SlideRenderer
  * imports ChartRenderer.
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { ECharts } from 'echarts';
+import type { EChartsType } from 'echarts/core';
 
 const mockChartInstance = {
   setOption: vi.fn(),
@@ -16,8 +16,8 @@ const mockChartInstance = {
   getDom: vi.fn(() => document.createElement('div')),
 };
 
-vi.mock('echarts', () => ({
-  init: vi.fn(() => mockChartInstance),
+vi.mock('../../../src/renderer/chart/echartsRuntime', () => ({
+  echarts: { init: vi.fn(() => mockChartInstance) },
 }));
 
 import { renderSlide } from '../../../src/renderer/SlideRenderer';
@@ -213,8 +213,8 @@ describe('renderSlide standalone chart lifecycle', () => {
       isDisposed: vi.fn(() => false),
       dispose: vi.fn(),
       getDom: vi.fn(() => document.createElement('div')),
-    } as unknown as ECharts;
-    const sharedCharts = new Set<ECharts>([externalChart]);
+    } as unknown as EChartsType;
+    const sharedCharts = new Set<EChartsType>([externalChart]);
 
     const handle = renderSlide(pres, slide, { chartInstances: sharedCharts });
     handle.dispose();

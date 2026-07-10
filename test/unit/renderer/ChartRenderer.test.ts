@@ -241,6 +241,12 @@ function parseChartOption(xml: string, ctx?: RenderContext): ParseChartResult {
 // ---------------------------------------------------------------------------
 
 describe('ChartRenderer', () => {
+  it('disables ECharts animation for deterministic static slide rendering', () => {
+    const { option } = parseChartOption(buildChartSpaceXml({}));
+
+    expect(option.animation).toBe(false);
+  });
+
   describe('chart data safety', () => {
     it('does not trust oversized ptCount when only sparse points are present', () => {
       const xml = `
