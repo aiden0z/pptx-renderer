@@ -1090,7 +1090,7 @@ export function renderTextBody(
     // ---- Render runs ----
     const compactNumericRunGroups = findCompactNumericRunGroups(paragraph.runs);
     const compactNumericGroupElements = new Map<number, HTMLElement>();
-    if (paragraph.runs.length === 0) {
+    if (!hasVisibleRuns) {
       // Empty paragraph — still need to maintain spacing
       paraDiv.appendChild(document.createElement('br'));
     }
@@ -1114,7 +1114,11 @@ export function renderTextBody(
       paraDiv.appendChild(currentLineDiv);
     }
 
-    for (const [runIndex, run] of paragraph.runs.entries()) {
+    for (const [runIndex, sourceRun] of paragraph.runs.entries()) {
+      const run =
+        sourceRun.fieldType?.toLowerCase() === 'slidenum'
+          ? { ...sourceRun, text: String(ctx.slide.index + 1) }
+          : sourceRun;
       if (run.text === '\n') {
         if (useLineWrappers) {
           // Close current line div and start a new one

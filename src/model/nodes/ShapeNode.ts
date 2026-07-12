@@ -8,6 +8,8 @@ import { BaseNodeData, parseBaseProps } from './BaseNode';
 
 export interface TextRun {
   text: string;
+  /** OOXML dynamic field type, for example `slidenum`. */
+  fieldType?: string;
   /** @internal Raw XML node — opaque to consumers. Use serializePresentation() for JSON-safe data. */
   properties?: SafeXmlNode;
 }
@@ -118,6 +120,7 @@ function parseParagraph(pNode: SafeXmlNode): TextParagraph {
       const tNode = child.child('t');
       orderedRuns.push({
         text: tNode.text(),
+        fieldType: child.attr('type'),
         properties: rPr.exists() ? rPr : undefined,
       });
     }

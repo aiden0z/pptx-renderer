@@ -297,6 +297,7 @@ describe('parseShapeNode', () => {
     expect(runs[1].text).toBe('\n');
     expect(runs[2].text).toBe('Line2');
     expect(runs[3].text).toBe('3');
+    expect(runs[3].fieldType).toBe('slidenum');
   });
 
   it('preserves run properties on line breaks and fields', () => {
