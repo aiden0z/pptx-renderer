@@ -37,6 +37,48 @@ import { PptxViewer, RECOMMENDED_ZIP_LIMITS } from '@aiden0z/pptx-renderer';
 
 If JSZip metadata does not provide a trustworthy uncompressed size, parsing still checks the actual decoded entry size before accepting the entry. This fallback applies to XML/text entries and media entries, so the same limits remain effective for archives whose size metadata is unavailable.
 
+## Embedded Font Limits
+
+Embedded font bytes are untrusted PPTX input and are decompressed synchronously during
+rendering. The renderer applies these limits automatically:
+
+| Limit                         | Default  | Effect                                     |
+| ----------------------------- | -------- | ------------------------------------------ |
+| `maxFaces`                    | `16`     | Bounds the number of loaded font faces     |
+| `maxInputBytesPerFace`        | `8 MiB`  | Rejects an oversized EOT input             |
+| `maxDecompressedBytesPerFace` | `16 MiB` | Rejects an oversized decoded font          |
+| `maxTotalDecompressedBytes`   | `32 MiB` | Bounds decoded font bytes per presentation |
+| `maxProcessingMs`             | `250`    | Stops starting additional font decode work |
+
+Trusted applications can provide a partial override through `ViewerOptions`; omitted fields
+retain `DEFAULT_EMBEDDED_FONT_LIMITS`:
+
+```ts
+const viewer = new PptxViewer(container, {
+  embeddedFontLimits: {
+    maxFaces: 32,
+    maxTotalDecompressedBytes: 64 * 1024 * 1024,
+    maxProcessingMs: 500,
+  },
+});
+```
+
+The same option is available in the headless slide renderer:
+
+```ts
+const handle = renderSlide(presentation, 0, {
+  embeddedFontLimits: { maxFaces: 32 },
+});
+```
+
+Values must be finite and non-negative; byte values and `maxFaces` must be safe integers.
+Set `maxFaces: 0` to disable embedded font loading. Invalid, malformed, oversized, or
+unloadable faces are skipped and text falls back to available host fonts.
+
+`maxProcessingMs` is a soft batch deadline: the current MTX decoder is synchronous, so an
+individual face already being decoded cannot be interrupted. The renderer checks the deadline
+after each face and does not start another face after the budget is reached.
+
 ## Lazy Media Decoding
 
 Large decks often spend most memory on decompressed `ppt/media/*` entries. By default,
@@ -137,6 +179,7 @@ for one slide or `materializeAllSlideNodes()` for the full model.
 
 These guards are applied by the renderer even when ZIP byte limits are configured, because some PPTX structures can be small on disk but expensive after parsing:
 
+- Embedded fonts use per-face, aggregate-byte, face-count, and soft processing-time limits.
 - Chart cache point indexes are capped at `10,000` per cache. Oversized `c:ptCount` values do not drive array allocation.
 - EMF bitmap previews are rejected above `16,777,216` decoded pixels, above `8192x8192` dimensions, or when the declared bitmap payload is truncated.
 - External audio/video media is not preloaded automatically; rendered media elements use `preload="none"`.

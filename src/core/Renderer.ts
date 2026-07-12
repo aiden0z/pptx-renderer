@@ -4,6 +4,7 @@ import { buildPresentation } from '../model/Presentation';
 import { PptxViewer, normalizePreviewInput } from './Viewer';
 import type { FitMode, PreviewInput, ListRenderOptions } from './Viewer';
 import type { PdfjsConfig } from '../utils/pdfRenderer';
+import type { EmbeddedFontLimits } from '../renderer/EmbeddedFontLoader';
 
 export type { PreviewInput, FitMode } from './Viewer';
 export type { SlideHandle } from '../renderer/SlideRenderer';
@@ -23,6 +24,8 @@ export interface RendererOptions {
   lazySlides?: boolean;
   /** Optional pdfjs URLs for EMF-embedded PDF fallback rendering. Use `false` to disable. */
   pdfjs?: PdfjsConfig;
+  /** Optional embedded-font resource limit overrides. Defaults remain enforced for omitted fields. */
+  embeddedFontLimits?: EmbeddedFontLimits;
   /**
    * Number of slides rendered per batch in list mode.
    * Lower values improve UI responsiveness for large decks.
@@ -73,6 +76,7 @@ export class PptxRenderer extends PptxViewer {
       lazyMedia: options.lazyMedia,
       lazySlides: options.lazySlides,
       pdfjs: options.pdfjs,
+      embeddedFontLimits: options.embeddedFontLimits,
       onSlideChange: options.onSlideChange,
       onSlideRendered: options.onSlideRendered,
       onSlideError: options.onSlideError,

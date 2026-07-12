@@ -52,6 +52,19 @@ Maintainers will acknowledge as soon as possible on GitHub.
 
 These limits are checked from ZIP metadata when available and from the actual decoded entry size when metadata is unavailable. The decoded-size fallback covers XML/text entries as well as media entries, which prevents oversized entries from bypassing limits through missing JSZip private size metadata.
 
+Embedded font loading applies safe defaults without requiring configuration:
+
+- At most `16` faces are loaded per presentation.
+- EOT input is limited to `8 MiB` per face.
+- Decoded font data is limited to `16 MiB` per face and `32 MiB` per presentation.
+- A `250 ms` soft batch deadline stops additional synchronous decode work from starting.
+
+Trusted applications can use `embeddedFontLimits` to provide finite, non-negative partial
+overrides; omitted fields keep the defaults exported as `DEFAULT_EMBEDDED_FONT_LIMITS`.
+Malformed, oversized, slow, or unloadable faces are skipped so text falls back to host fonts.
+Because the MTX decoder is synchronous, the time deadline cannot interrupt a face already in
+progress and may be exceeded by that final face.
+
 The renderer also applies semantic limits after ZIP parsing:
 
 - Chart data caches cap point indexes at `10,000` and ignore oversized `c:ptCount` allocation hints.

@@ -14,6 +14,7 @@ import {
 } from '../search/TextSearch';
 import type { EChartsType } from 'echarts/core';
 import type { PdfjsConfig } from '../utils/pdfRenderer';
+import type { EmbeddedFontLimits } from '../renderer/EmbeddedFontLoader';
 
 export type { SlideHandle } from '../renderer/SlideRenderer';
 
@@ -41,6 +42,8 @@ export interface ViewerOptions {
   lazySlides?: boolean;
   /** Optional pdfjs URLs for EMF-embedded PDF fallback rendering. Use `false` to disable. */
   pdfjs?: PdfjsConfig;
+  /** Optional embedded-font resource limit overrides. Defaults remain enforced for omitted fields. */
+  embeddedFontLimits?: EmbeddedFontLimits;
   onSlideChange?: (index: number) => void;
   onSlideRendered?: (index: number, element: HTMLElement) => void;
   onSlideError?: (index: number, error: unknown) => void;
@@ -482,6 +485,7 @@ export class PptxViewer extends EventTarget {
       onNavigate: (target) => this.handleNavigate(target),
       mediaUrlCache: this.mediaUrlCache,
       pdfjs: this.viewerOptions.pdfjs,
+      embeddedFontLimits: this.viewerOptions.embeddedFontLimits,
       chartInstances: this.chartInstances,
     });
 
@@ -977,6 +981,7 @@ export class PptxViewer extends EventTarget {
         onNavigate: (target) => this.handleNavigate(target),
         mediaUrlCache: this.mediaUrlCache,
         pdfjs: this.viewerOptions.pdfjs,
+        embeddedFontLimits: this.viewerOptions.embeddedFontLimits,
         chartInstances: this.chartInstances,
       });
 
@@ -1207,6 +1212,7 @@ export class PptxViewer extends EventTarget {
         onNavigate: (target) => this.handleNavigate(target),
         mediaUrlCache: this.mediaUrlCache,
         pdfjs: this.viewerOptions.pdfjs,
+        embeddedFontLimits: this.viewerOptions.embeddedFontLimits,
         chartInstances: this.chartInstances,
       });
       this.slideHandles.set(this.currentSlide, handle);

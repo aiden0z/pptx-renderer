@@ -101,6 +101,19 @@ describe('PptxViewer EventTarget', () => {
     expect(onSlideRendered).toHaveBeenCalledWith(0, expect.any(HTMLElement));
   });
 
+  it('passes embedded font limit overrides to slide rendering', async () => {
+    const container = document.createElement('div');
+    const embeddedFontLimits = { maxFaces: 32, maxProcessingMs: 500 };
+    const viewer = new PptxViewer(container, { embeddedFontLimits });
+    viewer.load(makeMockPresentation());
+
+    await viewer.renderSlide(0);
+
+    expect(vi.mocked(mockRenderSlide).mock.calls.at(-1)?.[2]).toMatchObject({
+      embeddedFontLimits,
+    });
+  });
+
   it('supports removeEventListener', async () => {
     const container = document.createElement('div');
     const viewer = new PptxViewer(container);

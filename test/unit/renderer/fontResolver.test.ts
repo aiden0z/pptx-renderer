@@ -84,6 +84,18 @@ describe('fontResolver', () => {
     ]);
   });
 
+  it('keeps the original family as fallback when an embedded face cannot load', () => {
+    const ctx = createMockRenderContext();
+    ctx.presentation.embeddedFontFamilies = new Map([['example sans', '__pptx_embedded_1_0']]);
+    ctx.usedEmbeddedFontFamilies = new Set();
+
+    expect(resolveThemeFontStack(['Example Sans'], ctx)).toEqual([
+      '__pptx_embedded_1_0',
+      'Example Sans',
+    ]);
+    expect(ctx.usedEmbeddedFontFamilies).toEqual(new Set(['__pptx_embedded_1_0']));
+  });
+
   it('serializes CSS font family stacks with aliases, CJK fallbacks, generics, and escaping', () => {
     expect(cssFontFamilyStack('Calibri')).toBe(
       '"Calibri", "Aptos", "Carlito", system-ui, "Arial", "Helvetica", sans-serif',

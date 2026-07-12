@@ -214,25 +214,30 @@ const viewer = await PptxViewer.open(buffer, container, {
 
 #### `new PptxViewer(container, options?)`
 
-| Option             | Type                       | Default     | Description                                                                                                       |
-| ------------------ | -------------------------- | ----------- | ----------------------------------------------------------------------------------------------------------------- |
-| `width`            | `number`                   | --          | Container width hint (omit for auto-detect)                                                                       |
-| `fitMode`          | `'contain' \| 'none'`      | `'contain'` | Responsive fit or fixed size                                                                                      |
-| `zoomPercent`      | `number`                   | `100`       | Zoom level (10–400)                                                                                               |
-| `scrollContainer`  | `HTMLElement`              | --          | Scroll container for IntersectionObserver root                                                                    |
-| `zipLimits`        | `ZipParseLimits`           | --          | Security limits for ZIP parsing (used by `.open()`). Use `RECOMMENDED_ZIP_LIMITS` for untrusted input.            |
-| `lazyMedia`        | `boolean`                  | `false`     | Decode embedded media on demand instead of during ZIP parsing. Best for large decks with windowed list rendering. |
-| `lazySlides`       | `boolean`                  | `false`     | Parse slide shape/table/chart nodes on demand. Best for large decks with windowed list rendering.                 |
-| `pdfjs`            | `PdfjsConfig`              | --          | Optional PDF.js URLs for EMF-embedded PDF fallback rendering, or `false` to disable it.                           |
-| `onSlideChange`    | `(index) => void`          | --          | Shorthand for `slidechange` event                                                                                 |
-| `onSlideRendered`  | `(index, element) => void` | --          | Shorthand for `sliderendered` event                                                                               |
-| `onSlideError`     | `(index, error) => void`   | --          | Shorthand for `slideerror` event                                                                                  |
-| `onSlideUnmounted` | `(index) => void`          | --          | Shorthand for `slideunmounted` event                                                                              |
-| `onNodeError`      | `(nodeId, error) => void`  | --          | Shorthand for `nodeerror` event                                                                                   |
-| `onRenderStart`    | `() => void`               | --          | Shorthand for `renderstart` event                                                                                 |
-| `onRenderComplete` | `() => void`               | --          | Shorthand for `rendercomplete` event                                                                              |
+| Option               | Type                       | Default       | Description                                                                                                       |
+| -------------------- | -------------------------- | ------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `width`              | `number`                   | --            | Container width hint (omit for auto-detect)                                                                       |
+| `fitMode`            | `'contain' \| 'none'`      | `'contain'`   | Responsive fit or fixed size                                                                                      |
+| `zoomPercent`        | `number`                   | `100`         | Zoom level (10–400)                                                                                               |
+| `scrollContainer`    | `HTMLElement`              | --            | Scroll container for IntersectionObserver root                                                                    |
+| `zipLimits`          | `ZipParseLimits`           | --            | Security limits for ZIP parsing (used by `.open()`). Use `RECOMMENDED_ZIP_LIMITS` for untrusted input.            |
+| `lazyMedia`          | `boolean`                  | `false`       | Decode embedded media on demand instead of during ZIP parsing. Best for large decks with windowed list rendering. |
+| `lazySlides`         | `boolean`                  | `false`       | Parse slide shape/table/chart nodes on demand. Best for large decks with windowed list rendering.                 |
+| `pdfjs`              | `PdfjsConfig`              | --            | Optional PDF.js URLs for EMF-embedded PDF fallback rendering, or `false` to disable it.                           |
+| `embeddedFontLimits` | `EmbeddedFontLimits`       | safe defaults | Optional embedded-font resource limit overrides. Omitted fields retain the built-in defaults.                     |
+| `onSlideChange`      | `(index) => void`          | --            | Shorthand for `slidechange` event                                                                                 |
+| `onSlideRendered`    | `(index, element) => void` | --            | Shorthand for `sliderendered` event                                                                               |
+| `onSlideError`       | `(index, error) => void`   | --            | Shorthand for `slideerror` event                                                                                  |
+| `onSlideUnmounted`   | `(index) => void`          | --            | Shorthand for `slideunmounted` event                                                                              |
+| `onNodeError`        | `(nodeId, error) => void`  | --            | Shorthand for `nodeerror` event                                                                                   |
+| `onRenderStart`      | `() => void`               | --            | Shorthand for `renderstart` event                                                                                 |
+| `onRenderComplete`   | `() => void`               | --            | Shorthand for `rendercomplete` event                                                                              |
 
 All shorthand callbacks are also available as `EventTarget` events (e.g. `viewer.addEventListener('slidechange', ...)`).
+
+Embedded font decompression is bounded by default. Trusted applications can provide partial
+`embeddedFontLimits` overrides; see the [performance guide](docs/PERFORMANCE.md#embedded-font-limits)
+for defaults, examples, and the soft processing-time boundary.
 
 #### Instance Methods
 

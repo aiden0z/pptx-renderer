@@ -55,6 +55,27 @@ function resolveScriptFont(
   return undefined;
 }
 
+function resolveThemeFontName(
+  typeface: string,
+  ctx: RenderContext,
+  languageHints?: LanguageHint | LanguageHint[],
+): string {
+  const match = typeface.match(THEME_FONT_REF);
+  if (!match) return typeface;
+
+  const scheme = match[1];
+  const slot = match[2] as ThemeFontSlot;
+  const fonts = scheme === 'mj' ? ctx.theme.majorFont : ctx.theme.minorFont;
+  const key = THEME_FONT_SLOT_MAP[slot];
+  const direct = fonts[key];
+  if (direct) return direct;
+  if (slot === 'ea') {
+    const scriptFont = resolveScriptFont(fonts.scripts, languageHints);
+    if (scriptFont) return scriptFont;
+  }
+  return fonts.latin || fonts.ea || fonts.cs || typeface;
+}
+
 /**
  * Resolve theme font placeholder references like "+mj-lt" or "+mn-ea".
  */
@@ -63,21 +84,7 @@ export function resolveThemeFont(
   ctx: RenderContext,
   languageHints?: LanguageHint | LanguageHint[],
 ): string {
-  const match = typeface.match(THEME_FONT_REF);
-  let resolved = typeface;
-
-  if (match) {
-    const scheme = match[1];
-    const slot = match[2] as ThemeFontSlot;
-    const fonts = scheme === 'mj' ? ctx.theme.majorFont : ctx.theme.minorFont;
-    const key = THEME_FONT_SLOT_MAP[slot];
-    resolved = fonts[key];
-    if (!resolved && slot === 'ea') {
-      resolved = resolveScriptFont(fonts.scripts, languageHints) ?? '';
-    }
-    resolved ||= fonts.latin || fonts.ea || fonts.cs || typeface;
-  }
-
+  const resolved = resolveThemeFontName(typeface, ctx, languageHints);
   const embeddedFamily = ctx.presentation.embeddedFontFamilies?.get(resolved.trim().toLowerCase());
   if (!embeddedFamily) return resolved;
   ctx.usedEmbeddedFontFamilies?.add(embeddedFamily);
@@ -93,12 +100,15 @@ export function resolveThemeFontStack(
   const stack: string[] = [];
   for (const typeface of typefaces) {
     if (!typeface) continue;
-    const resolved = resolveThemeFont(typeface, ctx, languageHints).trim();
-    if (!resolved) continue;
-    const key = resolved.toLowerCase();
-    if (seen.has(key)) continue;
-    seen.add(key);
-    stack.push(resolved);
+    const resolved = resolveThemeFontName(typeface, ctx, languageHints).trim();
+    const embedded = ctx.presentation.embeddedFontFamilies?.get(resolved.toLowerCase());
+    if (embedded) ctx.usedEmbeddedFontFamilies?.add(embedded);
+    for (const font of embedded ? [embedded, resolved] : [resolved]) {
+      const key = font.toLowerCase();
+      if (!font || seen.has(key)) continue;
+      seen.add(key);
+      stack.push(font);
+    }
   }
   return stack;
 }

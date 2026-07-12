@@ -18,6 +18,7 @@ function readJson<T>(path: string): T {
 
 interface PackageJson {
   packageManager: string;
+  files: string[];
   scripts: Record<string, string>;
   exports: Record<string, unknown>;
   devDependencies: Record<string, string>;
@@ -58,6 +59,19 @@ describe('browser distribution contract', () => {
     expect((isExternal as (id: string) => boolean)('jszip')).toBe(true);
     expect((isExternal as (id: string) => boolean)('pdfjs-dist')).toBe(true);
     expect(browserConfig.build?.rollupOptions?.external).toEqual(['pdfjs-dist']);
+  });
+
+  it('publishes the MPL notice, license, and exact source location for bundled MTX code', () => {
+    const notice = readText('THIRD_PARTY_NOTICES.md');
+
+    expect(packageJson.files).toContain('THIRD_PARTY_NOTICES.md');
+    expect(packageJson.files).toContain('licenses');
+    expect(notice).toContain('mtx-decompressor 1.4.2');
+    expect(notice).toContain('Mozilla Public License 2.0');
+    expect(notice).toContain('refs/tags/v1.4.2.tar.gz');
+    expect(readText('licenses/mtx-decompressor-MPL-2.0.txt')).toContain(
+      'Mozilla Public License Version 2.0',
+    );
   });
 
   it('uses the tree-shakeable ECharts runtime with every supported chart type registered', () => {

@@ -13,7 +13,7 @@ import { parseOoxmlBool } from '../parser/booleans';
 import { isExternalTargetMode } from '../parser/RelParser';
 import { isAllowedExternalUrl } from '../utils/urlSafety';
 import { getEffectiveBodyPrChild } from './TextBodyProperties';
-import { cssFontFamilyStack, resolveThemeFont } from './fontResolver';
+import { cssFontFamilyStack, resolveThemeFontStack } from './fontResolver';
 import { resolveSlideNavigationIndex, slideJumpTitle } from './navigation';
 
 // ---------------------------------------------------------------------------
@@ -460,7 +460,7 @@ function mergeRunProps(target: MergedRunStyle, rPr: SafeXmlNode, ctx: RenderCont
     if (!fontNode.exists()) continue;
     const typeface = fontNode.attr('typeface');
     if (!typeface) continue;
-    fontFamilyStack.push(resolveThemeFont(typeface, ctx, languageHints));
+    fontFamilyStack.push(...resolveThemeFontStack([typeface], ctx, languageHints));
   }
   if (fontFamilyStack.length > 0) {
     target.fontFamily = fontFamilyStack[0];
@@ -1040,7 +1040,9 @@ export function renderTextBody(
         }
       }
       if (merged.bulletFont) {
-        bulletSpan.style.fontFamily = cssFontFamilyStack(resolveThemeFont(merged.bulletFont, ctx));
+        bulletSpan.style.fontFamily = cssFontFamilyStack(
+          resolveThemeFontStack([merged.bulletFont], ctx),
+        );
       }
       const bulletFontSize = merged.bulletSizePt ?? effectiveFontSize * (merged.bulletSizePct ?? 1);
       bulletSpan.style.fontSize = `${bulletFontSize * fontScale}pt`;
@@ -1367,9 +1369,10 @@ export function renderTextBody(
         ? (runStyle.fontFamilyStack ?? runStyle.fontFamily)
         : (options?.cellTextFontFamily ?? runStyle.fontFamilyStack ?? runStyle.fontFamily);
       if (effectiveFont) {
-        const resolvedFont = Array.isArray(effectiveFont)
-          ? effectiveFont.map((font) => resolveThemeFont(font, ctx))
-          : resolveThemeFont(effectiveFont, ctx);
+        const resolvedFont = resolveThemeFontStack(
+          Array.isArray(effectiveFont) ? effectiveFont : [effectiveFont],
+          ctx,
+        );
         element.style.fontFamily = cssFontFamilyStack(resolvedFont);
       } else {
         // Fallback to theme minor font

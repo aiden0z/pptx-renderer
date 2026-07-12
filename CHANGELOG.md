@@ -7,6 +7,11 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added
+
+- Added browser rendering for licensed EOT/MTX fonts embedded in PowerPoint files, with
+  bounded face, byte, and processing budgets plus host-font fallback for rejected faces.
+
 ## [1.2.4] - 2026-07-10
 
 ### Added
