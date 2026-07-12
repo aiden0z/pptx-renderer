@@ -21,6 +21,8 @@ export interface PptxFiles {
   themes: Map<string, string>;
   themeOverrides?: Map<string, string>;
   media: Map<string, Uint8Array>;
+  /** Embedded EOT font parts under ppt/fonts/. */
+  fonts?: Map<string, Uint8Array>;
   mediaResolver?: MediaResolver;
   tableStyles?: string;
   charts: Map<string, string>; // ppt/charts/chart*.xml
@@ -347,6 +349,7 @@ async function parseZipInternal(
     themes: new Map(),
     themeOverrides: new Map(),
     media: new Map(),
+    fonts: new Map(),
     charts: new Map(),
     chartRels: new Map(),
     chartStyles: new Map(),
@@ -400,6 +403,13 @@ async function parseZipInternal(
 
       const bytes = await readZipBinaryEntry(normalizedPath, file, limitState);
       setPathMapEntry(result.media, normalizedPath, bytes);
+      return;
+    }
+
+    // --- Embedded fonts (binary EOT/.fntdata) ---
+    if (/^ppt\/fonts\/[^/]+\.fntdata$/i.test(normalizedPath)) {
+      const bytes = await readZipBinaryEntry(normalizedPath, file, limitState);
+      setPathMapEntry(result.fonts!, normalizedPath, bytes);
       return;
     }
 

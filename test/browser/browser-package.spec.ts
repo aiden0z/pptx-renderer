@@ -283,3 +283,44 @@ test('text overflow combinations remain non-scrollable in Chromium', async ({ pa
     expect(combination.computed, combination.name).toEqual(combination.expected);
   }
 });
+
+test('embedded PPTX fonts load without host font installation', async ({ page }) => {
+  await page.goto('/test/browser/blank.html');
+  const result = await page.evaluate(async () => {
+    const renderer = await import('/dist/aiden0z-pptx-renderer.browser.es.js');
+    const response = await fetch('/docs/example/embedded-font/source.pptx');
+    const presentation = renderer.buildPresentation(
+      await renderer.parseZip(await response.arrayBuffer()),
+    );
+    const handle = renderer.renderSlide(presentation, presentation.slides[0]);
+    document.body.replaceChildren(handle.element);
+    await handle.ready;
+
+    const renderFamily = presentation.embeddedFonts?.[0]?.renderFamily ?? '';
+    const vietnamese = Array.from(handle.element.querySelectorAll('span')).find((span) =>
+      span.textContent?.includes('Tiếng Việt'),
+    );
+    const registeredBeforeDispose = Array.from(document.fonts).filter(
+      (face) => face.family === renderFamily,
+    ).length;
+    handle.dispose();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    return {
+      embeddedFaceCount: presentation.embeddedFonts?.length ?? 0,
+      fontFamily: vietnamese ? getComputedStyle(vietnamese).fontFamily : '',
+      fontLoaded: document.fonts.check(`12px "${renderFamily}"`),
+      renderFamily,
+      registeredBeforeDispose,
+      registeredAfterDispose: Array.from(document.fonts).filter(
+        (face) => face.family === renderFamily,
+      ).length,
+    };
+  });
+
+  expect(result.embeddedFaceCount).toBe(2);
+  expect(result.renderFamily).toMatch(/^__pptx_embedded_/);
+  expect(result.fontFamily).toContain(result.renderFamily);
+  expect(result.fontLoaded).toBe(true);
+  expect(result.registeredBeforeDispose).toBe(2);
+  expect(result.registeredAfterDispose).toBe(0);
+});

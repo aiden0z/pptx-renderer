@@ -47,6 +47,19 @@ afterEach(() => {
 // ---------------------------------------------------------------------------
 
 describe('parseZip – categorization', () => {
+  it('extracts embedded font parts as binary data', async () => {
+    const buffer = await buildZip([
+      ...SKELETON,
+      { path: 'ppt/fonts/Example-regular.fntdata', data: new Uint8Array([1, 2, 3, 4]) },
+    ]);
+
+    const files = await parseZip(buffer);
+
+    expect(files.fonts?.get('ppt/fonts/Example-regular.fntdata')).toEqual(
+      new Uint8Array([1, 2, 3, 4]),
+    );
+  });
+
   it('parses presentation.xml into result.presentation', async () => {
     const presentationXml =
       '<p:presentation xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"><p:sldSz cx="9144000" cy="6858000"/></p:presentation>';

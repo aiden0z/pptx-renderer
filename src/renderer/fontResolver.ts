@@ -64,19 +64,24 @@ export function resolveThemeFont(
   languageHints?: LanguageHint | LanguageHint[],
 ): string {
   const match = typeface.match(THEME_FONT_REF);
-  if (!match) return typeface;
+  let resolved = typeface;
 
-  const scheme = match[1];
-  const slot = match[2] as ThemeFontSlot;
-  const fonts = scheme === 'mj' ? ctx.theme.majorFont : ctx.theme.minorFont;
-  const key = THEME_FONT_SLOT_MAP[slot];
-  const direct = fonts[key];
-  if (direct) return direct;
-  if (slot === 'ea') {
-    const scriptFont = resolveScriptFont(fonts.scripts, languageHints);
-    if (scriptFont) return scriptFont;
+  if (match) {
+    const scheme = match[1];
+    const slot = match[2] as ThemeFontSlot;
+    const fonts = scheme === 'mj' ? ctx.theme.majorFont : ctx.theme.minorFont;
+    const key = THEME_FONT_SLOT_MAP[slot];
+    resolved = fonts[key];
+    if (!resolved && slot === 'ea') {
+      resolved = resolveScriptFont(fonts.scripts, languageHints) ?? '';
+    }
+    resolved ||= fonts.latin || fonts.ea || fonts.cs || typeface;
   }
-  return fonts.latin || fonts.ea || fonts.cs || typeface;
+
+  const embeddedFamily = ctx.presentation.embeddedFontFamilies?.get(resolved.trim().toLowerCase());
+  if (!embeddedFamily) return resolved;
+  ctx.usedEmbeddedFontFamilies?.add(embeddedFamily);
+  return embeddedFamily;
 }
 
 export function resolveThemeFontStack(

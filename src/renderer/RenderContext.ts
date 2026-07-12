@@ -27,6 +27,8 @@ export interface RenderContext {
   colorCache: Map<string, { color: string; alpha: number }>;
   /** Async media/rendering work that callers may await before screenshot/export. */
   asyncTasks?: Promise<void>[];
+  /** Presentation-specific embedded CSS families referenced by this render. */
+  usedEmbeddedFontFamilies?: Set<string>;
   /** Aborted when the owning slide is disposed; async renderers must stop late writes. */
   signal?: AbortSignal;
   /** Optional pdfjs URLs for EMF-embedded PDF fallback rendering. */
@@ -98,6 +100,7 @@ export function createRenderContext(
     masterPath,
     mediaUrlCache: mediaUrlCache ?? new Map(),
     colorCache: new Map(),
+    usedEmbeddedFontFamilies: new Set(),
     pdfjs,
     signal,
     chartInstances,

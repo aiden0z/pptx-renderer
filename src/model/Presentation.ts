@@ -27,6 +27,9 @@ export interface PresentationData {
   masterToTheme: Map<string, string>;
   media: Map<string, Uint8Array>;
   mediaResolver?: MediaResolver;
+  /** Embedded font faces, isolated behind a presentation-specific CSS family. */
+  embeddedFonts?: EmbeddedFontFaceData[];
+  embeddedFontFamilies?: Map<string, string>;
   tableStyles?: SafeXmlNode;
   /** Presentation-wide default text style from ppt/presentation.xml. */
   defaultTextStyle?: SafeXmlNode;
@@ -40,6 +43,14 @@ export interface PresentationData {
   /** Chart color style parts keyed by chart part path. */
   chartColorStyles?: Map<string, SafeXmlNode>;
   isWps: boolean;
+}
+
+export interface EmbeddedFontFaceData {
+  family: string;
+  renderFamily: string;
+  data: Uint8Array;
+  weight: '400' | '700';
+  style: 'normal' | 'italic';
 }
 
 export interface BuildPresentationOptions {
@@ -122,6 +133,45 @@ function findRelsByType(rels: Map<string, RelEntry>, typeSubstring: string): [st
   return results;
 }
 
+let embeddedFontNamespace = 0;
+
+function parseEmbeddedFonts(
+  presRoot: SafeXmlNode,
+  presRels: Map<string, RelEntry>,
+  files: PptxFiles,
+): { faces: EmbeddedFontFaceData[]; families: Map<string, string> } {
+  const faces: EmbeddedFontFaceData[] = [];
+  const families = new Map<string, string>();
+  const namespace = ++embeddedFontNamespace;
+  const faceTypes = [
+    ['regular', '400', 'normal'],
+    ['bold', '700', 'normal'],
+    ['italic', '400', 'italic'],
+    ['boldItalic', '700', 'italic'],
+  ] as const;
+
+  for (const embeddedFont of presRoot.child('embeddedFontLst').children('embeddedFont')) {
+    const family = embeddedFont.child('font').attr('typeface')?.trim();
+    if (!family) continue;
+
+    const renderFamily = `__pptx_embedded_${namespace}_${families.size}`;
+    let foundFace = false;
+    for (const [elementName, weight, style] of faceTypes) {
+      const face = embeddedFont.child(elementName);
+      const rId = face.attr('id') ?? face.attr('r:id');
+      const rel = rId ? presRels.get(rId) : undefined;
+      if (!rel) continue;
+      const data = files.fonts?.get(resolveRelTarget('ppt', rel.target));
+      if (!data) continue;
+      faces.push({ family, renderFamily, data, weight, style });
+      foundFace = true;
+    }
+    if (foundFace) families.set(family.toLowerCase(), renderFamily);
+  }
+
+  return { faces, families };
+}
+
 /**
  * Build the complete PresentationData from extracted PPTX files.
  *
@@ -148,6 +198,7 @@ export function buildPresentation(
 
   // --- Presentation default text style ---
   const defaultTextStyle = presRoot.child('defaultTextStyle');
+  const embeddedFonts = parseEmbeddedFonts(presRoot, presRels, files);
 
   // --- Parse themes ---
   const themes = new Map<string, ThemeData>();
@@ -340,6 +391,8 @@ export function buildPresentation(
     masterToTheme,
     media: files.media,
     mediaResolver: files.mediaResolver,
+    embeddedFonts: embeddedFonts.faces,
+    embeddedFontFamilies: embeddedFonts.families,
     tableStyles,
     defaultTextStyle: defaultTextStyle.exists() ? defaultTextStyle : undefined,
     charts,

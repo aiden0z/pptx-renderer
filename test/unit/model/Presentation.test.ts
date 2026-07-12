@@ -127,6 +127,47 @@ function makeMinimalFiles(overrides: Partial<PptxFiles> = {}): PptxFiles {
 }
 
 describe('buildPresentation', () => {
+  it('maps embedded font relationships to isolated render families', () => {
+    const regular = new Uint8Array([1, 2, 3]);
+    const bold = new Uint8Array([4, 5, 6]);
+    const pres = buildPresentation(
+      makeMinimalFiles({
+        presentation: `
+          <Presentation xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+            <sldSz cx="9144000" cy="6858000"/>
+            <embeddedFontLst>
+              <embeddedFont>
+                <font typeface="Example Sans"/>
+                <regular r:id="rId8"/>
+                <bold r:id="rId9"/>
+              </embeddedFont>
+            </embeddedFontLst>
+            <sldIdLst><sldId id="256" r:id="rId2"/></sldIdLst>
+          </Presentation>
+        `,
+        presentationRels: `
+          <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+            <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide" Target="slides/slide1.xml"/>
+            <Relationship Id="rId8" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/font" Target="fonts/example-regular.fntdata"/>
+            <Relationship Id="rId9" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/font" Target="fonts/example-bold.fntdata"/>
+          </Relationships>
+        `,
+        fonts: new Map([
+          ['ppt/fonts/example-regular.fntdata', regular],
+          ['ppt/fonts/example-bold.fntdata', bold],
+        ]),
+      }),
+    );
+
+    expect(pres.embeddedFonts).toEqual([
+      expect.objectContaining({ family: 'Example Sans', data: regular, weight: '400' }),
+      expect.objectContaining({ family: 'Example Sans', data: bold, weight: '700' }),
+    ]);
+    const renderFamily = pres.embeddedFontFamilies?.get('example sans');
+    expect(renderFamily).toMatch(/^__pptx_embedded_/);
+    expect(pres.embeddedFonts?.every((face) => face.renderFamily === renderFamily)).toBe(true);
+  });
+
   it('builds presentation with correct dimensions', () => {
     const pres = buildPresentation(makeMinimalFiles());
     expect(pres.width).toBeCloseTo(960, 0);

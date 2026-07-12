@@ -21,6 +21,7 @@ import { SafeXmlNode } from '../parser/XmlParser';
 import type { RelEntry } from '../parser/RelParser';
 import { isPlaceholderNode, parseRenderableChild } from '../model/RenderableChild';
 import type { EChartsType } from 'echarts/core';
+import { useEmbeddedFonts } from './EmbeddedFontLoader';
 import type { PdfjsConfig } from '../utils/pdfRenderer';
 
 // ---------------------------------------------------------------------------
@@ -355,6 +356,9 @@ export function renderSlide(
     restoreMeasurementMount();
   }
 
+  const embeddedFontUse = useEmbeddedFonts(presentation, ctx.usedEmbeddedFontFamilies ?? new Set());
+  asyncTasks.push(embeddedFontUse.ready);
+
   // Build SlideHandle
   let disposed = false;
   const mediaUrlCache = ctx.mediaUrlCache;
@@ -364,6 +368,7 @@ export function renderSlide(
     if (disposed) return;
     disposed = true;
     abortController.abort();
+    embeddedFontUse.dispose();
 
     // Dispose chart instances whose DOM is inside this slide container
     if (chartInstances) {
