@@ -1643,6 +1643,8 @@ describe('renderImage', () => {
       expect(img).not.toBeNull();
       expect(img.style.width).toBe('100%');
       expect(img.style.height).toBe('100%');
+      expect(img.style.maxWidth).toBe('none');
+      expect(img.style.maxHeight).toBe('none');
       expect(img.style.objectFit).toBe('fill');
       expect(img.style.display).toBe('block');
       expect(img.draggable).toBe(false);

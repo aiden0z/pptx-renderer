@@ -67,6 +67,46 @@ test('standalone browser entry renders a tracked PPTX including its chart', asyn
   expect(result.textLength).toBeGreaterThan(0);
 });
 
+test('host image resets do not change PPTX picture sizing or crops', async ({ page }) => {
+  await page.goto('/test/browser/blank.html');
+  const pictures = await page.evaluate(async () => {
+    const style = document.createElement('style');
+    style.textContent = 'img { max-width: 100%; max-height: 100%; height: auto; }';
+    document.head.appendChild(style);
+
+    const renderer = await import('/dist/aiden0z-pptx-renderer.browser.es.js');
+    const response = await fetch('/docs/example/image-crop-css-reset/source.pptx');
+    const presentation = renderer.buildPresentation(
+      await renderer.parseZip(await response.arrayBuffer()),
+    );
+    const handle = renderer.renderSlide(presentation, presentation.slides[0]);
+    document.body.replaceChildren(handle.element);
+    await handle.ready;
+
+    return Array.from(handle.element.querySelectorAll('img')).map((image) => ({
+      imageWidth: image.getBoundingClientRect().width,
+      maxHeight: getComputedStyle(image).maxHeight,
+      maxWidth: getComputedStyle(image).maxWidth,
+      parentTop: Number.parseFloat(image.parentElement?.style.top ?? '0'),
+      parentWidth: image.parentElement?.getBoundingClientRect().width ?? 0,
+    }));
+  });
+
+  expect(pictures).toHaveLength(4);
+  expect(pictures.every((picture) => picture.maxWidth === 'none')).toBe(true);
+  expect(pictures.every((picture) => picture.maxHeight === 'none')).toBe(true);
+  expect(pictures[0].imageWidth).toBeCloseTo(pictures[0].parentWidth, 0);
+  expect(pictures.slice(1).every((picture) => picture.imageWidth > picture.parentWidth * 2.9)).toBe(
+    true,
+  );
+  expect(pictures.slice(1).map((picture) => picture.parentTop)).toEqual(
+    pictures
+      .slice(1)
+      .map((picture) => picture.parentTop)
+      .toSorted((a, b) => a - b),
+  );
+});
+
 test('isolated PDF fallback renders through the configured PDF.js module and worker', async ({
   page,
 }) => {

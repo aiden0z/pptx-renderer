@@ -221,6 +221,8 @@ function renderImageUrl(
   img.src = url;
   img.style.width = '100%';
   img.style.height = '100%';
+  img.style.maxWidth = 'none';
+  img.style.maxHeight = 'none';
   img.style.objectFit = 'fill';
   img.style.display = 'block';
   img.draggable = false;
