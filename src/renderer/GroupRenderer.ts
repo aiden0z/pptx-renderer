@@ -242,9 +242,9 @@ export function renderGroup(
       if (!childNode) continue;
 
       // Remap child coordinates from child space to group space
-      if (chExt.w > 0 && chExt.h > 0) {
-        const scaleX = groupW / chExt.w;
-        const scaleY = groupH / chExt.h;
+      if (chExt.w > 0 || chExt.h > 0) {
+        const scaleX = chExt.w > 0 ? groupW / chExt.w : 1;
+        const scaleY = chExt.h > 0 ? groupH / chExt.h : 1;
         const swapsAxes = rotationSwapsAxes(childNode.rotation);
         const originalPosition = childNode.position;
         const originalSize = childNode.size;

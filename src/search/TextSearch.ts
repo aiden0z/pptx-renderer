@@ -139,7 +139,7 @@ const getGroupChildTransform = (
   child: BaseNodeData,
   parentTransform: CoordinateTransform,
 ): CoordinateTransform => {
-  if (group.childExtent.w <= 0 || group.childExtent.h <= 0) {
+  if (group.childExtent.w <= 0 && group.childExtent.h <= 0) {
     return {
       offsetX: parentTransform.offsetX + group.position.x * parentTransform.scaleX,
       offsetY: parentTransform.offsetY + group.position.y * parentTransform.scaleY,
