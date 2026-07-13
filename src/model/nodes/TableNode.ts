@@ -121,12 +121,19 @@ export function parseTableNode(frameNode: SafeXmlNode): TableNodeData {
     rows.push(parseRow(trNode));
   }
 
+  const gridWidth = columns.reduce((sum, width) => sum + width, 0);
+  const gridHeight = rows.reduce((sum, row) => sum + row.height, 0);
+
   // --- Table properties ---
   const tblPr = tbl.child('tblPr');
   const tableStyleId = extractTableStyleId(tblPr);
 
   return {
     ...base,
+    size: {
+      w: gridWidth > 0 ? gridWidth : base.size.w,
+      h: gridHeight > 0 ? gridHeight : base.size.h,
+    },
     nodeType: 'table',
     columns,
     rows,

@@ -97,6 +97,26 @@ describe('renderTable', () => {
     expect(el.style.height).toBe('200px');
   });
 
+  it('uses the normalized node size after parent group remapping', () => {
+    const rows: TableRow[] = [
+      { height: 150, cells: [{ gridSpan: 1, rowSpan: 1, hMerge: false, vMerge: false }] },
+      { height: 250, cells: [{ gridSpan: 1, rowSpan: 1, hMerge: false, vMerge: false }] },
+    ];
+    const node = makeTable({ columns: [200, 400], rows });
+    node.size = { w: 1200, h: 800 };
+    const el = renderTable(node, makeCtx());
+    expect(el.style.width).toBe('1200px');
+    expect(el.style.height).toBe('800px');
+  });
+
+  it('falls back to the frame size when the grid has no explicit widths/heights', () => {
+    const node = makeTable({ columns: [], rows: [] });
+    node.size = { w: 320, h: 240 };
+    const el = renderTable(node, makeCtx());
+    expect(el.style.width).toBe('320px');
+    expect(el.style.height).toBe('240px');
+  });
+
   it('creates inner table element with border-collapse', () => {
     const el = renderTable(makeTable(), makeCtx());
     const table = el.querySelector('table')!;

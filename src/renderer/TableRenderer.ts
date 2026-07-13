@@ -443,6 +443,9 @@ function tableFlipTransform(node: TableNodeData): string {
  * Render a table node into an absolutely-positioned HTML element.
  */
 export function renderTable(node: TableNodeData, ctx: RenderContext): HTMLElement {
+  const totalWidth = node.columns.reduce((sum, w) => sum + w, 0);
+  const totalRowHeight = node.rows.reduce((sum, r) => sum + r.height, 0);
+
   const wrapper = document.createElement('div');
   wrapper.style.position = 'absolute';
   wrapper.style.left = `${node.position.x}px`;
@@ -485,7 +488,6 @@ export function renderTable(node: TableNodeData, ctx: RenderContext): HTMLElemen
   }
 
   // Column widths
-  const totalWidth = node.columns.reduce((sum, w) => sum + w, 0);
   if (totalWidth > 0 && node.columns.length > 0) {
     const colgroup = document.createElement('colgroup');
     for (const colW of node.columns) {
@@ -495,9 +497,6 @@ export function renderTable(node: TableNodeData, ctx: RenderContext): HTMLElemen
     }
     table.appendChild(colgroup);
   }
-
-  // Compute total row height so we can express each row as a proportion
-  const totalRowHeight = node.rows.reduce((sum, r) => sum + r.height, 0);
 
   // Render rows
   const tbody = document.createElement('tbody');

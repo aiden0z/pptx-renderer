@@ -67,6 +67,54 @@ test('standalone browser entry renders a tracked PPTX including its chart', asyn
   expect(result.textLength).toBeGreaterThan(0);
 });
 
+test('tracked PPTX renders stale table frames from the table grid dimensions', async ({ page }) => {
+  await page.goto('/test/browser/blank.html');
+  const result = await page.evaluate(async () => {
+    const renderer = await import('/dist/aiden0z-pptx-renderer.browser.es.js');
+    const response = await fetch('/docs/example/table-stale-frame/source.pptx');
+    const presentation = renderer.buildPresentation(
+      await renderer.parseZip(await response.arrayBuffer()),
+    );
+    const tableNode = presentation.slides[0].nodes.find((node) => node.nodeType === 'table');
+    if (!tableNode || tableNode.nodeType !== 'table') throw new Error('Missing table node');
+    const serializedTable = renderer
+      .serializePresentation(presentation)
+      .slides[0].nodes.find((node) => node.nodeType === 'table');
+    const indexedCell = renderer
+      .buildTextIndex(presentation)
+      .find((entry) => entry.nodeType === 'table');
+    const handle = renderer.renderSlide(presentation, presentation.slides[0]);
+    document.body.replaceChildren(handle.element);
+    await handle.ready;
+
+    const table = handle.element.querySelector('table');
+    const wrapper = table?.parentElement;
+    const firstCell = table?.querySelector('td');
+    if (!wrapper || !firstCell) throw new Error('Missing rendered table DOM');
+
+    const rawExtent = tableNode.source.child('xfrm').child('ext');
+    return {
+      rawFrame: [rawExtent.numAttr('cx'), rawExtent.numAttr('cy')],
+      modelSize: [tableNode.size.w, tableNode.size.h],
+      serializedSize: [serializedTable?.size.w, serializedTable?.size.h],
+      indexedSize: [indexedCell?.bounds.w, indexedCell?.bounds.h],
+      domSize: [wrapper.getBoundingClientRect().width, wrapper.getBoundingClientRect().height],
+      firstCellWidth: firstCell.getBoundingClientRect().width,
+      text: wrapper.textContent,
+    };
+  });
+
+  expect(result.rawFrame).toEqual([914400, 914400]);
+  expect(result.modelSize[0]).toBeCloseTo(576, 0);
+  expect(result.modelSize[1]).toBeCloseTo(192, 0);
+  expect(result.serializedSize).toEqual(result.modelSize);
+  expect(result.indexedSize).toEqual(result.modelSize);
+  expect(result.domSize[0]).toBeCloseTo(576, 0);
+  expect(result.domSize[1]).toBeCloseTo(192, 0);
+  expect(result.firstCellWidth).toBeGreaterThan(250);
+  expect(result.text).toContain('Wide table cell remains visible');
+});
+
 test('host image resets do not change PPTX picture sizing or crops', async ({ page }) => {
   await page.goto('/test/browser/blank.html');
   const pictures = await page.evaluate(async () => {

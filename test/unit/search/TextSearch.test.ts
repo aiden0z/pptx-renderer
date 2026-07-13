@@ -297,6 +297,52 @@ describe('buildTextIndex', () => {
     expect(entry?.bounds).toMatchObject({ x: 176, y: 108, w: 192, h: 48 });
   });
 
+  it('matches renderer bounds along the populated axis of a horizontal flat group', () => {
+    const group: GroupNodeData = {
+      id: 'horizontal-flat-group',
+      name: 'horizontal-flat-group',
+      nodeType: 'group',
+      position: { x: 10, y: 20 },
+      size: { w: 400, h: 0 },
+      rotation: 0,
+      flipH: false,
+      flipV: false,
+      childOffset: { x: 50, y: 25 },
+      childExtent: { w: 200, h: 0 },
+      children: [parseXml(templateShape('53', 'horizontal-flat-label', 'Horizontal flat label'))],
+      source: emptySource,
+    };
+    const pres = presentation();
+    pres.slides[0].nodes = [group];
+
+    const entry = buildTextIndex(pres).find((item) => item.text === 'Horizontal flat label');
+
+    expect(entry?.bounds).toMatchObject({ x: 102, y: 43, w: 384, h: 48 });
+  });
+
+  it('matches renderer bounds along the populated axis of a vertical flat group', () => {
+    const group: GroupNodeData = {
+      id: 'vertical-flat-group',
+      name: 'vertical-flat-group',
+      nodeType: 'group',
+      position: { x: 10, y: 20 },
+      size: { w: 0, h: 400 },
+      rotation: 0,
+      flipH: false,
+      flipV: false,
+      childOffset: { x: 50, y: 25 },
+      childExtent: { w: 0, h: 200 },
+      children: [parseXml(templateShape('54', 'vertical-flat-label', 'Vertical flat label'))],
+      source: emptySource,
+    };
+    const pres = presentation();
+    pres.slides[0].nodes = [group];
+
+    const entry = buildTextIndex(pres).find((item) => item.text === 'Vertical flat label');
+
+    expect(entry?.bounds).toMatchObject({ x: 56, y: 66, w: 192, h: 96 });
+  });
+
   it('ignores shapes without a text body while continuing to index later nodes', () => {
     const noTextShape: ShapeNodeData = {
       ...shape('empty-shape', ''),

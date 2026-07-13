@@ -10,9 +10,11 @@
 import { describe, expect, it, vi } from 'vitest';
 import { renderGroup } from '../../../src/renderer/GroupRenderer';
 import { renderShape } from '../../../src/renderer/ShapeRenderer';
+import { renderTable } from '../../../src/renderer/TableRenderer';
 import { parseXml, SafeXmlNode } from '../../../src/parser/XmlParser';
 import { createMockRenderContext } from '../helpers/mockContext';
 import type { GroupNodeData } from '../../../src/model/nodes/GroupNode';
+import type { TableNodeData } from '../../../src/model/nodes/TableNode';
 import type { RenderContext } from '../../../src/renderer/RenderContext';
 
 // ---------------------------------------------------------------------------
@@ -337,7 +339,22 @@ function makeNestedGrpFillXml(id = '40'): SafeXmlNode {
 /**
  * A graphicFrame containing a table (a:tbl).
  */
-function makeTableFrameXml(id = '5'): SafeXmlNode {
+function makeTableFrameXml(
+  id = '5',
+  opts: {
+    frameWidth?: number;
+    frameHeight?: number;
+    gridWidth?: number;
+    rowHeight?: number;
+    rotation?: number;
+  } = {},
+): SafeXmlNode {
+  const toEmu = (px: number) => Math.round(px * 9525);
+  const frameWidth = opts.frameWidth ?? 96;
+  const frameHeight = opts.frameHeight ?? 48;
+  const gridWidth = opts.gridWidth ?? frameWidth;
+  const rowHeight = opts.rowHeight ?? frameHeight;
+  const rotation = opts.rotation ? ` rot="${opts.rotation * 60000}"` : '';
   return xml(`
     <p:graphicFrame xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
                    xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
@@ -346,15 +363,15 @@ function makeTableFrameXml(id = '5'): SafeXmlNode {
         <p:cNvGraphicFramePr/>
         <p:nvPr/>
       </p:nvGraphicFramePr>
-      <p:xfrm>
-        <a:off x="0" y="0"/><a:ext cx="914400" cy="457200"/>
+      <p:xfrm${rotation}>
+        <a:off x="0" y="0"/><a:ext cx="${toEmu(frameWidth)}" cy="${toEmu(frameHeight)}"/>
       </p:xfrm>
       <a:graphic>
         <a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/table">
           <a:tbl>
             <a:tblPr/>
-            <a:tblGrid><a:gridCol w="914400"/></a:tblGrid>
-            <a:tr h="457200">
+            <a:tblGrid><a:gridCol w="${toEmu(gridWidth)}"/></a:tblGrid>
+            <a:tr h="${toEmu(rowHeight)}">
               <a:tc><a:txBody><a:p/></a:txBody></a:tc>
             </a:tr>
           </a:tbl>
@@ -1067,6 +1084,74 @@ describe('renderGroup — parseGroupChild dispatch for graphicFrame (table)', ()
     expect(tableNode.position.x).toBe(104);
     expect(tableNode.flipH).toBe(false);
   });
+
+  it('renders a table at its final non-1:1 group-scaled DOM size', () => {
+    const group = makeGroup([makeTableFrameXml('53')], {
+      w: 384,
+      h: 144,
+      childExtentW: 192,
+      childExtentH: 96,
+    });
+
+    const el = renderGroup(group, createMockRenderContext(), (childNode, ctx) =>
+      renderTable(childNode as TableNodeData, ctx),
+    );
+    const table = el.firstElementChild as HTMLElement;
+
+    expect(table.style.width).toBe('192px');
+    expect(table.style.height).toBe('72px');
+  });
+
+  it('positions a stale-frame table from its normalized grid size when the group is flipped', () => {
+    const group = makeGroup(
+      [makeTableFrameXml('54', { frameWidth: 96, frameHeight: 48, gridWidth: 192, rowHeight: 96 })],
+      {
+        w: 400,
+        h: 200,
+        childExtentW: 400,
+        childExtentH: 200,
+        flipH: true,
+      },
+    );
+
+    const el = renderGroup(group, createMockRenderContext(), (childNode, ctx) =>
+      renderTable(childNode as TableNodeData, ctx),
+    );
+    const table = el.firstElementChild as HTMLElement;
+
+    expect(table.style.left).toBe('208px');
+    expect(table.style.width).toBe('192px');
+  });
+
+  it('positions and scales a quarter-turn stale-frame table with non-uniform group scaling', () => {
+    const group = makeGroup(
+      [
+        makeTableFrameXml('55', {
+          frameWidth: 96,
+          frameHeight: 48,
+          gridWidth: 192,
+          rowHeight: 96,
+          rotation: 90,
+        }),
+      ],
+      {
+        w: 400,
+        h: 200,
+        childExtentW: 200,
+        childExtentH: 200,
+      },
+    );
+
+    const el = renderGroup(group, createMockRenderContext(), (childNode, ctx) =>
+      renderTable(childNode as TableNodeData, ctx),
+    );
+    const table = el.firstElementChild as HTMLElement;
+
+    expect(Number.parseFloat(table.style.left)).toBeCloseTo(96);
+    expect(Number.parseFloat(table.style.top)).toBeCloseTo(-48);
+    expect(table.style.width).toBe('192px');
+    expect(table.style.height).toBe('192px');
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -1284,14 +1369,47 @@ describe('renderGroup — child coordinate remapping', () => {
     expect(capturedNode.size.h).toBeCloseTo(500);
   });
 
-  it('skips coordinate remapping when childExtent is 0 in either dimension', () => {
+  it('skips coordinate remapping when childExtent is 0 in both dimensions', () => {
     const group = makeGroup([makeSpXml()], {
       childExtentW: 0,
       childExtentH: 0,
     });
-    // When chExt is zero the remapping block is skipped — no crash expected
+    // A fully degenerate child space has no usable mapping — the remap block is
+    // skipped and children keep their raw coordinates. No crash expected.
     const el = renderGroup(group, createMockRenderContext(), stubRenderNode);
     expect(el.children.length).toBe(1);
+  });
+
+  it('remaps children along the non-degenerate axis when a group is flat (childExtent.h = 0)', () => {
+    // Regression: layout divider/underline lines live in a zero-height group
+    // (ext.cy = chExt.cy = 0). The child-space → group-space remap must still
+    // subtract childOffset and scale the non-degenerate (X) axis; skipping the
+    // whole block left the line displaced by (chOffX, chOffY).
+    const group = makeGroup([makeSpXml()], {
+      x: 0,
+      y: 0,
+      w: 400,
+      h: 0,
+      childOffsetX: 50,
+      childOffsetY: 25,
+      childExtentW: 200,
+      childExtentH: 0, // flat group: no vertical child extent (a horizontal line)
+    });
+
+    let capturedNode: any;
+    const capture = (childNode: any, ctx: RenderContext): HTMLElement => {
+      capturedNode = childNode;
+      return stubRenderNode(childNode, ctx);
+    };
+
+    renderGroup(group, createMockRenderContext(), capture);
+
+    // X axis: scale = groupW / chExtW = 400 / 200 = 2, position = (0 - 50) * 2 = -100
+    expect(capturedNode.position.x).toBeCloseTo(-100);
+    expect(capturedNode.size.w).toBeCloseTo(192); // 96px child * 2
+    // Y axis is degenerate (chExtH = 0): scale falls back to 1 (no NaN), still subtract chOffY
+    expect(capturedNode.position.y).toBeCloseTo(-25); // (0 - 25) * 1
+    expect(Number.isNaN(capturedNode.size.h)).toBe(false);
   });
 });
 
