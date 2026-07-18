@@ -840,7 +840,7 @@ describe('renderTable', () => {
       expect(td.textContent).toContain('Cell Text');
     });
 
-    it('uses Office single line spacing for table cell text without explicit line spacing', () => {
+    it('keeps the existing table fallback without explicit line spacing', () => {
       const rows: TableRow[] = [
         {
           height: 0,
@@ -850,19 +850,29 @@ describe('renderTable', () => {
               rowSpan: 1,
               hMerge: false,
               vMerge: false,
-              textBody: { paragraphs: [{ runs: [{ text: 'Auto row height text' }], level: 0 }] },
+              textBody: {
+                paragraphs: [
+                  { runs: [{ text: 'First paragraph' }], level: 0 },
+                  {
+                    runs: [{ text: 'NOTE' }, { text: '\n' }, { text: 'continued' }],
+                    level: 0,
+                  },
+                  { runs: [{ text: 'WARNING' }], level: 0 },
+                ],
+              },
             },
           ],
         },
       ];
 
       const el = renderTable(makeTable({ columns: [400], rows }), makeCtx());
-      const paragraph = el.querySelector('td div') as HTMLElement;
+      const paragraphs = Array.from(el.querySelectorAll('td > div')) as HTMLElement[];
 
-      expect(paragraph.style.lineHeight).toBe('1');
+      expect(paragraphs.map((paragraph) => paragraph.style.lineHeight)).toEqual(['1', '1', '1']);
+      expect(paragraphs[1].querySelectorAll('br')).toHaveLength(1);
     });
 
-    it('preserves explicit table cell line spacing over the Office default', () => {
+    it('preserves explicit table cell line spacing over the fallback', () => {
       const rows: TableRow[] = [
         {
           height: 0,

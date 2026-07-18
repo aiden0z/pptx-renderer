@@ -4,6 +4,7 @@ import {
   emuToPt,
   angleToDeg,
   pctToDecimal,
+  parseOoxmlPercent,
   hundredthPtToPt,
   ptToPx,
   detectUnit,
@@ -59,6 +60,19 @@ describe('pctToDecimal', () => {
 
   it('converts 0 to 0', () => {
     expect(pctToDecimal(0)).toBe(0);
+  });
+});
+
+describe('parseOoxmlPercent', () => {
+  it.each([
+    ['120000', 1.2],
+    ['92.000%', 0.92],
+  ])('parses %s', (value, expected) => {
+    expect(parseOoxmlPercent(value)).toBe(expected);
+  });
+
+  it('rejects invalid values', () => {
+    expect(parseOoxmlPercent('not-a-percent')).toBeUndefined();
   });
 });
 

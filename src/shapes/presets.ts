@@ -153,8 +153,8 @@ export const presetShapes: Map<string, PresetShapeGenerator> = new Map();
 presetShapes.set('rect', (w, h) => `M0,0 L${w},0 L${w},${h} L0,${h} Z`);
 
 presetShapes.set('roundRect', (w, h, adjustments) => {
-  const a = adj(adjustments, 'adj', 16667);
-  const r = Math.min(w, h) * a;
+  const a = Math.min(Math.max(adjRaw(adjustments, 'adj', 16667), 0), 50000);
+  const r = (Math.min(w, h) * a) / 100000;
   return [
     `M${r},0`,
     `L${w - r},0`,

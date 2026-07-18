@@ -2718,6 +2718,183 @@ describe('ShapeRenderer', () => {
     expect(paragraphs[1].style.marginBottom).toBe('0px');
   });
 
+  it('uses endParaRPr metrics only for empty paragraph struts', () => {
+    const xml = `
+      <p:sp xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
+            xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+        <p:nvSpPr><p:cNvPr id="624" name="Slide 11 text"/><p:cNvSpPr txBox="1"/><p:nvPr/></p:nvSpPr>
+        <p:spPr>
+          <a:xfrm><a:off x="0" y="0"/><a:ext cx="11273400" cy="4925400"/></a:xfrm>
+          <a:prstGeom prst="rect"><a:avLst/></a:prstGeom>
+          <a:noFill/>
+        </p:spPr>
+        <p:txBody>
+          <a:bodyPr anchor="t" wrap="square"><a:spAutoFit/></a:bodyPr>
+          <a:lstStyle/>
+          <a:p><a:r><a:rPr sz="2800"/><a:t>Visible paragraph before blanks</a:t></a:r></a:p>
+          <a:p>
+            <a:r><a:rPr sz="600"><a:latin typeface="Courier New"/></a:rPr><a:t/></a:r>
+            <a:endParaRPr sz="2800"><a:latin typeface="Arial"/></a:endParaRPr>
+          </a:p>
+          <a:p><a:r><a:t/></a:r><a:endParaRPr sz="2800"/></a:p>
+          <a:p>
+            <a:r><a:t/></a:r>
+            <a:r><a:rPr sz="2400"><a:latin typeface="Arial"/></a:rPr><a:t>Visible paragraph after blanks</a:t></a:r>
+          </a:p>
+        </p:txBody>
+      </p:sp>
+    `;
+
+    const el = renderShape(parseShapeNode(parseXml(xml)), createMockRenderContext());
+    const textContainer = Array.from(el.querySelectorAll('div')).find(
+      (div) =>
+        div.textContent?.includes('Visible paragraph after blanks') &&
+        div.style.flexDirection === 'column',
+    );
+    const paragraphs = Array.from(textContainer?.children ?? []) as HTMLElement[];
+
+    expect(paragraphs).toHaveLength(4);
+    expect(paragraphs.map((paragraph) => paragraph.style.fontSize)).toEqual([
+      '28pt',
+      '28pt',
+      '28pt',
+      '24pt',
+    ]);
+    expect(paragraphs[1].style.fontFamily).toBe('"Arial"');
+    expect(paragraphs[3].style.fontFamily).toBe('');
+    expect(paragraphs[1].querySelector('br')).not.toBeNull();
+    expect(paragraphs[2].querySelector('br')).not.toBeNull();
+  });
+
+  it('uses line-break properties before endParaRPr for break-only paragraph struts', () => {
+    const xml = `
+      <p:sp xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
+            xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+        <p:nvSpPr><p:cNvPr id="625" name="Break-only lines"/><p:cNvSpPr txBox="1"/><p:nvPr/></p:nvSpPr>
+        <p:spPr>
+          <a:xfrm><a:off x="0" y="0"/><a:ext cx="4762500" cy="4762500"/></a:xfrm>
+          <a:prstGeom prst="rect"><a:avLst/></a:prstGeom>
+        </p:spPr>
+        <p:txBody>
+          <a:bodyPr><a:noAutofit/></a:bodyPr>
+          <a:lstStyle/>
+          <a:p><a:r><a:t>Visible</a:t></a:r></a:p>
+          <a:p><a:br/><a:endParaRPr sz="2800"><a:latin typeface="Arial"/></a:endParaRPr></a:p>
+          <a:p><a:br><a:rPr sz="1800"><a:latin typeface="Courier New"/></a:rPr></a:br><a:endParaRPr sz="2800"><a:latin typeface="Arial"/></a:endParaRPr></a:p>
+        </p:txBody>
+      </p:sp>
+    `;
+
+    const el = renderShape(parseShapeNode(parseXml(xml)), createMockRenderContext());
+    const textContainer = Array.from(el.querySelectorAll('div')).find(
+      (div) => div.style.flexDirection === 'column',
+    );
+    const paragraphs = Array.from(textContainer?.children ?? []) as HTMLElement[];
+
+    expect(paragraphs[1].style.fontSize).toBe('28pt');
+    expect(paragraphs[1].style.fontFamily).toBe('"Arial"');
+    expect(paragraphs[2].style.fontSize).toBe('18pt');
+    expect(paragraphs[2].style.fontFamily).toBe('"Courier New"');
+  });
+
+  it('uses the roundRect inscribed text rectangle', () => {
+    const xml = `
+      <p:sp xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
+            xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+        <p:nvSpPr><p:cNvPr id="725" name="Slide 16 text"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+        <p:spPr>
+          <a:xfrm><a:off x="653167" y="657300"/><a:ext cx="6317100" cy="1110000"/></a:xfrm>
+          <a:prstGeom prst="roundRect"><a:avLst><a:gd name="adj" fmla="val 16667"/></a:avLst></a:prstGeom>
+        </p:spPr>
+        <p:txBody>
+          <a:bodyPr lIns="98425" rIns="98425" wrap="square"><a:noAutofit/></a:bodyPr>
+          <a:lstStyle/>
+          <a:p>
+            <a:pPr algn="l"><a:buNone/></a:pPr>
+            <a:r>
+              <a:rPr lang="en-US" sz="900"><a:latin typeface="Be Vietnam Pro"/></a:rPr>
+              <a:t>Rounded rectangle text uses the inscribed DrawingML bounds.</a:t>
+            </a:r>
+          </a:p>
+        </p:txBody>
+      </p:sp>
+    `;
+
+    const node = parseShapeNode(parseXml(xml));
+    const el = renderShape(node, createMockRenderContext());
+    const textContainer = Array.from(el.querySelectorAll('div')).find(
+      (div) =>
+        div.textContent?.startsWith('Rounded rectangle') && div.style.flexDirection === 'column',
+    ) as HTMLElement | undefined;
+    const span = textContainer?.querySelector('span') as HTMLElement | null;
+    const expectedInset = Math.min(node.size.w, node.size.h) * (16667 / 100000) * (29289 / 100000);
+
+    expect(textContainer).toBeDefined();
+    expect(parseFloat(textContainer!.style.left)).toBeCloseTo(expectedInset, 5);
+    expect(parseFloat(textContainer!.style.top)).toBeCloseTo(expectedInset, 5);
+    expect(parseFloat(textContainer!.style.width)).toBeCloseTo(node.size.w - 2 * expectedInset, 5);
+    expect(parseFloat(textContainer!.style.height)).toBeCloseTo(node.size.h - 2 * expectedInset, 5);
+    expect(span!.style.letterSpacing).toBe('');
+
+    for (const [adjustment, expected] of [
+      [undefined, 16667],
+      [-10000, 0],
+      [75000, 50000],
+    ] as const) {
+      if (adjustment === undefined) node.adjustments.delete('adj');
+      else node.adjustments.set('adj', adjustment);
+      const adjusted = renderShape(node, createMockRenderContext());
+      const adjustedContainer = Array.from(adjusted.querySelectorAll('div')).find(
+        (div) =>
+          div.textContent?.startsWith('Rounded rectangle') && div.style.flexDirection === 'column',
+      ) as HTMLElement;
+      const adjustedInset = Math.min(node.size.w, node.size.h) * (expected / 100000) * 0.29289;
+      expect(parseFloat(adjustedContainer.style.left)).toBeCloseTo(adjustedInset, 5);
+    }
+  });
+
+  it('inherits explicit line spacing without changing visible paragraph font struts', () => {
+    const xml = `
+      <p:sp xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
+            xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+        <p:nvSpPr><p:cNvPr id="1055" name="Slide 34 text"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+        <p:spPr>
+          <a:xfrm><a:off x="523500" y="1169000"/><a:ext cx="11449800" cy="5695200"/></a:xfrm>
+          <a:prstGeom prst="rect"><a:avLst/></a:prstGeom>
+        </p:spPr>
+        <p:txBody>
+          <a:bodyPr wrap="square"><a:spAutoFit/></a:bodyPr>
+          <a:lstStyle/>
+          <a:p><a:r><a:rPr sz="1600"/><a:t>Inherited percentage spacing</a:t></a:r></a:p>
+          <a:p><a:pPr><a:lnSpc><a:spcPts val="1800"/></a:lnSpc></a:pPr><a:r><a:rPr sz="1600"/><a:t>Explicit point spacing</a:t></a:r></a:p>
+        </p:txBody>
+      </p:sp>
+    `;
+    const ctx = createMockRenderContext();
+    ctx.master.textStyles.otherStyle = parseXml(`
+      <p:otherStyle xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
+                    xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+        <a:lvl1pPr>
+          <a:lnSpc><a:spcPct val="100000"/></a:lnSpc>
+          <a:defRPr sz="1600"><a:latin typeface="Arial"/></a:defRPr>
+        </a:lvl1pPr>
+      </p:otherStyle>
+    `);
+
+    const el = renderShape(parseShapeNode(parseXml(xml)), ctx);
+    const textContainer = Array.from(el.querySelectorAll('div')).find(
+      (div) =>
+        div.textContent?.includes('Explicit point spacing') && div.style.flexDirection === 'column',
+    );
+    const paragraphs = Array.from(textContainer?.children ?? []) as HTMLElement[];
+
+    expect(paragraphs.map((paragraph) => paragraph.style.lineHeight)).toEqual(['1', '18pt']);
+    expect(paragraphs.map((paragraph) => paragraph.style.fontFamily)).toEqual(['', '']);
+    expect(
+      paragraphs.map((paragraph) => paragraph.querySelector('span')?.style.fontFamily),
+    ).toEqual(['"Arial"', '"Arial"']);
+  });
+
   it('renders supported prstTxWarp text as SVG textPath (ai-computing slide 28)', () => {
     const xml = `
       <p:sp xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
@@ -5501,8 +5678,8 @@ describe('ShapeRenderer', () => {
     expect(textContainer?.style.transform ?? '').not.toContain('scale(');
     expect(textContainer?.style.width).toBe('100%');
     expect(textContainer?.style.height).toBe('100%');
-    // Line spacing reduction should be applied
-    expect(textContainer?.style.lineHeight).toBeTruthy();
+    expect(textContainer?.style.lineHeight).toBe('');
+    expect((textContainer?.firstElementChild as HTMLElement).style.lineHeight).toBe('');
     // Text should be clipped at container boundary
     expect(textContainer?.style.overflowX).toBe('hidden');
     expect(textContainer?.style.overflowY).toBe('hidden');
