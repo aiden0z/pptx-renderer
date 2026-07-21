@@ -114,6 +114,7 @@ function findPlaceholderNode(
   placeholders: SafeXmlNode[],
   info: PlaceholderInfo,
 ): SafeXmlNode | undefined {
+  let typeMatch: SafeXmlNode | undefined;
   for (const ph of placeholders) {
     // Navigate to the ph element to read its attributes
     let phEl: SafeXmlNode | undefined;
@@ -132,11 +133,15 @@ function findPlaceholderNode(
     const phType = phEl.attr('type');
     const phIdx = phEl.numAttr('idx');
 
-    // Match by idx first (most specific), then by type
+    // Match by idx first (most specific): an exact idx match wins over any type-only match,
+    // even if a type match occurs on an earlier placeholder in the list.
     if (info.idx !== undefined && phIdx === info.idx) return ph;
-    if (info.type && phType === info.type) return ph;
+    // Remember the first type match as a fallback, used only if no idx match exists anywhere.
+    if (typeMatch === undefined && info.type && phType === info.type) {
+      typeMatch = ph;
+    }
   }
-  return undefined;
+  return typeMatch;
 }
 
 /**
