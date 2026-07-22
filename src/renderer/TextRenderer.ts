@@ -1071,13 +1071,10 @@ export function renderTextBody(
       // Bullet color: explicit buClr > first visible run text color > inherited defaults > fallback.
       let bulletColor: string | undefined;
       const firstVisibleRunTextColor = (): string | undefined => {
-        const firstVisibleRun = paragraph.runs.find(
-          (run) => run.text != null && run.text.length > 0,
-        );
-        if (!firstVisibleRun) return undefined;
+        if (!firstVisibleTextRun) return undefined;
         const runStyle = getParagraphDefaultRunStyle(merged, ctx);
-        if (firstVisibleRun.properties) {
-          mergeRunProps(runStyle, firstVisibleRun.properties, ctx);
+        if (firstVisibleTextRun.properties) {
+          mergeRunProps(runStyle, firstVisibleTextRun.properties, ctx);
         }
         return (
           runStyle.color ??
@@ -1139,16 +1136,12 @@ export function renderTextBody(
     }
 
     for (const [runIndex, run] of paragraph.runs.entries()) {
-      if (run.text === '\n') {
-        if (useLineWrappers) {
-          // Close current line div and start a new one
-          currentLineDiv = document.createElement('div');
-          currentLineDiv.style.height = effectiveLineHeight!;
-          currentLineDiv.style.overflow = 'visible';
-          paraDiv.appendChild(currentLineDiv);
-        } else {
-          paraDiv.appendChild(document.createElement('br'));
-        }
+      if (run.text === '\n' && useLineWrappers) {
+        // Close current line div and start a new one
+        currentLineDiv = document.createElement('div');
+        currentLineDiv.style.height = effectiveLineHeight!;
+        currentLineDiv.style.overflow = 'visible';
+        paraDiv.appendChild(currentLineDiv);
         continue;
       }
 
@@ -1182,7 +1175,9 @@ export function renderTextBody(
 
       // Determine if this should be a link
       let element: HTMLElement;
-      if (runStyle.hlinkSlideIndex !== undefined) {
+      if (run.text === '\n') {
+        element = document.createElement('span');
+      } else if (runStyle.hlinkSlideIndex !== undefined) {
         const span = document.createElement('span');
         const slideIndex = runStyle.hlinkSlideIndex;
         span.setAttribute('role', 'link');
@@ -1226,7 +1221,9 @@ export function renderTextBody(
         !!compactNumericToken &&
         run.text !== compactNumericToken &&
         !usesElementLevelTextPaint;
-      if (run.text && run.text.includes('\t')) {
+      if (run.text === '\n') {
+        element.appendChild(document.createElement('br'));
+      } else if (run.text && run.text.includes('\t')) {
         element.textContent = run.text;
         element.style.whiteSpace = 'pre';
       } else if (shouldSplitCompactNumericToken) {

@@ -435,6 +435,69 @@ test('browser layout preserves blank lines and roundRect wrapping', async ({ pag
     });
     blank.shape.remove();
 
+    const lineBreaks = render(`
+      <p:sp xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
+            xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+        <p:nvSpPr><p:cNvPr id="3" name="Styled line breaks"/><p:cNvSpPr txBox="1"/><p:nvPr/></p:nvSpPr>
+        <p:spPr>
+          <a:xfrm><a:off x="0" y="0"/><a:ext cx="4762500" cy="4762500"/></a:xfrm>
+          <a:prstGeom prst="rect"><a:avLst/></a:prstGeom>
+        </p:spPr>
+        <p:txBody>
+          <a:bodyPr lIns="0" tIns="0" rIns="0" bIns="0"><a:noAutofit/></a:bodyPr>
+          <a:lstStyle/>
+          <a:p><a:pPr><a:lnSpc><a:spcPct val="100000"/></a:lnSpc></a:pPr><a:r><a:rPr sz="1000"><a:latin typeface="Arial"/></a:rPr><a:t>Before</a:t></a:r></a:p>
+          <a:p><a:pPr><a:lnSpc><a:spcPct val="100000"/></a:lnSpc></a:pPr><a:br><a:rPr sz="3000"><a:latin typeface="Arial"/></a:rPr></a:br><a:r><a:rPr sz="1000"><a:latin typeface="Arial"/></a:rPr><a:t>Styled</a:t></a:r></a:p>
+          <a:p><a:pPr><a:lnSpc><a:spcPct val="100000"/></a:lnSpc><a:defRPr sz="1800"><a:latin typeface="Courier New"/></a:defRPr></a:pPr><a:br/><a:r><a:rPr sz="1000"><a:latin typeface="Arial"/></a:rPr><a:t>Inherited</a:t></a:r></a:p>
+          <a:p><a:pPr><a:lnSpc><a:spcPct val="100000"/></a:lnSpc></a:pPr><a:r><a:rPr sz="1000"><a:latin typeface="Arial"/></a:rPr><a:t>After</a:t></a:r></a:p>
+        </p:txBody>
+      </p:sp>
+    `);
+    const breakParagraphs = Array.from(lineBreaks.container.children) as HTMLElement[];
+    const breakMetrics = breakParagraphs.map((paragraph) => {
+      const rect = paragraph.getBoundingClientRect();
+      const breakElement = paragraph.querySelector('br')?.parentElement;
+      const textElement = Array.from(paragraph.querySelectorAll('span')).find(
+        (span) => span.textContent === 'Styled' || span.textContent === 'Inherited',
+      );
+      return {
+        height: rect.height,
+        top: rect.top,
+        paragraphFontSize: paragraph.style.fontSize,
+        paragraphFontFamily: paragraph.style.fontFamily,
+        breakTag: breakElement?.tagName,
+        breakFontSize: breakElement ? getComputedStyle(breakElement).fontSize : undefined,
+        breakFontFamily: breakElement ? getComputedStyle(breakElement).fontFamily : undefined,
+        textTop: textElement?.getBoundingClientRect().top,
+      };
+    });
+    lineBreaks.shape.remove();
+
+    const fixedLineSpacing = render(`
+      <p:sp xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
+            xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+        <p:nvSpPr><p:cNvPr id="4" name="Fixed line spacing"/><p:cNvSpPr txBox="1"/><p:nvPr/></p:nvSpPr>
+        <p:spPr>
+          <a:xfrm><a:off x="0" y="0"/><a:ext cx="4762500" cy="4762500"/></a:xfrm>
+          <a:prstGeom prst="rect"><a:avLst/></a:prstGeom>
+        </p:spPr>
+        <p:txBody>
+          <a:bodyPr lIns="0" tIns="0" rIns="0" bIns="0"><a:noAutofit/></a:bodyPr>
+          <a:lstStyle/>
+          <a:p><a:pPr><a:lnSpc><a:spcPts val="2400"/></a:lnSpc></a:pPr><a:r><a:rPr sz="1000"/><a:t>First</a:t></a:r><a:br><a:rPr sz="3000"/></a:br><a:r><a:rPr sz="1000"/><a:t>Second</a:t></a:r></a:p>
+        </p:txBody>
+      </p:sp>
+    `);
+    const fixedParagraph = fixedLineSpacing.container.firstElementChild as HTMLElement;
+    const fixedMetrics = {
+      wrapperCount: fixedParagraph.children.length,
+      wrapperHeights: Array.from(fixedParagraph.children).map(
+        (line) => line.getBoundingClientRect().height,
+      ),
+      brCount: fixedParagraph.querySelectorAll('br').length,
+    };
+    fixedLineSpacing.shape.remove();
+
     const text = 'one two to in';
     const probe = document.createElement('span');
     probe.style.font = '20pt Arial';
@@ -484,6 +547,8 @@ test('browser layout preserves blank lines and roundRect wrapping', async ({ pag
     return {
       blank: paragraphRects.slice(0, 4),
       breakOnly: paragraphRects[4],
+      breakMetrics,
+      fixedMetrics,
       expectedRoundWidth: width - 2 * inset,
       rect: wordTops('rect'),
       roundRect: wordTops('roundRect'),
@@ -502,6 +567,28 @@ test('browser layout preserves blank lines and roundRect wrapping', async ({ pag
   }
   expect(result.breakOnly.height).toBeGreaterThan(0);
   expect(result.breakOnly.fontFamily).toContain('Arial');
+  expect(result.breakMetrics).toHaveLength(4);
+  const [beforeBreak, styledBreak, inheritedBreak, afterBreak] = result.breakMetrics;
+  expect(styledBreak.paragraphFontSize).toBe('10pt');
+  expect(styledBreak.paragraphFontFamily).toBe('');
+  expect(styledBreak.breakTag).toBe('SPAN');
+  expect(parseFloat(styledBreak.breakFontSize!)).toBeCloseTo(40, 1);
+  expect(styledBreak.breakFontFamily).toContain('Arial');
+  expect(inheritedBreak.paragraphFontSize).toBe('10pt');
+  expect(inheritedBreak.paragraphFontFamily).toBe('');
+  expect(inheritedBreak.breakTag).toBe('SPAN');
+  expect(parseFloat(inheritedBreak.breakFontSize!)).toBeCloseTo(24, 1);
+  expect(inheritedBreak.breakFontFamily).toContain('Courier New');
+  expect(styledBreak.textTop! - styledBreak.top).toBeGreaterThan(
+    inheritedBreak.textTop! - inheritedBreak.top,
+  );
+  expect(styledBreak.height).toBeGreaterThan(inheritedBreak.height);
+  expect(styledBreak.top - beforeBreak.top).toBeCloseTo(beforeBreak.height, 1);
+  expect(inheritedBreak.top - styledBreak.top).toBeCloseTo(styledBreak.height, 1);
+  expect(afterBreak.top - inheritedBreak.top).toBeCloseTo(inheritedBreak.height, 1);
+  expect(result.fixedMetrics.wrapperCount).toBe(2);
+  expect(result.fixedMetrics.wrapperHeights).toEqual([32, 32]);
+  expect(result.fixedMetrics.brCount).toBe(0);
   expect(result.rect.inTop).toBeCloseTo(result.rect.toTop, 1);
   expect(result.roundRect.inTop).toBeGreaterThan(result.roundRect.toTop);
   expect(result.roundRect.containerWidth).toBeCloseTo(result.expectedRoundWidth, 1);
