@@ -386,6 +386,282 @@ test('text overflow combinations remain non-scrollable in Chromium', async ({ pa
   }
 });
 
+test('browser layout preserves blank lines and roundRect wrapping', async ({ page }) => {
+  await page.goto('/test/browser/blank.html');
+  const result = await page.evaluate(async () => {
+    const [{ parseXml }, { parseShapeNode }, { renderShape }, { createMockRenderContext }] =
+      await Promise.all([
+        import('/src/parser/XmlParser.ts'),
+        import('/src/model/nodes/ShapeNode.ts'),
+        import('/src/renderer/ShapeRenderer.ts'),
+        import('/test/unit/helpers/mockContext.ts'),
+      ]);
+    const render = (xml: string) => {
+      const shape = renderShape(parseShapeNode(parseXml(xml)), createMockRenderContext());
+      document.body.appendChild(shape);
+      const container = Array.from(shape.querySelectorAll('div')).find(
+        (element) => element.style.flexDirection === 'column',
+      );
+      if (!container) throw new Error('Missing text container');
+      return { shape, container };
+    };
+
+    const blank = render(`
+      <p:sp xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
+            xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+        <p:nvSpPr><p:cNvPr id="1" name="Blank lines"/><p:cNvSpPr txBox="1"/><p:nvPr/></p:nvSpPr>
+        <p:spPr>
+          <a:xfrm><a:off x="0" y="0"/><a:ext cx="4762500" cy="4762500"/></a:xfrm>
+          <a:prstGeom prst="rect"><a:avLst/></a:prstGeom>
+        </p:spPr>
+        <p:txBody>
+          <a:bodyPr lIns="0" tIns="0" rIns="0" bIns="0"><a:noAutofit/></a:bodyPr>
+          <a:lstStyle/>
+          <a:p><a:pPr><a:lnSpc><a:spcPct val="100000"/></a:lnSpc></a:pPr><a:r><a:rPr sz="1000"><a:latin typeface="Arial"/></a:rPr><a:t>Small </a:t></a:r><a:r><a:rPr sz="2000"><a:latin typeface="Arial"/></a:rPr><a:t>Before</a:t></a:r></a:p>
+          <a:p><a:pPr><a:lnSpc><a:spcPct val="100000"/></a:lnSpc></a:pPr><a:r><a:rPr sz="600"/><a:t/></a:r><a:endParaRPr sz="2000"><a:latin typeface="Arial"/></a:endParaRPr></a:p>
+          <a:p><a:pPr><a:lnSpc><a:spcPct val="100000"/></a:lnSpc></a:pPr><a:r><a:t/></a:r><a:endParaRPr sz="2000"><a:latin typeface="Arial"/></a:endParaRPr></a:p>
+          <a:p><a:pPr><a:lnSpc><a:spcPct val="100000"/></a:lnSpc></a:pPr><a:r><a:rPr sz="2000"><a:latin typeface="Arial"/></a:rPr><a:t>After</a:t></a:r></a:p>
+          <a:p><a:br/><a:endParaRPr sz="2000"><a:latin typeface="Arial"/></a:endParaRPr></a:p>
+        </p:txBody>
+      </p:sp>
+    `);
+    const paragraphRects = Array.from(blank.container.children).map((paragraph) => {
+      const rect = paragraph.getBoundingClientRect();
+      return {
+        height: rect.height,
+        top: rect.top,
+        fontFamily: getComputedStyle(paragraph).fontFamily,
+      };
+    });
+    blank.shape.remove();
+
+    const lineBreaks = render(`
+      <p:sp xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
+            xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+        <p:nvSpPr><p:cNvPr id="3" name="Styled line breaks"/><p:cNvSpPr txBox="1"/><p:nvPr/></p:nvSpPr>
+        <p:spPr>
+          <a:xfrm><a:off x="0" y="0"/><a:ext cx="4762500" cy="4762500"/></a:xfrm>
+          <a:prstGeom prst="rect"><a:avLst/></a:prstGeom>
+        </p:spPr>
+        <p:txBody>
+          <a:bodyPr lIns="0" tIns="0" rIns="0" bIns="0"><a:noAutofit/></a:bodyPr>
+          <a:lstStyle/>
+          <a:p><a:pPr><a:lnSpc><a:spcPct val="100000"/></a:lnSpc></a:pPr><a:r><a:rPr sz="1000"><a:latin typeface="Arial"/></a:rPr><a:t>Before</a:t></a:r></a:p>
+          <a:p><a:pPr><a:lnSpc><a:spcPct val="100000"/></a:lnSpc></a:pPr><a:br><a:rPr sz="3000"><a:latin typeface="Arial"/></a:rPr></a:br><a:r><a:rPr sz="1000"><a:latin typeface="Arial"/></a:rPr><a:t>Styled</a:t></a:r></a:p>
+          <a:p><a:pPr><a:lnSpc><a:spcPct val="100000"/></a:lnSpc><a:defRPr sz="1800"><a:latin typeface="Courier New"/></a:defRPr></a:pPr><a:br/><a:r><a:rPr sz="1000"><a:latin typeface="Arial"/></a:rPr><a:t>Inherited</a:t></a:r></a:p>
+          <a:p><a:pPr><a:lnSpc><a:spcPct val="100000"/></a:lnSpc></a:pPr><a:r><a:rPr sz="1000"><a:latin typeface="Arial"/></a:rPr><a:t>After</a:t></a:r></a:p>
+        </p:txBody>
+      </p:sp>
+    `);
+    const breakParagraphs = Array.from(lineBreaks.container.children) as HTMLElement[];
+    const breakMetrics = breakParagraphs.map((paragraph) => {
+      const rect = paragraph.getBoundingClientRect();
+      const breakElement = paragraph.querySelector('br')?.parentElement;
+      const textElement = Array.from(paragraph.querySelectorAll('span')).find(
+        (span) => span.textContent === 'Styled' || span.textContent === 'Inherited',
+      );
+      return {
+        height: rect.height,
+        top: rect.top,
+        paragraphFontSize: paragraph.style.fontSize,
+        paragraphFontFamily: paragraph.style.fontFamily,
+        breakTag: breakElement?.tagName,
+        breakFontSize: breakElement ? getComputedStyle(breakElement).fontSize : undefined,
+        breakFontFamily: breakElement ? getComputedStyle(breakElement).fontFamily : undefined,
+        textTop: textElement?.getBoundingClientRect().top,
+      };
+    });
+    lineBreaks.shape.remove();
+
+    const fixedLineSpacing = render(`
+      <p:sp xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
+            xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+        <p:nvSpPr><p:cNvPr id="4" name="Fixed line spacing"/><p:cNvSpPr txBox="1"/><p:nvPr/></p:nvSpPr>
+        <p:spPr>
+          <a:xfrm><a:off x="0" y="0"/><a:ext cx="4762500" cy="4762500"/></a:xfrm>
+          <a:prstGeom prst="rect"><a:avLst/></a:prstGeom>
+        </p:spPr>
+        <p:txBody>
+          <a:bodyPr lIns="0" tIns="0" rIns="0" bIns="0"><a:noAutofit/></a:bodyPr>
+          <a:lstStyle/>
+          <a:p><a:pPr><a:lnSpc><a:spcPts val="2400"/></a:lnSpc></a:pPr><a:r><a:rPr sz="1000"/><a:t>First</a:t></a:r><a:br><a:rPr sz="3000"/></a:br><a:r><a:rPr sz="1000"/><a:t>Second</a:t></a:r></a:p>
+        </p:txBody>
+      </p:sp>
+    `);
+    const fixedParagraph = fixedLineSpacing.container.firstElementChild as HTMLElement;
+    const fixedMetrics = {
+      wrapperCount: fixedParagraph.children.length,
+      wrapperHeights: Array.from(fixedParagraph.children).map(
+        (line) => line.getBoundingClientRect().height,
+      ),
+      brCount: fixedParagraph.querySelectorAll('br').length,
+    };
+    fixedLineSpacing.shape.remove();
+
+    const text = 'one two to in';
+    const probe = document.createElement('span');
+    probe.style.font = '20pt Arial';
+    probe.style.whiteSpace = 'pre';
+    probe.textContent = text;
+    document.body.appendChild(probe);
+    const fullTextWidth = probe.getBoundingClientRect().width;
+    probe.remove();
+    const height = 100;
+    const inset = height * (16667 / 100000) * 0.29289;
+    const width = fullTextWidth + inset;
+
+    const wordTops = (preset: 'rect' | 'roundRect') => {
+      const rendered = render(`
+        <p:sp xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
+              xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+          <p:nvSpPr><p:cNvPr id="2" name="${preset}"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+          <p:spPr>
+            <a:xfrm><a:off x="0" y="0"/><a:ext cx="${Math.ceil(width * 9525)}" cy="952500"/></a:xfrm>
+            <a:prstGeom prst="${preset}"><a:avLst/></a:prstGeom>
+          </p:spPr>
+          <p:txBody>
+            <a:bodyPr lIns="0" tIns="0" rIns="0" bIns="0" wrap="square"><a:noAutofit/></a:bodyPr>
+            <a:lstStyle/>
+            <a:p><a:r><a:rPr sz="2000"><a:latin typeface="Arial"/></a:rPr><a:t>${text}</a:t></a:r></a:p>
+          </p:txBody>
+        </p:sp>
+      `);
+      const textNode = rendered.container.querySelector('span')?.firstChild;
+      if (!textNode) throw new Error(`Missing ${preset} text`);
+      const top = (word: string) => {
+        const start = text.indexOf(word);
+        const range = document.createRange();
+        range.setStart(textNode, start);
+        range.setEnd(textNode, start + word.length);
+        return range.getBoundingClientRect().top;
+      };
+      const value = {
+        containerWidth: rendered.container.getBoundingClientRect().width,
+        inTop: top('in'),
+        toTop: top('to'),
+      };
+      rendered.shape.remove();
+      return value;
+    };
+
+    return {
+      blank: paragraphRects.slice(0, 4),
+      breakOnly: paragraphRects[4],
+      breakMetrics,
+      fixedMetrics,
+      expectedRoundWidth: width - 2 * inset,
+      rect: wordTops('rect'),
+      roundRect: wordTops('roundRect'),
+    };
+  });
+
+  expect(result.blank).toHaveLength(4);
+  expect(result.blank.every(({ height }) => height > 0)).toBe(true);
+  const blankHeights = result.blank.map(({ height }) => height);
+  expect(Math.max(...blankHeights) - Math.min(...blankHeights)).toBeLessThanOrEqual(1);
+  for (let index = 1; index < result.blank.length; index += 1) {
+    expect(result.blank[index].top - result.blank[index - 1].top).toBeCloseTo(
+      result.blank[index - 1].height,
+      1,
+    );
+  }
+  expect(result.breakOnly.height).toBeGreaterThan(0);
+  expect(result.breakOnly.fontFamily).toContain('Arial');
+  expect(result.breakMetrics).toHaveLength(4);
+  const [beforeBreak, styledBreak, inheritedBreak, afterBreak] = result.breakMetrics;
+  expect(styledBreak.paragraphFontSize).toBe('10pt');
+  expect(styledBreak.paragraphFontFamily).toBe('');
+  expect(styledBreak.breakTag).toBe('SPAN');
+  expect(parseFloat(styledBreak.breakFontSize!)).toBeCloseTo(40, 1);
+  expect(styledBreak.breakFontFamily).toContain('Arial');
+  expect(inheritedBreak.paragraphFontSize).toBe('10pt');
+  expect(inheritedBreak.paragraphFontFamily).toBe('');
+  expect(inheritedBreak.breakTag).toBe('SPAN');
+  expect(parseFloat(inheritedBreak.breakFontSize!)).toBeCloseTo(24, 1);
+  expect(inheritedBreak.breakFontFamily).toContain('Courier New');
+  expect(styledBreak.textTop! - styledBreak.top).toBeGreaterThan(
+    inheritedBreak.textTop! - inheritedBreak.top,
+  );
+  expect(styledBreak.height).toBeGreaterThan(inheritedBreak.height);
+  expect(styledBreak.top - beforeBreak.top).toBeCloseTo(beforeBreak.height, 1);
+  expect(inheritedBreak.top - styledBreak.top).toBeCloseTo(styledBreak.height, 1);
+  expect(afterBreak.top - inheritedBreak.top).toBeCloseTo(inheritedBreak.height, 1);
+  expect(result.fixedMetrics.wrapperCount).toBe(2);
+  expect(result.fixedMetrics.wrapperHeights).toEqual([32, 32]);
+  expect(result.fixedMetrics.brCount).toBe(0);
+  expect(result.rect.inTop).toBeCloseTo(result.rect.toTop, 1);
+  expect(result.roundRect.inTop).toBeGreaterThan(result.roundRect.toTop);
+  expect(result.roundRect.containerWidth).toBeCloseTo(result.expectedRoundWidth, 1);
+});
+
+test('table paragraphs without lnSpc keep the existing cumulative fallback', async ({ page }) => {
+  await page.goto('/test/browser/blank.html');
+  const result = await page.evaluate(async () => {
+    const [{ renderTable }, { parseXml }, { createMockRenderContext }] = await Promise.all([
+      import('/src/renderer/TableRenderer.ts'),
+      import('/src/parser/XmlParser.ts'),
+      import('/test/unit/helpers/mockContext.ts'),
+    ]);
+    const run = (text: string) => ({
+      text,
+      properties: parseXml('<rPr sz="2000"><latin typeface="Arial"/></rPr>'),
+    });
+    const table = renderTable(
+      {
+        id: '1',
+        name: 'Cumulative paragraph spacing',
+        nodeType: 'table',
+        position: { x: 0, y: 0 },
+        size: { w: 400, h: 300 },
+        rotation: 0,
+        flipH: false,
+        flipV: false,
+        source: parseXml('<graphicFrame/>'),
+        columns: [400],
+        rows: [
+          {
+            height: 300,
+            cells: [
+              {
+                gridSpan: 1,
+                rowSpan: 1,
+                hMerge: false,
+                vMerge: false,
+                textBody: {
+                  paragraphs: [
+                    { runs: [run('First paragraph')], level: 0 },
+                    { runs: [run('NOTE'), { text: '\n' }, run('continued')], level: 0 },
+                    { runs: [run('WARNING')], level: 0 },
+                  ],
+                },
+              },
+            ],
+          },
+        ],
+      },
+      createMockRenderContext(),
+    );
+    document.body.replaceChildren(table);
+
+    return Array.from(table.querySelectorAll('td > div')).map((paragraph) => {
+      const rect = paragraph.getBoundingClientRect();
+      return {
+        fontSize: getComputedStyle(paragraph).fontSize,
+        height: rect.height,
+        lineHeight: getComputedStyle(paragraph).lineHeight,
+        top: rect.top,
+      };
+    });
+  });
+
+  const lineHeight = parseFloat(result[0].lineHeight);
+  expect(lineHeight).toBeCloseTo(parseFloat(result[0].fontSize), 1);
+  expect(result[1].height).toBeCloseTo(result[0].height * 2, 1);
+  expect(result[2].height).toBeCloseTo(result[0].height, 1);
+  expect(result[1].top - result[0].top).toBeCloseTo(result[0].height, 1);
+  expect(result[2].top - result[1].top).toBeCloseTo(result[1].height, 1);
+});
+
 test('embedded PPTX fonts load without host font installation', async ({ page }) => {
   await page.goto('/test/browser/blank.html');
   const result = await page.evaluate(async () => {

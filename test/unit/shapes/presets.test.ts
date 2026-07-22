@@ -24,6 +24,15 @@ describe('getPresetShapePath', () => {
     expect(d.length).toBeGreaterThan(0);
   });
 
+  it('clamps roundRect adjustments to the DrawingML range', () => {
+    expect(getPresetShapePath('roundRect', 200, 100, new Map([['adj', -1000]]))).toBe(
+      getPresetShapePath('roundRect', 200, 100, new Map([['adj', 0]])),
+    );
+    expect(getPresetShapePath('roundRect', 200, 100, new Map([['adj', 75000]]))).toBe(
+      getPresetShapePath('roundRect', 200, 100, new Map([['adj', 50000]])),
+    );
+  });
+
   it('returns an ellipse path', () => {
     const d = getPresetShapePath('ellipse', 100, 100);
     expect(d).toContain('A');

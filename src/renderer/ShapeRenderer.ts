@@ -2436,6 +2436,13 @@ export function renderShape(node: ShapeNodeData, ctx: RenderContext): HTMLElemen
         textContainer.style.top = `${node.textBoxBounds.y}px`;
         textContainer.style.width = `${node.textBoxBounds.w}px`;
         textContainer.style.height = `${node.textBoxBounds.h}px`;
+      } else if (node.presetGeometry === 'roundRect') {
+        const adjustment = Math.min(Math.max(node.adjustments.get('adj') ?? 16667, 0), 50000);
+        const inset = Math.min(node.size.w, node.size.h) * (adjustment / 100000) * 0.29289;
+        textContainer.style.left = `${inset}px`;
+        textContainer.style.top = `${inset}px`;
+        textContainer.style.width = `${node.size.w - 2 * inset}px`;
+        textContainer.style.height = `${node.size.h - 2 * inset}px`;
       } else {
         textContainer.style.left = '0';
         textContainer.style.top = '0';
@@ -2492,14 +2499,9 @@ export function renderShape(node: ShapeNodeData, ctx: RenderContext): HTMLElemen
       if (hasNormAutofit && normAutofit) {
         textContainer.style.overflowX = 'hidden';
         textContainer.style.overflowY = 'hidden';
-        const lnSpcReduction = normAutofit.numAttr('lnSpcReduction') ?? 0;
         // renderTextBody applies normAutofit@fontScale to run and paragraph font sizes.
         // The container transform is reserved for additional browser-measured shrink.
         needsDynamicAutofit = true;
-        if (lnSpcReduction > 0) {
-          const lnFactor = 1 - lnSpcReduction / 100000;
-          textContainer.style.lineHeight = `${lnFactor}`;
-        }
       }
       // spAutoFit requests in-shape text fitting. In browser rendering we cannot
       // resize the absolutely positioned shape like PowerPoint editor behavior,
