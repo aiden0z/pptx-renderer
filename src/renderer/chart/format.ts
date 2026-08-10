@@ -36,15 +36,29 @@ function isCachePointInRange(idx: number | undefined, pointLimit: number): idx i
   );
 }
 
+// Chart data points live in a cache under a reference (strRef/strCache,
+// numRef/numCache), in literal data (strLit/numLit, used by generators that
+// embed values directly instead of a workbook), or in a bare cache element.
+// Return the first container that exists; a dangling reference without its
+// cache falls through so callers can try the next data kind.
+function selectDataContainer(
+  refNode: SafeXmlNode,
+  refName: 'strRef' | 'numRef',
+  litName: 'strLit' | 'numLit',
+  cacheName: 'strCache' | 'numCache',
+): SafeXmlNode {
+  const ref = refNode.child(refName);
+  if (ref.exists()) return ref.child(cacheName);
+  const lit = refNode.child(litName);
+  if (lit.exists()) return lit;
+  return refNode.child(cacheName);
+}
+
 export function extractStringValues(refNode: SafeXmlNode): string[] {
-  const cache = refNode.child('strRef').exists()
-    ? refNode.child('strRef').child('strCache')
-    : refNode.child('strCache');
+  const cache = selectDataContainer(refNode, 'strRef', 'strLit', 'strCache');
 
   if (!cache.exists()) {
-    const numCache = refNode.child('numRef').exists()
-      ? refNode.child('numRef').child('numCache')
-      : refNode.child('numCache');
+    const numCache = selectDataContainer(refNode, 'numRef', 'numLit', 'numCache');
     if (numCache.exists()) {
       return extractNumericValuesAsStrings(numCache);
     }
@@ -66,9 +80,7 @@ export function extractStringValues(refNode: SafeXmlNode): string[] {
 }
 
 export function extractFormatCode(refNode: SafeXmlNode): string | undefined {
-  const cache = refNode.child('numRef').exists()
-    ? refNode.child('numRef').child('numCache')
-    : refNode.child('numCache');
+  const cache = selectDataContainer(refNode, 'numRef', 'numLit', 'numCache');
 
   if (!cache.exists()) return undefined;
 
@@ -198,9 +210,7 @@ interface NumericValuesWithBlanks {
 }
 
 export function extractNumericValuesWithBlanks(refNode: SafeXmlNode): NumericValuesWithBlanks {
-  const cache = refNode.child('numRef').exists()
-    ? refNode.child('numRef').child('numCache')
-    : refNode.child('numCache');
+  const cache = selectDataContainer(refNode, 'numRef', 'numLit', 'numCache');
 
   if (!cache.exists()) return { values: [], blankIndices: new Set() };
 

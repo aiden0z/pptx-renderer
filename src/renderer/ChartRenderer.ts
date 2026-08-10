@@ -716,7 +716,9 @@ function buildBarChartOption(
           ...(pointStyle.borderWidth !== undefined ? { borderWidth: pointStyle.borderWidth } : {}),
           ...(pointStyle.borderType ? { borderType: pointStyle.borderType } : {}),
         };
-      } else if (s.invertIfNegative !== false && rawValue < 0) {
+      } else if (s.invertIfNegative === true && rawValue < 0) {
+        // OOXML treats a missing c:invertIfNegative as off (PowerPoint renders
+        // the series color for negative points); only invert when explicitly on.
         itemStyle = { color: '#FFFFFF', borderColor: '#000000', borderWidth: 1 };
       } else if (varyColors && !s.colorHex && pointPalette.length > 0) {
         itemStyle = { color: pointPalette[pointIdx % pointPalette.length] };
@@ -2220,15 +2222,15 @@ export function applyZeroCrossingAxisLabelLayout(
     option.yAxis as MutableAxisOption | MutableAxisOption[],
   );
   const gridHeight = plotSpanPx(grid, chartSize.h, 'top', 'bottom');
-  const gridWidth = plotSpanPx(grid, chartSize.w, 'left', 'right');
   let applied = false;
 
   xAxes.forEach((xAxis, index) => {
     applied = applyCategoryLabelZeroOffset(xAxis, yAxes[index] ?? yAxes[0], gridHeight) || applied;
   });
-  yAxes.forEach((yAxis, index) => {
-    applied = applyCategoryLabelZeroOffset(yAxis, xAxes[index] ?? xAxes[0], gridWidth) || applied;
-  });
+  // Y category axes (horizontal bars) are deliberately skipped: ECharts keeps
+  // their labels anchored at the grid's left edge when the axis line moves to
+  // zero, so applying the zero offset there pushes labels into the plot over
+  // negative bars.
 
   if (applied && grid) {
     grid.containLabel = false;
