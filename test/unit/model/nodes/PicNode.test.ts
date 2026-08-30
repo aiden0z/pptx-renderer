@@ -6,6 +6,7 @@ function makePicXml(
   opts: {
     embed?: string;
     link?: string;
+    svgEmbed?: string;
     srcRect?: { t?: number; b?: number; l?: number; r?: number };
     video?: boolean;
     audio?: boolean;
@@ -20,6 +21,9 @@ function makePicXml(
   const blipAttrs = [embed ? `embed="${embed}"` : '', opts.link ? `link="${opts.link}"` : '']
     .filter(Boolean)
     .join(' ');
+  const svgBlip = opts.svgEmbed
+    ? `<extLst><ext uri="{96DAC541-7B7A-43D3-8B79-37D633B846F1}"><asvg:svgBlip r:embed="${opts.svgEmbed}"/></ext></extLst>`
+    : '';
   const srcRect = opts.srcRect
     ? `<srcRect ${Object.entries(opts.srcRect)
         .map(([k, v]) => `${k}="${v}"`)
@@ -58,13 +62,14 @@ function makePicXml(
 
   return parseXml(`
     <pic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"
-         xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+         xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"
+         xmlns:asvg="http://schemas.microsoft.com/office/drawing/2016/SVG/main">
       <nvPicPr>
         <cNvPr id="5" name="Picture 1"/>
         <nvPr>${media}</nvPr>
       </nvPicPr>
       <blipFill>
-        <blip ${blipAttrs}/>
+        <blip ${blipAttrs}>${svgBlip}</blip>
         ${srcRect}
       </blipFill>
       <spPr>
@@ -115,6 +120,20 @@ describe('parsePicNode', () => {
     );
 
     expect(node.blipEmbed).toBe('rIdAlt');
+  });
+
+  it('prefers the Office SVG relationship over the raster fallback', () => {
+    const node = parsePicNode(
+      makePicXml({ embed: 'rIdPng', svgEmbed: 'rIdSvg' }),
+    );
+
+    expect(node.blipEmbed).toBe('rIdSvg');
+  });
+
+  it('uses an Office SVG relationship when the raster relationship is absent', () => {
+    const node = parsePicNode(makePicXml({ embed: '', svgEmbed: 'rIdSvg' }));
+
+    expect(node.blipEmbed).toBe('rIdSvg');
   });
 
   it('parses crop rect', () => {
