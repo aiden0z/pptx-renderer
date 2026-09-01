@@ -802,7 +802,7 @@ interface RenderTextBodyOptions {
   cellTextItalic?: boolean;
   /** When set, applies font family from table style tcTxStyle (overrides inherited, yields to explicit run rPr). */
   cellTextFontFamily?: string | string[];
-  /** fontRef color from shape style (e.g. SmartArt). Overrides inherited styles but yields to explicit run rPr color. */
+  /** fontRef color from shape style (e.g. SmartArt). Overrides inherited styles but yields to explicit paragraph/run colors. */
   fontRefColor?: string;
   /** True when the text container uses vertical writing mode. */
   isVerticalText?: boolean;
@@ -1279,15 +1279,18 @@ export function renderTextBody(
         element.style.backgroundColor = runStyle.highlightColor;
       }
 
-      // Color priority: explicit run rPr > hlink theme color > cellTextColor (table style tcTxStyle) > fontRef (shape style) > inherited styles > black default
+      // Color priority: explicit paragraph/run color > hlink theme color > cellTextColor (table style tcTxStyle) > fontRef (shape style) > inherited styles > black default
       // cellTextColor from table style overrides inherited cascade colors but yields to explicit run/paragraph solidFill/gradFill.
-      // fontRefColor overrides inherited styles but yields to explicit run solidFill/gradFill.
+      // fontRefColor overrides inherited styles but yields to explicit paragraph/run solidFill/gradFill.
       const runColorKind = getRunColorKind(run.properties);
       const hasExplicitRunColor = runColorKind !== 'none';
+      const paragraphColorKind = getRunColorKind(paragraph.properties?.child('defRPr'));
+      const hasExplicitParagraphColor = paragraphColorKind !== 'none';
+      const hasExplicitTextColor = hasExplicitRunColor || hasExplicitParagraphColor;
       let effectiveColor: string | undefined;
       if (options?.fontRefColor) {
-        effectiveColor = hasExplicitRunColor ? runStyle.color : options.fontRefColor;
-      } else if (options?.cellTextColor && !hasExplicitRunColor) {
+        effectiveColor = hasExplicitTextColor ? runStyle.color : options.fontRefColor;
+      } else if (options?.cellTextColor && !hasExplicitTextColor) {
         effectiveColor = options.cellTextColor;
       } else {
         effectiveColor = runStyle.color;

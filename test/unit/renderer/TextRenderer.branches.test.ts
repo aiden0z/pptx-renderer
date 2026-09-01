@@ -1546,6 +1546,82 @@ describe('TextRenderer — branch coverage (uncovered paths)', () => {
       expect(span!.style.color).toBe('rgb(255, 0, 0)');
     });
 
+    it('prefers explicit paragraph defRPr color over fontRefColor', () => {
+      const body = makeTextBody({
+        paragraphs: [
+          {
+            properties: xmlNode(
+              '<pPr><defRPr><solidFill><srgbClr val="243B53"/></solidFill></defRPr></pPr>',
+            ),
+            runs: [{ text: 'Paragraph color wins' }],
+            level: 0,
+          },
+        ],
+      });
+      const ctx = createMockRenderContext();
+      const container = document.createElement('div');
+      renderTextBody(body, undefined, ctx, container, {
+        fontRefColor: '#FFFFFF',
+      });
+      const span = container.querySelector('span');
+      expect(span!.style.color).toBe('rgb(36, 59, 83)');
+    });
+
+    it('uses fontRefColor when paragraph defRPr has no color', () => {
+      const body = makeTextBody({
+        paragraphs: [
+          {
+            properties: xmlNode('<pPr><defRPr sz="1800"/></pPr>'),
+            runs: [{ text: 'Shape style color wins' }],
+            level: 0,
+          },
+        ],
+      });
+      const ctx = createMockRenderContext();
+      const container = document.createElement('div');
+      renderTextBody(body, undefined, ctx, container, {
+        fontRefColor: '#FFFFFF',
+      });
+      const span = container.querySelector('span');
+      expect(span!.style.color).toBe('rgb(255, 255, 255)');
+    });
+
+    it('keeps fontRefColor precedence over inherited list style colors', () => {
+      const body = makeTextBody({
+        listStyle:
+          '<lstStyle><lvl1pPr><defRPr><solidFill><srgbClr val="243B53"/></solidFill></defRPr></lvl1pPr></lstStyle>',
+        paragraphs: [{ runs: [{ text: 'Shape style color wins' }], level: 0 }],
+      });
+      const ctx = createMockRenderContext();
+      const container = document.createElement('div');
+      renderTextBody(body, undefined, ctx, container, {
+        fontRefColor: '#FFFFFF',
+      });
+      const span = container.querySelector('span');
+      expect(span!.style.color).toBe('rgb(255, 255, 255)');
+    });
+
+    it('prefers explicit paragraph defRPr color over cellTextColor', () => {
+      const body = makeTextBody({
+        paragraphs: [
+          {
+            properties: xmlNode(
+              '<pPr><defRPr><solidFill><srgbClr val="243B53"/></solidFill></defRPr></pPr>',
+            ),
+            runs: [{ text: 'Paragraph color wins' }],
+            level: 0,
+          },
+        ],
+      });
+      const ctx = createMockRenderContext();
+      const container = document.createElement('div');
+      renderTextBody(body, undefined, ctx, container, {
+        cellTextColor: '#FF0000',
+      });
+      const span = container.querySelector('span');
+      expect(span!.style.color).toBe('rgb(36, 59, 83)');
+    });
+
     it('uses cellTextColor as fallback when no other color set', () => {
       const body = makeTextBody({
         paragraphs: [
