@@ -826,6 +826,34 @@ describe('TextRenderer — renderTextBody', () => {
       expect(bulletSpan!.style.color).toBe('rgb(255, 255, 255)');
     });
 
+    it('ignores leading break properties when resolving the first visible run color', () => {
+      const body = makeTextBody({
+        paragraphs: [
+          {
+            properties: xmlNode('<pPr><buChar char="•"/></pPr>'),
+            runs: [
+              {
+                text: '\n',
+                properties: xmlNode('<rPr><solidFill><srgbClr val="FF0000"/></solidFill></rPr>'),
+              },
+              {
+                text: 'Visible',
+                properties: xmlNode('<rPr><solidFill><srgbClr val="0000FF"/></solidFill></rPr>'),
+              },
+            ],
+            level: 0,
+          },
+        ],
+      });
+
+      const container = renderToContainer(body);
+      const bulletSpan = Array.from(container.querySelectorAll('span')).find((span) =>
+        span.textContent?.startsWith('•'),
+      );
+
+      expect(bulletSpan!.style.color).toBe('rgb(0, 0, 255)');
+    });
+
     it('suppresses bullet when buNone is present', () => {
       const body = makeTextBody({
         paragraphs: [

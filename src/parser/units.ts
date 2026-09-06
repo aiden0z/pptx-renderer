@@ -29,6 +29,16 @@ export function pctToDecimal(pct: number): number {
   return pct / 100000;
 }
 
+/** OOXML percentage in either integer-thousandths (`120000`) or percent-string (`120%`) form. */
+export function parseOoxmlPercent(value: string | undefined): number | undefined {
+  const trimmed = value?.trim();
+  if (!trimmed) return undefined;
+  const isPercentString = trimmed.endsWith('%');
+  const parsed = Number(isPercentString ? trimmed.slice(0, -1) : trimmed);
+  if (!Number.isFinite(parsed)) return undefined;
+  return parsed / (isPercentString ? 100 : 100000);
+}
+
 /** Hundredths of a point to points (used for font sizes in OOXML). */
 export function hundredthPtToPt(val: number): number {
   return val / 100;

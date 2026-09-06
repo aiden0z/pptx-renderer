@@ -14,6 +14,9 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Fixed
 
+- Preserved consecutive blank text paragraphs, used DrawingML's inscribed text rectangle for
+  rounded rectangles, and kept both OOXML percentage encodings unitless across mixed run sizes
+  and `normAutofit` reductions.
 - Sized tables from their column/row grid (Σ column widths × Σ row heights) instead of the
   graphicFrame `<a:ext>`, so tables authored in Google Slides — which export a stale
   placeholder ext — no longer render squished with clipped cell text.

@@ -8,7 +8,7 @@ import { RenderContext } from './RenderContext';
 import type { TextBody, TextParagraph, TextRun } from '../model/nodes/ShapeNode';
 import { PlaceholderInfo } from '../model/nodes/BaseNode';
 import { resolveColor, resolveColorToCss, resolveFill } from './StyleResolver';
-import { emuToPx, pctToDecimal, angleToDeg } from '../parser/units';
+import { emuToPx, pctToDecimal, parseOoxmlPercent, angleToDeg } from '../parser/units';
 import { parseOoxmlBool } from '../parser/booleans';
 import { isExternalTargetMode } from '../parser/RelParser';
 import { isAllowedExternalUrl } from '../utils/urlSafety';
@@ -201,7 +201,7 @@ function mergeParagraphProps(target: MergedParagraphStyle, pPr: SafeXmlNode): vo
   if (defTabSz !== undefined) target.defaultTabSize = emuToPx(defTabSz);
 
   // Line spacing
-  // OOXML spcPct: 100000 = "single spacing" = 1.0× the font's line height.
+  // OOXML spcPct is a percentage of the text size.
   // IMPORTANT: We must use UNITLESS CSS line-height values (e.g., 1.0, 1.2)
   // instead of percentages (e.g., 100%, 120%). CSS percentage line-height is
   // computed once against the element's own font-size and inherited as a FIXED
@@ -213,10 +213,10 @@ function mergeParagraphProps(target: MergedParagraphStyle, pPr: SafeXmlNode): vo
   if (lnSpc.exists()) {
     const spcPct = lnSpc.child('spcPct');
     if (spcPct.exists()) {
-      const val = spcPct.numAttr('val');
+      const val = parseOoxmlPercent(spcPct.attr('val'));
       if (val !== undefined) {
-        // OOXML 100000 → CSS unitless 1.0; OOXML 120000 → CSS 1.2
-        target.lineHeight = `${(val / 100000).toFixed(3)}`;
+        target.lineHeight = `${val.toFixed(3)}`;
+        target.lineHeightAbsolute = false;
       }
     }
     const spcPts = lnSpc.child('spcPts');
@@ -239,8 +239,8 @@ function mergeParagraphProps(target: MergedParagraphStyle, pPr: SafeXmlNode): vo
     }
     const spcPct = spcBef.child('spcPct');
     if (spcPct.exists()) {
-      const val = spcPct.numAttr('val');
-      if (val !== undefined) target.spaceBeforePct = val / 100000; // store as ratio
+      const val = parseOoxmlPercent(spcPct.attr('val'));
+      if (val !== undefined) target.spaceBeforePct = val;
     }
   }
 
@@ -254,8 +254,8 @@ function mergeParagraphProps(target: MergedParagraphStyle, pPr: SafeXmlNode): vo
     }
     const spcPct = spcAft.child('spcPct');
     if (spcPct.exists()) {
-      const val = spcPct.numAttr('val');
-      if (val !== undefined) target.spaceAfterPct = val / 100000; // store as ratio
+      const val = parseOoxmlPercent(spcPct.attr('val'));
+      if (val !== undefined) target.spaceAfterPct = val;
     }
   }
 
@@ -845,10 +845,8 @@ export function renderTextBody(
   let lnSpcReduction = 0;
   const normAutofit = getEffectiveBodyPrChild(textBody, 'normAutofit');
   if (normAutofit?.exists()) {
-    const fs = normAutofit.numAttr('fontScale');
-    if (fs !== undefined) fontScale = fs / 100000; // 100000 = 100%
-    const lsr = normAutofit.numAttr('lnSpcReduction');
-    if (lsr !== undefined) lnSpcReduction = lsr / 100000; // e.g., 20000 = 20%
+    fontScale = parseOoxmlPercent(normAutofit.attr('fontScale')) ?? 1;
+    lnSpcReduction = parseOoxmlPercent(normAutofit.attr('lnSpcReduction')) ?? 0;
   }
 
   const bulletCounters = new Map<string, number>();
@@ -928,6 +926,11 @@ export function renderTextBody(
       mergeParagraphProps(merged, paragraph.properties);
     }
 
+    const hasVisibleRuns = paragraph.runs.some((run) => run.text != null && run.text.length > 0);
+    const firstVisibleTextRun = paragraph.runs.find(
+      (run) => run.text != null && run.text.length > 0 && run.text !== '\n' && run.text !== '\t',
+    );
+
     // ---- Apply paragraph styles ----
     if (merged.align) {
       const alignMap: Record<string, string> = {
@@ -951,16 +954,14 @@ export function renderTextBody(
       paraDiv.style.textIndent = `${merged.textIndent}px`;
     }
     // Compute effective line-height (with optional lnSpcReduction from normAutofit)
+    const hasPercentageLineSpacing =
+      merged.lineHeight !== undefined && merged.lineHeightAbsolute === false;
     let effectiveLineHeight = merged.lineHeight ?? options?.defaultLineHeight;
     if (effectiveLineHeight) {
-      if (lnSpcReduction > 0) {
+      if (lnSpcReduction > 0 && hasPercentageLineSpacing) {
         const parsed = parseFloat(effectiveLineHeight);
         if (!isNaN(parsed)) {
-          if (effectiveLineHeight.includes('pt')) {
-            effectiveLineHeight = `${(parsed * (1 - lnSpcReduction)).toFixed(2)}pt`;
-          } else {
-            effectiveLineHeight = `${(parsed * (1 - lnSpcReduction)).toFixed(3)}`;
-          }
+          effectiveLineHeight = `${(parsed * (1 - lnSpcReduction)).toFixed(3)}`;
         }
       }
       if (options?.isVerticalText && !merged.lineHeightAbsolute) {
@@ -970,22 +971,27 @@ export function renderTextBody(
       }
       paraDiv.style.lineHeight = effectiveLineHeight!;
     }
-    // Determine effective font size for percentage-based spacing
-    // Use defRPr or first run's font size, fallback to 12pt
-    let effectiveFontSize = 12; // default 12pt
+    // Keep the paragraph strut aligned with its first visible run. Blank paragraphs use
+    // line-break properties when present, then fall back to endParaRPr.
     const defaultRunStyle = getParagraphDefaultRunStyle(merged, ctx);
-    if (defaultRunStyle.fontSize !== undefined) effectiveFontSize = defaultRunStyle.fontSize;
-    if (paragraph.runs.length > 0 && paragraph.runs[0].properties) {
-      const sz = paragraph.runs[0].properties.numAttr('sz');
-      if (sz !== undefined) effectiveFontSize = sz / 100;
-    } else if (paragraph.runs.length === 0 && paragraph.endParaRPr) {
-      const sz = paragraph.endParaRPr.numAttr('sz');
-      if (sz !== undefined) effectiveFontSize = sz / 100;
+    const paragraphRunStyle = { ...defaultRunStyle };
+    const paragraphRunProperties = firstVisibleTextRun
+      ? firstVisibleTextRun.properties
+      : (paragraph.runs.find((run) => run.text === '\n' && run.properties)?.properties ??
+        paragraph.endParaRPr ??
+        paragraph.runs[0]?.properties);
+    if (paragraphRunProperties) {
+      mergeRunProps(paragraphRunStyle, paragraphRunProperties, ctx);
     }
+    const effectiveFontSize = paragraphRunStyle.fontSize ?? 12;
     // Browser line boxes include a "strut" based on the block element's own font size.
     // Keep the paragraph block in sync with Office's effective run size so tiny
     // multi-paragraph labels do not inherit a 13px page font and overflow their boxes.
     paraDiv.style.fontSize = `${effectiveFontSize * fontScale}pt`;
+    if (!firstVisibleTextRun) {
+      const paragraphFont = paragraphRunStyle.fontFamilyStack ?? paragraphRunStyle.fontFamily;
+      if (paragraphFont) paraDiv.style.fontFamily = cssFontFamilyStack(paragraphFont);
+    }
 
     const trimSpaceBefore =
       options?.trimOuterParagraphSpacing && paragraphIndex === firstVisibleParagraphIndex;
@@ -1010,7 +1016,6 @@ export function renderTextBody(
     // ---- Bullets ----
     // Suppress bullets for metadata placeholders (slide number, date, footer)
     // Also suppress for empty paragraphs (no visible runs) — PowerPoint never shows bullets for them
-    const hasVisibleRuns = paragraph.runs.some((r) => r.text != null && r.text.length > 0);
     const suppressBullet =
       !hasVisibleRuns ||
       placeholder?.type === 'sldNum' ||
@@ -1066,13 +1071,10 @@ export function renderTextBody(
       // Bullet color: explicit buClr > first visible run text color > inherited defaults > fallback.
       let bulletColor: string | undefined;
       const firstVisibleRunTextColor = (): string | undefined => {
-        const firstVisibleRun = paragraph.runs.find(
-          (run) => run.text != null && run.text.length > 0,
-        );
-        if (!firstVisibleRun) return undefined;
+        if (!firstVisibleTextRun) return undefined;
         const runStyle = getParagraphDefaultRunStyle(merged, ctx);
-        if (firstVisibleRun.properties) {
-          mergeRunProps(runStyle, firstVisibleRun.properties, ctx);
+        if (firstVisibleTextRun.properties) {
+          mergeRunProps(runStyle, firstVisibleTextRun.properties, ctx);
         }
         return (
           runStyle.color ??
@@ -1134,16 +1136,12 @@ export function renderTextBody(
     }
 
     for (const [runIndex, run] of paragraph.runs.entries()) {
-      if (run.text === '\n') {
-        if (useLineWrappers) {
-          // Close current line div and start a new one
-          currentLineDiv = document.createElement('div');
-          currentLineDiv.style.height = effectiveLineHeight!;
-          currentLineDiv.style.overflow = 'visible';
-          paraDiv.appendChild(currentLineDiv);
-        } else {
-          paraDiv.appendChild(document.createElement('br'));
-        }
+      if (run.text === '\n' && useLineWrappers) {
+        // Close current line div and start a new one
+        currentLineDiv = document.createElement('div');
+        currentLineDiv.style.height = effectiveLineHeight!;
+        currentLineDiv.style.overflow = 'visible';
+        paraDiv.appendChild(currentLineDiv);
         continue;
       }
 
@@ -1177,7 +1175,9 @@ export function renderTextBody(
 
       // Determine if this should be a link
       let element: HTMLElement;
-      if (runStyle.hlinkSlideIndex !== undefined) {
+      if (run.text === '\n') {
+        element = document.createElement('span');
+      } else if (runStyle.hlinkSlideIndex !== undefined) {
         const span = document.createElement('span');
         const slideIndex = runStyle.hlinkSlideIndex;
         span.setAttribute('role', 'link');
@@ -1221,7 +1221,9 @@ export function renderTextBody(
         !!compactNumericToken &&
         run.text !== compactNumericToken &&
         !usesElementLevelTextPaint;
-      if (run.text && run.text.includes('\t')) {
+      if (run.text === '\n') {
+        element.appendChild(document.createElement('br'));
+      } else if (run.text && run.text.includes('\t')) {
         element.textContent = run.text;
         element.style.whiteSpace = 'pre';
       } else if (shouldSplitCompactNumericToken) {
