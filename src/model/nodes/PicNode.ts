@@ -43,8 +43,18 @@ export function parsePicNode(picNode: SafeXmlNode): PicNodeData {
   const blipFill = picNode.child('blipFill');
   const blip = blipFill.child('blip');
 
-  // Try both namespaced and non-namespaced embed attribute
-  const blipEmbed = blip.attr('embed') ?? blip.attr('r:embed');
+  // PowerPoint stores SVG pictures in an Office extension relationship on the
+  // blip, with the raster relationship (when present) acting as a fallback.
+  // Prefer the SVG relationship so SVG-only pictures are not treated as
+  // missing images and SVG-with-PNG-fallback pictures retain their fidelity.
+  const svgBlip = blip
+    .child('extLst')
+    .children('ext')
+    .map((ext) => ext.child('svgBlip'))
+    .find((candidate) => candidate.exists());
+  const svgEmbed = svgBlip?.attr('embed') ?? svgBlip?.attr('r:embed');
+  const rasterEmbed = blip.attr('embed') ?? blip.attr('r:embed');
+  const blipEmbed = svgEmbed ?? rasterEmbed;
   const blipLink = blip.attr('link') ?? blip.attr('r:link');
 
   // --- Crop (srcRect) ---
