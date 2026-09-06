@@ -14,6 +14,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Fixed
 
+- Prevented tolerated text metric overhang from turning PowerPoint text boxes into browser
+  scroll containers, which could expose scrollbars and change wrapping on Windows.
 - Sized tables from their column/row grid (Σ column widths × Σ row heights) instead of the
   graphicFrame `<a:ext>`, so tables authored in Google Slides — which export a stale
   placeholder ext — no longer render squished with clipped cell text.

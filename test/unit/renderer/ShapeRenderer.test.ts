@@ -1584,6 +1584,7 @@ describe('ShapeRenderer', () => {
 
       expect(textContainer).toBeDefined();
       expect(textContainer!.style.transform).not.toContain('scale(');
+      expect(textContainer!.style.overflowX).toBe('clip');
       expect(textContainer!.style.overflowY).toBe('visible');
       expect(textContainer!.style.paddingTop).toBe('0px');
       expect(textContainer!.style.paddingBottom).toBe('0px');
@@ -2030,7 +2031,7 @@ describe('ShapeRenderer', () => {
     }
   });
 
-  it('does not collapse or clip wrapped spAutoFit body text metric overhang (xcloud-solution slide 38)', () => {
+  it('keeps tolerated spAutoFit metric overhang non-scrollable (issue #15, xcloud-solution slide 38)', () => {
     const isFitContainer = (el: HTMLElement) =>
       el.style.display === 'flex' && el.style.flexDirection === 'column';
     const clientWidthSpy = vi
@@ -2105,6 +2106,7 @@ describe('ShapeRenderer', () => {
       expect(textContainer!.style.transform).not.toContain('scale(');
       expect(textContainer!.style.width).toBe('100%');
       expect(textContainer!.style.height).toBe('100%');
+      expect(textContainer!.style.overflowX).toBe('clip');
       expect(textContainer!.style.overflowY).toBe('visible');
     } finally {
       clientWidthSpy.mockRestore();

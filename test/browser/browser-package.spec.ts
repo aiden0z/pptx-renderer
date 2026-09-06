@@ -386,6 +386,97 @@ test('text overflow combinations remain non-scrollable in Chromium', async ({ pa
   }
 });
 
+test('tolerated vertical text metric overhang remains non-scrollable in Chromium', async ({
+  page,
+}) => {
+  await page.goto('/test/browser/blank.html');
+  const result = await page.evaluate(async () => {
+    const xmlParserModuleUrl = '/src/parser/XmlParser.ts';
+    const shapeNodeModuleUrl = '/src/model/nodes/ShapeNode.ts';
+    const shapeRendererModuleUrl = '/src/renderer/ShapeRenderer.ts';
+    const mockContextModuleUrl = '/test/unit/helpers/mockContext.ts';
+    const [{ parseXml }, { parseShapeNode }, { renderShape }, { createMockRenderContext }] =
+      await Promise.all([
+        import(/* @vite-ignore */ xmlParserModuleUrl),
+        import(/* @vite-ignore */ shapeNodeModuleUrl),
+        import(/* @vite-ignore */ shapeRendererModuleUrl),
+        import(/* @vite-ignore */ mockContextModuleUrl),
+      ]);
+
+    const prototype = HTMLElement.prototype;
+    const metricValues = {
+      clientWidth: 211,
+      clientHeight: 97,
+      scrollWidth: 211,
+      scrollHeight: 105,
+    } as const;
+    const metrics = Object.keys(metricValues) as (keyof typeof metricValues)[];
+    const originalDescriptors = new Map(
+      metrics.map((metric) => [metric, Object.getOwnPropertyDescriptor(prototype, metric)]),
+    );
+    const isTextContainer = (element: HTMLElement) =>
+      element.style.display === 'flex' && element.style.flexDirection === 'column';
+
+    for (const metric of metrics) {
+      Object.defineProperty(prototype, metric, {
+        configurable: true,
+        get(this: HTMLElement) {
+          return isTextContainer(this) ? metricValues[metric] : 0;
+        },
+      });
+    }
+
+    try {
+      const xml = `
+        <p:sp xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
+              xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+          <p:nvSpPr>
+            <p:cNvPr id="15" name="Issue 15 metric overhang"/>
+            <p:cNvSpPr txBox="1"/>
+            <p:nvPr/>
+          </p:nvSpPr>
+          <p:spPr>
+            <a:xfrm><a:off x="0" y="0"/><a:ext cx="2011782" cy="923330"/></a:xfrm>
+            <a:prstGeom prst="rect"><a:avLst/></a:prstGeom>
+            <a:noFill/><a:ln><a:noFill/></a:ln>
+          </p:spPr>
+          <p:txBody>
+            <a:bodyPr wrap="square" lIns="0" tIns="0" rIns="0" bIns="0" anchor="ctr">
+              <a:spAutoFit/>
+            </a:bodyPr>
+            <a:lstStyle/>
+            <a:p>
+              <a:r><a:rPr sz="1200"/><a:t>支持策略全生命周期管理以及安全规则可视化编辑与发布。</a:t></a:r>
+            </a:p>
+          </p:txBody>
+        </p:sp>
+      `;
+      const shape = renderShape(parseShapeNode(parseXml(xml)), createMockRenderContext());
+      document.body.appendChild(shape);
+      const container = Array.from(shape.querySelectorAll('div')).find(
+        (element) => element.style.flexDirection === 'column',
+      );
+      if (!container) throw new Error('Missing issue #15 text container');
+      const computed = getComputedStyle(container);
+      return {
+        inline: [container.style.overflowX, container.style.overflowY],
+        computed: [computed.overflowX, computed.overflowY],
+      };
+    } finally {
+      for (const [metric, descriptor] of originalDescriptors) {
+        if (descriptor) {
+          Object.defineProperty(prototype, metric, descriptor);
+        } else {
+          delete (prototype as unknown as Record<string, unknown>)[metric];
+        }
+      }
+    }
+  });
+
+  expect(result.inline).toEqual(['clip', 'visible']);
+  expect(result.computed).toEqual(['clip', 'visible']);
+});
+
 test('embedded PPTX fonts load without host font installation', async ({ page }) => {
   await page.goto('/test/browser/blank.html');
   const result = await page.evaluate(async () => {

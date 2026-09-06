@@ -2868,6 +2868,12 @@ export function renderShape(node: ShapeNodeData, ctx: RenderContext): HTMLElemen
             hasToleratedVerticalMetricOverhang ||
             hasIgnoredImplicitSingleLineVerticalOverflow
           ) {
+            // Pair visible vertical overflow with clip rather than hidden on the
+            // other axis. CSS otherwise computes hidden/visible as hidden/auto,
+            // creating a scrollbar that also steals text wrapping width.
+            if (textContainer.style.overflowX === 'hidden') {
+              textContainer.style.overflowX = 'clip';
+            }
             textContainer.style.overflowY = 'visible';
           }
         };
