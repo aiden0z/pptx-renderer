@@ -192,6 +192,7 @@ const SINGLE_PARAGRAPH_WRAPPED_AUTOFIT_HEIGHT_TOLERANCE = 1.25;
 const WRAPPED_AUTOFIT_WIDTH_TOLERANCE_PX = 1;
 const NO_AUTOFIT_TITLE_METRIC_SCALE_FLOOR = 0.9;
 const SP_AUTOFIT_UNWRAPPED_WIDTH_SCALE_FLOOR = 0.9;
+const NEAR_FIT_SINGLE_LINE_WRAP_SCALE_FLOOR = 0.98;
 
 function getSupportedTextWarpPreset(textBody: TextBody): 'textArchDown' | 'textArchUp' | null {
   const prstTxWarp = textBody.bodyProperties?.child('prstTxWarp');
@@ -2487,6 +2488,14 @@ export function renderShape(node: ShapeNodeData, ctx: RenderContext): HTMLElemen
         vertOverflow !== 'clip' &&
         isTitlePlaceholder(node.placeholder) &&
         isSingleLineTextBody(textBody);
+      const usesNearFitSingleLineWrap =
+        !hasSpAutoFit &&
+        !hasNormAutofit &&
+        !hasNoAutofit &&
+        textWrap === 'square' &&
+        isSingleLineTextBody(textBody) &&
+        isShortImplicitSingleLineLabel(textBody) &&
+        !hasBulletParagraph(textBody);
       textContainer.style.overflowX = 'visible';
       // noAutofit means "don't auto-fit" — NOT "clip text". PowerPoint allows text to
       // overflow the shape boundary visibly.
@@ -2541,6 +2550,12 @@ export function renderShape(node: ShapeNodeData, ctx: RenderContext): HTMLElemen
       // the same single-line title wrap, so measure it and only shrink when wrapping
       // would overflow the title box.
       if (usesNoAutofitSingleLineTitleFit) {
+        needsDynamicAutofit = true;
+      }
+      // Office can keep a short, square-wrapped heading on one line when its glyph
+      // metrics only narrowly exceed the text box. Measure these boxes, but accept
+      // at most a 2% width correction so deliberate multi-line layouts stay wrapped.
+      if (usesNearFitSingleLineWrap) {
         needsDynamicAutofit = true;
       }
 
@@ -2774,7 +2789,8 @@ export function renderShape(node: ShapeNodeData, ctx: RenderContext): HTMLElemen
               !wrappedHeightFits ||
               isSingleLineSpAutoFit ||
               usesImplicitSingleLineFit ||
-              usesNoAutofitSingleLineTitleFit);
+              usesNoAutofitSingleLineTitleFit ||
+              usesNearFitSingleLineWrap);
           let measuredUnwrappedWidth = false;
           if (shouldMeasureUnwrappedWidth) {
             textContainer.style.whiteSpace = 'nowrap';
@@ -2791,7 +2807,10 @@ export function renderShape(node: ShapeNodeData, ctx: RenderContext): HTMLElemen
             wrapper.style.visibility = savedWrapperVisibility;
           }
           let scale = 1;
-          const fitWidthOnly = usesNoAutofitSingleLineTitleFit || usesImplicitSingleLineFit;
+          const fitWidthOnly =
+            usesNoAutofitSingleLineTitleFit ||
+            usesImplicitSingleLineFit ||
+            usesNearFitSingleLineWrap;
           const usesUnwrappedNoScaleFit =
             hasSpAutoFit &&
             !hasNormAutofit &&
@@ -2826,18 +2845,19 @@ export function renderShape(node: ShapeNodeData, ctx: RenderContext): HTMLElemen
               canFitWrappedLinesByWidth ||
               usesSingleLineSpAutoFitWidthFit ||
               usesImplicitSingleLineFit ||
-              usesNoAutofitSingleLineTitleFit;
+              usesNoAutofitSingleLineTitleFit ||
+              usesNearFitSingleLineWrap;
             if (
               canUseUnwrappedWidthScale &&
               (!usesNoAutofitSingleLineTitleFit ||
-                widthScale >= NO_AUTOFIT_TITLE_METRIC_SCALE_FLOOR)
+                widthScale >= NO_AUTOFIT_TITLE_METRIC_SCALE_FLOOR) &&
+              (!usesNearFitSingleLineWrap || widthScale >= NEAR_FIT_SINGLE_LINE_WRAP_SCALE_FLOOR)
             ) {
               scale = Math.min(scale, widthScale);
             }
           }
           const usesUnwrappedWidthFit =
-            hasSpAutoFit &&
-            !hasNormAutofit &&
+            ((hasSpAutoFit && !hasNormAutofit) || usesNearFitSingleLineWrap) &&
             scale < 1 &&
             contentH <= containerH &&
             !wrappedHeightFits;

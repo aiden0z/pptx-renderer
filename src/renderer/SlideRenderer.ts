@@ -24,6 +24,8 @@ import type { EChartsType } from 'echarts/core';
 import { useEmbeddedFonts } from './EmbeddedFontLoader';
 import type { EmbeddedFontLimits } from './EmbeddedFontLoader';
 import type { PdfjsConfig } from '../utils/pdfRenderer';
+import { useConfiguredFonts } from './ConfiguredFontLoader';
+import type { FontFaceConfig } from './ConfiguredFontLoader';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -46,6 +48,8 @@ export interface SlideRendererOptions {
   chartInstances?: Set<EChartsType>;
   /** Optional embedded-font resource limit overrides. Defaults remain enforced for omitted fields. */
   embeddedFontLimits?: EmbeddedFontLimits;
+  /** Host-provided faces for fonts referenced by the PPTX but not embedded in it. */
+  fontFaces?: readonly FontFaceConfig[];
 }
 
 /**
@@ -260,6 +264,8 @@ export function renderSlide(
   const chartInstances = options?.chartInstances ?? new Set<EChartsType>();
   const asyncTasks: Promise<void>[] = [];
   const abortController = new AbortController();
+  const configuredFontUse = useConfiguredFonts(options?.fontFaces);
+  asyncTasks.push(configuredFontUse.ready);
 
   // Create render context (resolves slide -> layout -> master -> theme chain)
   const ctx = createRenderContext(
@@ -376,6 +382,7 @@ export function renderSlide(
     disposed = true;
     abortController.abort();
     embeddedFontUse.dispose();
+    configuredFontUse.dispose();
 
     // Dispose chart instances whose DOM is inside this slide container
     if (chartInstances) {

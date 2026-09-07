@@ -165,3 +165,143 @@ test('vertical text, adjacent runs, bullets and multiple paragraphs preserve con
   expect(result.whiteSpace).toBe('normal');
   expect(result.width).toBe(160);
 });
+
+test('near-fit square-wrapped heading stays on one line with bounded scale', async ({ page }) => {
+  await page.goto('/test/browser/blank.html');
+  const result = await page.evaluate(async () => {
+    const { parseXml } = await import('/src/parser/XmlParser.ts');
+    const { parseShapeNode } = await import('/src/model/nodes/ShapeNode.ts');
+    const { renderShape } = await import('/src/renderer/ShapeRenderer.ts');
+    const { createMockRenderContext } = await import('/test/unit/helpers/mockContext.ts');
+    const text = '发扬遵义会议精神自觉做到 “两个维护”';
+    const shapeXml = (wrap: string, noAutofit: boolean) => `
+      <p:sp xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
+            xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+        <p:nvSpPr><p:cNvPr id="248" name="Near-fit heading"/><p:cNvSpPr txBox="1"/><p:nvPr/></p:nvSpPr>
+        <p:spPr>
+          <a:xfrm><a:off x="0" y="0"/><a:ext cx="28575000" cy="1905000"/></a:xfrm>
+          <a:prstGeom prst="rect"><a:avLst/></a:prstGeom><a:noFill/>
+        </p:spPr>
+        <p:txBody>
+          <a:bodyPr wrap="${wrap}" lIns="0" tIns="0" rIns="0" bIns="0">${noAutofit ? '<a:noAutofit/>' : ''}</a:bodyPr>
+          <a:lstStyle/>
+          <a:p>
+            <a:r><a:rPr sz="5400" b="1" spc="50"><a:latin typeface="Arial"/><a:ea typeface="Arial"/></a:rPr><a:t>发扬遵义会议精神自觉做到</a:t></a:r>
+            <a:r><a:rPr sz="5400" spc="-1380"><a:latin typeface="Arial"/><a:ea typeface="Arial"/></a:rPr><a:t xml:space="preserve"> </a:t></a:r>
+            <a:r><a:rPr sz="5400" b="1" spc="50"><a:latin typeface="Arial"/><a:ea typeface="Arial"/></a:rPr><a:t>“两个维护”</a:t></a:r>
+          </a:p>
+        </p:txBody>
+      </p:sp>`;
+    const findContainer = (element: HTMLElement) =>
+      Array.from(element.querySelectorAll('div')).find(
+        (candidate) => candidate.textContent === text && candidate.style.flexDirection === 'column',
+      ) as HTMLElement;
+
+    const referenceNode = parseShapeNode(parseXml(shapeXml('none', true)));
+    const reference = renderShape(referenceNode, createMockRenderContext());
+    document.body.append(reference);
+    await document.fonts.ready;
+    const referenceContainer = findContainer(reference);
+    const range = document.createRange();
+    const referenceSpans = referenceContainer.querySelectorAll('span');
+    range.setStart(referenceSpans[0].firstChild!, 0);
+    range.setEnd(
+      referenceSpans[referenceSpans.length - 1].firstChild!,
+      referenceSpans[referenceSpans.length - 1].textContent!.length,
+    );
+    const naturalRect = range.getBoundingClientRect();
+    reference.remove();
+
+    const targetNode = parseShapeNode(parseXml(shapeXml('square', false)));
+    targetNode.size.w = naturalRect.width - 24;
+    targetNode.size.h = naturalRect.height + 4;
+    const target = renderShape(targetNode, createMockRenderContext());
+    document.body.append(target);
+    await new Promise<void>((resolve) =>
+      requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+    );
+    const targetContainer = findContainer(target);
+    const targetRange = document.createRange();
+    const targetSpans = targetContainer.querySelectorAll('span');
+    targetRange.setStart(targetSpans[0].firstChild!, 0);
+    targetRange.setEnd(
+      targetSpans[targetSpans.length - 1].firstChild!,
+      targetSpans[targetSpans.length - 1].textContent!.length,
+    );
+    const lineCount = new Set(
+      Array.from(targetRange.getClientRects(), (rect) => Math.round(rect.top)),
+    ).size;
+    const scale = Number(targetContainer.style.transform.match(/scale\(([^)]+)\)/)?.[1]);
+
+    return {
+      lineCount,
+      naturalWidth: naturalRect.width,
+      targetWidth: targetNode.size.w,
+      scale,
+    };
+  });
+
+  expect(result.naturalWidth - result.targetWidth).toBeCloseTo(24, 1);
+  expect(result.lineCount).toBe(1);
+  expect(result.scale).toBeGreaterThan(0.98);
+  expect(result.scale).toBeLessThan(1);
+});
+
+test('headless renderSlide registers and releases host-provided font faces', async ({ page }) => {
+  await page.goto('/test/browser/blank.html');
+  const result = await page.evaluate(async () => {
+    const { parseXml } = await import('/src/parser/XmlParser.ts');
+    const { parseShapeNode } = await import('/src/model/nodes/ShapeNode.ts');
+    const { renderSlide } = await import('/src/renderer/SlideRenderer.ts');
+    const { createMockRenderContext } = await import('/test/unit/helpers/mockContext.ts');
+    const ctx = createMockRenderContext();
+    const node = parseShapeNode(
+      parseXml(`
+        <p:sp xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
+              xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+          <p:nvSpPr><p:cNvPr id="2" name="Configured font"/><p:cNvSpPr txBox="1"/><p:nvPr/></p:nvSpPr>
+          <p:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="1524000" cy="762000"/></a:xfrm><a:prstGeom prst="rect"/></p:spPr>
+          <p:txBody>
+            <a:bodyPr wrap="none"><a:noAutofit/></a:bodyPr><a:lstStyle/>
+            <a:p><a:r><a:rPr sz="2400"><a:latin typeface="Configured Deck Face"/></a:rPr><a:t>Configured font</a:t></a:r></a:p>
+          </p:txBody>
+        </p:sp>`),
+    );
+    ctx.slide.nodes = [node];
+    const config = [
+      {
+        family: 'Configured Deck Face',
+        source: 'url("/test/browser/missing-font.woff2") format("woff2")',
+        descriptors: { weight: '400' },
+      },
+    ];
+    const handle = renderSlide(ctx.presentation, ctx.slide, { fontFaces: config });
+    document.body.append(handle.element);
+    const registeredFamilies = Array.from(document.fonts, (face) => face.family);
+    const registeredImmediately = registeredFamilies.some((family) =>
+      family.includes('Configured Deck Face'),
+    );
+    const family = getComputedStyle(handle.element.querySelector('span')!).fontFamily;
+    await handle.ready;
+    const registeredAfterReady = Array.from(document.fonts).some((face) =>
+      face.family.includes('Configured Deck Face'),
+    );
+    handle.dispose();
+    const registeredAfterDispose = Array.from(document.fonts).some((face) =>
+      face.family.includes('Configured Deck Face'),
+    );
+    return {
+      family,
+      registeredFamilies,
+      registeredImmediately,
+      registeredAfterReady,
+      registeredAfterDispose,
+    };
+  });
+
+  expect(result).toEqual(expect.objectContaining({ registeredImmediately: true }));
+  expect(result.family).toContain('Configured Deck Face');
+  // The missing URL must remove the rejected face while keeping the slide usable.
+  expect(result.registeredAfterReady).toBe(false);
+  expect(result.registeredAfterDispose).toBe(false);
+});

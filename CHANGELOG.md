@@ -11,8 +11,13 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 - Added browser rendering for licensed EOT/MTX fonts embedded in PowerPoint files, with
   bounded face, byte, and processing budgets plus host-font fallback for rejected faces.
+- Added `fontFaces` options to `PptxViewer` and headless `renderSlide()` so host applications can
+  register missing regular/bold font data before PowerPoint text layout is measured.
 
 ### Fixed
+
+- Keep near-fit, single-paragraph square-wrapped headings on one line with a conservative 2%
+  browser-metric correction while preserving deliberate multi-line text.
 
 - Align default vertical column, line, area, scatter, and bubble plot areas and side legends
   more closely with PowerPoint while preserving manual layouts, overlay legends, negative-value

@@ -225,6 +225,7 @@ const viewer = await PptxViewer.open(buffer, container, {
 | `lazySlides`         | `boolean`                  | `false`       | Parse slide shape/table/chart nodes on demand. Best for large decks with windowed list rendering.                 |
 | `pdfjs`              | `PdfjsConfig`              | --            | Optional PDF.js URLs for EMF-embedded PDF fallback rendering, or `false` to disable it.                           |
 | `embeddedFontLimits` | `EmbeddedFontLimits`       | safe defaults | Optional embedded-font resource limit overrides. Omitted fields retain the built-in defaults.                     |
+| `fontFaces`          | `readonly FontFaceConfig[]` | --            | Host-provided font faces for typefaces referenced by the PPTX but not embedded in it.                             |
 | `onSlideChange`      | `(index) => void`          | --            | Shorthand for `slidechange` event                                                                                 |
 | `onSlideRendered`    | `(index, element) => void` | --            | Shorthand for `sliderendered` event                                                                               |
 | `onSlideError`       | `(index, error) => void`   | --            | Shorthand for `slideerror` event                                                                                  |
@@ -238,6 +239,24 @@ All shorthand callbacks are also available as `EventTarget` events (e.g. `viewer
 Embedded font decompression is bounded by default. Trusted applications can provide partial
 `embeddedFontLimits` overrides; see the [performance guide](docs/PERFORMANCE.md#embedded-font-limits)
 for defaults, examples, and the soft processing-time boundary.
+
+For decks that reference fonts unavailable in the browser, provide regular/bold faces before
+layout through `fontFaces`. Sources follow the browser `FontFace` API and can be font bytes or a
+CSS `url(...)` source (subject to the host page's CSP and CORS policy):
+
+```ts
+const [regular, bold] = await Promise.all([
+  fetch('/fonts/brand-sans-regular.woff2').then((response) => response.arrayBuffer()),
+  fetch('/fonts/brand-sans-bold.woff2').then((response) => response.arrayBuffer()),
+]);
+
+const viewer = new PptxViewer(container, {
+  fontFaces: [
+    { family: 'Brand Sans', source: regular, descriptors: { weight: '400' } },
+    { family: 'Brand Sans', source: bold, descriptors: { weight: '700' } },
+  ],
+});
+```
 
 #### Instance Methods
 
@@ -472,6 +491,7 @@ const handle = renderSlide(presentation, presentation.slides[0], {
   onNodeError: (nodeId, err) => console.warn(nodeId, err),
   mediaUrlCache: new Map(), // optional shared cache for blob URLs
   pdfjs, // optional, only for EMF-embedded PDF fallback rendering
+  fontFaces, // optional host-provided FontFaceConfig[]
 });
 document.body.appendChild(handle.element);
 
@@ -513,6 +533,7 @@ import type {
   FitMode,
   PreviewInput,
   ViewerOptions,
+  FontFaceConfig,
   ListRenderOptions,
   ThumbnailRenderOptions,
   SearchHighlightHandle,
