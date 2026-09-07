@@ -99,35 +99,47 @@ describe('TextRenderer — line spacing', () => {
   });
 
   describe('lnSpcReduction (normAutofit)', () => {
-    it('reduces line spacing by normAutofit lnSpcReduction percentage', () => {
+    it('subtracts normAutofit reduction from percentage line spacing', () => {
       // lnSpc=150000 (1.5), lnSpcReduction=20000 (20%)
-      // Effective = 1.5 * (1 - 0.2) = 1.2
+      // Microsoft NormalAutoFit: 150% - 20 percentage points = 130%.
       const body: TextBody = {
         bodyProperties: xmlNode(`<bodyPr><normAutofit lnSpcReduction="20000"/></bodyPr>`),
-        paragraphs: [{
-          properties: xmlNode(`<pPr><lnSpc><spcPct val="150000"/></lnSpc></pPr>`),
-          runs: [{ text: 'Hello' }],
-          level: 0,
-        }],
+        paragraphs: [
+          {
+            properties: xmlNode(`<pPr><lnSpc><spcPct val="150000"/></lnSpc></pPr>`),
+            runs: [{ text: 'Hello' }],
+            level: 0,
+          },
+        ],
       };
       const para = renderAndGetPara(body);
-      // 1.5 * 0.8 = 1.2
-      expect(parseFloat(para.style.lineHeight)).toBeCloseTo(1.2, 3);
+      expect(parseFloat(para.style.lineHeight)).toBeCloseTo(1.3, 3);
     });
 
-    it('reduces pt-based line spacing by normAutofit', () => {
+    it('preserves point-based line spacing despite normAutofit reduction', () => {
       // lnSpc=2000 (20pt), lnSpcReduction=25000 (25%)
-      // Effective = 20 * (1 - 0.25) = 15pt
+      // NormalAutoFit line-space reduction applies only to percentage spacing.
       const body: TextBody = {
         bodyProperties: xmlNode(`<bodyPr><normAutofit lnSpcReduction="25000"/></bodyPr>`),
-        paragraphs: [{
-          properties: xmlNode(`<pPr><lnSpc><spcPts val="2000"/></lnSpc></pPr>`),
-          runs: [{ text: 'Hello' }],
-          level: 0,
-        }],
+        paragraphs: [
+          {
+            properties: xmlNode(`<pPr><lnSpc><spcPts val="2000"/></lnSpc></pPr>`),
+            runs: [{ text: 'Hello' }],
+            level: 0,
+          },
+        ],
       };
       const para = renderAndGetPara(body);
-      expect(para.style.lineHeight).toMatch(/^15(\.0+)?pt$/);
+      expect(para.style.lineHeight).toBe('20pt');
+    });
+
+    it('noAutofit suppresses inherited normal-autofit line reduction', () => {
+      const body = makeTextBody(
+        '<pPr><lnSpc><spcPct val="150000"/></lnSpc></pPr>',
+        '<bodyPr><noAutofit/></bodyPr>',
+      );
+      body.layoutBodyProperties = xmlNode('<bodyPr><normAutofit lnSpcReduction="20000"/></bodyPr>');
+      expect(parseFloat(renderAndGetPara(body).style.lineHeight)).toBeCloseTo(1.5, 3);
     });
 
     it('does not reduce line spacing when lnSpcReduction is 0', () => {

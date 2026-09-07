@@ -26,8 +26,16 @@ const alternate = (requires: string, choice: string, fallback: string) =>
   `<mc:AlternateContent><mc:Choice Requires="${requires}">${choice}</mc:Choice><mc:Fallback>${fallback}</mc:Fallback></mc:AlternateContent>`;
 const picture = (id: number, svg: boolean) =>
   `<p:pic><p:nvPicPr><p:cNvPr id="${id}" name="preview-${id}"/><p:cNvPicPr/><p:nvPr/></p:nvPicPr><p:blipFill><a:blip r:embed="rRaster">${svg ? '<a:extLst><a:ext uri="{96DAC541-7B7A-43D3-8B79-37D633B846F1}"><svg:svgBlip r:embed="rSvg"/></a:ext></a:extLst>' : ''}</a:blip><a:stretch><a:fillRect/></a:stretch></p:blipFill><p:spPr>${xfrm(10, 70)}<a:prstGeom prst="rect"><a:avLst/></a:prstGeom></p:spPr></p:pic>`;
-const frame = (id: number, name: string, x: number, content: string, uri: string) =>
-  `<p:graphicFrame><p:nvGraphicFramePr><p:cNvPr id="${id}" name="${name}"/><p:cNvGraphicFramePr/><p:nvPr/></p:nvGraphicFramePr>${xfrm(x, 70, 90, 70, 'p:xfrm')}<a:graphic><a:graphicData uri="${uri}">${content}</a:graphicData></a:graphic></p:graphicFrame>`;
+const frame = (
+  id: number,
+  name: string,
+  x: number,
+  content: string,
+  uri: string,
+  width = 90,
+  height = 70,
+) =>
+  `<p:graphicFrame><p:nvGraphicFramePr><p:cNvPr id="${id}" name="${name}"/><p:cNvGraphicFramePr/><p:nvPr/></p:nvGraphicFramePr>${xfrm(x, 70, width, height, 'p:xfrm')}<a:graphic><a:graphicData uri="${uri}">${content}</a:graphicData></a:graphic></p:graphicFrame>`;
 const rels = (entries: [string, string, string, boolean?][]) =>
   `<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${entries.map(([id, type, target, external]) => `<Relationship Id="${id}" Type="${r}/${type}" Target="${target}"${external ? ' TargetMode="External"' : ''}/>`).join('')}</Relationships>`;
 
@@ -41,6 +49,7 @@ async function packageBytes(chartMap: 'accent2' | 'accent1' | 'absent') {
     ['accent1', 'FF0000'],
     ['accent2', '0000FF'],
     ['accent3', '00FF00'],
+    ['accent4', '888888'],
   ])
     theme = theme.replace(
       new RegExp(`<a:${key}>[\\s\\S]*?</a:${key}>`),
@@ -93,7 +102,7 @@ async function packageBytes(chartMap: 'accent2' | 'accent1' | 'absent') {
   const nested = `<p:grpSp><p:nvGrpSpPr><p:cNvPr id="6" name="nested"/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="3810000" cy="2095500"/><a:chOff x="0" y="0"/><a:chExt cx="3810000" cy="2095500"/></a:xfrm></p:grpSpPr>${alternate('unknown', shape(60, 'discard-nested', 0, 0), shape(7, 'nested-first', 10, 160) + shape(8, 'nested-second', 90, 160))}</p:grpSp>`;
   zip.file(
     'ppt/slides/slide1.xml',
-    `<p:sld ${ns}><p:cSld><p:spTree>${groupProps}${shape(2, 'ordinary-before', 10, 10)}${alternate('p', shape(3, 'chosen', 90, 10), shape(30, 'discard-fallback', 0, 0))}${alternate('unknown', shape(40, 'discard-choice', 0, 0), shape(4, 'fallback', 170, 10))}${alternate('svg', picture(5, true), picture(50, false))}${nested}${frame(9, 'ole-preview', 90, alternate('svg', ole(true), ole(false)), 'http://schemas.openxmlformats.org/presentationml/2006/ole')}${frame(10, 'mapped-chart', 210, '<c:chart r:id="rChart"/>', c)}${shape(11, 'ordinary-after', 290, 160)}</p:spTree></p:cSld><p:clrMapOvr><a:overrideClrMapping ${map.replace('accent1="accent1"', 'accent1="accent3"')}/></p:clrMapOvr></p:sld>`,
+    `<p:sld ${ns}><p:cSld><p:spTree>${groupProps}${shape(2, 'ordinary-before', 10, 10)}${alternate('p', shape(3, 'chosen', 90, 10), shape(30, 'discard-fallback', 0, 0))}${alternate('unknown', shape(40, 'discard-choice', 0, 0), shape(4, 'fallback', 170, 10))}${alternate('svg', picture(5, true), picture(50, false))}${nested}${frame(9, 'ole-preview', 90, alternate('svg', ole(true), ole(false)), 'http://schemas.openxmlformats.org/presentationml/2006/ole')}${frame(10, 'mapped-chart', 210, '<c:chart r:id="rChart"/>', c, 180, 120)}${shape(11, 'ordinary-after', 290, 160)}</p:spTree></p:cSld><p:clrMapOvr><a:overrideClrMapping ${map.replace('accent1="accent1"', 'accent1="accent3"')}/></p:clrMapOvr></p:sld>`,
   );
   zip.file(
     'ppt/slides/_rels/slide1.xml.rels',
@@ -116,7 +125,7 @@ async function packageBytes(chartMap: 'accent2' | 'accent1' | 'absent') {
   );
   zip.file(
     'ppt/charts/chart1.xml',
-    `<c:chartSpace ${ns}>${chartMap === 'absent' ? '' : `<c:clrMapOvr ${map.replace('accent1="accent1"', `accent1="${chartMap}"`)}/>`}<c:chart><c:plotArea><c:layout/><c:barChart><c:barDir val="col"/><c:grouping val="clustered"/><c:varyColors val="0"/><c:ser><c:idx val="0"/><c:order val="0"/><c:spPr><a:solidFill><a:schemeClr val="accent1"/></a:solidFill><a:ln><a:noFill/></a:ln></c:spPr><c:cat><c:strLit><c:ptCount val="1"/><c:pt idx="0"><c:v>one</c:v></c:pt></c:strLit></c:cat><c:val><c:numLit><c:formatCode>General</c:formatCode><c:ptCount val="1"/><c:pt idx="0"><c:v>1</c:v></c:pt></c:numLit></c:val></c:ser><c:axId val="1"/><c:axId val="2"/></c:barChart><c:catAx><c:axId val="1"/><c:scaling><c:orientation val="minMax"/></c:scaling><c:axPos val="b"/><c:crossAx val="2"/><c:crosses val="autoZero"/></c:catAx><c:valAx><c:axId val="2"/><c:scaling><c:orientation val="minMax"/></c:scaling><c:axPos val="l"/><c:crossAx val="1"/><c:crosses val="autoZero"/></c:valAx></c:plotArea><c:plotVisOnly val="1"/></c:chart><c:spPr><a:solidFill><a:schemeClr val="accent1"/></a:solidFill></c:spPr></c:chartSpace>`,
+    `<c:chartSpace ${ns}>${chartMap === 'absent' ? '' : `<c:clrMapOvr ${map.replace('accent1="accent1"', `accent1="${chartMap}"`)}/>`}<c:chart><c:plotArea><c:layout/><c:barChart><c:barDir val="col"/><c:grouping val="clustered"/><c:varyColors val="0"/><c:ser><c:idx val="0"/><c:order val="0"/><c:spPr><a:solidFill><a:schemeClr val="accent1"/></a:solidFill><a:ln><a:noFill/></a:ln></c:spPr><c:cat><c:strLit><c:ptCount val="1"/><c:pt idx="0"><c:v>one</c:v></c:pt></c:strLit></c:cat><c:val><c:numLit><c:formatCode>General</c:formatCode><c:ptCount val="1"/><c:pt idx="0"><c:v>1</c:v></c:pt></c:numLit></c:val></c:ser><c:axId val="1"/><c:axId val="2"/></c:barChart><c:catAx><c:axId val="1"/><c:scaling><c:orientation val="minMax"/></c:scaling><c:axPos val="b"/><c:crossAx val="2"/><c:crosses val="autoZero"/></c:catAx><c:valAx><c:axId val="2"/><c:scaling><c:orientation val="minMax"/></c:scaling><c:axPos val="l"/><c:crossAx val="1"/><c:crosses val="autoZero"/></c:valAx></c:plotArea><c:plotVisOnly val="1"/></c:chart><c:spPr><a:solidFill><a:schemeClr val="accent4"/></a:solidFill></c:spPr></c:chartSpace>`,
   );
   return [...(await zip.generateAsync({ type: 'uint8array' }))];
 }
@@ -159,9 +168,11 @@ for (const lazy of [false, true]) {
           const chart = handle.element.querySelector('canvas')!;
           if (!chart) throw new Error('No rendered chart Canvas');
           const pixels = chart.getContext('2d')!.getImageData(0, 0, chart.width, chart.height).data;
-          const colors: Record<string, number> = { red: 0, blue: 0, green: 0 };
+          const colors: Record<string, number> = { red: 0, blue: 0, green: 0, frameGray: 0 };
           for (let i = 0; i < pixels.length; i += 4) {
             if (pixels[i + 3] < 250) continue;
+            if (pixels[i] === 136 && pixels[i + 1] === 136 && pixels[i + 2] === 136)
+              colors.frameGray++;
             if (pixels[i] > 250 && pixels[i + 1] < 5 && pixels[i + 2] < 5) colors.red++;
             if (pixels[i] < 5 && pixels[i + 1] < 5 && pixels[i + 2] > 250) colors.blue++;
             if (pixels[i] < 5 && pixels[i + 1] > 250 && pixels[i + 2] < 5) colors.green++;
@@ -201,6 +212,8 @@ for (const lazy of [false, true]) {
       ]);
       expect(result.parentMap).toBe('accent3');
       expect(result.fills.filter((fill) => fill?.toUpperCase() === '#00FF00')).toHaveLength(6);
+      // The neutral frame cannot satisfy the independent red/blue/green bar assertion.
+      expect(result.colors.frameGray).toBeGreaterThan(100);
       const expected = chartMap === 'accent2' ? 'blue' : chartMap === 'accent1' ? 'red' : 'green';
       expect(result.colors[expected], JSON.stringify(result.colors)).toBeGreaterThan(100);
       for (const color of ['red', 'blue', 'green'])
