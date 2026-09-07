@@ -1,5 +1,5 @@
 import { SafeXmlNode, parseXml } from '../parser/XmlParser';
-import { RelEntry, resolveRelTarget } from '../parser/RelParser';
+import { RelEntry, resolveRelTarget, isExternalTargetMode } from '../parser/RelParser';
 import { parseBaseProps } from './nodes/BaseNode';
 import { ShapeNodeData, parseShapeNode } from './nodes/ShapeNode';
 import { PicNodeData, parsePicNode } from './nodes/PicNode';
@@ -202,7 +202,20 @@ function parseDiagramFrame(
   for (const candidate of drawingCandidates) {
     const drawingPath = resolveRelTarget(partDir, candidate.target);
     const drawingXml = ctx.diagramDrawings.get(drawingPath);
-    if (drawingXml) return buildDiagramGroup(base, drawingXml);
+    if (drawingXml) {
+      const group = buildDiagramGroup(base, drawingXml);
+      const layoutId = relIds.attr('r:lo') ?? relIds.attr('lo');
+      const layoutRel = layoutId ? ctx.rels.get(layoutId) : undefined;
+      if (
+        layoutRel &&
+        !isExternalTargetMode(layoutRel.targetMode) &&
+        layoutRel.type.endsWith('/diagramLayout')
+      ) {
+        const layoutXml = ctx.diagramDrawings.get(resolveRelTarget(partDir, layoutRel.target));
+        if (layoutXml) group.diagramLayoutId = parseXml(layoutXml).attr('uniqueId');
+      }
+      return group;
+    }
   }
 
   return undefined;

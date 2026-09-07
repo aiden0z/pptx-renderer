@@ -2530,40 +2530,51 @@ export function renderChart(node: ChartNodeData, ctx: RenderContext): HTMLElemen
   // Initialize ECharts after the element is attached to the DOM.
   // Use requestAnimationFrame to ensure the container has dimensions.
   const chartReady = new Promise<void>((resolve) => {
-    const finishInit = (): void => {
-      initChart(chartDiv, option, chartSet);
+    let sizeObserver: ResizeObserver | undefined;
+    let frame: number | undefined;
+    const cancel = () => {
+      if (frame !== undefined) cancelAnimationFrame(frame);
+      sizeObserver?.disconnect();
+      ctx.signal?.removeEventListener('abort', cancel);
       resolve();
     };
-
-    requestAnimationFrame(() => {
-      if (!chartDiv.isConnected) {
-        resolve();
+    const finishInit = (): void => {
+      sizeObserver?.disconnect();
+      ctx.signal?.removeEventListener('abort', cancel);
+      if (!ctx.signal?.aborted && chartDiv.isConnected) {
+        initChart(chartDiv, option, chartSet, ctx.signal);
+      }
+      resolve();
+    };
+    if (ctx.signal?.aborted) {
+      resolve();
+      return;
+    }
+    ctx.signal?.addEventListener('abort', cancel, { once: true });
+    frame = requestAnimationFrame(() => {
+      frame = undefined;
+      if (ctx.signal?.aborted || !chartDiv.isConnected) {
+        cancel();
         return;
       }
-
-      // Guard against 0-size containers (e.g. hidden tabs); defer until non-zero.
       if (chartDiv.offsetWidth === 0 || chartDiv.offsetHeight === 0) {
         if (typeof ResizeObserver === 'undefined') {
           finishInit();
           return;
         }
-
-        const sizeObserver = new ResizeObserver((entries) => {
-          if (!chartDiv.isConnected) {
-            sizeObserver.disconnect();
+        sizeObserver = new ResizeObserver((entries) => {
+          if (ctx.signal?.aborted || !chartDiv.isConnected) {
+            cancel();
             return;
           }
           const { width, height } = entries[0]?.contentRect ?? { width: 0, height: 0 };
-          if (width > 0 && height > 0) {
-            sizeObserver.disconnect();
-            finishInit();
-          }
+          if (width > 0 && height > 0) finishInit();
         });
         sizeObserver.observe(chartDiv);
+        // Hidden charts retain the existing non-blocking ready contract.
         resolve();
         return;
       }
-
       finishInit();
     });
   });
@@ -2577,30 +2588,38 @@ function initChart(
   container: HTMLElement,
   option: EChartsTypes.EChartsOption,
   chartInstances?: Set<EChartsType>,
+  signal?: AbortSignal,
 ): void {
   try {
     const chart = echarts.init(container);
     chart.setOption(option);
     chartInstances?.add(chart);
 
-    if (typeof ResizeObserver === 'undefined') {
-      return;
-    }
+    const dispose = () => {
+      ro?.disconnect();
+      if (!chart.isDisposed()) chart.dispose();
+      chartInstances?.delete(chart);
+      signal?.removeEventListener('abort', dispose);
+    };
+    signal?.addEventListener('abort', dispose, { once: true });
 
     // Handle container resize
-    const ro = new ResizeObserver(() => {
-      if (container.isConnected) {
-        chart.resize();
-      } else {
-        // Container removed from DOM — dispose to prevent leaks
-        ro.disconnect();
-        if (!chart.isDisposed()) {
-          chart.dispose();
-        }
-        chartInstances?.delete(chart);
-      }
-    });
-    ro.observe(container);
+    const ro =
+      typeof ResizeObserver === 'undefined'
+        ? undefined
+        : new ResizeObserver(() => {
+            if (signal?.aborted || chart.isDisposed()) {
+              dispose();
+              return;
+            }
+            if (container.isConnected) {
+              chart.resize();
+            } else {
+              // Container removed from DOM — dispose to prevent leaks
+              dispose();
+            }
+          });
+    ro?.observe(container);
   } catch (e) {
     console.warn('Failed to initialize ECharts:', e);
     container.style.display = 'flex';

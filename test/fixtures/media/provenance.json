@@ -1,0 +1,18 @@
+{
+  "purpose": "synthetic decoder fixtures, no external/user media",
+  "generator": "system ffmpeg lavfi testsrc 96x64 10fps 1s and 440Hz sine 8kHz PCM16 1s",
+  "files": {
+    "test-audio.wav": {
+      "bytes": 16078,
+      "sha256": "988d7ecd272cf7fad690da058f09c6ab41af2f986eab299ecb3284238e4eaeea"
+    },
+    "test-video.webm": {
+      "bytes": 4760,
+      "sha256": "a29f9b02ce8c59ce8861f6356c08ff0f869e78457da5a9e03b5e9ce56fbf00cf"
+    },
+    "test-video.mp4": {
+      "bytes": 3056,
+      "sha256": "20101fd2c5201ba37e0067076a4929e66eeb52af42d032a964be6321380d8569"
+    }
+  }
+}
