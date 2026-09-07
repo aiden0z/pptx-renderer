@@ -13,7 +13,7 @@ import { ThemeData, parseTheme } from './Theme';
 import { MasterData, parseMaster } from './Master';
 import { LayoutData, parseLayout, PlaceholderEntry } from './Layout';
 import { SlideData, SlideNode, createLazySlide, materializeSlideData, parseSlide } from './Slide';
-import { BaseNodeData, PlaceholderInfo, Position, Size } from './nodes/BaseNode';
+import { BaseNodeData, PlaceholderInfo, Position, Size, findXfrm } from './nodes/BaseNode';
 import type { GroupNodeData } from './nodes/GroupNode';
 
 export interface PresentationData {
@@ -587,8 +587,7 @@ export function resolveNodePlaceholderInheritance(
       )
     : undefined;
 
-  const ownSpXfrm = node.source.child('spPr').child('xfrm');
-  const ownXfrm = ownSpXfrm.exists() ? ownSpXfrm : node.source.child('xfrm');
+  const ownXfrm = findXfrm(node.source);
   const ownOff = ownXfrm.child('off');
   const ownExt = ownXfrm.child('ext');
   const inherited = [layoutMatch, masterMatch]
