@@ -898,8 +898,8 @@ describe('TextRenderer — renderTextBody', () => {
       };
       const container = renderToContainer(body);
       const para = container.children[0] as HTMLElement;
-      // 1.5 * (1 - 0.2) = 1.2
-      expect(parseFloat(para.style.lineHeight)).toBeCloseTo(1.2, 3);
+      // OOXML subtracts the reduction: 1.5 - 0.2 = 1.3
+      expect(parseFloat(para.style.lineHeight)).toBeCloseTo(1.3, 3);
     });
   });
 

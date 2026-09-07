@@ -123,7 +123,7 @@ import { applyTint, hexToRgb, rgbToHex } from '../utils/color';
 import { SafeXmlNode } from '../parser/XmlParser';
 import { findMediaByTarget, findMediaByTargetAsync, getOrCreateBlobUrl } from '../utils/media';
 import { isAllowedExternalMediaUrl, isAllowedExternalUrl } from '../utils/urlSafety';
-import { getEffectiveBodyPrChild } from './TextBodyProperties';
+import { getEffectiveBodyPrChild, parseTextPercentage } from './TextBodyProperties';
 import { cssFontFamilyStack, resolveThemeFontStack } from './fontResolver';
 import { resolveSlideNavigationIndex, slideJumpTitle } from './navigation';
 import { scaleCssLengthForTransform } from './cssValues';
@@ -2445,10 +2445,12 @@ export function renderShape(node: ShapeNodeData, ctx: RenderContext): HTMLElemen
       textContainer.style.display = 'flex';
       textContainer.style.flexDirection = 'column';
       textContainer.style.boxSizing = 'border-box';
+      // Isolate text layout from host pre/nowrap styles; bodyPr wrap=none overrides below.
+      textContainer.style.whiteSpace = 'normal';
       // Overflow handling based on bodyPr auto-fit mode:
       // - spAutoFit: shape resizes to fit text → overflow visible
       // - normAutofit: text shrinks to fit shape → apply fontScale, overflow hidden
-      // - noAutofit: text clips → overflow hidden
+      // - noAutofit: fixed font size, with independent explicit clip/overflow axes
       // - (default, no child): PowerPoint implicitly auto-shrinks simple single-line labels
       const spAutoFit = getEffectiveBodyPrChild(textBody, 'spAutoFit');
       const hasSpAutoFit = spAutoFit?.exists();
@@ -2480,11 +2482,19 @@ export function renderShape(node: ShapeNodeData, ctx: RenderContext): HTMLElemen
         (textWrap === 'none' ||
           (textWrap === undefined && isShortImplicitSingleLineLabel(textBody)));
       const usesNoAutofitSingleLineTitleFit =
-        hasNoAutofit && isTitlePlaceholder(node.placeholder) && isSingleLineTextBody(textBody);
+        hasNoAutofit &&
+        horzOverflow !== 'clip' &&
+        vertOverflow !== 'clip' &&
+        isTitlePlaceholder(node.placeholder) &&
+        isSingleLineTextBody(textBody);
       textContainer.style.overflowX = 'visible';
       // noAutofit means "don't auto-fit" — NOT "clip text". PowerPoint allows text to
       // overflow the shape boundary visibly.
       textContainer.style.overflowY = 'visible';
+      if (hasNoAutofit) {
+        textContainer.style.overflowX = horzOverflow === 'clip' ? 'clip' : 'visible';
+        textContainer.style.overflowY = vertOverflow === 'clip' ? 'clip' : 'visible';
+      }
 
       // normAutofit: PowerPoint stores the computed fontScale (1000ths of percent).
       // Apply it as a CSS transform to shrink text so it fits the shape.
@@ -2492,12 +2502,12 @@ export function renderShape(node: ShapeNodeData, ctx: RenderContext): HTMLElemen
       if (hasNormAutofit && normAutofit) {
         textContainer.style.overflowX = 'hidden';
         textContainer.style.overflowY = 'hidden';
-        const lnSpcReduction = normAutofit.numAttr('lnSpcReduction') ?? 0;
+        const lnSpcReduction = parseTextPercentage(normAutofit.attr('lnSpcReduction')) ?? 0;
         // renderTextBody applies normAutofit@fontScale to run and paragraph font sizes.
         // The container transform is reserved for additional browser-measured shrink.
         needsDynamicAutofit = true;
         if (lnSpcReduction > 0) {
-          const lnFactor = 1 - lnSpcReduction / 100000;
+          const lnFactor = Math.max(0, 1 - lnSpcReduction);
           textContainer.style.lineHeight = `${lnFactor}`;
         }
       }
@@ -2543,7 +2553,7 @@ export function renderShape(node: ShapeNodeData, ctx: RenderContext): HTMLElemen
       // Apply bodyPr (text body properties)
       // Use layout/master bodyPr as fallback for missing attributes
       {
-        if (bodyPr) {
+        {
           // Text wrap: only wrap="none" should force single-line.
           // Title placeholders without explicit wrap should still be allowed to wrap.
           if (textWrap === 'none') {
