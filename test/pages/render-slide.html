@@ -52,6 +52,7 @@
       import { parseZip, buildPresentation } from '../../src/index.ts';
       import { renderSlide } from '../../src/renderer/SlideRenderer.ts';
       import { TRUSTED_TESTDATA_ZIP_LIMITS } from './zipLimits.ts';
+      import { waitForVisualStability } from './visualStability.ts';
 
       const pdfjs = {
         moduleUrl: new URL('pdfjs-dist/build/pdf.min.mjs', import.meta.url).toString(),
@@ -69,6 +70,7 @@
       let currentSlide = 0;
       let mediaCache = new Map();
       let currentHandle = null;
+      let renderGeneration = 0;
 
       // URL params
       const params = new URLSearchParams(location.search);
@@ -138,6 +140,7 @@
           slideSelect.value = String(idx);
           await showSlide(idx);
         } catch (e) {
+          window.__renderError = e?.message || String(e);
           renderLoadError(e);
           statusEl.textContent = `Error: ${e.message}`;
           console.error(e);
@@ -156,6 +159,7 @@
 
       async function showSlide(idx) {
         if (!presentation) return;
+        const generation = ++renderGeneration;
         window.__renderDone = false;
         window.__renderError = undefined;
         currentSlide = idx;
@@ -190,7 +194,11 @@
 
         try {
           await handle.ready;
+          if (generation !== renderGeneration || currentHandle !== handle) return;
+          await waitForVisualStability(handle.element);
+          if (generation !== renderGeneration || currentHandle !== handle) return;
         } catch (e) {
+          if (generation !== renderGeneration || currentHandle !== handle) return;
           window.__renderError = e?.message || String(e);
           throw e;
         }

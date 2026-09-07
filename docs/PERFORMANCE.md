@@ -195,9 +195,10 @@ the chart types/components used by the renderer. The regular package entry keeps
 runtime registration with `import * as echarts from 'echarts'`; that restores the full
 ECharts bundle and bypasses the standalone size budget.
 
-Chart animation is disabled because the renderer produces static slide content and does
-not implement OOXML animation timelines. This makes first paint and screenshot/export
-timing deterministic while avoiding transition work that cannot match PowerPoint.
+The renderer preserves ECharts' default animation behavior for compatibility. The oracle
+single-slide page waits for fonts, images, and consecutive stable canvas frames before it
+sets its screenshot completion flag, so screenshots do not capture a chart mid-transition.
+This visual-stability wait is separate from the public `SlideHandle.ready` contract.
 
 Chart registrations and the standalone package are exercised in Chromium by
 `pnpm test:browser`. Run it together with `pnpm size` after changing chart imports,

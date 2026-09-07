@@ -23,6 +23,9 @@ pnpm exec playwright install chromium
 pnpm test:browser
 ```
 
+On machines with branded Chrome but no downloaded Playwright Chromium, run
+`PLAYWRIGHT_CHANNEL=chrome pnpm test:browser`. The channel applies to the complete browser suite.
+
 These tests load the built standalone browser artifact with a tracked PPTX, initialize
 every renderer-supported ECharts series through the modular runtime, verify computed
 overflow behavior for all text-axis combinations, and execute the actual outer-Worker
