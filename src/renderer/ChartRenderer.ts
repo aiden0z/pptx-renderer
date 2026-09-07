@@ -328,6 +328,20 @@ function hasManualGrid(
   );
 }
 
+function hasNegativeSeriesValue(seriesArr: SeriesData[]): boolean {
+  return seriesArr.some((series) => series.values.some((value) => value < 0));
+}
+
+function scaledChartMargin(
+  size: number | undefined,
+  ratio: number,
+  fallback: number,
+  minimum = 0,
+): number {
+  if (size === undefined || !Number.isFinite(size) || size <= 0) return fallback;
+  return Math.max(minimum, Math.round(size * ratio));
+}
+
 // ---------------------------------------------------------------------------
 // ECharts Option Builders
 // ---------------------------------------------------------------------------
@@ -853,15 +867,21 @@ function buildBarChartOption(
   if (isPercentStacked) forcePercentAxis(valueAxisDef);
   applyAxisInfo(valueAxisDef, valueAxis, 'value');
 
+  const manualGrid = extractManualLayoutGrid(chartNode);
+  const useCompactDefaults =
+    !isHorizontal &&
+    !legendInfo?.overlay &&
+    !hasManualGrid(manualGrid) &&
+    !hasNegativeSeriesValue(seriesArr);
   const hasTitle = !!titleOption;
-  const gridTop = isHorizontal && hasTitle ? 60 : getGridTopPx(hasTitle, legendInfo);
+  const gridTop =
+    isHorizontal && hasTitle ? 60 : getGridTopPx(hasTitle, legendInfo, useCompactDefaults);
   const legendTopPx = getLegendTopPx(hasTitle, legendInfo);
   // When value axis is hidden, reduce left/right padding so bars use full width
-  const gridLeft = isHorizontal ? 15 : valueAxis.deleted ? 4 : 18;
-  const gridRight = isHorizontal ? 28 : 10;
+  const gridLeft = isHorizontal ? 15 : valueAxis.deleted ? 4 : useCompactDefaults ? 12 : 18;
+  const gridRight = isHorizontal ? 28 : useCompactDefaults ? 15 : 10;
   const tooltipFmt = pctFormat || sharedSeriesFormat;
-  const gridBottom = getGridBottomPx(legendInfo);
-  const manualGrid = extractManualLayoutGrid(chartNode);
+  const gridBottom = getGridBottomPx(legendInfo) + (useCompactDefaults ? 3 : 0);
   const containLabel = !hasManualGrid(manualGrid);
 
   return {
@@ -1093,12 +1113,14 @@ function buildLineChartOption(
   };
   applyAxisInfo(xAxisDef, categoryAxis, 'category');
 
-  const gridTop = getGridTopPx(!!titleOption, legendInfo);
-  const legendTopPx = getLegendTopPx(!!titleOption, legendInfo);
-  const gridLeft = valueAxis.deleted ? 4 : 18;
-  const tooltipFmt = pctFormat || sharedSeriesFormat;
-  const gridBottom = getGridBottomPx(legendInfo);
   const manualGrid = extractManualLayoutGrid(chartNode);
+  const useCompactDefaults =
+    !legendInfo?.overlay && !hasManualGrid(manualGrid) && !hasNegativeSeriesValue(seriesArr);
+  const gridTop = getGridTopPx(!!titleOption, legendInfo, useCompactDefaults);
+  const legendTopPx = getLegendTopPx(!!titleOption, legendInfo);
+  const gridLeft = valueAxis.deleted ? 4 : useCompactDefaults ? 12 : 18;
+  const tooltipFmt = pctFormat || sharedSeriesFormat;
+  const gridBottom = getGridBottomPx(legendInfo) + (useCompactDefaults ? 3 : 0);
   const containLabel = !hasManualGrid(manualGrid);
   const legendEntries = seriesArr.map((s, idx) => ({ series: s, idx }));
   const legendOrder = isStacked || isPercentStacked ? [...legendEntries].reverse() : legendEntries;
@@ -1147,7 +1169,7 @@ function buildLineChartOption(
     grid: {
       containLabel,
       left: gridLeft,
-      right: 10,
+      right: useCompactDefaults ? 15 : 10,
       top: gridTop,
       bottom: gridBottom,
       ...manualGrid,
@@ -1500,6 +1522,7 @@ function buildScatterChartOption(
   chartNode: SafeXmlNode,
   seriesArr: SeriesData[],
   ctx: RenderContext,
+  chartSize?: ChartPixelSize,
 ): EChartsTypes.EChartsOption {
   const titleOption = buildChartTitleOption(chartNode, seriesArr, ctx, 14);
   const legendInfo = extractLegendInfo(chartNode, ctx);
@@ -1575,13 +1598,24 @@ function buildScatterChartOption(
   const plotArea = chartNode.child('plotArea');
   const { xAxis: xAxisInfo, yAxis: yAxisInfo } = parseScatterAxes(plotArea, ctx);
 
-  const gridTop = getGridTopPx(!!titleOption, legendInfo);
-  const legendTopPx = getLegendTopPx(!!titleOption, legendInfo);
   const manualGrid = extractManualLayoutGrid(chartNode);
+  const useCompactDefaults =
+    chartSize !== undefined && !legendInfo?.overlay && !hasManualGrid(manualGrid);
+  const gridTop = getGridTopPx(!!titleOption, legendInfo, useCompactDefaults);
+  const legendTopPx = getLegendTopPx(!!titleOption, legendInfo);
   const containLabel = !hasManualGrid(manualGrid);
-  const scatterGridLeft = yAxisInfo.deleted ? 4 : 18;
+  const scatterGridLeft = yAxisInfo.deleted
+    ? 4
+    : useCompactDefaults
+      ? scaledChartMargin(chartSize?.w, 0.018, 18, 4)
+      : 18;
+  const scatterGridRight = useCompactDefaults ? scaledChartMargin(chartSize?.w, 0.01, 10, 4) : 10;
   const scatterGridTop = gridTop;
-  const scatterGridBottom = Math.max(getGridBottomPx(legendInfo), 20);
+  const scatterGridBottom = useCompactDefaults
+    ? getLegendPlacement(legendInfo) === 'bottom'
+      ? getGridBottomPx(legendInfo)
+      : scaledChartMargin(chartSize?.h, 0.04, 20, 8)
+    : getGridBottomPx(legendInfo);
 
   const xAxisDef: Record<string, unknown> = { type: 'value' };
   const yAxisDef: Record<string, unknown> = { type: 'value' };
@@ -1595,7 +1629,7 @@ function buildScatterChartOption(
     grid: {
       containLabel,
       left: scatterGridLeft,
-      right: 10,
+      right: scatterGridRight,
       top: scatterGridTop,
       bottom: scatterGridBottom,
       ...manualGrid,
@@ -1657,6 +1691,7 @@ function buildBubbleChartOption(
   chartNode: SafeXmlNode,
   seriesArr: SeriesData[],
   ctx: RenderContext,
+  chartSize?: ChartPixelSize,
 ): EChartsTypes.EChartsOption {
   const titleOption = buildChartTitleOption(chartNode, seriesArr, ctx, 14);
   const legendInfo = extractLegendInfo(chartNode, ctx);
@@ -1692,13 +1727,24 @@ function buildBubbleChartOption(
   const plotArea = chartNode.child('plotArea');
   const { xAxis: xAxisInfo, yAxis: yAxisInfo } = parseScatterAxes(plotArea, ctx);
 
-  const gridTop = getGridTopPx(!!titleOption, legendInfo);
-  const legendTopPx = getLegendTopPx(!!titleOption, legendInfo);
   const manualGrid = extractManualLayoutGrid(chartNode);
+  const useCompactDefaults =
+    chartSize !== undefined && !legendInfo?.overlay && !hasManualGrid(manualGrid);
+  const gridTop = getGridTopPx(!!titleOption, legendInfo, useCompactDefaults);
+  const legendTopPx = getLegendTopPx(!!titleOption, legendInfo);
   const containLabel = !hasManualGrid(manualGrid);
-  const scatterGridLeft = yAxisInfo.deleted ? 4 : 18;
+  const scatterGridLeft = yAxisInfo.deleted
+    ? 4
+    : useCompactDefaults
+      ? scaledChartMargin(chartSize?.w, 0.016, 15, 4)
+      : 18;
+  const scatterGridRight = useCompactDefaults ? scaledChartMargin(chartSize?.w, 0.01, 10, 4) : 10;
   const scatterGridTop = gridTop;
-  const scatterGridBottom = Math.max(getGridBottomPx(legendInfo), 20);
+  const scatterGridBottom = useCompactDefaults
+    ? getLegendPlacement(legendInfo) === 'bottom'
+      ? getGridBottomPx(legendInfo)
+      : scaledChartMargin(chartSize?.h, 0.04, 20, 8)
+    : getGridBottomPx(legendInfo);
 
   const xAxisDef: Record<string, unknown> = { type: 'value' };
   const yAxisDef: Record<string, unknown> = { type: 'value' };
@@ -1738,7 +1784,7 @@ function buildBubbleChartOption(
     grid: {
       containLabel,
       left: scatterGridLeft,
-      right: 10,
+      right: scatterGridRight,
       top: scatterGridTop,
       bottom: scatterGridBottom,
       ...manualGrid,
@@ -2125,9 +2171,9 @@ function buildOptionForChartType(
         chartSize,
       );
     case 'scatterChart':
-      return buildScatterChartOption(chartTypeNode, chartNode, seriesArr, ctx);
+      return buildScatterChartOption(chartTypeNode, chartNode, seriesArr, ctx, chartSize);
     case 'bubbleChart':
-      return buildBubbleChartOption(chartTypeNode, chartNode, seriesArr, ctx);
+      return buildBubbleChartOption(chartTypeNode, chartNode, seriesArr, ctx, chartSize);
     case 'stockChart':
       return buildStockChartOption(chartTypeNode, chartNode, seriesArr, ctx);
     default:

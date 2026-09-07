@@ -247,6 +247,77 @@ describe('ChartRenderer', () => {
     expect(option.animation).toBeUndefined();
   });
 
+  describe('PowerPoint default Cartesian plot layout', () => {
+    it('uses compact Office plot margins for nonnegative vertical columns', () => {
+      const { option } = parseChartXml(
+        parseXml(buildChartSpaceXml({ valAxDeleted: false, values: [120, 180, 240] })),
+        createMockRenderContext(),
+        undefined,
+        { w: 960, h: 576 },
+      );
+
+      expect(option.grid).toMatchObject({ left: 12, right: 15, top: 9, bottom: 23 });
+    });
+
+    it('preserves zero-crossing and horizontal-bar plot defaults', () => {
+      const negative = parseChartXml(
+        parseXml(buildChartSpaceXml({ valAxDeleted: false, values: [15, -8, 22] })),
+        createMockRenderContext(),
+        undefined,
+        { w: 960, h: 576 },
+      ).option.grid;
+      const horizontalXml = buildChartSpaceXml({
+        valAxDeleted: false,
+        values: [8, 25, 18],
+        titleText: 'Headcount',
+        autoTitleDeleted: false,
+      }).replace('<c:barDir val="col"/>', '<c:barDir val="bar"/>');
+      const horizontal = parseChartXml(
+        parseXml(horizontalXml),
+        createMockRenderContext(),
+        undefined,
+        { w: 960, h: 576 },
+      ).option.grid;
+
+      expect(negative).toMatchObject({ left: 18, right: 10, top: 20, bottom: 20 });
+      expect(horizontal).toMatchObject({ left: 15, right: 28, top: 60, bottom: 20 });
+    });
+
+    it('scales numeric-axis margins with the chart frame', () => {
+      const scatterXml = `
+        <c:chartSpace xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart"
+                      xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+          <c:chart>
+            <c:plotArea>
+              <c:scatterChart>
+                <c:scatterStyle val="marker"/>
+                <c:ser>
+                  <c:idx val="0"/><c:order val="0"/>
+                  <c:xVal><c:numLit><c:ptCount val="2"/><c:pt idx="0"><c:v>1</c:v></c:pt><c:pt idx="1"><c:v>2</c:v></c:pt></c:numLit></c:xVal>
+                  <c:yVal><c:numLit><c:ptCount val="2"/><c:pt idx="0"><c:v>2</c:v></c:pt><c:pt idx="1"><c:v>3</c:v></c:pt></c:numLit></c:yVal>
+                </c:ser>
+                <c:axId val="1"/><c:axId val="2"/>
+              </c:scatterChart>
+              <c:valAx><c:axId val="1"/><c:scaling/><c:delete val="0"/><c:axPos val="b"/><c:crossAx val="2"/></c:valAx>
+              <c:valAx><c:axId val="2"/><c:scaling/><c:delete val="0"/><c:axPos val="l"/><c:crossAx val="1"/></c:valAx>
+            </c:plotArea>
+          </c:chart>
+        </c:chartSpace>`;
+
+      const large = parseChartXml(parseXml(scatterXml), createMockRenderContext(), undefined, {
+        w: 960,
+        h: 576,
+      }).option.grid;
+      const compact = parseChartXml(parseXml(scatterXml), createMockRenderContext(), undefined, {
+        w: 640,
+        h: 427,
+      }).option.grid;
+
+      expect(large).toMatchObject({ left: 17, right: 10, top: 9, bottom: 23 });
+      expect(compact).toMatchObject({ left: 12, right: 6, top: 9, bottom: 17 });
+    });
+  });
+
   describe('chart data safety', () => {
     it('does not trust oversized ptCount when only sparse points are present', () => {
       const xml = `
@@ -3335,7 +3406,7 @@ describe('ChartRenderer', () => {
 
       expect(legend).not.toBeNull();
       expect(legend.style.flexDirection).toBe('column');
-      expect(legend.style.right).toBe('8px');
+      expect(legend.style.right).toBe('4px');
       expect(legend.style.top).toBe('150px');
       expect(legend.style.transform).toBe('translateY(-50%)');
     });
@@ -3515,8 +3586,8 @@ describe('ChartRenderer', () => {
       const grid = option.grid as any;
       const series = option.series as any[];
 
-      expect(grid.left).toBe(18);
-      expect(grid.bottom).toBe(20);
+      expect(grid.left).toBe(12);
+      expect(grid.bottom).toBe(23);
       expect(series[0].barGap).toBe('0%');
     });
 
@@ -3530,7 +3601,10 @@ describe('ChartRenderer', () => {
         values: [15, -8, 22],
       });
 
-      const { option } = parseChartOption(xml);
+      const { option } = parseChartXml(parseXml(xml), createMockRenderContext(), undefined, {
+        w: 960,
+        h: 576,
+      });
       const grid = option.grid as any;
 
       expect((option.title as any)?.text).toBe('Profit/Loss');
@@ -5308,11 +5382,16 @@ describe('ChartRenderer', () => {
           </c:chart>
         </c:chartSpace>`;
 
-      const { option } = parseChartOption(xml);
+      const { option } = parseChartXml(parseXml(xml), createMockRenderContext(), undefined, {
+        w: 960,
+        h: 576,
+      });
       const xAxis = option.xAxis as any;
       const yAxis = option.yAxis as any;
       const grid = option.grid as any;
-      expect(grid.left).toBe(18);
+      expect(grid.left).toBe(15);
+      expect(grid.top).toBe(9);
+      expect(grid.bottom).toBe(23);
       expect(xAxis.max).toBe(6);
       expect(xAxis.interval).toBe(1);
       expect(yAxis.max).toBe(5);
@@ -5343,10 +5422,13 @@ describe('ChartRenderer', () => {
           </c:chart>
         </c:chartSpace>`;
 
-      const { option } = parseChartOption(xml);
+      const { option } = parseChartXml(parseXml(xml), createMockRenderContext(), undefined, {
+        w: 960,
+        h: 576,
+      });
       const grid = option.grid as any;
 
-      expect(grid.top).toBe(68);
+      expect(grid.top).toBe(57);
     });
   });
 
@@ -6313,7 +6395,7 @@ describe('ChartRenderer', () => {
 
       const { option } = parseChartOption(xml);
       expect((option.xAxis as any).axisLabel.rotate).toBe(0);
-      expect((option.grid as any).right).toBe(108);
+      expect((option.grid as any).right).toBe(114);
     });
 
     it('uses the chart-level line marker default when series markers are omitted (oracle-pypptx-chart-0021)', () => {

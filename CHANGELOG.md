@@ -14,6 +14,11 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Fixed
 
+- Align default vertical column, line, area, scatter, and bubble plot areas and side legends
+  more closely with PowerPoint while preserving manual layouts, overlay legends, negative-value
+  columns, and horizontal bars.
+- Wait for fonts, images, and stable chart canvas output before oracle screenshots without
+  changing ECharts animation or the public `SlideHandle.ready` contract.
 - Select one compatible MCE Choice or Fallback across slide/template/group content and
   OLE picture previews, including the supported SVG picture extension and lazy paths.
 - Preserve slide/layout/master color-map identity/reset semantics and isolate chart-local
