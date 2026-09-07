@@ -228,6 +228,39 @@ describe('buildPresentation', () => {
     expect(pres.slides[0].nodes[0].nodeType).toBe('shape');
   });
 
+  it('materializes compatible fallback content and slide color metadata for lazy slides', () => {
+    const files = makeMinimalFiles();
+    files.slides.set(
+      'ppt/slides/slide1.xml',
+      `
+        <sld xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:p14="http://schemas.microsoft.com/office/powerpoint/2010/main">
+          <cSld><spTree>
+            <mc:AlternateContent>
+              <mc:Choice Requires="p14"><p14:contentPart/></mc:Choice>
+              <mc:Fallback>
+                <sp><nvSpPr><cNvPr id="9" name="Lazy fallback"/><nvPr/></nvSpPr><spPr/></sp>
+              </mc:Fallback>
+            </mc:AlternateContent>
+          </spTree></cSld>
+          <clrMapOvr><overrideClrMapping accent1="accent2"/></clrMapOvr>
+        </sld>
+      `,
+    );
+    const pres = buildPresentation(files, { lazySlides: true });
+
+    expect(pres.slides[0].nodes).toHaveLength(0);
+    materializeSlideNodes(pres, pres.slides[0]);
+
+    expect(pres.slides[0].nodes.map((node) => node.name)).toEqual(['Lazy fallback']);
+    expect(pres.slides[0].colorMapOverrideMode).toBe('override');
+    expect(pres.slides[0].colorMapOverride?.get('accent1')).toBe('accent2');
+    expect(serializePresentation(pres).slides[0]).toMatchObject({
+      colorMapOverrideMode: 'override',
+      colorMapOverride: { accent1: 'accent2' },
+    });
+  });
+
   it('materializes lazy slides for search and serialization consumers', () => {
     const pres = buildPresentation(makeMinimalFiles(), { lazySlides: true });
 

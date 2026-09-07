@@ -46,10 +46,29 @@ describe('chart palette helpers', () => {
     expect(chartCtx.colorCache).not.toBe(ctx.colorCache);
   });
 
+  it('marks chart-local mappings as overrides when the parent layout resets to master', () => {
+    const base = createMockRenderContext();
+    const ctx = createMockRenderContext({
+      layout: { ...base.layout, colorMapOverrideMode: 'master' },
+    });
+    const chartXml = parseXml(`
+      <c:chartSpace xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart">
+        <c:clrMapOvr><c:overrideClrMapping accent1="accent2"/></c:clrMapOvr>
+      </c:chartSpace>
+    `);
+
+    const chartCtx = createChartRenderContext(chartXml, ctx);
+
+    expect(chartCtx.layout.colorMapOverrideMode).toBe('override');
+    expect(chartCtx.layout.colorMapOverride?.get('accent1')).toBe('accent2');
+  });
+
   it('builds implicit palette from theme accents', () => {
     expect(
       buildChartPalette(
-        parseXml('<c:chartSpace xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart"/>'),
+        parseXml(
+          '<c:chartSpace xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart"/>',
+        ),
         createMockRenderContext(),
       ),
     ).toEqual(['#4472C4', '#ED7D31', '#A5A5A5', '#FFC000', '#5B9BD5', '#70AD47']);

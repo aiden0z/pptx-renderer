@@ -432,6 +432,39 @@ describe('renderSlide', () => {
     expect(el.querySelector('img')).not.toBeNull();
   });
 
+  it('renders compatible AlternateContent shapes from master and layout in draw order', () => {
+    const pres = makeMinimalPres();
+    const alternateTree = (choiceName: string, fallbackName: string) =>
+      parseXml(`
+      <p:spTree xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
+                xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"
+                xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                xmlns:p14="http://schemas.microsoft.com/office/powerpoint/2010/main">
+        <mc:AlternateContent>
+          <mc:Choice Requires="p">
+            <p:sp><p:nvSpPr><p:cNvPr id="31" name="${choiceName}"/><p:nvPr/></p:nvSpPr><p:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="914400" cy="914400"/></a:xfrm><a:prstGeom prst="rect"/></p:spPr></p:sp>
+          </mc:Choice>
+          <mc:Fallback>
+            <p:sp><p:nvSpPr><p:cNvPr id="32" name="${fallbackName}"/><p:nvPr/></p:nvSpPr><p:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="914400" cy="914400"/></a:xfrm><a:prstGeom prst="rect"/></p:spPr></p:sp>
+          </mc:Fallback>
+        </mc:AlternateContent>
+      </p:spTree>
+    `);
+    pres.masters.values().next().value!.spTree = alternateTree('Master choice', 'Master fallback');
+    pres.layouts.values().next().value!.spTree = alternateTree('Layout choice', 'Layout fallback');
+    const slide: SlideData = {
+      index: 0,
+      nodes: [],
+      rels: new Map(),
+      slidePath: 'ppt/slides/slide1.xml',
+      showMasterSp: true,
+    };
+
+    const { element } = renderSlide(pres, slide);
+
+    expect(element.querySelectorAll('svg')).toHaveLength(2);
+  });
+
   it('skips placeholder shapes from master/layout spTree', () => {
     const pres = makeMinimalPres();
     const masterSpTree = parseXml(`

@@ -19,7 +19,7 @@ import { ChartNodeData } from '../model/nodes/ChartNode';
 import { BaseNodeData } from '../model/nodes/BaseNode';
 import { SafeXmlNode } from '../parser/XmlParser';
 import type { RelEntry } from '../parser/RelParser';
-import { isPlaceholderNode, parseRenderableChild } from '../model/RenderableChild';
+import { isPlaceholderNode, parseRenderableChildren } from '../model/RenderableChild';
 import type { EChartsType } from 'echarts/core';
 import { useEmbeddedFonts } from './EmbeddedFontLoader';
 import type { EmbeddedFontLimits } from './EmbeddedFontLoader';
@@ -162,13 +162,13 @@ function parseTemplateShapes(
 
   for (const child of spTree.allChildren()) {
     // Skip ALL placeholder shapes — they're templates, not renderable content
-    if (isPlaceholderNode(child)) continue;
-
     try {
-      const node = parseRenderableChild(child, parseContext);
-      // Skip empty/invisible nodes (0x0 size and no text)
-      if (node && (node.size.w > 0 || node.size.h > 0)) {
-        nodes.push(node);
+      for (const node of parseRenderableChildren(child, parseContext)) {
+        if (isPlaceholderNode(node.source)) continue;
+        // Skip empty/invisible nodes (0x0 size and no text)
+        if (node.size.w > 0 || node.size.h > 0) {
+          nodes.push(node);
+        }
       }
     } catch {
       // Skip unparseable template shapes silently

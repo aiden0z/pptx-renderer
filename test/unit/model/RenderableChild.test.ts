@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
+  expandCompatibleChildren,
   isPlaceholderNode,
   parseOleFrameAsPicture,
   parseRenderableChild,
+  parseRenderableChildren,
 } from '../../../src/model/RenderableChild';
 import { parseXml } from '../../../src/parser/XmlParser';
 
@@ -68,10 +70,10 @@ describe('RenderableChild parsing', () => {
     });
   });
 
-  it('uses AlternateContent Choice fallback pictures when Fallback is absent', () => {
+  it('uses a supported AlternateContent Choice picture when Fallback is absent', () => {
     const frame = parseXml(
       graphicFrame(
-        `<mc:AlternateContent><mc:Choice Requires="x"><p:oleObj>${olePic('<a:blip r:link="rIdLinked"/>')}</p:oleObj></mc:Choice></mc:AlternateContent>`,
+        `<mc:AlternateContent><mc:Choice Requires="p"><p:oleObj>${olePic('<a:blip r:link="rIdLinked"/>')}</p:oleObj></mc:Choice></mc:AlternateContent>`,
         'http://schemas.openxmlformats.org/presentationml/2006/ole',
       ),
     );
@@ -83,6 +85,126 @@ describe('RenderableChild parsing', () => {
       blipLink: 'rIdLinked',
       id: '7',
     });
+  });
+
+  it('selects one supported Choice and does not duplicate its Fallback', () => {
+    const alternate = parseXml(`
+      <mc:AlternateContent
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
+        <mc:Choice Requires="p">
+          <p:sp><p:nvSpPr><p:cNvPr id="1" name="Choice"/><p:nvPr/></p:nvSpPr><p:spPr/></p:sp>
+        </mc:Choice>
+        <mc:Fallback>
+          <p:sp><p:nvSpPr><p:cNvPr id="2" name="Fallback"/><p:nvPr/></p:nvSpPr><p:spPr/></p:sp>
+        </mc:Fallback>
+      </mc:AlternateContent>
+    `);
+
+    const nodes = parseRenderableChildren(alternate, { rels: new Map() });
+
+    expect(nodes).toHaveLength(1);
+    expect(nodes[0].name).toBe('Choice');
+  });
+
+  it('uses ordinary Fallback children when Choice requires an unsupported namespace', () => {
+    const alternate = parseXml(`
+      <mc:AlternateContent
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
+        xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"
+        xmlns:p14="http://schemas.microsoft.com/office/powerpoint/2010/main">
+        <mc:Choice Requires="p14"><p14:contentPart/></mc:Choice>
+        <mc:Fallback>
+          <p:sp><p:nvSpPr><p:cNvPr id="2" name="Fallback"/><p:nvPr/></p:nvSpPr><p:spPr/></p:sp>
+          <p:pic><p:nvPicPr><p:cNvPr id="3" name="Preview"/><p:nvPr/></p:nvPicPr><p:blipFill/><p:spPr/></p:pic>
+          <p:grpSp>
+            <p:nvGrpSpPr><p:cNvPr id="4" name="Group"/><p:nvPr/></p:nvGrpSpPr>
+            <p:grpSpPr/>
+          </p:grpSp>
+          <p:graphicFrame>
+            <p:nvGraphicFramePr><p:cNvPr id="5" name="Table"/><p:nvPr/></p:nvGraphicFramePr>
+            <p:xfrm/>
+            <a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/table"><a:tbl/></a:graphicData></a:graphic>
+          </p:graphicFrame>
+          <p:graphicFrame>
+            <p:nvGraphicFramePr><p:cNvPr id="6" name="Chart"/><p:nvPr/></p:nvGraphicFramePr>
+            <p:xfrm/>
+            <a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/chart"><c:chart xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart" r:id="rIdChart" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"/></a:graphicData></a:graphic>
+          </p:graphicFrame>
+        </mc:Fallback>
+      </mc:AlternateContent>
+    `);
+
+    const nodes = parseRenderableChildren(alternate, {
+      rels: new Map([['rIdChart', { type: 'chart', target: '../charts/chart1.xml' }]]),
+      partPath: 'ppt/slides/slide1.xml',
+    });
+
+    expect(nodes.map((node) => node.nodeType)).toEqual([
+      'shape',
+      'picture',
+      'group',
+      'table',
+      'chart',
+    ]);
+  });
+
+  it('selects compatible content nested inside a group', () => {
+    const groupXml = parseXml(`
+      <p:grpSp xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
+               xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+               xmlns:p14="http://schemas.microsoft.com/office/powerpoint/2010/main">
+        <p:nvGrpSpPr><p:cNvPr id="10" name="Group"/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr/>
+        <mc:AlternateContent>
+          <mc:Choice Requires="p14"><p14:contentPart/></mc:Choice>
+          <mc:Fallback><p:sp><p:nvSpPr><p:cNvPr id="11" name="Nested fallback"/><p:nvPr/></p:nvSpPr><p:spPr/></p:sp></mc:Fallback>
+        </mc:AlternateContent>
+      </p:grpSp>
+    `);
+
+    const group = parseRenderableChild(groupXml, { rels: new Map() });
+
+    expect(group).toMatchObject({ nodeType: 'group' });
+    expect(
+      group?.nodeType === 'group' ? group.children.map((child) => child.localName) : [],
+    ).toEqual(['sp']);
+  });
+
+  it('recursively selects nested AlternateContent while preserving draw order', () => {
+    const root = parseXml(`
+      <root xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+            xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
+            xmlns:p14="http://schemas.microsoft.com/office/powerpoint/2010/main">
+        <mc:AlternateContent>
+          <mc:Choice Requires="p14"><p14:contentPart/></mc:Choice>
+          <mc:Fallback>
+            <p:sp id="first"/>
+            <mc:AlternateContent>
+              <mc:Choice Requires="p"><p:pic id="second"/></mc:Choice>
+              <mc:Fallback><p:sp id="duplicate"/></mc:Fallback>
+            </mc:AlternateContent>
+            <p:graphicFrame id="third"/>
+          </mc:Fallback>
+        </mc:AlternateContent>
+      </root>
+    `);
+
+    const selected = expandCompatibleChildren(root.child('AlternateContent'));
+
+    expect(selected.map((node) => node.attr('id'))).toEqual(['first', 'second', 'third']);
+  });
+
+  it('returns no content when no Choice is compatible and Fallback is absent', () => {
+    const alternate = parseXml(`
+      <mc:AlternateContent
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:p14="http://schemas.microsoft.com/office/powerpoint/2010/main">
+        <mc:Choice Requires="p14"><p14:contentPart/></mc:Choice>
+      </mc:AlternateContent>
+    `);
+
+    expect(parseRenderableChildren(alternate, { rels: new Map() })).toEqual([]);
   });
 
   it('returns undefined for OLE frames without a resolvable fallback picture', () => {

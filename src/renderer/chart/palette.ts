@@ -31,7 +31,7 @@ export function createChartRenderContext(chartXml: SafeXmlNode, ctx: RenderConte
   if (!colorMapOverride) return ctx;
   return {
     ...ctx,
-    layout: { ...ctx.layout, colorMapOverride },
+    layout: { ...ctx.layout, colorMapOverride, colorMapOverrideMode: 'override' },
     colorCache: new Map(),
   };
 }
