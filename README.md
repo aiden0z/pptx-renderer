@@ -23,13 +23,13 @@ A complex slide with charts, text styles, shapes, and SmartArt — PowerPoint gr
 
 ## Visual Regression Testing
 
-Visual regression suites compare selected shape, SmartArt, fill/stroke, text, table, and chart cases against PowerPoint output. Results belong to the evaluated source revision, corpus, fonts, and browser environment. A passing aggregate score does not establish semantic correctness or full PowerPoint parity; structural assertions and targeted browser/native inspection complement the metrics.
+Visual regression suites compare selected shape, SmartArt, fill/stroke, text, table, and chart cases against PowerPoint output. Each API evaluation records the renderer revision, browser, optional font profile, and SHA-256 fingerprints of its PPTX and ground truth so results can be compared against the same inputs. A passing aggregate score does not establish semantic correctness or full PowerPoint parity; structural assertions and targeted browser/native inspection complement the metrics.
 
 <img src="docs/example/e2e-test-page.png" alt="E2E evaluation dashboard" width="800" />
 
 <sup>E2E evaluation dashboard: side-by-side ground truth vs rendered output with SSIM, color histogram, and IoU metrics per slide.</sup>
 
-> Ground truth data (PPTX + PDF pairs) is not committed to the repository due to file size. It can be regenerated locally via `scripts/one_shot_full_ground_truth.py` with Microsoft PowerPoint installed (macOS and Windows both supported) — see [`docs/TESTING.md`](docs/TESTING.md) for details.
+> Ground truth binaries (PPTX/PDF/PNG) stay in the ignored `test/e2e/testdata/` tree. Tracked case definitions and coverage metadata keep that local corpus reproducible. Generate shape/SmartArt corpora with `scripts/one_shot_full_ground_truth.py` or focused text/chart/composite cases with `scripts/generate_pypptx_cases.py`; both macOS and Windows PowerPoint are supported. See [`docs/TESTING.md`](docs/TESTING.md).
 
 ## Install
 

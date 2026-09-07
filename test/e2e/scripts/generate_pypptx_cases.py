@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate ground truth cases using python-pptx (PPTX) + PowerPoint COM (PDF export).
+"""Generate ground truth cases using python-pptx + native PowerPoint export.
 
 Produces oracle-pypptx-* cases covering:
   - Rich text: fonts, sizes, bold/italic, alignment, vertical text, bullets
@@ -9,12 +9,15 @@ Produces oracle-pypptx-* cases covering:
 
 Usage (from test/e2e/):
   pip install python-pptx
-  python scripts/generate_pypptx_cases.py            # generate PPTX + PDF (Windows)
-  python scripts/generate_pypptx_cases.py --pptx-only # generate PPTX only (any platform)
+  python scripts/generate_pypptx_cases.py              # PDF on macOS; PDF+PNG on Windows
+  python scripts/generate_pypptx_cases.py --pptx-only  # generate PPTX only (any platform)
+  python scripts/generate_pypptx_cases.py --case 'oracle-pypptx-text-00[45]*'
 """
 from __future__ import annotations
 
 import argparse
+import fnmatch
+import hashlib
 import json
 import math
 import posixpath
@@ -61,6 +64,99 @@ NS = {"p": PML_NS, "pr": REL_NS}
 
 def _emu(inches: float) -> int:
     return int(Inches(inches))
+
+
+def _remove_children(parent, local_names: tuple[str, ...]) -> None:
+    for local_name in local_names:
+        child = parent.find(qn(f"a:{local_name}"))
+        if child is not None:
+            parent.remove(child)
+
+
+def _configure_text_body(
+    text_frame,
+    *,
+    wrap: str,
+    autofit: str | None,
+    autofit_attrs: dict[str, str] | None = None,
+    anchor: str | None = None,
+) -> None:
+    """Set bodyPr values that python-pptx does not expose losslessly."""
+    body_pr = text_frame._txBody.find(qn("a:bodyPr"))
+    if body_pr is None:
+        raise RuntimeError("text frame has no a:bodyPr")
+
+    body_pr.set("wrap", wrap)
+    if anchor is not None:
+        body_pr.set("anchor", anchor)
+    _remove_children(body_pr, ("noAutofit", "normAutofit", "spAutoFit"))
+    if autofit is not None:
+        etree.SubElement(body_pr, qn(f"a:{autofit}"), **(autofit_attrs or {}))
+
+
+def _replace_spacing_value(paragraph, container_name: str, value_name: str, value: int) -> None:
+    p_pr = paragraph._p.get_or_add_pPr()
+    old = p_pr.find(qn(f"a:{container_name}"))
+    if old is not None:
+        p_pr.remove(old)
+    container = etree.SubElement(p_pr, qn(f"a:{container_name}"))
+    etree.SubElement(container, qn(f"a:{value_name}"), val=str(value))
+
+
+def _set_cjk_run_style(
+    run,
+    *,
+    font_name: str = "Microsoft YaHei",
+    font_size_pt: int = 28,
+    bold: bool = False,
+    spacing: int | None = None,
+) -> None:
+    run.font.name = font_name
+    run.font.size = Pt(font_size_pt)
+    run.font.bold = bold
+    r_pr = run._r.get_or_add_rPr()
+    r_pr.set("lang", "zh-CN")
+    if spacing is not None:
+        r_pr.set("spc", str(spacing))
+    for script in ("latin", "ea"):
+        typeface = r_pr.find(qn(f"a:{script}"))
+        if typeface is None:
+            typeface = etree.SubElement(r_pr, qn(f"a:{script}"))
+        typeface.set("typeface", font_name)
+
+
+def _add_cjk_run(paragraph, text: str, **style):
+    run = paragraph.add_run()
+    run.text = text
+    _set_cjk_run_style(run, **style)
+    return run
+
+
+def _set_cjk_paragraph_text(paragraph, text: str, **style) -> None:
+    """Set paragraph text so vertical tabs become OOXML soft line breaks."""
+    paragraph.text = text
+    for run in paragraph.runs:
+        _set_cjk_run_style(run, **style)
+
+
+def _add_cjk_textbox(
+    prs: Presentation,
+    *,
+    width: float = 8.5,
+    height: float = 3.0,
+    left: float = 1.0,
+    top: float = 1.0,
+):
+    slide = prs.slides.add_slide(prs.slide_layouts[6])
+    shape = slide.shapes.add_textbox(_emu(left), _emu(top), _emu(width), _emu(height))
+    text_frame = shape.text_frame
+    text_frame.clear()
+    text_frame.word_wrap = True
+    text_frame.margin_left = Inches(0.12)
+    text_frame.margin_right = Inches(0.12)
+    text_frame.margin_top = Inches(0.08)
+    text_frame.margin_bottom = Inches(0.08)
+    return slide, shape, text_frame
 
 
 def _rels_path(part_name: str) -> str:
@@ -276,7 +372,7 @@ def _build_text_cases() -> list[CaseDef]:
     cases: list[CaseDef] = []
     seq = 0
 
-    def _add(slug: str, build_fn, postprocess_fn=None):
+    def _add(slug: str, build_fn, postprocess_fn=None, coverage=None):
         nonlocal seq
         seq += 1
         case = {
@@ -285,6 +381,8 @@ def _build_text_cases() -> list[CaseDef]:
         }
         if postprocess_fn is not None:
             case["postprocess_fn"] = postprocess_fn
+        if coverage is not None:
+            case["coverage"] = coverage
         cases.append(case)
 
     # --- Font families ---
@@ -535,6 +633,187 @@ def _build_text_cases() -> list[CaseDef]:
         "placeholder-idx-inheritance",
         _build_placeholder_idx_inheritance,
         _patch_placeholder_idx_inheritance_case,
+    )
+
+    # --- CJK layout interaction matrix (issue #23 follow-up) ---
+    # Keep these as focused one-feature variants. Their PPTX/PDF outputs stay local and
+    # ignored; the definitions make the matrix reproducible across native PowerPoint hosts.
+    cjk_wrap_text = "坚守问题导向，持续提升复杂演示文稿的渲染质量与一致性。"
+
+    def _cjk_coverage(*features: str) -> dict:
+        return {
+            "oracle": "native-powerpoint",
+            "requiredFonts": ["Microsoft YaHei"],
+            "features": ["text.cjk", *features],
+        }
+
+    def _build_cjk_wrap_square_no_autofit(prs):
+        _, _, tf = _add_cjk_textbox(prs, width=5.6, height=1.8)
+        _configure_text_body(tf, wrap="square", autofit="noAutofit")
+        _add_cjk_run(tf.paragraphs[0], cjk_wrap_text, font_size_pt=30)
+    _add(
+        "cjk-wrap-square-no-autofit",
+        _build_cjk_wrap_square_no_autofit,
+        coverage=_cjk_coverage("bodyPr.wrap=square", "bodyPr.noAutofit"),
+    )
+
+    def _build_cjk_wrap_square_implicit(prs):
+        _, _, tf = _add_cjk_textbox(prs, width=5.6, height=1.8)
+        _configure_text_body(tf, wrap="square", autofit=None)
+        _add_cjk_run(tf.paragraphs[0], cjk_wrap_text, font_size_pt=30)
+    _add(
+        "cjk-wrap-square-implicit-autofit",
+        _build_cjk_wrap_square_implicit,
+        coverage=_cjk_coverage("bodyPr.wrap=square", "bodyPr.autofit=omitted"),
+    )
+
+    def _build_cjk_wrap_none_no_autofit(prs):
+        _, _, tf = _add_cjk_textbox(prs, width=5.6, height=1.4)
+        _configure_text_body(tf, wrap="none", autofit="noAutofit")
+        _add_cjk_run(tf.paragraphs[0], cjk_wrap_text, font_size_pt=30)
+    _add(
+        "cjk-wrap-none-no-autofit",
+        _build_cjk_wrap_none_no_autofit,
+        coverage=_cjk_coverage("bodyPr.wrap=none", "bodyPr.noAutofit"),
+    )
+
+    def _build_cjk_sp_autofit(prs):
+        _, _, tf = _add_cjk_textbox(prs, width=4.8, height=1.2)
+        _configure_text_body(tf, wrap="square", autofit="spAutoFit")
+        _add_cjk_run(tf.paragraphs[0], cjk_wrap_text, font_size_pt=30)
+    _add(
+        "cjk-sp-autofit-narrow",
+        _build_cjk_sp_autofit,
+        coverage=_cjk_coverage("bodyPr.wrap=square", "bodyPr.spAutoFit", "layout.narrow"),
+    )
+
+    def _build_cjk_norm_autofit(prs):
+        _, _, tf = _add_cjk_textbox(prs, width=4.8, height=1.35)
+        _configure_text_body(
+            tf,
+            wrap="square",
+            autofit="normAutofit",
+            autofit_attrs={"fontScale": "85000", "lnSpcReduction": "10000"},
+        )
+        _add_cjk_run(tf.paragraphs[0], cjk_wrap_text, font_size_pt=30)
+    _add(
+        "cjk-norm-autofit-scaled",
+        _build_cjk_norm_autofit,
+        coverage=_cjk_coverage(
+            "bodyPr.wrap=square",
+            "bodyPr.normAutofit",
+            "normAutofit.fontScale=85000",
+            "normAutofit.lnSpcReduction=10000",
+        ),
+    )
+
+    multiline_cjk = "第一行：统一字体测量\v第二行：核对中文行距\v第三行：观察基线位置"
+
+    def _build_cjk_line_spacing(prs, value_name: str, value: int):
+        _, _, tf = _add_cjk_textbox(prs, width=9.0, height=4.2)
+        _configure_text_body(tf, wrap="square", autofit="noAutofit")
+        paragraph = tf.paragraphs[0]
+        _set_cjk_paragraph_text(paragraph, multiline_cjk, font_size_pt=28)
+        _replace_spacing_value(paragraph, "lnSpc", value_name, value)
+
+    _add(
+        "cjk-line-spacing-100pct",
+        lambda prs: _build_cjk_line_spacing(prs, "spcPct", 100000),
+        coverage=_cjk_coverage("paragraph.manualBreaks", "lnSpc.spcPct=100000"),
+    )
+    _add(
+        "cjk-line-spacing-130pct",
+        lambda prs: _build_cjk_line_spacing(prs, "spcPct", 130000),
+        coverage=_cjk_coverage("paragraph.manualBreaks", "lnSpc.spcPct=130000"),
+    )
+    _add(
+        "cjk-line-spacing-28pt",
+        lambda prs: _build_cjk_line_spacing(prs, "spcPts", 2800),
+        coverage=_cjk_coverage("paragraph.manualBreaks", "lnSpc.spcPts=2800"),
+    )
+
+    def _build_cjk_paragraph_spacing(prs, value_name: str, before: int, after: int):
+        _, _, tf = _add_cjk_textbox(prs, width=9.0, height=4.8)
+        _configure_text_body(tf, wrap="square", autofit="noAutofit")
+        texts = [
+            "第一段：段前段后间距需要遵循演示文稿定义。",
+            "第二段：浏览器默认外边距不能参与布局。",
+            "第三段：末段外边距需要保持 PowerPoint 语义。",
+        ]
+        for index, text in enumerate(texts):
+            paragraph = tf.paragraphs[0] if index == 0 else tf.add_paragraph()
+            _add_cjk_run(paragraph, text, font_size_pt=26)
+            _replace_spacing_value(paragraph, "spcBef", value_name, before)
+            _replace_spacing_value(paragraph, "spcAft", value_name, after)
+
+    _add(
+        "cjk-paragraph-spacing-points",
+        lambda prs: _build_cjk_paragraph_spacing(prs, "spcPts", 600, 1000),
+        coverage=_cjk_coverage("paragraph.multiple", "spcBef.spcPts", "spcAft.spcPts"),
+    )
+    _add(
+        "cjk-paragraph-spacing-percent",
+        lambda prs: _build_cjk_paragraph_spacing(prs, "spcPct", 30000, 50000),
+        coverage=_cjk_coverage("paragraph.multiple", "spcBef.spcPct", "spcAft.spcPct"),
+    )
+
+    def _build_cjk_mixed_run_spacing(prs):
+        _, _, tf = _add_cjk_textbox(prs, width=9.2, height=2.2)
+        _configure_text_body(tf, wrap="square", autofit="noAutofit")
+        paragraph = tf.paragraphs[0]
+        _add_cjk_run(paragraph, "字距放宽", font_size_pt=32, bold=True, spacing=180)
+        _add_cjk_run(paragraph, "｜正常字距｜", font_size_pt=32)
+        _add_cjk_run(paragraph, "字距收紧", font_size_pt=32, bold=True, spacing=-120)
+    _add(
+        "cjk-mixed-run-character-spacing",
+        _build_cjk_mixed_run_spacing,
+        coverage=_cjk_coverage("runs.adjacent", "run.spacing=positive-negative"),
+    )
+
+    def _build_cjk_rounded_shape(prs):
+        slide = prs.slides.add_slide(prs.slide_layouts[6])
+        shape = slide.shapes.add_shape(
+            MSO_SHAPE.ROUNDED_RECTANGLE,
+            _emu(2.0),
+            _emu(1.2),
+            _emu(8.5),
+            _emu(4.2),
+        )
+        shape.fill.solid()
+        shape.fill.fore_color.rgb = RGBColor(0xE9, 0xF2, 0xFF)
+        shape.line.color.rgb = RGBColor(0x2F, 0x55, 0x97)
+        tf = shape.text_frame
+        tf.clear()
+        tf.word_wrap = True
+        tf.margin_left = Inches(0.3)
+        tf.margin_right = Inches(0.3)
+        tf.margin_top = Inches(0.2)
+        tf.margin_bottom = Inches(0.2)
+        _configure_text_body(
+            tf,
+            wrap="square",
+            autofit="noAutofit",
+            anchor="ctr",
+        )
+        paragraph = tf.paragraphs[0]
+        paragraph.alignment = PP_ALIGN.CENTER
+        _set_cjk_paragraph_text(
+            paragraph,
+            "容器内第一行\v容器内第二行\v居中与行距共同生效",
+            font_size_pt=28,
+            bold=True,
+        )
+        _replace_spacing_value(paragraph, "lnSpc", "spcPct", 120000)
+    _add(
+        "cjk-rounded-shape-centered-spacing",
+        _build_cjk_rounded_shape,
+        coverage=_cjk_coverage(
+            "container.roundedRect",
+            "bodyPr.anchor=ctr",
+            "paragraph.alignment=center",
+            "paragraph.manualBreaks",
+            "lnSpc.spcPct=120000",
+        ),
     )
 
     return cases
@@ -1378,6 +1657,48 @@ def _build_all_case_defs() -> list[CaseDef]:
     return all_cases
 
 
+def _select_case_defs(case_defs: list[CaseDef], patterns: list[str] | None) -> list[CaseDef]:
+    """Select case definitions by repeatable exact or shell-style glob patterns."""
+    if not patterns:
+        return list(case_defs)
+    return [
+        case_def
+        for case_def in case_defs
+        if any(fnmatch.fnmatchcase(case_def["name"], pattern) for pattern in patterns)
+    ]
+
+
+def _file_fingerprint(path: Path) -> dict | None:
+    if not path.exists() or not path.is_file():
+        return None
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return {"size_bytes": path.stat().st_size, "sha256": digest.hexdigest()}
+
+
+def _case_artifact_record(
+    name: str,
+    status: str,
+    pptx_path: Path,
+    pdf_path: Path,
+    slides_dir: Path,
+) -> dict:
+    pngs = []
+    if slides_dir.is_dir():
+        for png_path in sorted(slides_dir.glob("slide*.png")):
+            if fingerprint := _file_fingerprint(png_path):
+                pngs.append({"name": png_path.name, **fingerprint})
+    return {
+        "case": name,
+        "status": status,
+        "source_pptx": _file_fingerprint(pptx_path),
+        "ground_truth_pdf": _file_fingerprint(pdf_path),
+        "ground_truth_pngs": pngs,
+    }
+
+
 def _generate_pptx(case_def: CaseDef, output_path: str | Path) -> None:
     """Generate a single PPTX file using python-pptx."""
     output_path = Path(output_path)
@@ -1399,6 +1720,8 @@ def _write_case_json(case_def: CaseDef, cases_dir: Path) -> Path:
         "generator": "python-pptx",
         "slides": [{"nodes": [{"kind": "pypptx-generated"}]}],
     }
+    if coverage := case_def.get("coverage"):
+        payload["coverage"] = coverage
     out = cases_dir / f"{name}.json"
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
@@ -1424,6 +1747,14 @@ def main() -> int:
                         help="PNG export height in pixels (0 = PowerPoint default).")
     parser.add_argument("--no-reuse", action="store_true",
                         help="Force regeneration even if files exist.")
+    parser.add_argument(
+        "--case",
+        action="append",
+        dest="case_patterns",
+        default=[],
+        metavar="PATTERN",
+        help="Generate only matching case names; repeat for more exact/glob patterns.",
+    )
     args = parser.parse_args()
 
     cases_dir = args.cases_dir.resolve()
@@ -1431,35 +1762,51 @@ def main() -> int:
     report_path = args.report_path.resolve()
 
     all_cases = _build_all_case_defs()
-    print(f"Total case definitions: {len(all_cases)}")
+    selected_cases = _select_case_defs(all_cases, args.case_patterns)
+    print(f"Total case definitions: {len(all_cases)}; selected: {len(selected_cases)}")
+    if args.case_patterns and not selected_cases:
+        print(f"ERROR: no cases matched: {args.case_patterns}", file=sys.stderr)
+        return 2
 
     generated: list[str] = []
     failures: list[dict] = []
+    artifacts: list[dict] = []
     skipped = 0
 
-    do_png = args.export_png and not args.pptx_only
+    do_png = args.export_png and not args.pptx_only and sys.platform == "win32"
 
-    # Import ground truth export only if needed (per-case COM session for stability)
+    # Import ground truth export only if needed (per-case native PowerPoint session for stability).
     export_fn = None
     if not args.pptx_only:
-        if sys.platform != "win32":
-            print("ERROR: PDF/PNG export requires Windows + PowerPoint. Use --pptx-only on other platforms.",
-                  file=sys.stderr)
+        if sys.platform not in {"darwin", "win32"}:
+            print(
+                "ERROR: PDF export requires macOS or Windows with Microsoft PowerPoint. "
+                "Use --pptx-only on other platforms.",
+                file=sys.stderr,
+            )
             return 1
-        from oracle.powerpoint_oracle import export_pptx_ground_truth_win
-        export_fn = export_pptx_ground_truth_win
+        from oracle.powerpoint_oracle import export_pptx_ground_truth
+        export_fn = export_pptx_ground_truth
+        if args.export_png and sys.platform == "darwin":
+            print("macOS PowerPoint export is PDF-only; skipping per-slide PNG export.")
 
-    for i, case_def in enumerate(all_cases, 1):
+    for i, case_def in enumerate(selected_cases, 1):
         name = case_def["name"]
         case_d = testdata_dir / "cases" / name
         pptx_path = case_d / "source.pptx"
         pdf_path = case_d / "ground-truth.pdf"
         slides_d = case_d / "slides"
 
+        # Keep the tracked case index aligned even when ignored binary ground truth is reused.
+        _write_case_json(case_def, cases_dir)
+
         # Reuse check
         if not args.no_reuse:
             if args.pptx_only and pptx_path.exists():
                 skipped += 1
+                artifacts.append(
+                    _case_artifact_record(name, "reused", pptx_path, pdf_path, slides_d)
+                )
                 continue
             if not args.pptx_only and pptx_path.exists() and pdf_path.exists():
                 # If PNG export requested but slide1.png missing, regenerate
@@ -1467,9 +1814,12 @@ def main() -> int:
                     pass  # fall through
                 else:
                     skipped += 1
+                    artifacts.append(
+                        _case_artifact_record(name, "reused", pptx_path, pdf_path, slides_d)
+                    )
                     continue
 
-        print(f"  [{i}/{len(all_cases)}] {name} ...", end=" ", flush=True)
+        print(f"  [{i}/{len(selected_cases)}] {name} ...", end=" ", flush=True)
 
         try:
             # Generate PPTX via python-pptx
@@ -1484,10 +1834,10 @@ def main() -> int:
                     png_height=args.png_height,
                 )
 
-            # Write case JSON for eval discovery
-            _write_case_json(case_def, cases_dir)
-
             generated.append(name)
+            artifacts.append(
+                _case_artifact_record(name, "generated", pptx_path, pdf_path, slides_d)
+            )
             print("OK")
         except Exception as exc:
             failures.append({"case": name, "error": str(exc)})
@@ -1497,18 +1847,21 @@ def main() -> int:
 
     report = {
         "generator": "python-pptx",
-        "cases_dir": str(cases_dir),
-        "testdata_dir": str(testdata_dir),
+        "schema_version": 2,
+        "platform": sys.platform,
         "pptx_only": args.pptx_only,
         "export_png": do_png,
         "png_width": args.png_width,
         "png_height": args.png_height,
         "total_definitions": len(all_cases),
+        "selected_definitions": len(selected_cases),
+        "case_patterns": args.case_patterns,
         "generated_count": len(generated),
         "skipped_reused": skipped,
         "failed_count": len(failures),
         "generated_cases": generated,
         "failed_cases": failures,
+        "artifacts": artifacts,
     }
     report_path.parent.mkdir(parents=True, exist_ok=True)
     report_path.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")

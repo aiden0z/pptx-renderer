@@ -102,6 +102,19 @@ PPTX_E2E_TESTDATA_SOURCE=windows pytest test_visual.py -v
 Windows case ids are encoded with a `win__` prefix during pytest
 parametrization so baseline/report filenames stay distinct from default cases.
 
+### Local Corpus Contract
+
+Binary oracle artifacts stay local under `test/e2e/testdata/` and are ignored by Git:
+
+- `cases/{stem}/source.pptx`
+- `cases/{stem}/ground-truth.pdf`
+- optional `cases/{stem}/slides/slide{N}.png`
+
+Keep the generator, tracked case JSON, and its `coverage` metadata in the repository. This
+preserves case IDs, intended OOXML features, required fonts, and the native-oracle requirement
+without committing large or licensed files. Generation reports record SHA-256 hashes for local
+artifacts; visual evaluation reports independently fingerprint the exact inputs they consumed.
+
 ### Test Layers
 
 | Layer               | File                             | What it checks                                              |
@@ -157,6 +170,74 @@ cd test/e2e
 ```
 
 This generates/reuses ground truth for all SmartArt layouts available on the local PowerPoint build plus the specified shape ID range.
+
+For text, shape-adjustment, composite, and chart interaction cases, use the python-pptx
+generator. It currently defines 123 cases: 51 text, 31 shape-adjustment, 20 composite, and 21
+chart cases. The CJK text matrix at IDs 0040-0051 covers square/no-wrap behavior, omitted and
+explicit autofit modes, percentage and point line spacing, paragraph spacing, adjacent run
+spacing, and centered text inside a parent shape.
+
+```bash
+cd test/e2e
+
+# Generate all definitions and native ground truth.
+.venv/bin/python scripts/generate_pypptx_cases.py
+
+# Generate only the CJK matrix. --case is repeatable and accepts exact names or globs.
+.venv/bin/python scripts/generate_pypptx_cases.py \
+  --case 'oracle-pypptx-text-00[45]*'
+
+# Package-only inspection on a host without PowerPoint.
+.venv/bin/python scripts/generate_pypptx_cases.py \
+  --pptx-only \
+  --case 'oracle-pypptx-text-0044-*'
+```
+
+macOS PowerPoint exports PDF ground truth. Windows PowerPoint exports PDF and, by default,
+per-slide PNG. The generator refreshes tracked case metadata even when cached local binaries are
+reused and writes artifact fingerprints to
+`reports/oracle-failures/pypptx-ground-truth.json`, including every available slide PNG.
+
+PowerPoint automation on macOS requires an unlocked interactive session. Error `-9074` while the
+same known-good deck exports normally in an unlocked session is an environment failure, not a
+renderer result. The export script closes only the presentation it opened on failure and includes
+AppleScript stderr in the reported error.
+
+### Reproducing Fonts in Oracle Runs
+
+Text metrics are only comparable when the browser can use the same font faces as PowerPoint.
+Create an ignored profile under `test/e2e/testdata/` using
+`test/e2e/oracle/font-profile.example.json` as the format. Each `path` is relative to the testdata
+root; it may be an ignored symlink to a locally installed and properly licensed font. Do not copy
+or commit proprietary font files.
+
+Start the API with an explicit code server, browser channel, and profile:
+
+```bash
+# Terminal 1, project root
+pnpm dev --host 127.0.0.1 --port 5183 --strictPort
+
+# Terminal 2, test/e2e
+PPTX_E2E_VITE_SERVER_URL=http://127.0.0.1:5183 \
+PPTX_E2E_FONT_PROFILE=font-profiles/local-office-fonts.json \
+PPTX_E2E_BROWSER_CHANNEL=chrome \
+.venv/bin/python server.py
+```
+
+`PPTX_E2E_API_PORT` can move the API from port 8080 when needed. The single-slide page accepts
+the corresponding `fontProfile` query parameter and passes those faces to `renderSlide()` before
+layout measurement.
+
+Every `/api/evaluate/{case}` response includes `provenance` with:
+
+- source PPTX and ground-truth kind, size, and SHA-256;
+- renderer Git revision and tracked dirty state;
+- OS/Python details and the actual browser version;
+- optional font-profile manifest and font-file hashes.
+
+`scripts/run_all_shapes_eval.py` preserves this object in every `results[]` row. Compare or update
+a baseline only when the input hashes and relevant runtime profile match; otherwise treat the
+difference as an environment/corpus change and rerun before changing renderer code.
 
 ### Manual Review
 

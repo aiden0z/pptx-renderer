@@ -13,11 +13,24 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   bounded face, byte, and processing budgets plus host-font fallback for rejected faces.
 - Added `fontFaces` options to `PptxViewer` and headless `renderSlide()` so host applications can
   register missing regular/bold font data before PowerPoint text layout is measured.
+- Added a 12-case CJK native-oracle matrix for wrap, autofit, line/paragraph spacing, adjacent
+  run spacing, and parent-shape layout, with tracked coverage/font metadata and ignored binaries.
+- Added optional local font profiles and per-evaluation provenance for PPTX/ground-truth/font
+  hashes, renderer Git state, and the actual browser version.
+
+### Changed
+
+- The python-pptx corpus generator now supports native PDF export on macOS, repeatable exact/glob
+  case filters, and SHA-256 artifact records while keeping cached case metadata synchronized.
 
 ### Fixed
 
 - Keep near-fit, single-paragraph square-wrapped headings on one line with a conservative 2%
   browser-metric correction while preserving deliberate multi-line text.
+- Close only the PowerPoint presentation opened by a failed macOS oracle export and preserve the
+  underlying AppleScript stderr, including environment codes such as `-9074`.
+- Generate CJK soft line breaks as DrawingML `a:br` elements so local oracle inputs do not contain
+  visible `_x000B_` escape text.
 
 - Align default vertical column, line, area, scatter, and bubble plot areas and side legends
   more closely with PowerPoint while preserving manual layouts, overlay legends, negative-value

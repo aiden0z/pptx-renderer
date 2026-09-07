@@ -53,6 +53,7 @@
       import { renderSlide } from '../../src/renderer/SlideRenderer.ts';
       import { TRUSTED_TESTDATA_ZIP_LIMITS } from './zipLimits.ts';
       import { waitForVisualStability } from './visualStability.ts';
+      import { loadTestFontProfile } from './fontProfile.ts';
 
       const pdfjs = {
         moduleUrl: new URL('pdfjs-dist/build/pdf.min.mjs', import.meta.url).toString(),
@@ -76,6 +77,8 @@
       const params = new URLSearchParams(location.search);
       const fileParam = params.get('file');
       const slideParam = params.get('slide');
+      const fontProfileParam = params.get('fontProfile');
+      const fontProfilePromise = loadTestFontProfile(fontProfileParam);
 
       // Populate file select from testdata directory
       async function populateFileSelect() {
@@ -173,7 +176,13 @@
 
         container.innerHTML = '';
         const slide = presentation.slides[idx];
-        const handle = renderSlide(presentation, slide, { mediaUrlCache: mediaCache, pdfjs });
+        const fontProfile = await fontProfilePromise;
+        window.__fontProfile = fontProfile.id;
+        const handle = renderSlide(presentation, slide, {
+          mediaUrlCache: mediaCache,
+          pdfjs,
+          fontFaces: fontProfile.fontFaces,
+        });
         currentHandle = handle;
 
         const wrapper = document.createElement('div');

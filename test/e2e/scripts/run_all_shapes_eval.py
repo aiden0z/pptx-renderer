@@ -81,6 +81,7 @@ def _result_from_evaluate_response(name: str, data: dict) -> dict:
         "summary": summary,
         "reasons": quality.get("reasons") or [],
         "warnings": quality.get("warnings") or [],
+        "provenance": data.get("provenance"),
     }
 
 

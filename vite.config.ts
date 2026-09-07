@@ -58,6 +58,11 @@ export default defineConfig({
               jpeg: 'image/jpeg',
               pdf: 'application/pdf',
               pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+              ttf: 'font/ttf',
+              ttc: 'font/collection',
+              otf: 'font/otf',
+              woff: 'font/woff',
+              woff2: 'font/woff2',
               json: 'application/json',
               xml: 'text/xml',
             };

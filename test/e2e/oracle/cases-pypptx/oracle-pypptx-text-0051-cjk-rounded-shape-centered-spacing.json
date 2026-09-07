@@ -1,0 +1,27 @@
+{
+  "name": "oracle-pypptx-text-0051-cjk-rounded-shape-centered-spacing",
+  "generator": "python-pptx",
+  "slides": [
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    }
+  ],
+  "coverage": {
+    "oracle": "native-powerpoint",
+    "requiredFonts": [
+      "Microsoft YaHei"
+    ],
+    "features": [
+      "text.cjk",
+      "container.roundedRect",
+      "bodyPr.anchor=ctr",
+      "paragraph.alignment=center",
+      "paragraph.manualBreaks",
+      "lnSpc.spcPct=120000"
+    ]
+  }
+}

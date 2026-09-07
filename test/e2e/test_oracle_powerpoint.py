@@ -90,6 +90,41 @@ def test_export_raises_after_exhausting_retries(tmp_path: Path):
         )
 
 
+def test_export_error_includes_osascript_stderr(tmp_path: Path):
+    def fail_with_powerpoint_code(cmd, **_kwargs):
+        raise subprocess.CalledProcessError(
+            returncode=1,
+            cmd=cmd,
+            stderr="Microsoft PowerPoint error -9074",
+        )
+
+    pptx = tmp_path / "sample.pptx"
+    pptx.write_bytes(b"pptx")
+
+    with pytest.raises(PowerPointExportError, match="-9074"):
+        export_pptx_to_pdf_mac(
+            pptx_path=pptx,
+            pdf_path=tmp_path / "sample.pdf",
+            runner=fail_with_powerpoint_code,
+            retries=0,
+        )
+
+
+def test_export_applescript_closes_only_the_opened_presentation_on_error():
+    script_path = (
+        Path(__file__).resolve().parent
+        / "oracle"
+        / "scripts"
+        / "export_pptx_to_pdf.applescript"
+    )
+    script = script_path.read_text(encoding="utf-8")
+
+    assert "set openedPresentation to active presentation" in script
+    assert "on error errorMessage number errorNumber" in script
+    assert "close openedPresentation saving no" in script
+    assert "error errorMessage number errorNumber" in script
+
+
 def test_export_validates_input_file_exists(tmp_path: Path):
     with pytest.raises(FileNotFoundError):
         export_pptx_to_pdf_mac(

@@ -142,8 +142,8 @@ def export_pptx_to_pdf_mac(
     backoff_sec: float = 1.0,
 ) -> ExportResult:
     """Export a PPTX to PDF using Microsoft PowerPoint on macOS via AppleScript."""
-    src = Path(pptx_path)
-    out = Path(pdf_path)
+    src = Path(pptx_path).resolve()
+    out = Path(pdf_path).resolve()
 
     if not src.exists():
         raise FileNotFoundError(f"PPTX not found: {src}")
@@ -167,8 +167,13 @@ def export_pptx_to_pdf_mac(
             if backoff_sec > 0:
                 time.sleep(backoff_sec)
 
+    error_details = (
+        _called_process_text(last_error)
+        if isinstance(last_error, subprocess.CalledProcessError)
+        else str(last_error)
+    )
     raise PowerPointExportError(
-        f"Failed to export {src} -> {out} after {retries + 1} attempt(s): {last_error}"
+        f"Failed to export {src} -> {out} after {retries + 1} attempt(s): {error_details}"
     )
 
 

@@ -32,6 +32,13 @@ This directory contains the local-macOS PowerPoint oracle pipeline used to drive
 - `test_oracle_auto_pipeline.py`: end-to-end local pipeline (`case -> macro -> pptx/pdf -> renderer compare`).
 - `test_oracle_attention_ranking.py`: verifies ranked `attention_cases` output.
 
+6. Reproducible evaluation provenance
+- Every `/api/evaluate/{case}` result fingerprints the source PPTX and PDF/PNG ground truth.
+- Reports also record the renderer Git state, actual browser version, and the configured local
+  font-profile manifest/font hashes.
+- `font-profile.example.json` documents the ignored local profile format without distributing
+  font binaries.
+
 ## How To Run
 
 1. Unit tests (no PowerPoint dependency)
@@ -109,9 +116,12 @@ Report (default):
 
 ## Python-pptx Ground Truth Pipeline
 
-A second pipeline using `python-pptx` for PPTX creation and PowerPoint COM for PDF/PNG export. Generates 111 cases under `oracle/cases-pypptx/` with `oracle-pypptx-*` prefix, covering:
+A second pipeline uses `python-pptx` for PPTX creation and native PowerPoint automation for
+ground-truth export. It defines 123 cases under `oracle/cases-pypptx/` with the
+`oracle-pypptx-*` prefix:
 
-- **Text** (39 cases): fonts, sizes, styles, alignment, colors, bullets, vertical text, line spacing, placeholder inheritance
+- **Text** (51 cases): fonts, sizes, styles, alignment, colors, bullets, vertical text,
+  placeholder inheritance, plus a 12-case CJK wrap/autofit/line-spacing interaction matrix
 - **Shape adjustments** (31 cases): adjustment handles for roundRect, chevron, arrow, star, donut, cross, trapezoid, blockArc, bevel, triangle, pentagon, can, heart, moon, brace
 - **Composites** (20 cases): multi-element layouts combining shapes, text, tables, charts, connectors, merged cells, vertical text, transparent overlaps, and scaled groups
 - **Charts** (21 cases): column, bar, line, pie, doughnut, area, scatter, radar, bubble variants
@@ -121,9 +131,37 @@ Generate cases:
 ```bash
 cd test/e2e
 .venv/bin/python3 scripts/generate_pypptx_cases.py
+
+# Focus one or more exact/glob patterns; this example selects text IDs 0040-0051.
+.venv/bin/python3 scripts/generate_pypptx_cases.py \
+  --case 'oracle-pypptx-text-00[45]*'
 ```
 
-Each case uses an independent COM session for fault isolation.
+macOS exports PDF; Windows exports PDF plus optional per-slide PNG. `--pptx-only` works without
+PowerPoint. Each case uses an independent native PowerPoint session for fault isolation. The
+binary artifacts remain ignored under `testdata/`, while tracked case JSON records coverage and
+font requirements. The generation report includes the selected patterns and SHA-256 fingerprints.
+
+On macOS the PowerPoint session must be unlocked. A locked session can return `-9074` even for a
+known-good PPTX. The exporter preserves the original AppleScript stderr and closes only the deck
+it opened when export fails.
+
+## Optional Font Profile
+
+For font-sensitive text cases, copy `font-profile.example.json` to an ignored path such as
+`testdata/font-profiles/local-office-fonts.json`, then point each face at an ignored local font or
+symlink. Paths are relative to `testdata/`; do not commit licensed fonts.
+
+```bash
+PPTX_E2E_VITE_SERVER_URL=http://127.0.0.1:5183 \
+PPTX_E2E_FONT_PROFILE=font-profiles/local-office-fonts.json \
+PPTX_E2E_BROWSER_CHANNEL=chrome \
+.venv/bin/python server.py
+```
+
+The single-slide page registers the profile before layout. Evaluation provenance records the
+profile manifest, every face hash, the browser version, renderer revision, and source/ground-truth
+hashes. Only compare metric runs whose relevant provenance matches.
 
 ## Local Development Loop (Incremental by default)
 
