@@ -36,19 +36,29 @@ function isCachePointInRange(idx: number | undefined, pointLimit: number): idx i
   );
 }
 
-export function extractStringValues(refNode: SafeXmlNode): string[] {
-  const cache = refNode.child('strRef').exists()
-    ? refNode.child('strRef').child('strCache')
-    : refNode.child('strCache');
+/** Reference caches win when populated; empty/missing caches may use inline data. */
+function resolveDataCache(refNode: SafeXmlNode, kind: 'str' | 'num'): SafeXmlNode {
+  const candidates = [
+    refNode.child(`${kind}Ref`).child(`${kind}Cache`),
+    refNode.child(`${kind}Lit`),
+    refNode.child(`${kind}Cache`),
+  ];
+  return (
+    candidates.find((cache) => cache.children('pt').length > 0) ??
+    candidates.find((cache) => cache.exists()) ??
+    candidates[0]
+  );
+}
 
-  if (!cache.exists()) {
-    const numCache = refNode.child('numRef').exists()
-      ? refNode.child('numRef').child('numCache')
-      : refNode.child('numCache');
-    if (numCache.exists()) {
+export function extractStringValues(refNode: SafeXmlNode): string[] {
+  const cache = resolveDataCache(refNode, 'str');
+
+  if (cache.children('pt').length === 0) {
+    const numCache = resolveDataCache(refNode, 'num');
+    if (numCache.exists() && (!cache.exists() || numCache.children('pt').length > 0)) {
       return extractNumericValuesAsStrings(numCache);
     }
-    return [];
+    if (!cache.exists()) return [];
   }
 
   const pointLimit = getCachePointLimit(cache);
@@ -66,9 +76,7 @@ export function extractStringValues(refNode: SafeXmlNode): string[] {
 }
 
 export function extractFormatCode(refNode: SafeXmlNode): string | undefined {
-  const cache = refNode.child('numRef').exists()
-    ? refNode.child('numRef').child('numCache')
-    : refNode.child('numCache');
+  const cache = resolveDataCache(refNode, 'num');
 
   if (!cache.exists()) return undefined;
 
@@ -198,9 +206,7 @@ interface NumericValuesWithBlanks {
 }
 
 export function extractNumericValuesWithBlanks(refNode: SafeXmlNode): NumericValuesWithBlanks {
-  const cache = refNode.child('numRef').exists()
-    ? refNode.child('numRef').child('numCache')
-    : refNode.child('numCache');
+  const cache = resolveDataCache(refNode, 'num');
 
   if (!cache.exists()) return { values: [], blankIndices: new Set() };
 

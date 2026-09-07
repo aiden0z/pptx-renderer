@@ -235,6 +235,48 @@ function defaultLineMarkerSymbol(seriesIndex: number): string {
   return DEFAULT_LINE_MARKER_SYMBOLS[seriesIndex % DEFAULT_LINE_MARKER_SYMBOLS.length];
 }
 
+/** Keep source indices and missing coordinates through the ECharts boundary. */
+function buildXYData(s: SeriesData, mode: DispBlanksAs, bubble = false): (number | null)[][] {
+  const count = Math.max(
+    s.values.length,
+    s.xValues?.length ?? 0,
+    bubble ? (s.bubbleSizes?.length ?? 0) : 0,
+  );
+  const blank = mode === 'zero' ? 0 : null;
+  return Array.from({ length: count }, (_, i) => {
+    const x = s.xValues ? (s.xBlankIndices?.has(i) ? blank : (s.xValues[i] ?? blank)) : i;
+    const y = s.blankIndices?.has(i) ? blank : (s.values[i] ?? blank);
+    return bubble
+      ? [
+          x,
+          y,
+          s.bubbleSizes ? (s.bubbleBlankIndices?.has(i) ? blank : (s.bubbleSizes[i] ?? blank)) : 0,
+        ]
+      : [x, y];
+  });
+}
+
+function smoothXYData(data: (number | null)[][], span: boolean): (number | null)[][] {
+  const result: (number | null)[][] = [];
+  let segment: number[][] = [];
+  const flush = () => {
+    result.push(...buildSmoothScatterLineData(segment));
+    segment = [];
+  };
+  for (const point of data) {
+    if (point.some((v) => v === null)) {
+      if (!span) {
+        flush();
+        result.push(point);
+      }
+    } else {
+      segment.push(point as number[]);
+    }
+  }
+  flush();
+  return result;
+}
+
 function buildSmoothScatterLineData(data: number[][], stepsPerSegment = 24): number[][] {
   if (data.length < 3) return data;
   for (let i = 1; i < data.length; i++) {
@@ -1475,22 +1517,20 @@ function buildScatterChartOption(
   const scatterStyleHidesMarkers = scatterStyle === 'line' || scatterStyle === 'smooth';
 
   const series = seriesArr.map((s, idx) => {
-    // Use xValues if available (parsed from c:xVal), otherwise fall back to index
-    const data = s.values.map((v, i) => {
-      const x = s.xValues && i < s.xValues.length ? s.xValues[i] : i;
-      return [x, v];
-    });
+    const data = buildXYData(s, getDispBlanksAs(chartNode));
     const echartsSymbol = mapOoxmlSymbol(s.markerSymbol) ?? defaultScatterSymbol(scatterStyle, idx);
     const showSymbol = !scatterStyleHidesMarkers && echartsSymbol !== 'none';
     const renderAsLine = (scatterStyleDrawsLine || s.smooth) && !s.lineNoFill;
     if (renderAsLine) {
       const shouldInterpolate = s.smooth ?? scatterStyleIsSmooth;
-      const lineData = shouldInterpolate ? buildSmoothScatterLineData(data) : data;
+      const span = getDispBlanksAs(chartNode) === 'span';
+      const lineData = shouldInterpolate ? smoothXYData(data, span) : data;
       const lineWidth = s.lineWidth ?? 3;
       return {
         type: 'line' as const,
         name: s.name,
         data: lineData,
+        connectNulls: span,
         smooth: false,
         showSymbol,
         ...(showSymbol
@@ -1629,20 +1669,14 @@ function buildBubbleChartOption(
   // should follow sqrt(value / maxValue), not a linear min-max interpolation.
   let maxSize = -Infinity;
   for (const s of seriesArr) {
-    if (s.bubbleSizes) {
-      for (const sz of s.bubbleSizes) {
-        if (sz > maxSize) maxSize = sz;
-      }
+    for (const point of buildXYData(s, getDispBlanksAs(chartNode), true)) {
+      if (point.every((value) => value !== null) && point[2]! > maxSize) maxSize = point[2]!;
     }
   }
   const safeMaxBubbleSize = maxSize > 0 ? maxSize : 1;
 
   const series: EChartsTypes.ScatterSeriesOption[] = seriesArr.map((s) => {
-    const data = s.values.map((v, i) => {
-      const x = s.xValues && i < s.xValues.length ? s.xValues[i] : i;
-      const bub = s.bubbleSizes && i < s.bubbleSizes.length ? s.bubbleSizes[i] : 0;
-      return [x, v, bub];
-    });
+    const data = buildXYData(s, getDispBlanksAs(chartNode), true);
     return {
       type: 'scatter' as const,
       name: s.name,
@@ -1670,13 +1704,10 @@ function buildBubbleChartOption(
   const yAxisDef: Record<string, unknown> = { type: 'value' };
   applyAxisInfo(xAxisDef, xAxisInfo, 'value');
   applyAxisInfo(yAxisDef, yAxisInfo, 'value');
-  const bubblePoints = seriesArr.flatMap((s) =>
-    s.values.map((y, i) => ({
-      x: s.xValues && i < s.xValues.length ? s.xValues[i] : i,
-      y,
-      bubbleSize: s.bubbleSizes && i < s.bubbleSizes.length ? s.bubbleSizes[i] : 0,
-    })),
-  );
+  const bubblePoints = seriesArr
+    .flatMap((s) => buildXYData(s, getDispBlanksAs(chartNode), true))
+    .filter((point): point is number[] => point.every((value) => value !== null))
+    .map(([x, y, bubbleSize]) => ({ x, y, bubbleSize }));
   applyBubbleAxisHeadroom(
     xAxisDef,
     bubblePoints.map((point) => point.x),

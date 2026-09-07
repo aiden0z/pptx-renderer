@@ -8,7 +8,9 @@ export interface SeriesData {
   categories: string[];
   values: number[];
   xValues?: number[];
+  xBlankIndices?: Set<number>;
   bubbleSizes?: number[];
+  bubbleBlankIndices?: Set<number>;
   colorHex?: string | object;
   dataPointColors?: (string | undefined)[];
   dataPointStyles?: (DataPointStyle | undefined)[];
