@@ -1501,6 +1501,7 @@ describe('placeholder text inheritance coverage', () => {
     slideXfrm = '',
     slidePh = 'type="body" idx="7"',
     slideBody = '<bodyPr/>',
+    layoutType = 'obj',
   ) {
     const shape = (ph: string, body: string, xfrm: string, text: string) =>
       `<sp><nvSpPr><cNvPr id="2" name="${text}"/><nvPr><ph ${ph}/></nvPr></nvSpPr><spPr>${xfrm}</spPr><txBody>${body}<lstStyle/><p><r><rPr sz="2400"/><t>${text}</t></r></p></txBody></sp>`;
@@ -1512,7 +1513,7 @@ describe('placeholder text inheritance coverage', () => {
     );
     files.slideLayouts.set(
       'ppt/slideLayouts/slideLayout1.xml',
-      `<sldLayout><cSld><spTree>${shape('type="body" idx="3"', '<bodyPr anchor="t"/>', xfrm.replace('914400" y', '0" y'), 'Wrong idx')}${shape('type="obj" idx="7"', layoutBody, xfrm, 'Right idx')}</spTree></cSld></sldLayout>`,
+      `<sldLayout><cSld><spTree>${shape('type="body" idx="3"', '<bodyPr anchor="t"/>', xfrm.replace('914400" y', '0" y'), 'Wrong idx')}${shape(`type="${layoutType}" idx="7"`, layoutBody, xfrm, 'Right idx')}</spTree></cSld></sldLayout>`,
     );
     files.slideMasters.set(
       'ppt/slideMasters/slideMaster1.xml',
@@ -1555,9 +1556,9 @@ describe('placeholder text inheritance coverage', () => {
     expect(node.textBody!.layoutBodyProperties!.attr('anchor')).toBe('b');
   });
   it.each(['obj', 'pic', 'chart', 'subTitle', 'clipArt', 'dgm', 'media', 'tbl'])(
-    'maps layout %s to master body, ignoring master idx collision',
+    'maps actual layout %s to master body despite conflicting slide title and master idx',
     (type) => {
-      const p = fixture('<bodyPr/>', '', `type="${type}" idx="7"`);
+      const p = fixture('<bodyPr/>', '', 'type="title" idx="7"', '<bodyPr/>', type);
       const node = p.slides[0].nodes[0];
       if (node.nodeType !== 'shape') throw new Error('Expected shape');
       expect(node.textBody!.layoutBodyProperties!.attr('anchor')).toBe('b');

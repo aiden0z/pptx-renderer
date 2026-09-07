@@ -29,12 +29,35 @@ overflow behavior for all text-axis combinations, and execute the actual outer-W
 plus PDF.js-worker path. CI runs the PDF test against both supported PDF.js major lines;
 Node-only imports are not accepted as browser compatibility evidence.
 
+The dedicated `compatible-content-package.spec.ts` generates an OPC PPTX package and
+loads it through the built exported `parseZip`, `buildPresentation`, `renderSlide`, and
+serialization APIs. It checks eager/lazy MCE selection and nested order, decoded SVG/OLE
+picture previews, and actual chart Canvas colors for local override/identity/absence while
+ordinary slide colors retain the parent map. Run it alone after a build with:
+
+```bash
+pnpm exec playwright test --config test/browser/playwright.config.ts test/browser/compatible-content-package.spec.ts --workers=1
+```
+
+Other coverage specs exercise source modules for focused text, table/chart, and media/lifecycle
+interactions. Keep these distinct from built-package coverage and PowerPoint oracle evidence.
+Browser media tests explicitly await image decoding/playback; `handle.ready` covers scheduled
+renderer work, not automatic playback or every browser decoder completion. Hidden charts can
+initialize after visibility returns. H264 checks require branded Chrome; default Chromium still
+runs WAV/WebM checks.
+
 Coverage areas:
 
 - Parser safety and correctness (ZipParser, relationship parsing, EMU/angle/PCT unit conversion)
 - Shape geometry (preset shape path tests in `test/unit/shapes/presets.test.ts`)
 - Renderer behavior (batching, windowed mounting, hyperlink safety)
 - Color utilities (HSL/RGB conversion, lumMod/lumOff/tint/shade modifiers)
+
+Report native comparisons with the exact source revision, case IDs, environment, errors,
+pre-existing metric failures, new regressions, and visual-review status. A sampled run is not a
+full-corpus acceptance result. Do not change thresholds or baseline images to hide failures.
+Unresolved native questions (including negative percent-stacked chart normalization and text
+inheritance through some empty body-property/autofit combinations) need specific native evidence.
 
 ## E2E Tests
 
@@ -147,7 +170,7 @@ The comparison pipeline uses a **two-layer metric system**. This design was arri
 
 ### Pass/Fail Layer (automated)
 
-These two metrics determine pass/fail. Chosen for zero false positives across all 452+ baseline cases:
+These two metrics determine automated pass/fail for this oracle evaluator. Their thresholds are regression gates, not proof that every feature is correct or that the corpus has no failures:
 
 | Metric            | Range   | Threshold | What it catches                                                                 |
 | ----------------- | ------- | --------- | ------------------------------------------------------------------------------- |
@@ -175,7 +198,7 @@ These metrics appear in the UI for reference but do not affect pass/fail:
 
 - **`fg_iou` was removed from pass/fail** — thin-stroke shapes (brackets, braces, arcs) get ~50% IoU drop from 1px anti-aliasing differences despite correct geometry.
 - **`chamfer_score` was not promoted** — its "dilution effect" masks localized errors when most of the shape is correct.
-- **SSIM catches all bugs** that any other metric catches, but color histogram adds sensitivity to pure-color errors that SSIM misses (e.g., wrong gradient stop colors on an otherwise correctly shaped element).
+- **SSIM and color histogram are complementary signals.** Color histogram adds sensitivity to pure-color errors, while both can miss localized semantic defects, incorrect branch selection, or lifecycle behavior. Use source-based assertions, decoded media/Canvas checks, and native visual inspection for those boundaries.
 
 Previously evaluated but rejected: `edge_iou` (too noisy), `fg_area_ratio` (redundant), `fg_centroid_distance` (no observed failures), patch-based SSIM (can't detect < 1% area defects), LPIPS (heavy PyTorch dependency, marginal improvement).
 

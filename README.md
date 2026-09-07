@@ -4,7 +4,7 @@
 
 A high-fidelity, browser-native PPTX renderer that parses Office Open XML (`.pptx`) files and renders slides as HTML/SVG DOM.
 
-Supports shapes, text, images, tables, charts, SmartArt, groups, backgrounds, gradients, pattern fills, and the full OOXML color pipeline — covering the vast majority of real-world PowerPoint content.
+Supports shapes, text, images, tables, charts, SmartArt fallback data, groups, backgrounds, gradients, pattern fills, and OOXML color inheritance. Rendering fidelity depends on the source features and available preview data; see the support boundaries below.
 
 ## Rendering Example
 
@@ -23,7 +23,7 @@ A complex slide with charts, text styles, shapes, and SmartArt — PowerPoint gr
 
 ## Visual Regression Testing
 
-Every rendering capability is automatically verified against PowerPoint output. **452+ visual regression cases** with zero failures — covering 187+ preset shapes, 134+ SmartArt layouts, 36+ fill/stroke/gradient variants, and 101 python-pptx cases (text, shape adjustments, composites, charts).
+Visual regression suites compare selected shape, SmartArt, fill/stroke, text, table, and chart cases against PowerPoint output. Results belong to the evaluated source revision, corpus, fonts, and browser environment. A passing aggregate score does not establish semantic correctness or full PowerPoint parity; structural assertions and targeted browser/native inspection complement the metrics.
 
 <img src="docs/example/e2e-test-page.png" alt="E2E evaluation dashboard" width="800" />
 
@@ -567,15 +567,23 @@ OOXML 3D chart elements such as `bar3DChart`, `line3DChart`, `pie3DChart`, `area
 
 - **Fills**: solid, linear/radial/rectangular gradient, 52+ pattern fills, image (stretch/tile)
 - **Strokes**: 8 dash styles, 5 arrowhead types, compound lines, line joins
-- **Colors**: full OOXML pipeline — `schemeClr` → `colorMap` remap → theme lookup → modifiers (lumMod, lumOff, tint, shade, alpha, satMod, etc.). All 6 color spaces supported.
+- **Colors**: OOXML pipeline — `schemeClr` → `colorMap` remap → theme lookup → modifiers (lumMod, lumOff, tint, shade, alpha, satMod, etc.). All 6 color spaces supported. Effective maps follow slide → layout → master overrides, including explicit identity mappings and master resets; chart-local maps remain isolated from the parent slide.
+
+Supported chart combinations include combo charts and secondary axes. Sparse scatter/bubble caches preserve missing coordinates and explicit zeros, with gap/span/zero handling; literal data sources and explicit negative-bar inversion flags are honored. Negative percent-stacked normalization is not newly guaranteed by these checks.
 
 ### SmartArt, Tables, Images & More
 
-- **SmartArt**: 134+ layouts via PowerPoint fallback data. EMF-embedded PDF previews can be rendered with optional [pdfjs-dist](https://mozilla.github.io/pdf.js/) configuration.
-- **Tables**: OOXML table styles, cell merge, border inheritance
-- **Images**: blob URL with crop, stretch/tile, video/audio placeholders
-- **Groups**: coordinate remapping with recursive child rendering
+- **SmartArt**: renders available PowerPoint diagram fallback data; individual layout fidelity varies. EMF-embedded PDF previews can be rendered with optional [pdfjs-dist](https://mozilla.github.io/pdf.js/) configuration.
+- **Tables**: OOXML table styles, merged-cell inside/outer borders, conditional corner styles, explicit no-fill border clearing, and direct-cell overrides
+- **Images**: raster/SVG previews with crop and geometry clipping; grayscale, duotone, luminance, and biLevel effects on clipped pictures. Embedded audio/video playback uses browser-supported codecs, with posters/placeholders when playback data is unavailable.
+- **Groups**: coordinate remapping with recursive child rendering; diagram-specific compensation requires matching diagram layout provenance
 - **Backgrounds**: slide → layout → master inheritance chain
+
+### Compatible Content and Text Inheritance
+
+`mc:AlternateContent` selects one compatible `Choice` (including the supported SVG picture extension), otherwise its `Fallback`, across ordinary slide/template/group content and OLE picture previews. Unknown extension namespaces do not become supported merely because they occur in a `Choice`. Eager and lazy rendering retain selected branch order.
+
+Placeholder inheritance follows the matched layout placeholder into its master category, preserves explicit zero transforms/insets, and resolves omitted body properties and mutually exclusive autofit choices. Explicit no-autofit clipping and whitespace behavior are checked in real browser containers. These combinations do not establish native equivalence for every text/autofit variant.
 
 ## Architecture
 
@@ -694,7 +702,7 @@ Dev pages at `http://127.0.0.1:5173`:
 
 ## What's Not Yet Supported
 
-3D effects, true 3D chart perspective/depth/surface meshes, animations/transitions, equations (OMML), full EMF/WMF vector rendering, shadow/reflection/glow effects, embedded OLE objects, and slide notes rendering.
+3D effects, true 3D chart perspective/depth/surface meshes, animations/transitions, equations (OMML), full EMF/WMF vector rendering, shadow/reflection/glow effects, executing/editing embedded OLE objects, and slide notes rendering. Available OLE picture previews can render; they are not an OLE object engine. EMF bitmap and embedded-PDF previews remain supported (PDF previews require PDF.js); arbitrary EMF/WMF vector records remain excluded.
 
 ## FAQ
 

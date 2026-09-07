@@ -128,11 +128,17 @@ Three-step: `schemeClr` → master `colorMap` remap (e.g. "tx1"→"dk1") → the
 
 ### What's NOT Supported
 
-3D effects, animations/transitions, equations, EMF/WMF images, pattern fills, shadow/reflection/glow, combo charts, secondary axes, embedded OLE objects, slide notes.
+3D effects, true 3D chart perspective/depth/surface meshes, animations/transitions, equations, full EMF/WMF vector rendering, shadow/reflection/glow, executing/editing embedded OLE objects, and slide notes rendering.
 
 Notes:
 
-- SmartArt/diagram fallback is partially supported and under active oracle-driven regression expansion.
+- Pattern fills, supported combo-chart combinations, and secondary axes are implemented; do not treat them as blanket exclusions.
+- OLE picture previews and EMF bitmap/embedded-PDF previews are supported paths, not full OLE or EMF/WMF engines. PDF previews require PDF.js.
+- Compatible content selects one supported Choice or Fallback, including supported SVG preview Choices; eager/lazy slide and group paths must preserve branch order.
+- Color inheritance is slide → layout → master, with explicit identity/reset semantics. Chart-local maps take precedence only inside the derived chart context.
+- Placeholder parent inheritance follows actual layout type/category, even when slide-local type differs. Preserve explicit zero values and exclusive autofit choices.
+- Sparse chart caches, literal sources, conditional/merged table borders, and clipped image effects have scoped regression coverage; this is not a full-corpus native parity claim.
+- SmartArt/diagram fallback is partially supported and under active oracle-driven regression expansion. Diagram-specific geometry compensation requires matching layout provenance.
 - Do not assume full PowerPoint parity for all SmartArt layouts.
 
 ## Dev Server Pages

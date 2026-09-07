@@ -14,6 +14,18 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Fixed
 
+- Select one compatible MCE Choice or Fallback across slide/template/group content and
+  OLE picture previews, including the supported SVG picture extension and lazy paths.
+- Preserve slide/layout/master color-map identity/reset semantics and isolate chart-local
+  overrides from the parent slide.
+- Follow matched layout placeholder categories during master inheritance, preserve explicit
+  zero transforms/insets, and resolve body-property/autofit choices and text-container whitespace.
+- Preserve sparse scatter/bubble coordinates and literal chart data; respect explicit negative-bar
+  inversion flags and merged/conditional table borders, including corner styles and no-fill clears.
+- Keep clipped picture effects and asynchronous media work attached to their owning render
+  handle; preserve external handles across viewer reload/destroy and cancel disposed chart setup.
+- Restrict segmented-cycle geometry compensation to matching SmartArt layout provenance.
+
 - Prevented tolerated text metric overhang from turning PowerPoint text boxes into browser
   scroll containers, which could expose scrollbars and change wrapping on Windows.
 - Sized tables from their column/row grid (Σ column widths × Σ row heights) instead of the
