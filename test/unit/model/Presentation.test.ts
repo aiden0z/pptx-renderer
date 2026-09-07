@@ -126,6 +126,45 @@ function makeMinimalFiles(overrides: Partial<PptxFiles> = {}): PptxFiles {
   };
 }
 
+function makeNestedCompatibleGroupFiles(): PptxFiles {
+  const files = makeMinimalFiles();
+  files.slides.set(
+    'ppt/slides/slide1.xml',
+    `
+      <sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"
+           xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+           xmlns:p14="http://schemas.microsoft.com/office/powerpoint/2010/main">
+        <cSld><spTree>
+          <grpSp>
+            <nvGrpSpPr><cNvPr id="10" name="Outer group"/><nvPr/></nvGrpSpPr>
+            <grpSpPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="1828800" cy="914400"/><a:chOff x="0" y="0"/><a:chExt cx="1828800" cy="914400"/></a:xfrm></grpSpPr>
+            <grpSp>
+              <nvGrpSpPr><cNvPr id="11" name="Inner group"/><nvPr/></nvGrpSpPr>
+              <grpSpPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="1828800" cy="914400"/><a:chOff x="0" y="0"/><a:chExt cx="1828800" cy="914400"/></a:xfrm></grpSpPr>
+              <mc:AlternateContent>
+                <mc:Choice Requires="p14"><p14:contentPart/></mc:Choice>
+                <mc:Fallback>
+                  <sp>
+                    <nvSpPr><cNvPr id="12" name="First nested"/><nvPr/></nvSpPr>
+                    <spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="914400" cy="914400"/></a:xfrm><a:prstGeom prst="rect"/></spPr>
+                    <txBody><a:bodyPr/><a:lstStyle/><a:p><a:r><a:t>First nested</a:t></a:r></a:p></txBody>
+                  </sp>
+                  <sp>
+                    <nvSpPr><cNvPr id="13" name="Second nested"/><nvPr/></nvSpPr>
+                    <spPr><a:xfrm><a:off x="914400" y="0"/><a:ext cx="914400" cy="914400"/></a:xfrm><a:prstGeom prst="rect"/></spPr>
+                    <txBody><a:bodyPr/><a:lstStyle/><a:p><a:r><a:t>Second nested</a:t></a:r></a:p></txBody>
+                  </sp>
+                </mc:Fallback>
+              </mc:AlternateContent>
+            </grpSp>
+          </grpSp>
+        </spTree></cSld>
+      </sld>
+    `,
+  );
+  return files;
+}
+
 describe('buildPresentation', () => {
   it('maps embedded font relationships to isolated render families', () => {
     const regular = new Uint8Array([1, 2, 3]);
@@ -270,6 +309,39 @@ describe('buildPresentation', () => {
     expect(index.map((entry) => entry.text)).toContain('Deferred title');
     expect(serialized.slides[0].nodes[0].textBody?.totalText).toBe('Deferred title');
     expect(pres.slides[0].nodes).toHaveLength(1);
+  });
+
+  it('keeps selected nested group children in source order for eager and lazy search', () => {
+    const eager = buildPresentation(makeNestedCompatibleGroupFiles());
+    const lazy = buildPresentation(makeNestedCompatibleGroupFiles(), { lazySlides: true });
+
+    expect(buildTextIndex(eager).map((entry) => entry.text)).toEqual([
+      'First nested',
+      'Second nested',
+    ]);
+    expect(lazy.slides[0].nodes).toHaveLength(0);
+    expect(buildTextIndex(lazy).map((entry) => entry.text)).toEqual([
+      'First nested',
+      'Second nested',
+    ]);
+    expect(lazy.slides[0].nodes).toHaveLength(1);
+  });
+
+  it('materializes and serializes multiple selected children inside nested lazy groups', () => {
+    const pres = buildPresentation(makeNestedCompatibleGroupFiles(), { lazySlides: true });
+
+    const serialized = serializePresentation(pres);
+    const outer = serialized.slides[0].nodes[0];
+    const inner = outer.children?.[0];
+
+    expect(pres.slides[0].nodesMaterialized).toBe(true);
+    expect(outer.id).toBe('10');
+    expect(inner?.id).toBe('11');
+    expect(inner?.children?.map((child) => child.id)).toEqual(['12', '13']);
+    expect(inner?.children?.map((child) => child.textBody?.totalText)).toEqual([
+      'First nested',
+      'Second nested',
+    ]);
   });
 
   it('can materialize all lazy slides explicitly', () => {

@@ -31,6 +31,9 @@ export function createChartRenderContext(chartXml: SafeXmlNode, ctx: RenderConte
   if (!colorMapOverride) return ctx;
   return {
     ...ctx,
+    // Chart clrMapOvr is the innermost scope. Clear slide mapping only on this derived context
+    // so StyleResolver reaches the chart map stored on the synthetic layout scope below.
+    slide: { ...ctx.slide, colorMapOverride: undefined, colorMapOverrideMode: undefined },
     layout: { ...ctx.layout, colorMapOverride, colorMapOverrideMode: 'override' },
     colorCache: new Map(),
   };

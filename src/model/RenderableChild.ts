@@ -33,6 +33,7 @@ const SUPPORTED_MCE_NAMESPACES = new Set([
   'http://schemas.openxmlformats.org/drawingml/2006/diagram',
   'http://purl.oclc.org/ooxml/drawingml/diagram',
   'http://schemas.microsoft.com/office/drawing/2008/diagram',
+  'http://schemas.microsoft.com/office/drawing/2016/SVG/main',
 ]);
 
 function isCompatibleChoice(choice: SafeXmlNode): boolean {

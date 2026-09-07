@@ -22,7 +22,10 @@ const graphicFrame = (graphicDataInner: string, uri: string): string => `
                   xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart"
                   xmlns:dgm="http://schemas.openxmlformats.org/drawingml/2006/diagram"
                   xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"
-                  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006">
+                  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                  xmlns:asvg="http://schemas.microsoft.com/office/drawing/2016/SVG/main"
+                  xmlns:pAlias="http://schemas.openxmlformats.org/presentationml/2006/main"
+                  xmlns:future="urn:example:unsupported-future">
     <p:nvGraphicFramePr><p:cNvPr id="7" name="Frame"/><p:nvPr/></p:nvGraphicFramePr>
     <p:xfrm><a:off x="0" y="0"/><a:ext cx="1828800" cy="914400"/></p:xfrm>
     <a:graphic><a:graphicData uri="${uri}">${graphicDataInner}</a:graphicData></a:graphic>
@@ -84,6 +87,83 @@ describe('RenderableChild parsing', () => {
       nodeType: 'picture',
       blipLink: 'rIdLinked',
       id: '7',
+    });
+  });
+
+  it('uses an SVG OLE preview from an SVG-requiring Choice without Fallback', () => {
+    const frame = parseXml(
+      graphicFrame(
+        `<mc:AlternateContent><mc:Choice Requires="asvg"><p:oleObj>${olePic(
+          '<a:blip r:embed="rIdRaster"><a:extLst><a:ext><asvg:svgBlip r:embed="rIdSvg"/></a:ext></a:extLst></a:blip>',
+        )}</p:oleObj></mc:Choice></mc:AlternateContent>`,
+        'http://schemas.openxmlformats.org/presentationml/2006/ole',
+      ),
+    );
+
+    expect(parseRenderableChild(frame, { rels: new Map() })).toMatchObject({
+      nodeType: 'picture',
+      blipEmbed: 'rIdSvg',
+    });
+  });
+
+  it('selects an SVG OLE Choice once instead of its raster Fallback', () => {
+    const frame = parseXml(
+      graphicFrame(
+        `<mc:AlternateContent>
+          <mc:Choice Requires="asvg"><p:oleObj>${olePic(
+            '<a:blip r:embed="rIdChoiceRaster"><a:extLst><a:ext><asvg:svgBlip r:embed="rIdChoiceSvg"/></a:ext></a:extLst></a:blip>',
+          )}</p:oleObj></mc:Choice>
+          <mc:Fallback><p:oleObj>${olePic(
+            '<a:blip r:embed="rIdFallbackRaster"/>',
+          )}</p:oleObj></mc:Fallback>
+        </mc:AlternateContent>`,
+        'http://schemas.openxmlformats.org/presentationml/2006/ole',
+      ),
+    );
+
+    const picture = parseRenderableChild(frame, { rels: new Map() });
+
+    expect(picture).toMatchObject({ nodeType: 'picture', blipEmbed: 'rIdChoiceSvg' });
+  });
+
+  it('uses an ordinary preview fallback for an unsupported non-SVG extension', () => {
+    const frame = parseXml(
+      graphicFrame(
+        `<mc:AlternateContent>
+          <mc:Choice Requires="future"><future:preview/></mc:Choice>
+          <mc:Fallback><p:oleObj>${olePic(
+            '<a:blip r:embed="rIdEmfFallback"/>',
+          )}</p:oleObj></mc:Fallback>
+        </mc:AlternateContent>`,
+        'http://schemas.openxmlformats.org/presentationml/2006/ole',
+      ),
+    );
+
+    expect(parseRenderableChild(frame, { rels: new Map() })).toMatchObject({
+      nodeType: 'picture',
+      blipEmbed: 'rIdEmfFallback',
+    });
+  });
+
+  it('resolves prefix aliases and selects a later Choice when one of multiple requirements fails', () => {
+    const frame = parseXml(
+      graphicFrame(
+        `<mc:AlternateContent>
+          <mc:Choice Requires="pAlias future"><future:preview/></mc:Choice>
+          <mc:Choice Requires="pAlias asvg"><p:oleObj>${olePic(
+            '<a:blip r:embed="rIdAliasRaster"><a:extLst><a:ext><asvg:svgBlip r:embed="rIdAliasSvg"/></a:ext></a:extLst></a:blip>',
+          )}</p:oleObj></mc:Choice>
+          <mc:Fallback><p:oleObj>${olePic(
+            '<a:blip r:embed="rIdAliasFallback"/>',
+          )}</p:oleObj></mc:Fallback>
+        </mc:AlternateContent>`,
+        'http://schemas.openxmlformats.org/presentationml/2006/ole',
+      ),
+    );
+
+    expect(parseRenderableChild(frame, { rels: new Map() })).toMatchObject({
+      nodeType: 'picture',
+      blipEmbed: 'rIdAliasSvg',
     });
   });
 
