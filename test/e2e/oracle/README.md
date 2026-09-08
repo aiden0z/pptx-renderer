@@ -5,12 +5,17 @@ This directory contains the local-macOS PowerPoint oracle pipeline used to drive
 ## Current Implemented Pieces
 
 1. `powerpoint_oracle.py`
-- `export_pptx_to_pdf_mac(...)`: opens a PPTX in PowerPoint and exports PDF with retry.
-- `run_macro_export_mac(...)`: opens a macro host `.pptm`, runs a VBA macro (with optional parameters), exports PDF.
+- `export_pptx_to_pdf_mac(...)`: stages a PPTX in a fixed runtime directory, opens that exact file
+  in PowerPoint, and exports PDF with retry and a bounded timeout.
+- `run_macro_export_mac(...)`: opens an exact macro host `.pptm`, runs a filename-qualified VBA
+  macro, and optionally exports that same host.
+- `run_macro_only_mac(...)`: runs a filename-qualified VBA macro when the macro writes its own
+  fixed sink artifacts.
 
 2. AppleScript runners
 - `scripts/export_pptx_to_pdf.applescript`
 - `scripts/run_macro_export.applescript`
+- `scripts/run_macro_only.applescript`
 
 3. Case compiler and metrics
 - `case_compiler.py`: compiles JSON case files into a VBA-friendly line spec.
@@ -32,6 +37,13 @@ This directory contains the local-macOS PowerPoint oracle pipeline used to drive
 - `test_oracle_auto_pipeline.py`: end-to-end local pipeline (`case -> macro -> pptx/pdf -> renderer compare`).
 - `test_oracle_attention_ranking.py`: verifies ranked `attention_cases` output.
 
+6. Reproducible evaluation provenance
+- Every `/api/evaluate/{case}` result fingerprints the source PPTX and PDF/PNG ground truth.
+- Reports also record the renderer Git state, actual browser version, and the configured local
+  font-profile manifest/font hashes.
+- `font-profile.example.json` documents the ignored local profile format without distributing
+  font binaries.
+
 ## How To Run
 
 1. Unit tests (no PowerPoint dependency)
@@ -49,8 +61,11 @@ PPTX_ORACLE_MACRO_HOST=/tmp/pptx-macro-host.pptm \
 
 Optional macro name override:
 ```bash
-PPTX_ORACLE_MACRO_NAME=GenerateProbeDeck_Default
+PPTX_ORACLE_MACRO_NAME=ExportSmartArtLayouts_ToFile
 ```
+
+The smoke passes a fixed catalog path to the macro and verifies that at least one `Id|Name` row is
+written. An override must follow the same one-output-path contract.
 
 3. End-to-end local oracle pipeline
 ```bash
@@ -109,9 +124,12 @@ Report (default):
 
 ## Python-pptx Ground Truth Pipeline
 
-A second pipeline using `python-pptx` for PPTX creation and PowerPoint COM for PDF/PNG export. Generates 111 cases under `oracle/cases-pypptx/` with `oracle-pypptx-*` prefix, covering:
+A second pipeline uses `python-pptx` for PPTX creation and native PowerPoint automation for
+ground-truth export. It defines 123 cases under `oracle/cases-pypptx/` with the
+`oracle-pypptx-*` prefix:
 
-- **Text** (39 cases): fonts, sizes, styles, alignment, colors, bullets, vertical text, line spacing, placeholder inheritance
+- **Text** (51 cases): fonts, sizes, styles, alignment, colors, bullets, vertical text,
+  placeholder inheritance, plus a 12-case CJK wrap/autofit/line-spacing interaction matrix
 - **Shape adjustments** (31 cases): adjustment handles for roundRect, chevron, arrow, star, donut, cross, trapezoid, blockArc, bevel, triangle, pentagon, can, heart, moon, brace
 - **Composites** (20 cases): multi-element layouts combining shapes, text, tables, charts, connectors, merged cells, vertical text, transparent overlaps, and scaled groups
 - **Charts** (21 cases): column, bar, line, pie, doughnut, area, scatter, radar, bubble variants
@@ -121,9 +139,43 @@ Generate cases:
 ```bash
 cd test/e2e
 .venv/bin/python3 scripts/generate_pypptx_cases.py
+
+# Focus one or more exact/glob patterns; this example selects text IDs 0040-0051.
+.venv/bin/python3 scripts/generate_pypptx_cases.py \
+  --case 'oracle-pypptx-text-00[45]*'
 ```
 
-Each case uses an independent COM session for fault isolation.
+macOS exports PDF; Windows exports PDF plus optional per-slide PNG. `--pptx-only` works without
+PowerPoint. On macOS each export is isolated to its staged input path and fixed runtime sink;
+PowerPoint itself may remain running. The exporter resolves and closes only the presentation whose
+full path matches that staged input, so unrelated user presentations stay outside the export
+lifecycle. The binary artifacts remain ignored under `testdata/`, while tracked case JSON records
+coverage and font requirements. The generation report includes the selected patterns and SHA-256
+fingerprints.
+
+On macOS the PowerPoint session must be unlocked. A locked session can return `-9074` even for a
+known-good PPTX. Export and macro timeouts stop immediately and point to the unlock state or a
+pending **Grant File Access** or macro-security dialog. VBA calls are qualified as
+`<macro-host-filename>!<macro-name>` because an unqualified procedure can return `-18` when another
+presentation is open. The exporter removes stale output before every attempt and preserves the
+original AppleScript stderr.
+
+## Optional Font Profile
+
+For font-sensitive text cases, copy `font-profile.example.json` to an ignored path such as
+`testdata/font-profiles/local-office-fonts.json`, then point each face at an ignored local font or
+symlink. Paths are relative to `testdata/`; do not commit licensed fonts.
+
+```bash
+PPTX_E2E_VITE_SERVER_URL=http://127.0.0.1:5183 \
+PPTX_E2E_FONT_PROFILE=font-profiles/local-office-fonts.json \
+PPTX_E2E_BROWSER_CHANNEL=chrome \
+.venv/bin/python server.py
+```
+
+The single-slide page registers the profile before layout. Evaluation provenance records the
+profile manifest, every face hash, the browser version, renderer revision, and source/ground-truth
+hashes. Only compare metric runs whose relevant provenance matches.
 
 ## Local Development Loop (Incremental by default)
 
@@ -242,6 +294,8 @@ To avoid repeated PowerPoint permission prompts, keep oracle IO in one fixed dir
 
 - Fixed runtime dir: `test/e2e/testdata/oracle-runtime`
 - PowerPoint now writes only to fixed sink files in that dir:
+  - `test/e2e/testdata/oracle-runtime/_pptx-input.pptx`
+  - `test/e2e/testdata/oracle-runtime/_pptx-output.pdf`
   - `test/e2e/testdata/oracle-runtime/_macro-output.pptx`
   - `test/e2e/testdata/oracle-runtime/_macro-output.pdf`
 - Macro spec path is also fixed:
@@ -249,6 +303,11 @@ To avoid repeated PowerPoint permission prompts, keep oracle IO in one fixed dir
   Generated per-case files are copied from these sinks by Python.
 
 Authorize this directory once when prompted by PowerPoint.
+
+The macOS runner also needs an unlocked user session, Automation permission for the calling app to
+control Microsoft PowerPoint, and permission to run the repository-owned macro host. Keep these
+native-oracle permissions on a dedicated development user or machine when running unattended
+corpora; do not mix untrusted macro-enabled documents into that session.
 
 ## Next Steps (TDD Sequence)
 

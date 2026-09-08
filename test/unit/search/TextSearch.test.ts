@@ -357,7 +357,14 @@ describe('buildTextIndex', () => {
     expect(index.map((entry) => entry.nodeId)).not.toContain('empty-shape');
   });
 
-  it('indexes inherited placeholder bounds for lazy group children', () => {
+  it.each([
+    ['omitted transform inherits layout bounds', '', { x: 100, y: 60, w: 40, h: 20 }],
+    [
+      'explicit zero transform preserves zero size at group origin',
+      '<a:xfrm><a:off x="0" y="0"/><a:ext cx="0" cy="0"/></a:xfrm>',
+      { x: 50, y: 30, w: 0, h: 0 },
+    ],
+  ] as const)('indexes lazy group placeholder: %s', (_label, transform, expectedBounds) => {
     const child = parseXml(`
       <p:sp xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
             xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
@@ -367,7 +374,7 @@ describe('buildTextIndex', () => {
           <p:nvPr><p:ph type="body" idx="1"/></p:nvPr>
         </p:nvSpPr>
         <p:spPr>
-          <a:xfrm><a:off x="0" y="0"/><a:ext cx="0" cy="0"/></a:xfrm>
+          ${transform}
           <a:prstGeom prst="rect"><a:avLst/></a:prstGeom>
         </p:spPr>
         <p:txBody>
@@ -427,7 +434,7 @@ describe('buildTextIndex', () => {
       (entry) => entry.text === 'Inherited grouped placeholder',
     );
 
-    expect(result?.bounds).toEqual({ x: 100, y: 60, w: 40, h: 20 });
+    expect(result?.bounds).toEqual(expectedBounds);
   });
 
   it('matches renderer bounds for quarter-turn rotated group children', () => {

@@ -13,9 +13,11 @@ Usage:
 import asyncio
 import io
 import json
+import os
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
+from urllib.parse import quote
 
 import cv2
 import fitz  # PyMuPDF
@@ -54,6 +56,7 @@ from oracle.metrics import (  # noqa: E402
     compute_foreground_shape_metrics,
     compute_visual_metrics,
 )
+from oracle.provenance import collect_evaluation_provenance  # noqa: E402
 from oracle.support_catalog import (  # noqa: E402
     load_or_init_support_catalog,
     merge_case_results_into_catalog,
@@ -66,8 +69,8 @@ from test_visual import build_slide_to_pdf_mapping  # noqa: E402
 # Config
 # ---------------------------------------------------------------------------
 
-PYTHON_SERVER_PORT = 8080
-VITE_SERVER_URL = "http://localhost:5173"
+PYTHON_SERVER_PORT = int(os.getenv("PPTX_E2E_API_PORT", "8080"))
+VITE_SERVER_URL = os.getenv("PPTX_E2E_VITE_SERVER_URL", "http://localhost:5173").rstrip("/")
 VISUAL_EVAL_THRESHOLDS = {
     "ssim": 0.95,
     "color_hist_corr": 0.80,
@@ -107,7 +110,10 @@ async def get_browser():
     global _browser, _playwright
     if _browser is None:
         _playwright = await async_playwright().start()
-        _browser = await _playwright.chromium.launch(headless=True)
+        launch_options = {"headless": True}
+        if channel := os.getenv("PPTX_E2E_BROWSER_CHANNEL", "").strip():
+            launch_options["channel"] = channel
+        _browser = await _playwright.chromium.launch(**launch_options)
     return _browser
 
 
@@ -169,6 +175,25 @@ def _validate_case_stem(test_file: str) -> str:
     if "/" in stem or "\\" in stem:
         raise HTTPException(400, "Invalid test file")
     return stem
+
+
+def _configured_font_profile_ref() -> str | None:
+    value = os.getenv("PPTX_E2E_FONT_PROFILE", "").strip()
+    if not value:
+        return None
+    allowed_chars = frozenset(
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789._-/"
+    )
+    if (
+        "\x00" in value
+        or Path(value).is_absolute()
+        or "://" in value
+        or ".." in Path(value).parts
+        or any(char not in allowed_chars for char in value)
+        or not value.endswith(".json")
+    ):
+        raise ValueError("PPTX_E2E_FONT_PROFILE must be a local testdata-relative JSON path")
+    return value
 
 
 def _load_manual_review_store() -> dict:
@@ -277,8 +302,7 @@ async def screenshot_slide(browser, test_file: str, slide_idx: int, source: str 
     page = await ctx.new_page()
     page.set_default_timeout(PAGE_TIMEOUT_MS)
     try:
-        subdir = _testdata_subdir(source)
-        url = f"{VITE_SERVER_URL}/test/pages/render-slide.html?file=testdata/{subdir}/{test_file}/source.pptx&slide={slide_idx}"
+        url = _render_slide_url(test_file, slide_idx, source)
         await page.goto(url)
         await page.wait_for_function(
             "() => window.__renderDone === true || window.__renderError !== undefined",
@@ -341,6 +365,17 @@ def _save_image(arr: np.ndarray, path: Path):
 
 def _testdata_subdir(source: str | None) -> str:
     return "windows-cases" if source == "windows" else "cases"
+
+
+def _render_slide_url(test_file: str, slide_idx: int, source: str | None) -> str:
+    subdir = _testdata_subdir(source)
+    url = (
+        f"{VITE_SERVER_URL}/test/pages/render-slide.html?"
+        f"file=testdata/{subdir}/{test_file}/source.pptx&slide={slide_idx}"
+    )
+    if profile_ref := _configured_font_profile_ref():
+        url += f"&fontProfile={quote(profile_ref, safe='')}"
+    return url
 
 
 def _report_prefix(test_file: str, source: str | None) -> str:
@@ -456,6 +491,36 @@ async def evaluate_file(test_file: str, source: str | None = Query(None)):
         await asyncio.to_thread(get_pdf_page_count, pdf_path)
         if pdf_path.exists()
         else len(slide_to_pdf)
+    )
+    visible_slide_indexes = [
+        slide_idx for slide_idx, pdf_page_idx in enumerate(slide_to_pdf) if pdf_page_idx is not None
+    ]
+    png_ground_truth_paths = [
+        tdp.slide_png(test_file, slide_idx + 1, source)
+        for slide_idx in visible_slide_indexes
+        if tdp.slide_png(test_file, slide_idx + 1, source).exists()
+    ]
+    if png_ground_truth_paths and len(png_ground_truth_paths) == len(visible_slide_indexes):
+        ground_truth_kind = "png"
+        ground_truth_paths = png_ground_truth_paths
+    elif png_ground_truth_paths:
+        ground_truth_kind = "mixed"
+        ground_truth_paths = [*png_ground_truth_paths, pdf_path]
+    else:
+        ground_truth_kind = "pdf"
+        ground_truth_paths = [pdf_path]
+
+    browser_channel = os.getenv("PPTX_E2E_BROWSER_CHANNEL", "").strip()
+    provenance = await asyncio.to_thread(
+        collect_evaluation_provenance,
+        project_root=PROJECT_ROOT,
+        testdata_dir=TESTDATA_DIR,
+        pptx_path=pptx_path,
+        ground_truth_paths=ground_truth_paths,
+        ground_truth_kind=ground_truth_kind,
+        browser_name=browser_channel or "chromium",
+        browser_version=browser.version,
+        font_profile_ref=_configured_font_profile_ref(),
     )
 
     per_slide = []
@@ -641,6 +706,7 @@ async def evaluate_file(test_file: str, source: str | None = Query(None)):
             "warnings": warning_reasons,
             "needsReview": needs_review,
         },
+        "provenance": provenance,
         "perSlide": per_slide,
     }
     _eval_cache[_cache_key(test_file, source)] = result

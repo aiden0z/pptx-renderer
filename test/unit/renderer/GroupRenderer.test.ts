@@ -842,7 +842,9 @@ describe('renderGroup — parseGroupChild dispatch for sp', () => {
   });
 
   it('resolves layout placeholder inheritance for lazy group children before remapping coordinates', () => {
-    const group = makeGroup([makePlaceholderSpXml()], {
+    const placeholder = makePlaceholderSpXml();
+    placeholder.child('spPr').child('xfrm').element!.remove();
+    const group = makeGroup([placeholder], {
       x: 50,
       y: 30,
       w: 200,
@@ -882,6 +884,49 @@ describe('renderGroup — parseGroupChild dispatch for sp', () => {
     expect(child.style.top).toBe('30px');
     expect(child.style.width).toBe('40px');
     expect(child.style.height).toBe('20px');
+    expect(child.dataset.anchor).toBe('ctr');
+  });
+  it('preserves explicit zero placeholder coordinates and extents inside a group', () => {
+    const group = makeGroup([makePlaceholderSpXml()], {
+      x: 50,
+      y: 30,
+      w: 200,
+      h: 100,
+      childOffsetX: 0,
+      childOffsetY: 0,
+      childExtentW: 400,
+      childExtentH: 200,
+    });
+    const layout = createMockRenderContext().layout;
+    layout.placeholders = [
+      {
+        node: makeLayoutPlaceholderXml(),
+        absoluteXfrm: {
+          position: { x: 100, y: 60 },
+          size: { w: 40, h: 20 },
+        },
+      },
+    ];
+    const ctx = createMockRenderContext({ layout });
+    const renderNode = vi.fn((node) => {
+      const el = document.createElement('div');
+      el.style.position = 'absolute';
+      el.style.left = `${node.position.x}px`;
+      el.style.top = `${node.position.y}px`;
+      el.style.width = `${node.size.w}px`;
+      el.style.height = `${node.size.h}px`;
+      el.dataset.anchor = node.textBody?.layoutBodyProperties?.attr('anchor') ?? '';
+      return el;
+    });
+
+    const el = renderGroup(group, ctx, renderNode);
+    const child = el.firstElementChild as HTMLElement;
+
+    expect(renderNode).toHaveBeenCalledOnce();
+    expect(child.style.left).toBe('0px');
+    expect(child.style.top).toBe('0px');
+    expect(child.style.width).toBe('0px');
+    expect(child.style.height).toBe('0px');
     expect(child.dataset.anchor).toBe('ctr');
   });
 
@@ -1761,6 +1806,7 @@ describe('renderGroup — cycle diagram (3 pie + 3 circularArrow reordering)', (
       childExtentH: 200,
     });
 
+    group.diagramLayoutId = 'urn:microsoft.com/office/officeart/2005/8/layout/cycle8';
     const renderOrder: string[] = [];
     const trackingRender = (childNode: any, ctx: RenderContext): HTMLElement => {
       renderOrder.push(childNode.id);
@@ -1797,6 +1843,7 @@ describe('renderGroup — cycle diagram (3 pie + 3 circularArrow reordering)', (
       childExtentH: 200,
     });
 
+    group.diagramLayoutId = 'urn:microsoft.com/office/officeart/2005/8/layout/cycle8';
     let capturedPie: any;
     renderGroup(group, createMockRenderContext(), (childNode, ctx) => {
       if (childNode.id === '1') capturedPie = childNode;
@@ -1830,6 +1877,7 @@ describe('renderGroup — cycle diagram (3 pie + 3 circularArrow reordering)', (
       childExtentH: 200,
     });
 
+    group.diagramLayoutId = 'urn:microsoft.com/office/officeart/2005/8/layout/cycle8';
     const el = renderGroup(group, createMockRenderContext(), stubRenderNode);
     const piePositions = Array.from(
       el.querySelectorAll('[data-node-id="1"], [data-node-id="2"], [data-node-id="3"]'),
@@ -1864,6 +1912,7 @@ describe('renderGroup — cycle diagram (3 pie + 3 circularArrow reordering)', (
       childExtentH: 200,
     });
 
+    group.diagramLayoutId = 'urn:microsoft.com/office/officeart/2005/8/layout/cycle8';
     const renderOrder: string[] = [];
     renderGroup(group, createMockRenderContext(), (childNode, ctx) => {
       renderOrder.push(childNode.id);

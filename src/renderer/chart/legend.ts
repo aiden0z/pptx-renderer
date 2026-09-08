@@ -106,11 +106,15 @@ export function legendIsAtTop(legendInfo: LegendInfo | undefined): boolean {
   return legendInfo?.position === 't' || legendInfo?.position === 'tr';
 }
 
-export function getGridTopPx(hasTitle: boolean, legendInfo: LegendInfo | undefined): number {
+export function getGridTopPx(
+  hasTitle: boolean,
+  legendInfo: LegendInfo | undefined,
+  compact = false,
+): number {
   const atTop = legendIsAtTop(legendInfo);
   const overlayLegend = legendInfo?.overlay ?? false;
-  if (hasTitle) return atTop && !overlayLegend ? 52 : 68;
-  return atTop && !overlayLegend ? 32 : 20;
+  const top = hasTitle ? (atTop && !overlayLegend ? 52 : 68) : atTop && !overlayLegend ? 32 : 20;
+  return compact ? Math.max(0, top - 11) : top;
 }
 
 export function getLegendTopPx(

@@ -34,6 +34,7 @@ describe('chart legend helpers', () => {
     });
     expect(legend?.textStyle?.fontSize).toBe(9);
     expect(getLegendPlacement(legend)).toBe('right');
+    expect((legend?.option as { right?: string }).right).toBe('2%');
   });
 
   it('reserves bottom grid space for bottom legends and exposes line icon path', () => {
@@ -46,6 +47,8 @@ describe('chart legend helpers', () => {
     const legend = extractLegendInfo(chart, createMockRenderContext());
 
     expect(getGridTopPx(false, legend)).toBe(20);
+    expect(getGridTopPx(false, legend, true)).toBe(9);
+    expect(getGridTopPx(true, undefined, true)).toBe(57);
     expect(getGridBottomPx(legend)).toBe(35);
     expect(lineLegendIconPath()).toBe('path://M2 4.5 L22 4.5');
   });

@@ -3,6 +3,7 @@
  * with full 7-level style inheritance.
  */
 
+import { masterPlaceholderType } from '../model/placeholderMatching';
 import { SafeXmlNode } from '../parser/XmlParser';
 import { RenderContext } from './RenderContext';
 import type { TextBody, TextParagraph, TextRun } from '../model/nodes/ShapeNode';
@@ -12,7 +13,7 @@ import { emuToPx, pctToDecimal, angleToDeg } from '../parser/units';
 import { parseOoxmlBool } from '../parser/booleans';
 import { isExternalTargetMode } from '../parser/RelParser';
 import { isAllowedExternalUrl } from '../utils/urlSafety';
-import { getEffectiveBodyPrChild } from './TextBodyProperties';
+import { getEffectiveBodyPrChild, parseTextPercentage } from './TextBodyProperties';
 import { cssFontFamilyStack, resolveThemeFontStack } from './fontResolver';
 import { resolveSlideNavigationIndex, slideJumpTitle } from './navigation';
 
@@ -113,6 +114,7 @@ function getPlaceholderCategory(
 function findPlaceholderNode(
   placeholders: SafeXmlNode[],
   info: PlaceholderInfo,
+  matchBy: 'idx' | 'type',
 ): SafeXmlNode | undefined {
   for (const ph of placeholders) {
     // Navigate to the ph element to read its attributes
@@ -132,9 +134,8 @@ function findPlaceholderNode(
     const phType = phEl.attr('type');
     const phIdx = phEl.numAttr('idx');
 
-    // Match by idx first (most specific), then by type
-    if (info.idx !== undefined && phIdx === info.idx) return ph;
-    if (info.type && phType === info.type) return ph;
+    if (matchBy === 'idx' && (phIdx ?? 0) === (info.idx ?? 0)) return ph;
+    if (matchBy === 'type' && (phType ?? 'obj') === masterPlaceholderType(info.type)) return ph;
   }
   return undefined;
 }
@@ -160,6 +161,8 @@ interface MergedParagraphStyle {
   textIndent?: number;
   defaultTabSize?: number;
   lineHeight?: string;
+  /** OOXML spcPct as a 0-1 ratio. One Office line is approximately 1.19 CSS em. */
+  lineHeightPercent?: number;
   /** True when lineHeight comes from spcPts (absolute pt value). For CJK fonts, CSS line-height
    *  with absolute values may not produce exact spacing because the font's content area can exceed
    *  the line-height. When true, we use block-level line wrappers instead of <br> for line breaks. */
@@ -182,6 +185,12 @@ interface MergedParagraphStyle {
   defRPrs?: SafeXmlNode[];
 }
 
+const OFFICE_LINE_HEIGHT_EM = 1.19;
+
+function officeLinePoints(ratio: number, fontSizePt: number): number {
+  return Number((ratio * fontSizePt * OFFICE_LINE_HEIGHT_EM).toFixed(3));
+}
+
 function mergeParagraphProps(target: MergedParagraphStyle, pPr: SafeXmlNode): void {
   if (!pPr.exists()) return;
 
@@ -201,7 +210,9 @@ function mergeParagraphProps(target: MergedParagraphStyle, pPr: SafeXmlNode): vo
   if (defTabSz !== undefined) target.defaultTabSize = emuToPx(defTabSz);
 
   // Line spacing
-  // OOXML spcPct: 100000 = "single spacing" = 1.0× the font's line height.
+  // OOXML spcPct: 100000 = one Office line. PowerPoint's native baseline distance is
+  // approximately 1.19× the font size in the native oracle, while CSS unitless
+  // line-height 1 is only 1em. Keep the Office line unit explicit before mapping to CSS.
   // IMPORTANT: We must use UNITLESS CSS line-height values (e.g., 1.0, 1.2)
   // instead of percentages (e.g., 100%, 120%). CSS percentage line-height is
   // computed once against the element's own font-size and inherited as a FIXED
@@ -213,10 +224,11 @@ function mergeParagraphProps(target: MergedParagraphStyle, pPr: SafeXmlNode): vo
   if (lnSpc.exists()) {
     const spcPct = lnSpc.child('spcPct');
     if (spcPct.exists()) {
-      const val = spcPct.numAttr('val');
+      const val = parseTextPercentage(spcPct.attr('val'));
       if (val !== undefined) {
-        // OOXML 100000 → CSS unitless 1.0; OOXML 120000 → CSS 1.2
-        target.lineHeight = `${(val / 100000).toFixed(3)}`;
+        target.lineHeightPercent = val;
+        target.lineHeight = `${(val * OFFICE_LINE_HEIGHT_EM).toFixed(3)}`;
+        target.lineHeightAbsolute = false;
       }
     }
     const spcPts = lnSpc.child('spcPts');
@@ -224,6 +236,7 @@ function mergeParagraphProps(target: MergedParagraphStyle, pPr: SafeXmlNode): vo
       const val = spcPts.numAttr('val');
       if (val !== undefined) {
         target.lineHeight = `${val / 100}pt`;
+        target.lineHeightPercent = undefined;
         target.lineHeightAbsolute = true;
       }
     }
@@ -235,12 +248,18 @@ function mergeParagraphProps(target: MergedParagraphStyle, pPr: SafeXmlNode): vo
     const spcPts = spcBef.child('spcPts');
     if (spcPts.exists()) {
       const val = spcPts.numAttr('val');
-      if (val !== undefined) target.spaceBefore = val / 100;
+      if (val !== undefined) {
+        target.spaceBefore = val / 100;
+        target.spaceBeforePct = undefined;
+      }
     }
     const spcPct = spcBef.child('spcPct');
     if (spcPct.exists()) {
-      const val = spcPct.numAttr('val');
-      if (val !== undefined) target.spaceBeforePct = val / 100000; // store as ratio
+      const val = parseTextPercentage(spcPct.attr('val'));
+      if (val !== undefined) {
+        target.spaceBeforePct = val;
+        target.spaceBefore = undefined;
+      }
     }
   }
 
@@ -250,23 +269,33 @@ function mergeParagraphProps(target: MergedParagraphStyle, pPr: SafeXmlNode): vo
     const spcPts = spcAft.child('spcPts');
     if (spcPts.exists()) {
       const val = spcPts.numAttr('val');
-      if (val !== undefined) target.spaceAfter = val / 100;
+      if (val !== undefined) {
+        target.spaceAfter = val / 100;
+        target.spaceAfterPct = undefined;
+      }
     }
     const spcPct = spcAft.child('spcPct');
     if (spcPct.exists()) {
-      const val = spcPct.numAttr('val');
-      if (val !== undefined) target.spaceAfterPct = val / 100000; // store as ratio
+      const val = parseTextPercentage(spcPct.attr('val'));
+      if (val !== undefined) {
+        target.spaceAfterPct = val;
+        target.spaceAfter = undefined;
+      }
     }
   }
 
   // Bullets
   const buChar = pPr.child('buChar');
   if (buChar.exists()) {
+    target.bulletAutoNum = undefined;
+    target.bulletAutoNumStartAt = undefined;
     target.bulletChar = buChar.attr('char') || '';
     target.bulletNone = false;
   }
   const buAutoNum = pPr.child('buAutoNum');
   if (buAutoNum.exists()) {
+    target.bulletChar = undefined;
+    target.bulletAutoNumStartAt = undefined;
     target.bulletAutoNum = buAutoNum.attr('type') || 'arabicPeriod';
     const startAt = buAutoNum.numAttr('startAt');
     if (startAt !== undefined) target.bulletAutoNumStartAt = startAt;
@@ -284,9 +313,9 @@ function mergeParagraphProps(target: MergedParagraphStyle, pPr: SafeXmlNode): vo
   }
   const buSzPct = pPr.child('buSzPct');
   if (buSzPct.exists()) {
-    const val = buSzPct.numAttr('val');
+    const val = parseTextPercentage(buSzPct.attr('val'));
     if (val !== undefined) {
-      target.bulletSizePct = val / 100000;
+      target.bulletSizePct = val;
       target.bulletSizePt = undefined;
     }
   }
@@ -802,7 +831,7 @@ interface RenderTextBodyOptions {
   cellTextItalic?: boolean;
   /** When set, applies font family from table style tcTxStyle (overrides inherited, yields to explicit run rPr). */
   cellTextFontFamily?: string | string[];
-  /** fontRef color from shape style (e.g. SmartArt). Overrides inherited styles but yields to explicit run rPr color. */
+  /** fontRef color from shape style (e.g. SmartArt). Overrides template styles but yields to explicit paragraph/run fills. */
   fontRefColor?: string;
   /** True when the text container uses vertical writing mode. */
   isVerticalText?: boolean;
@@ -838,17 +867,39 @@ export function renderTextBody(
   options?: RenderTextBodyOptions,
 ): void {
   const textBody = resolveTextFields(sourceTextBody, ctx);
-  const category = getPlaceholderCategory(placeholder);
+  const layoutPh = placeholder
+    ? findPlaceholderNode(
+        ctx.layout.placeholders.map((entry) => entry.node),
+        placeholder,
+        'idx',
+      )
+    : undefined;
+  const layoutPhProps = layoutPh?.child('nvSpPr').child('nvPr').child('ph');
+  const layoutPhType = layoutPhProps?.exists()
+    ? layoutPhProps.attr('type')
+    : layoutPh?.child('nvPicPr').child('nvPr').child('ph').attr('type');
+  // Follow the parent's parent: a local slide type does not rewire layout -> master.
+  const masterInfo = layoutPh ? { type: layoutPhType } : placeholder;
+  const category = getPlaceholderCategory(
+    masterInfo ? { type: masterPlaceholderType(masterInfo.type) } : undefined,
+  );
+  // ShapeRenderer may already configure fitting/vertical flow. Other callers (tables)
+  // need a local whitespace boundary so host pre/nowrap does not leak into paragraphs.
+  if (!container.style.whiteSpace) {
+    const wrap =
+      textBody.bodyProperties?.attr('wrap') ?? textBody.layoutBodyProperties?.attr('wrap');
+    container.style.whiteSpace = wrap === 'none' ? 'nowrap' : 'normal';
+  }
 
   // Parse normAutofit from bodyPr (font scaling + line spacing reduction)
   let fontScale = 1;
   let lnSpcReduction = 0;
   const normAutofit = getEffectiveBodyPrChild(textBody, 'normAutofit');
   if (normAutofit?.exists()) {
-    const fs = normAutofit.numAttr('fontScale');
-    if (fs !== undefined) fontScale = fs / 100000; // 100000 = 100%
-    const lsr = normAutofit.numAttr('lnSpcReduction');
-    if (lsr !== undefined) lnSpcReduction = lsr / 100000; // e.g., 20000 = 20%
+    const fs = parseTextPercentage(normAutofit.attr('fontScale'));
+    if (fs !== undefined) fontScale = fs; // 100000 = 100%
+    const lsr = parseTextPercentage(normAutofit.attr('lnSpcReduction'));
+    if (lsr !== undefined) lnSpcReduction = lsr; // e.g., 20000 = 20%
   }
 
   const bulletCounters = new Map<string, number>();
@@ -900,8 +951,8 @@ export function renderTextBody(
     mergeParagraphProps(merged, findStyleAtLevel(masterTextStyle, level));
 
     // Level 4: master placeholder lstStyle
-    if (placeholder) {
-      const masterPh = findPlaceholderNode(ctx.master.placeholders, placeholder);
+    if (masterInfo) {
+      const masterPh = findPlaceholderNode(ctx.master.placeholders, masterInfo, 'type');
       if (masterPh) {
         const lstStyle = getPlaceholderLstStyle(masterPh);
         mergeParagraphProps(merged, findStyleAtLevel(lstStyle, level));
@@ -909,15 +960,9 @@ export function renderTextBody(
     }
 
     // Level 5: layout placeholder lstStyle
-    if (placeholder) {
-      const layoutPh = findPlaceholderNode(
-        ctx.layout.placeholders.map((e) => e.node),
-        placeholder,
-      );
-      if (layoutPh) {
-        const lstStyle = getPlaceholderLstStyle(layoutPh);
-        mergeParagraphProps(merged, findStyleAtLevel(lstStyle, level));
-      }
+    if (layoutPh) {
+      const lstStyle = getPlaceholderLstStyle(layoutPh);
+      mergeParagraphProps(merged, findStyleAtLevel(lstStyle, level));
     }
 
     // Level 6: shape lstStyle
@@ -953,14 +998,17 @@ export function renderTextBody(
     // Compute effective line-height (with optional lnSpcReduction from normAutofit)
     let effectiveLineHeight = merged.lineHeight ?? options?.defaultLineHeight;
     if (effectiveLineHeight) {
-      if (lnSpcReduction > 0) {
+      if (lnSpcReduction > 0 && merged.lineHeightPercent !== undefined) {
+        effectiveLineHeight = `${(
+          Math.max(0, merged.lineHeightPercent - lnSpcReduction) * OFFICE_LINE_HEIGHT_EM
+        ).toFixed(3)}`;
+      } else if (lnSpcReduction > 0 && !effectiveLineHeight.includes('pt')) {
         const parsed = parseFloat(effectiveLineHeight);
         if (!isNaN(parsed)) {
-          if (effectiveLineHeight.includes('pt')) {
-            effectiveLineHeight = `${(parsed * (1 - lnSpcReduction)).toFixed(2)}pt`;
-          } else {
-            effectiveLineHeight = `${(parsed * (1 - lnSpcReduction)).toFixed(3)}`;
-          }
+          effectiveLineHeight = `${Math.max(
+            0,
+            parsed - lnSpcReduction * OFFICE_LINE_HEIGHT_EM,
+          ).toFixed(3)}`;
         }
       }
       if (options?.isVerticalText && !merged.lineHeightAbsolute) {
@@ -997,14 +1045,14 @@ export function renderTextBody(
     } else if (merged.spaceBefore !== undefined) {
       paraDiv.style.marginTop = `${merged.spaceBefore}pt`;
     } else if (merged.spaceBeforePct !== undefined) {
-      paraDiv.style.marginTop = `${merged.spaceBeforePct * effectiveFontSize}pt`;
+      paraDiv.style.marginTop = `${officeLinePoints(merged.spaceBeforePct, effectiveFontSize)}pt`;
     }
     if (trimSpaceAfter) {
       paraDiv.style.marginBottom = '0px';
     } else if (merged.spaceAfter !== undefined) {
       paraDiv.style.marginBottom = `${merged.spaceAfter}pt`;
     } else if (merged.spaceAfterPct !== undefined) {
-      paraDiv.style.marginBottom = `${merged.spaceAfterPct * effectiveFontSize}pt`;
+      paraDiv.style.marginBottom = `${officeLinePoints(merged.spaceAfterPct, effectiveFontSize)}pt`;
     }
 
     // ---- Bullets ----
@@ -1279,16 +1327,18 @@ export function renderTextBody(
         element.style.backgroundColor = runStyle.highlightColor;
       }
 
-      // Color priority: explicit run rPr > hlink theme color > cellTextColor (table style tcTxStyle) > fontRef (shape style) > inherited styles > black default
-      // cellTextColor from table style overrides inherited cascade colors but yields to explicit run/paragraph solidFill/gradFill.
-      // fontRefColor overrides inherited styles but yields to explicit run solidFill/gradFill.
+      // Local run/paragraph fills override style references; inherited template fills do not.
+      // Hyperlink theme rules are resolved independently below.
       const runColorKind = getRunColorKind(run.properties);
       const hasExplicitRunColor = runColorKind !== 'none';
       let effectiveColor: string | undefined;
-      if (options?.fontRefColor) {
-        effectiveColor = hasExplicitRunColor ? runStyle.color : options.fontRefColor;
-      } else if (options?.cellTextColor && !hasExplicitRunColor) {
+      const hasParagraphColor = getRunColorKind(paragraph.properties?.child('defRPr')) !== 'none';
+      if (hasExplicitRunColor || hasParagraphColor) {
+        effectiveColor = runStyle.color;
+      } else if (options?.cellTextColor) {
         effectiveColor = options.cellTextColor;
+      } else if (options?.fontRefColor) {
+        effectiveColor = options.fontRefColor;
       } else {
         effectiveColor = runStyle.color;
       }

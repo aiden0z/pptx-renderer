@@ -1,5 +1,5 @@
 import { SafeXmlNode, parseXml } from '../parser/XmlParser';
-import { RelEntry, resolveRelTarget } from '../parser/RelParser';
+import { RelEntry, resolveRelTarget, isExternalTargetMode } from '../parser/RelParser';
 import { parseBaseProps } from './nodes/BaseNode';
 import { ShapeNodeData, parseShapeNode } from './nodes/ShapeNode';
 import { PicNodeData, parsePicNode } from './nodes/PicNode';
@@ -23,6 +23,48 @@ interface RenderableChildParseContext {
 
 const CHILD_TAGS = new Set(['sp', 'pic', 'grpSp', 'graphicFrame', 'cxnSp']);
 const PLACEHOLDER_WRAPPERS = ['nvSpPr', 'nvPicPr', 'nvGrpSpPr', 'nvGraphicFramePr', 'nvCxnSpPr'];
+const SUPPORTED_MCE_NAMESPACES = new Set([
+  'http://schemas.openxmlformats.org/presentationml/2006/main',
+  'http://purl.oclc.org/ooxml/presentationml/main',
+  'http://schemas.openxmlformats.org/drawingml/2006/main',
+  'http://purl.oclc.org/ooxml/drawingml/main',
+  'http://schemas.openxmlformats.org/drawingml/2006/chart',
+  'http://purl.oclc.org/ooxml/drawingml/chart',
+  'http://schemas.openxmlformats.org/drawingml/2006/diagram',
+  'http://purl.oclc.org/ooxml/drawingml/diagram',
+  'http://schemas.microsoft.com/office/drawing/2008/diagram',
+  'http://schemas.microsoft.com/office/drawing/2016/SVG/main',
+]);
+
+function isCompatibleChoice(choice: SafeXmlNode): boolean {
+  const requires = choice.attr('Requires')?.trim();
+  if (!requires) return true;
+  const element = choice.element;
+  if (!element) return false;
+
+  return requires
+    .split(/\s+/)
+    .every((prefix) => SUPPORTED_MCE_NAMESPACES.has(element.lookupNamespaceURI(prefix) ?? ''));
+}
+
+function selectAlternateContentBranch(alternateContent: SafeXmlNode): SafeXmlNode | undefined {
+  for (const choice of alternateContent.children('Choice')) {
+    if (isCompatibleChoice(choice)) return choice;
+  }
+  const fallback = alternateContent.child('Fallback');
+  return fallback.exists() ? fallback : undefined;
+}
+
+/**
+ * Expand one MCE wrapper into the children from exactly one compatible branch.
+ * Nested wrappers are flattened recursively so callers preserve source draw order.
+ */
+export function expandCompatibleChildren(node: SafeXmlNode): SafeXmlNode[] {
+  if (node.localName !== 'AlternateContent') return [node];
+  const branch = selectAlternateContentBranch(node);
+  if (!branch) return [];
+  return branch.allChildren().flatMap(expandCompatibleChildren);
+}
 
 export function isPlaceholderNode(node: SafeXmlNode): boolean {
   for (const wrapper of PLACEHOLDER_WRAPPERS) {
@@ -72,14 +114,12 @@ function findOleFallbackPic(graphicFrame: SafeXmlNode): SafeXmlNode | null {
 
   const altContent = graphicData.child('AlternateContent');
   if (!altContent.exists()) return null;
-
-  for (const branch of ['Fallback', 'Choice'] as const) {
-    const oleObj = altContent.child(branch).child('oleObj');
-    if (!oleObj.exists()) continue;
-    const pic = oleObj.child('pic');
-    if (!pic.exists()) continue;
-    if (hasResolvableBlip(pic)) return pic;
-  }
+  const branch = selectAlternateContentBranch(altContent);
+  if (!branch) return null;
+  const oleObj = branch.child('oleObj');
+  if (!oleObj.exists()) return null;
+  const pic = oleObj.child('pic');
+  if (pic.exists() && hasResolvableBlip(pic)) return pic;
   return null;
 }
 
@@ -109,7 +149,9 @@ function buildDiagramGroup(
 
   if (spTree.exists()) {
     for (const child of spTree.allChildren()) {
-      if (CHILD_TAGS.has(child.localName)) children.push(child);
+      for (const selected of expandCompatibleChildren(child)) {
+        if (CHILD_TAGS.has(selected.localName)) children.push(selected);
+      }
     }
   }
 
@@ -160,13 +202,26 @@ function parseDiagramFrame(
   for (const candidate of drawingCandidates) {
     const drawingPath = resolveRelTarget(partDir, candidate.target);
     const drawingXml = ctx.diagramDrawings.get(drawingPath);
-    if (drawingXml) return buildDiagramGroup(base, drawingXml);
+    if (drawingXml) {
+      const group = buildDiagramGroup(base, drawingXml);
+      const layoutId = relIds.attr('r:lo') ?? relIds.attr('lo');
+      const layoutRel = layoutId ? ctx.rels.get(layoutId) : undefined;
+      if (
+        layoutRel &&
+        !isExternalTargetMode(layoutRel.targetMode) &&
+        layoutRel.type.endsWith('/diagramLayout')
+      ) {
+        const layoutXml = ctx.diagramDrawings.get(resolveRelTarget(partDir, layoutRel.target));
+        if (layoutXml) group.diagramLayoutId = parseXml(layoutXml).attr('uniqueId');
+      }
+      return group;
+    }
   }
 
   return undefined;
 }
 
-export function parseRenderableChild(
+function parseDirectRenderableChild(
   childXml: SafeXmlNode,
   ctx: RenderableChildParseContext,
 ): RenderableNode | undefined {
@@ -178,8 +233,14 @@ export function parseRenderableChild(
       return parseShapeNode(childXml);
     case 'pic':
       return parsePicNode(childXml);
-    case 'grpSp':
-      return parseGroupNode(childXml);
+    case 'grpSp': {
+      const group = parseGroupNode(childXml);
+      group.children = childXml
+        .allChildren()
+        .flatMap(expandCompatibleChildren)
+        .filter((child) => CHILD_TAGS.has(child.localName));
+      return group;
+    }
     case 'graphicFrame':
       if (isTableFrame(childXml)) return parseTableNode(childXml);
       if (isChartFrame(childXml)) return parseChartNode(childXml, ctx.rels, ctx.partPath ?? '');
@@ -188,4 +249,23 @@ export function parseRenderableChild(
     default:
       return undefined;
   }
+}
+
+export function parseRenderableChildren(
+  childXml: SafeXmlNode,
+  ctx: RenderableChildParseContext,
+): RenderableNode[] {
+  const nodes: RenderableNode[] = [];
+  for (const selected of expandCompatibleChildren(childXml)) {
+    const node = parseDirectRenderableChild(selected, ctx);
+    if (node) nodes.push(node);
+  }
+  return nodes;
+}
+
+export function parseRenderableChild(
+  childXml: SafeXmlNode,
+  ctx: RenderableChildParseContext,
+): RenderableNode | undefined {
+  return parseRenderableChildren(childXml, ctx)[0];
 }

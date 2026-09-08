@@ -3,6 +3,7 @@
  * (themes, masters, layouts, slides) into a single PresentationData structure.
  */
 
+import { masterPlaceholderType } from './placeholderMatching';
 import { PptxFiles } from '../parser/ZipParser';
 import type { MediaResolver } from '../utils/media';
 import { parseXml, SafeXmlNode } from '../parser/XmlParser';
@@ -12,7 +13,7 @@ import { ThemeData, parseTheme } from './Theme';
 import { MasterData, parseMaster } from './Master';
 import { LayoutData, parseLayout, PlaceholderEntry } from './Layout';
 import { SlideData, SlideNode, createLazySlide, materializeSlideData, parseSlide } from './Slide';
-import { BaseNodeData, PlaceholderInfo, Position, Size } from './nodes/BaseNode';
+import { BaseNodeData, PlaceholderInfo, Position, Size, findXfrm } from './nodes/BaseNode';
 import type { GroupNodeData } from './nodes/GroupNode';
 
 export interface PresentationData {
@@ -468,30 +469,10 @@ function getPhXfrm(phNode: SafeXmlNode): { position: Position; size: Size } | un
  */
 function findMatchingLayoutPlaceholder(
   placeholders: PlaceholderEntry[],
-  type?: string,
   idx?: number,
 ): PlaceholderEntry | undefined {
-  let typeMatch: PlaceholderEntry | undefined;
-
-  for (const entry of placeholders) {
-    const info = getPhInfo(entry.node);
-
-    if (type !== undefined && info.type === type && idx !== undefined && info.idx === idx) {
-      return entry;
-    }
-    if (type !== undefined && info.type === type && !typeMatch) {
-      typeMatch = entry;
-    }
-    if (idx !== undefined && info.idx === idx && type === undefined && info.type === undefined) {
-      return entry;
-    }
-  }
-  if (type === undefined && idx !== undefined) {
-    for (const entry of placeholders) {
-      if (getPhInfo(entry.node).idx === idx) return entry;
-    }
-  }
-  return typeMatch;
+  // Slide placeholders inherit from layout by idx (default 0), regardless of type.
+  return placeholders.find((entry) => (getPhInfo(entry.node).idx ?? 0) === (idx ?? 0));
 }
 
 function getMasterPlaceholderEntries(master: MasterData): PlaceholderEntry[] {
@@ -592,79 +573,49 @@ export function resolveNodePlaceholderInheritance(
 ): void {
   if (!node.placeholder) return;
 
-  const { type, idx } = node.placeholder;
-  const findMasterMatch = (): PlaceholderEntry | undefined =>
-    master
-      ? findMatchingLayoutPlaceholder(
-          getMasterPlaceholderEntries(master),
-          node.placeholder?.type ?? type,
-          idx,
-        )
-      : undefined;
-  const sizeIsEmpty = node.size.w === 0 && node.size.h === 0;
-  const positionLooksDefault = node.position.y < 5; // y=0 or near top → use layout position
+  const { idx } = node.placeholder;
+  const layoutMatch = layout ? findMatchingLayoutPlaceholder(layout.placeholders, idx) : undefined;
+  if (layoutMatch) inheritPlaceholderType(node.placeholder, layoutMatch.node);
+  // Layout -> master uses type, never idx: master idx values may collide with unrelated types.
+  const masterMatch = master
+    ? getMasterPlaceholderEntries(master).find(
+        (entry) =>
+          (getPhInfo(entry.node).type ?? 'obj') ===
+          masterPlaceholderType(
+            layoutMatch ? getPhInfo(layoutMatch.node).type : node.placeholder?.type,
+          ),
+      )
+    : undefined;
 
-  if (layout) {
-    const layoutMatch = findMatchingLayoutPlaceholder(layout.placeholders, type, idx);
-    if (layoutMatch) {
-      inheritPlaceholderType(node.placeholder, layoutMatch.node);
-
-      const rawXfrm = layoutMatch.absoluteXfrm ?? getPhXfrm(layoutMatch.node);
-      if (rawXfrm) {
-        const xfrm = resolveInheritedXfrm(rawXfrm, options);
-        if (sizeIsEmpty) {
-          node.position = xfrm.position;
-          node.size = xfrm.size;
-        } else if (positionLooksDefault) {
-          node.position = xfrm.position;
-        }
-      }
-
-      // Inherit bodyPr from layout placeholder for text rendering (anchor, insets, etc.)
-      if ('textBody' in node && node.textBody) {
-        const layoutBodyPr = getPhBodyPr(layoutMatch.node);
-        if (layoutBodyPr) {
-          node.textBody.layoutBodyProperties = layoutBodyPr;
-        }
-      }
-
-      if (rawXfrm) {
-        const masterMatch = findMasterMatch();
-        if (masterMatch) {
-          inheritPlaceholderType(node.placeholder, masterMatch.node);
-          if ('textBody' in node && node.textBody && !node.textBody.layoutBodyProperties) {
-            const masterBodyPr = getPhBodyPr(masterMatch.node);
-            if (masterBodyPr) {
-              node.textBody.layoutBodyProperties = masterBodyPr;
-            }
-          }
-        }
-        return;
-      }
-    }
+  const ownXfrm = findXfrm(node.source);
+  const ownOff = ownXfrm.child('off');
+  const ownExt = ownXfrm.child('ext');
+  const inherited = [layoutMatch, masterMatch]
+    .map((entry) => entry && (entry.absoluteXfrm ?? getPhXfrm(entry.node)))
+    .find((xfrm) => xfrm !== undefined);
+  if (inherited) {
+    const xfrm = resolveInheritedXfrm(inherited, options);
+    // Presence, not numeric value, decides inheritance. Zero positions/extents are explicit.
+    if (ownOff.attr('x') === undefined) node.position.x = xfrm.position.x;
+    if (ownOff.attr('y') === undefined) node.position.y = xfrm.position.y;
+    if (ownExt.attr('cx') === undefined) node.size.w = xfrm.size.w;
+    if (ownExt.attr('cy') === undefined) node.size.h = xfrm.size.h;
   }
 
-  const masterMatch = findMasterMatch();
-  if (masterMatch) {
-    inheritPlaceholderType(node.placeholder, masterMatch.node);
-
-    const rawXfrm = masterMatch.absoluteXfrm ?? getPhXfrm(masterMatch.node);
-    if (rawXfrm) {
-      const xfrm = resolveInheritedXfrm(rawXfrm, options);
-      if (sizeIsEmpty) {
-        node.position = xfrm.position;
-        node.size = xfrm.size;
-      } else if (positionLooksDefault) {
-        node.position = xfrm.position;
+  if ('textBody' in node && node.textBody) {
+    const layoutBodyPr = layoutMatch && getPhBodyPr(layoutMatch.node);
+    const masterBodyPr = masterMatch && getPhBodyPr(masterMatch.node);
+    if (layoutBodyPr && masterBodyPr) {
+      // Placeholder attributes inherit independently through empty/partial layout bodyPr.
+      // Keep child-mode behavior unchanged; this evidence covers anchor and insets only.
+      const merged = layoutBodyPr.element!.cloneNode(true) as Element;
+      for (const attr of ['anchor', 'lIns', 'tIns', 'rIns', 'bIns']) {
+        const value = masterBodyPr.attr(attr);
+        if (!merged.hasAttribute(attr) && value !== undefined) merged.setAttribute(attr, value);
       }
-    }
-
-    // Inherit bodyPr from master placeholder as fallback
-    if ('textBody' in node && node.textBody && !node.textBody.layoutBodyProperties) {
-      const masterBodyPr = getPhBodyPr(masterMatch.node);
-      if (masterBodyPr) {
-        node.textBody.layoutBodyProperties = masterBodyPr;
-      }
+      node.textBody.layoutBodyProperties = new SafeXmlNode(merged);
+    } else {
+      node.textBody.layoutBodyProperties = layoutBodyPr ?? masterBodyPr;
     }
   }
 }

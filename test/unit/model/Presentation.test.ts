@@ -6,6 +6,8 @@ import {
 } from '../../../src/model/Presentation';
 import type { PptxFiles } from '../../../src/parser/ZipParser';
 import { serializePresentation } from '../../../src/export/serializePresentation';
+import { renderShape } from '../../../src/renderer/ShapeRenderer';
+import { createRenderContext } from '../../../src/renderer/RenderContext';
 import { buildTextIndex } from '../../../src/search/TextSearch';
 
 /**
@@ -126,6 +128,45 @@ function makeMinimalFiles(overrides: Partial<PptxFiles> = {}): PptxFiles {
   };
 }
 
+function makeNestedCompatibleGroupFiles(): PptxFiles {
+  const files = makeMinimalFiles();
+  files.slides.set(
+    'ppt/slides/slide1.xml',
+    `
+      <sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"
+           xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+           xmlns:p14="http://schemas.microsoft.com/office/powerpoint/2010/main">
+        <cSld><spTree>
+          <grpSp>
+            <nvGrpSpPr><cNvPr id="10" name="Outer group"/><nvPr/></nvGrpSpPr>
+            <grpSpPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="1828800" cy="914400"/><a:chOff x="0" y="0"/><a:chExt cx="1828800" cy="914400"/></a:xfrm></grpSpPr>
+            <grpSp>
+              <nvGrpSpPr><cNvPr id="11" name="Inner group"/><nvPr/></nvGrpSpPr>
+              <grpSpPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="1828800" cy="914400"/><a:chOff x="0" y="0"/><a:chExt cx="1828800" cy="914400"/></a:xfrm></grpSpPr>
+              <mc:AlternateContent>
+                <mc:Choice Requires="p14"><p14:contentPart/></mc:Choice>
+                <mc:Fallback>
+                  <sp>
+                    <nvSpPr><cNvPr id="12" name="First nested"/><nvPr/></nvSpPr>
+                    <spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="914400" cy="914400"/></a:xfrm><a:prstGeom prst="rect"/></spPr>
+                    <txBody><a:bodyPr/><a:lstStyle/><a:p><a:r><a:t>First nested</a:t></a:r></a:p></txBody>
+                  </sp>
+                  <sp>
+                    <nvSpPr><cNvPr id="13" name="Second nested"/><nvPr/></nvSpPr>
+                    <spPr><a:xfrm><a:off x="914400" y="0"/><a:ext cx="914400" cy="914400"/></a:xfrm><a:prstGeom prst="rect"/></spPr>
+                    <txBody><a:bodyPr/><a:lstStyle/><a:p><a:r><a:t>Second nested</a:t></a:r></a:p></txBody>
+                  </sp>
+                </mc:Fallback>
+              </mc:AlternateContent>
+            </grpSp>
+          </grpSp>
+        </spTree></cSld>
+      </sld>
+    `,
+  );
+  return files;
+}
+
 describe('buildPresentation', () => {
   it('maps embedded font relationships to isolated render families', () => {
     const regular = new Uint8Array([1, 2, 3]);
@@ -228,6 +269,39 @@ describe('buildPresentation', () => {
     expect(pres.slides[0].nodes[0].nodeType).toBe('shape');
   });
 
+  it('materializes compatible fallback content and slide color metadata for lazy slides', () => {
+    const files = makeMinimalFiles();
+    files.slides.set(
+      'ppt/slides/slide1.xml',
+      `
+        <sld xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:p14="http://schemas.microsoft.com/office/powerpoint/2010/main">
+          <cSld><spTree>
+            <mc:AlternateContent>
+              <mc:Choice Requires="p14"><p14:contentPart/></mc:Choice>
+              <mc:Fallback>
+                <sp><nvSpPr><cNvPr id="9" name="Lazy fallback"/><nvPr/></nvSpPr><spPr/></sp>
+              </mc:Fallback>
+            </mc:AlternateContent>
+          </spTree></cSld>
+          <clrMapOvr><overrideClrMapping accent1="accent2"/></clrMapOvr>
+        </sld>
+      `,
+    );
+    const pres = buildPresentation(files, { lazySlides: true });
+
+    expect(pres.slides[0].nodes).toHaveLength(0);
+    materializeSlideNodes(pres, pres.slides[0]);
+
+    expect(pres.slides[0].nodes.map((node) => node.name)).toEqual(['Lazy fallback']);
+    expect(pres.slides[0].colorMapOverrideMode).toBe('override');
+    expect(pres.slides[0].colorMapOverride?.get('accent1')).toBe('accent2');
+    expect(serializePresentation(pres).slides[0]).toMatchObject({
+      colorMapOverrideMode: 'override',
+      colorMapOverride: { accent1: 'accent2' },
+    });
+  });
+
   it('materializes lazy slides for search and serialization consumers', () => {
     const pres = buildPresentation(makeMinimalFiles(), { lazySlides: true });
 
@@ -237,6 +311,39 @@ describe('buildPresentation', () => {
     expect(index.map((entry) => entry.text)).toContain('Deferred title');
     expect(serialized.slides[0].nodes[0].textBody?.totalText).toBe('Deferred title');
     expect(pres.slides[0].nodes).toHaveLength(1);
+  });
+
+  it('keeps selected nested group children in source order for eager and lazy search', () => {
+    const eager = buildPresentation(makeNestedCompatibleGroupFiles());
+    const lazy = buildPresentation(makeNestedCompatibleGroupFiles(), { lazySlides: true });
+
+    expect(buildTextIndex(eager).map((entry) => entry.text)).toEqual([
+      'First nested',
+      'Second nested',
+    ]);
+    expect(lazy.slides[0].nodes).toHaveLength(0);
+    expect(buildTextIndex(lazy).map((entry) => entry.text)).toEqual([
+      'First nested',
+      'Second nested',
+    ]);
+    expect(lazy.slides[0].nodes).toHaveLength(1);
+  });
+
+  it('materializes and serializes multiple selected children inside nested lazy groups', () => {
+    const pres = buildPresentation(makeNestedCompatibleGroupFiles(), { lazySlides: true });
+
+    const serialized = serializePresentation(pres);
+    const outer = serialized.slides[0].nodes[0];
+    const inner = outer.children?.[0];
+
+    expect(pres.slides[0].nodesMaterialized).toBe(true);
+    expect(outer.id).toBe('10');
+    expect(inner?.id).toBe('11');
+    expect(inner?.children?.map((child) => child.id)).toEqual(['12', '13']);
+    expect(inner?.children?.map((child) => child.textBody?.totalText)).toEqual([
+      'First nested',
+      'Second nested',
+    ]);
   });
 
   it('can materialize all lazy slides explicitly', () => {
@@ -524,7 +631,7 @@ describe('buildPresentation', () => {
             <sp>
               <nvSpPr><cNvPr id="2" name="Title"/><nvPr><ph type="title"/></nvPr></nvSpPr>
               <spPr>
-                <xfrm><off x="0" y="0"/><ext cx="0" cy="0"/></xfrm>
+                <!-- Transform omitted to inherit placeholder geometry. -->
                 <prstGeom prst="rect"><avLst/></prstGeom>
               </spPr>
             </sp>
@@ -555,7 +662,7 @@ describe('buildPresentation', () => {
 
     const pres = buildPresentation(files);
     const node = pres.slides[0].nodes[0];
-    // Placeholder with size=0 should inherit from layout
+    // Placeholder with omitted transform should inherit from layout
     expect(node.size.w).toBeGreaterThan(0);
     expect(node.size.h).toBeGreaterThan(0);
   });
@@ -592,7 +699,7 @@ describe('buildPresentation', () => {
               <sp>
                 <nvSpPr><cNvPr id="2" name="Body"/><nvPr><ph type="body" idx="1"/></nvPr></nvSpPr>
                 <spPr>
-                  <xfrm><off x="0" y="0"/><ext cx="0" cy="0"/></xfrm>
+                  <!-- Transform omitted to inherit placeholder geometry. -->
                   <prstGeom prst="rect"><avLst/></prstGeom>
                 </spPr>
               </sp>
@@ -629,7 +736,7 @@ describe('buildPresentation', () => {
       expect(node.size.h).toBeGreaterThan(0);
     });
 
-    it('inherits position only (not size) when size is non-zero but y < 5', () => {
+    it('inherits absent offset while preserving explicit size', () => {
       const slideXml = `
         <sld xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
           <cSld>
@@ -637,7 +744,7 @@ describe('buildPresentation', () => {
               <sp>
                 <nvSpPr><cNvPr id="2" name="Title"/><nvPr><ph type="title"/></nvPr></nvSpPr>
                 <spPr>
-                  <xfrm><off x="0" y="0"/><ext cx="914400" cy="457200"/></xfrm>
+                  <xfrm><ext cx="914400" cy="457200"/></xfrm>
                   <prstGeom prst="rect"><avLst/></prstGeom>
                 </spPr>
               </sp>
@@ -677,7 +784,7 @@ describe('buildPresentation', () => {
               <sp>
                 <nvSpPr><cNvPr id="2" name="Content"/><nvPr><ph idx="10"/></nvPr></nvSpPr>
                 <spPr>
-                  <xfrm><off x="0" y="0"/><ext cx="0" cy="0"/></xfrm>
+                  <!-- Transform omitted to inherit placeholder geometry. -->
                   <prstGeom prst="rect"><avLst/></prstGeom>
                 </spPr>
               </sp>
@@ -716,7 +823,7 @@ describe('buildPresentation', () => {
               <sp>
                 <nvSpPr><cNvPr id="2" name="Title"/><nvPr><ph idx="1"/></nvPr></nvSpPr>
                 <spPr>
-                  <xfrm><off x="0" y="0"/><ext cx="0" cy="0"/></xfrm>
+                  <!-- Transform omitted to inherit placeholder geometry. -->
                   <prstGeom prst="rect"><avLst/></prstGeom>
                 </spPr>
               </sp>
@@ -749,7 +856,7 @@ describe('buildPresentation', () => {
       expect(node.placeholder).toEqual({ idx: 1, type: 'title' });
     });
 
-    it('inherits placeholder type from master when matching layout placeholder has no type', () => {
+    it('does not inherit unrelated master type from an idx collision', () => {
       const slideXml = `
         <sld xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
           <cSld>
@@ -757,7 +864,7 @@ describe('buildPresentation', () => {
               <sp>
                 <nvSpPr><cNvPr id="2" name="Body"/><nvPr><ph idx="2"/></nvPr></nvSpPr>
                 <spPr>
-                  <xfrm><off x="0" y="0"/><ext cx="0" cy="0"/></xfrm>
+                  <!-- Transform omitted to inherit placeholder geometry. -->
                   <prstGeom prst="rect"><avLst/></prstGeom>
                 </spPr>
               </sp>
@@ -803,7 +910,7 @@ describe('buildPresentation', () => {
       const pres = buildPresentation(files);
       const node = pres.slides[0].nodes[0];
 
-      expect(node.placeholder).toEqual({ idx: 2, type: 'body' });
+      expect(node.placeholder).toEqual({ idx: 2, type: undefined });
     });
 
     it('inherits bodyPr from layout placeholder for text rendering', () => {
@@ -814,7 +921,7 @@ describe('buildPresentation', () => {
               <sp>
                 <nvSpPr><cNvPr id="2" name="Title"/><nvPr><ph type="title"/></nvPr></nvSpPr>
                 <spPr>
-                  <xfrm><off x="0" y="0"/><ext cx="0" cy="0"/></xfrm>
+                  <!-- Transform omitted to inherit placeholder geometry. -->
                   <prstGeom prst="rect"><avLst/></prstGeom>
                 </spPr>
                 <txBody>
@@ -862,7 +969,7 @@ describe('buildPresentation', () => {
               <sp>
                 <nvSpPr><cNvPr id="2" name="Body"/><nvPr><ph type="body" idx="1"/></nvPr></nvSpPr>
                 <spPr>
-                  <xfrm><off x="0" y="0"/><ext cx="0" cy="0"/></xfrm>
+                  <!-- Transform omitted to inherit placeholder geometry. -->
                   <prstGeom prst="rect"><avLst/></prstGeom>
                 </spPr>
                 <txBody>
@@ -896,7 +1003,7 @@ describe('buildPresentation', () => {
               <sp>
                 <nvSpPr><cNvPr id="4" name="Body Master"/><nvPr><ph type="body" idx="1"/></nvPr></nvSpPr>
                 <spPr>
-                  <xfrm><off x="0" y="0"/><ext cx="0" cy="0"/></xfrm>
+                  <!-- Transform omitted to inherit placeholder geometry. -->
                 </spPr>
                 <txBody>
                   <bodyPr anchor="ctr" lIns="91440"/>
@@ -1013,7 +1120,7 @@ describe('buildPresentation', () => {
   });
 
   describe('resolveSlidePositions — placeholder position resolution', () => {
-    it('shape with zero size inherits both position and size from layout', () => {
+    it('shape with omitted transform inherits both position and size from layout', () => {
       const slideXml = `
         <sld xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
           <cSld>
@@ -1021,7 +1128,7 @@ describe('buildPresentation', () => {
               <sp>
                 <nvSpPr><cNvPr id="2" name="Subtitle"/><nvPr><ph type="subTitle" idx="1"/></nvPr></nvSpPr>
                 <spPr>
-                  <xfrm><off x="0" y="0"/><ext cx="0" cy="0"/></xfrm>
+                  <!-- Transform omitted to inherit placeholder geometry. -->
                   <prstGeom prst="rect"><avLst/></prstGeom>
                 </spPr>
               </sp>
@@ -1056,7 +1163,7 @@ describe('buildPresentation', () => {
       expect(node.size.h).toBeGreaterThan(0);
     });
 
-    it('shape with positionLooksDefault (y < 5) inherits position but keeps size', () => {
+    it('shape with absent offset inherits position but keeps size', () => {
       const slideXml = `
         <sld xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
           <cSld>
@@ -1064,7 +1171,7 @@ describe('buildPresentation', () => {
               <sp>
                 <nvSpPr><cNvPr id="2" name="Title"/><nvPr><ph type="title"/></nvPr></nvSpPr>
                 <spPr>
-                  <xfrm><off x="0" y="0"/><ext cx="4572000" cy="914400"/></xfrm>
+                  <xfrm><ext cx="4572000" cy="914400"/></xfrm>
                   <prstGeom prst="rect"><avLst/></prstGeom>
                 </spPr>
               </sp>
@@ -1108,7 +1215,7 @@ describe('buildPresentation', () => {
               <sp>
                 <nvSpPr><cNvPr id="2" name="Footer"/><nvPr><ph type="ftr" idx="11"/></nvPr></nvSpPr>
                 <spPr>
-                  <xfrm><off x="0" y="0"/><ext cx="0" cy="0"/></xfrm>
+                  <!-- Transform omitted to inherit placeholder geometry. -->
                   <prstGeom prst="rect"><avLst/></prstGeom>
                 </spPr>
               </sp>
@@ -1155,7 +1262,7 @@ describe('buildPresentation', () => {
               <sp>
                 <nvSpPr><cNvPr id="2" name="Footer"/><nvPr><ph type="ftr" idx="11"/></nvPr></nvSpPr>
                 <spPr>
-                  <xfrm><off x="0" y="0"/><ext cx="0" cy="0"/></xfrm>
+                  <!-- Transform omitted to inherit placeholder geometry. -->
                   <prstGeom prst="rect"><avLst/></prstGeom>
                 </spPr>
               </sp>
@@ -1205,7 +1312,7 @@ describe('buildPresentation', () => {
       expect(node.size.h).toBeCloseTo(24, 0);
     });
 
-    it('master fallback also inherits position when positionLooksDefault', () => {
+    it('master fallback inherits an absent offset', () => {
       const slideXml = `
         <sld xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
           <cSld>
@@ -1213,7 +1320,7 @@ describe('buildPresentation', () => {
               <sp>
                 <nvSpPr><cNvPr id="2" name="Dt"/><nvPr><ph type="dt" idx="10"/></nvPr></nvSpPr>
                 <spPr>
-                  <xfrm><off x="0" y="0"/><ext cx="2743200" cy="365125"/></xfrm>
+                  <xfrm><ext cx="2743200" cy="365125"/></xfrm>
                   <prstGeom prst="rect"><avLst/></prstGeom>
                 </spPr>
               </sp>
@@ -1244,7 +1351,7 @@ describe('buildPresentation', () => {
       });
       const pres = buildPresentation(files);
       const node = pres.slides[0].nodes[0];
-      // Position should be inherited from master (y was 0 < 5 so positionLooksDefault)
+      // Position should be inherited from master (offset is absent)
       expect(node.position.x).toBeCloseTo(48, 0); // 457200 EMU
       expect(node.position.y).toBeCloseTo(672, -1); // 6400800 EMU
     });
@@ -1385,5 +1492,98 @@ describe('buildPresentation', () => {
         'E97132',
       );
     });
+  });
+});
+
+describe('placeholder text inheritance coverage', () => {
+  function fixture(
+    layoutBody: string,
+    slideXfrm = '',
+    slidePh = 'type="body" idx="7"',
+    slideBody = '<bodyPr/>',
+    layoutType = 'obj',
+  ) {
+    const shape = (ph: string, body: string, xfrm: string, text: string) =>
+      `<sp><nvSpPr><cNvPr id="2" name="${text}"/><nvPr><ph ${ph}/></nvPr></nvSpPr><spPr>${xfrm}</spPr><txBody>${body}<lstStyle/><p><r><rPr sz="2400"/><t>${text}</t></r></p></txBody></sp>`;
+    const xfrm = '<xfrm><off x="914400" y="914400"/><ext cx="1828800" cy="914400"/></xfrm>';
+    const files = makeMinimalFiles();
+    files.slides.set(
+      'ppt/slides/slide1.xml',
+      `<sld><cSld><spTree>${shape(slidePh, slideBody, slideXfrm, 'Alpha')}</spTree></cSld></sld>`,
+    );
+    files.slideLayouts.set(
+      'ppt/slideLayouts/slideLayout1.xml',
+      `<sldLayout><cSld><spTree>${shape('type="body" idx="3"', '<bodyPr anchor="t"/>', xfrm.replace('914400" y', '0" y'), 'Wrong idx')}${shape(`type="${layoutType}" idx="7"`, layoutBody, xfrm, 'Right idx')}</spTree></cSld></sldLayout>`,
+    );
+    files.slideMasters.set(
+      'ppt/slideMasters/slideMaster1.xml',
+      `<sldMaster><cSld><spTree>${shape('type="title" idx="7"', '<bodyPr anchor="t"/>', xfrm, 'Wrong type')}${shape('type="body" idx="99"', '<bodyPr anchor="b" lIns="190500" tIns="95250" rIns="285750" bIns="381000"/>', xfrm, 'Master')}</spTree></cSld></sldMaster>`,
+    );
+    return buildPresentation(files);
+  }
+  it.each(['', '<bodyPr/>', '<bodyPr lIns="0"/>'])(
+    'inherits anchor and omitted insets through layout %s',
+    (body) => {
+      const p = fixture(body);
+      const node = p.slides[0].nodes[0];
+      expect(node.position).toEqual({ x: 96, y: 96 });
+      if (node.nodeType !== 'shape') throw new Error('Expected shape');
+      const inherited = node.textBody!.layoutBodyProperties!;
+      expect(inherited.attr('anchor')).toBe('b');
+      expect(inherited.numAttr('lIns')).toBe(body.includes('lIns') ? 0 : 190500);
+      expect(inherited.numAttr('rIns')).toBe(285750);
+      const rendered = renderShape(node, createRenderContext(p, p.slides[0]));
+      const container = rendered.querySelector('span')!.closest('div')!.parentElement!;
+      expect(container.style.justifyContent).toBe('flex-end');
+      expect(container.style.paddingLeft).toBe(body.includes('lIns') ? '0px' : '20px');
+      expect(container.style.paddingRight).toBe('30px');
+    },
+  );
+  it.each([0, 19050, -19050])('preserves explicit y=%s and zero extent', (y) => {
+    const node = fixture('<bodyPr/>', `<xfrm><off x="0" y="${y}"/><ext cx="0" cy="0"/></xfrm>`)
+      .slides[0].nodes[0];
+    expect(node.position).toEqual({ x: 0, y: y / 9525 });
+    expect(node.size).toEqual({ w: 0, h: 0 });
+  });
+  it('inherits missing extent while preserving explicit offset', () => {
+    const node = fixture('<bodyPr/>', '<xfrm><off x="0" y="0"/></xfrm>').slides[0].nodes[0];
+    expect(node.position).toEqual({ x: 0, y: 0 });
+    expect(node.size).toEqual({ w: 192, h: 96 });
+  });
+  it('does not fall back to same-type layout with a different idx', () => {
+    const node = fixture('<bodyPr/>', '', 'type="body" idx="55"').slides[0].nodes[0];
+    if (node.nodeType !== 'shape') throw new Error('Expected shape');
+    expect(node.textBody!.layoutBodyProperties!.attr('anchor')).toBe('b');
+  });
+  it.each(['obj', 'pic', 'chart', 'subTitle', 'clipArt', 'dgm', 'media', 'tbl'])(
+    'maps actual layout %s to master body despite conflicting slide title and master idx',
+    (type) => {
+      const p = fixture('<bodyPr/>', '', 'type="title" idx="7"', '<bodyPr/>', type);
+      const node = p.slides[0].nodes[0];
+      if (node.nodeType !== 'shape') throw new Error('Expected shape');
+      expect(node.textBody!.layoutBodyProperties!.attr('anchor')).toBe('b');
+    },
+  );
+  it('slide attributes override inherited layout/master values including zero', () => {
+    const p = fixture(
+      '<bodyPr lIns="95250"/>',
+      '',
+      'type="body" idx="7"',
+      '<bodyPr anchor="ctr" rIns="0"/>',
+    );
+    const node = p.slides[0].nodes[0];
+    if (node.nodeType !== 'shape') throw new Error('Expected shape');
+    const rendered = renderShape(node, createRenderContext(p, p.slides[0]));
+    const container = rendered.querySelector('span')!.closest('div')!.parentElement!;
+    expect(container.style.justifyContent).toBe('center');
+    expect(container.style.paddingLeft).toBe('10px');
+    expect(container.style.paddingRight).toBe('0px');
+  });
+  it('keeps local type while following the matched layout type to its master', () => {
+    const p = fixture('<bodyPr/>', '', 'type="title" idx="7"');
+    const node = p.slides[0].nodes[0];
+    if (node.nodeType !== 'shape') throw new Error('Expected shape');
+    expect(node.placeholder!.type).toBe('title');
+    expect(node.textBody!.layoutBodyProperties!.attr('anchor')).toBe('b');
   });
 });

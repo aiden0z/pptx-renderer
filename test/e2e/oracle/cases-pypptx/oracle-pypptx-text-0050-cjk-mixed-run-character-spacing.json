@@ -1,0 +1,24 @@
+{
+  "name": "oracle-pypptx-text-0050-cjk-mixed-run-character-spacing",
+  "generator": "python-pptx",
+  "slides": [
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    }
+  ],
+  "coverage": {
+    "oracle": "native-powerpoint",
+    "requiredFonts": [
+      "Microsoft YaHei"
+    ],
+    "features": [
+      "text.cjk",
+      "runs.adjacent",
+      "run.spacing=positive-negative"
+    ]
+  }
+}

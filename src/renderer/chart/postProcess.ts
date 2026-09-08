@@ -209,12 +209,49 @@ export function applyLegendGridMargins(
     const estimatedLegendPx = iconWidth + 8 + maxTextPx + 14;
     const plotArea = chartNode.child('plotArea');
     const isLineChart = plotArea.child('lineChart').exists();
+    const isBarChart = plotArea.child('barChart').exists();
+    const isAreaChart = plotArea.child('areaChart').exists();
+    const isScatterChart = plotArea.child('scatterChart').exists();
+    const isBubbleChart = plotArea.child('bubbleChart').exists();
+    const isHorizontalBar =
+      isBarChart && plotArea.child('barChart').child('barDir').attr('val') === 'bar';
+    const seriesOptions = Array.isArray(opt.series) ? opt.series : opt.series ? [opt.series] : [];
+    const hasNegativeBarValue =
+      isBarChart &&
+      seriesOptions.some(
+        (series: { type?: string; data?: unknown[] }) =>
+          series?.type === 'bar' &&
+          Array.isArray(series.data) &&
+          series.data.some((item) => {
+            const value =
+              typeof item === 'object' && item !== null && 'value' in item
+                ? (item as { value?: unknown }).value
+                : item;
+            return typeof value === 'number' && value < 0;
+          }),
+      );
+    const usesCompactBarLegend = isBarChart && !isHorizontalBar && !hasNegativeBarValue;
+    const usesCompactSideInset =
+      isLineChart || usesCompactBarLegend || isAreaChart || isScatterChart || isBubbleChart;
+    const hasManualLegendLayout = legend.child('layout').child('manualLayout').exists();
+    if (usesCompactSideInset && !hasManualLegendLayout) {
+      if (posVal === 'r') opt.legend.right = '1%';
+      else opt.legend.left = '1%';
+    }
     const seriesCount = Array.isArray(opt.series) ? opt.series.length : opt.series ? 1 : 0;
     const xAxis = Array.isArray(opt.xAxis) ? opt.xAxis[0] : opt.xAxis;
     const categoryCount = Array.isArray(xAxis?.data) ? xAxis.data.length : 0;
     const isDenseSingleSeriesLineRightLegend =
       posVal === 'r' && isLineChart && seriesCount === 1 && categoryCount >= 20;
-    const legendPaddingPx = isLineChart ? (isDenseSingleSeriesLineRightLegend ? -10 : 0) : 18;
+    const legendPaddingPx = isLineChart
+      ? isDenseSingleSeriesLineRightLegend
+        ? -4
+        : 6
+      : isBubbleChart
+        ? 10
+        : usesCompactBarLegend
+          ? 15
+          : 18;
     const gridMarginPx = Math.max(84, Math.round(estimatedLegendPx + legendPaddingPx));
 
     if (typeof opt.grid.left === 'string' && opt.grid.left.includes('%')) return;

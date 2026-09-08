@@ -168,6 +168,45 @@ function makeLazySlideFiles(): PptxFiles {
   };
 }
 
+function makeNestedCompatibleGroupFiles(): PptxFiles {
+  const files = makeLazySlideFiles();
+  files.slides.set(
+    'ppt/slides/slide1.xml',
+    `
+      <sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"
+           xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+           xmlns:p14="http://schemas.microsoft.com/office/powerpoint/2010/main">
+        <cSld><spTree>
+          <grpSp>
+            <nvGrpSpPr><cNvPr id="10" name="Outer group"/><nvPr/></nvGrpSpPr>
+            <grpSpPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="1828800" cy="914400"/><a:chOff x="0" y="0"/><a:chExt cx="1828800" cy="914400"/></a:xfrm></grpSpPr>
+            <grpSp>
+              <nvGrpSpPr><cNvPr id="11" name="Inner group"/><nvPr/></nvGrpSpPr>
+              <grpSpPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="1828800" cy="914400"/><a:chOff x="0" y="0"/><a:chExt cx="1828800" cy="914400"/></a:xfrm></grpSpPr>
+              <mc:AlternateContent>
+                <mc:Choice Requires="p14"><p14:contentPart/></mc:Choice>
+                <mc:Fallback>
+                  <sp>
+                    <nvSpPr><cNvPr id="12" name="First nested"/><nvPr/></nvSpPr>
+                    <spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="914400" cy="914400"/></a:xfrm><a:prstGeom prst="rect"/></spPr>
+                    <txBody><a:bodyPr/><a:lstStyle/><a:p><a:r><a:t>First nested</a:t></a:r></a:p></txBody>
+                  </sp>
+                  <sp>
+                    <nvSpPr><cNvPr id="13" name="Second nested"/><nvPr/></nvSpPr>
+                    <spPr><a:xfrm><a:off x="914400" y="0"/><a:ext cx="914400" cy="914400"/></a:xfrm><a:prstGeom prst="rect"/></spPr>
+                    <txBody><a:bodyPr/><a:lstStyle/><a:p><a:r><a:t>Second nested</a:t></a:r></a:p></txBody>
+                  </sp>
+                </mc:Fallback>
+              </mc:AlternateContent>
+            </grpSp>
+          </grpSp>
+        </spTree></cSld>
+      </sld>
+    `,
+  );
+  return files;
+}
+
 describe('renderSlide', () => {
   it('creates container with correct dimensions', () => {
     const pres = makeMinimalPres();
@@ -212,6 +251,18 @@ describe('renderSlide', () => {
 
     expect(slide.nodes).toHaveLength(1);
     expect(handle.element.textContent).toContain('Deferred label');
+  });
+
+  it('renders multiple selected children inside nested groups in source order', () => {
+    const pres = buildPresentation(makeNestedCompatibleGroupFiles());
+
+    const handle = renderSlide(pres, pres.slides[0]);
+    const text = handle.element.textContent ?? '';
+
+    expect(text.indexOf('First nested')).toBeGreaterThanOrEqual(0);
+    expect(text.indexOf('Second nested')).toBeGreaterThan(text.indexOf('First nested'));
+    expect(text.match(/First nested/g)).toHaveLength(1);
+    expect(text.match(/Second nested/g)).toHaveLength(1);
   });
 
   it('renders shape nodes', () => {
@@ -430,6 +481,39 @@ describe('renderSlide', () => {
     const { element: el } = renderSlide(pres, slide);
 
     expect(el.querySelector('img')).not.toBeNull();
+  });
+
+  it('renders compatible AlternateContent shapes from master and layout in draw order', () => {
+    const pres = makeMinimalPres();
+    const alternateTree = (choiceName: string, fallbackName: string) =>
+      parseXml(`
+      <p:spTree xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
+                xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"
+                xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                xmlns:p14="http://schemas.microsoft.com/office/powerpoint/2010/main">
+        <mc:AlternateContent>
+          <mc:Choice Requires="p">
+            <p:sp><p:nvSpPr><p:cNvPr id="31" name="${choiceName}"/><p:nvPr/></p:nvSpPr><p:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="914400" cy="914400"/></a:xfrm><a:prstGeom prst="rect"/></p:spPr></p:sp>
+          </mc:Choice>
+          <mc:Fallback>
+            <p:sp><p:nvSpPr><p:cNvPr id="32" name="${fallbackName}"/><p:nvPr/></p:nvSpPr><p:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="914400" cy="914400"/></a:xfrm><a:prstGeom prst="rect"/></p:spPr></p:sp>
+          </mc:Fallback>
+        </mc:AlternateContent>
+      </p:spTree>
+    `);
+    pres.masters.values().next().value!.spTree = alternateTree('Master choice', 'Master fallback');
+    pres.layouts.values().next().value!.spTree = alternateTree('Layout choice', 'Layout fallback');
+    const slide: SlideData = {
+      index: 0,
+      nodes: [],
+      rels: new Map(),
+      slidePath: 'ppt/slides/slide1.xml',
+      showMasterSp: true,
+    };
+
+    const { element } = renderSlide(pres, slide);
+
+    expect(element.querySelectorAll('svg')).toHaveLength(2);
   });
 
   it('skips placeholder shapes from master/layout spTree', () => {

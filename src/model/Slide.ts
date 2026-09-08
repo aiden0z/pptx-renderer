@@ -5,8 +5,9 @@
 
 import { parseXml, SafeXmlNode } from '../parser/XmlParser';
 import { RelEntry } from '../parser/RelParser';
-import { parseRenderableChild, type RenderableNode } from './RenderableChild';
+import { parseRenderableChildren, type RenderableNode } from './RenderableChild';
 import { parseOoxmlBool } from '../parser/booleans';
+import { parseColorMapOverride, type ColorMapOverrideMode } from './Layout';
 
 export { parseOleFrameAsPicture } from './RenderableChild';
 
@@ -24,6 +25,9 @@ export interface SlideData {
   slidePath: string;
   /** When false, shapes from the layout and master should NOT be rendered on this slide. */
   showMasterSp: boolean;
+  colorMapOverride?: Map<string, string>;
+  /** Whether clrMapOvr supplies an override map or explicitly resets to the master map. */
+  colorMapOverrideMode?: ColorMapOverrideMode;
   /** @internal Raw slide XML used when slide node parsing is deferred. */
   sourceXml?: string;
   /** @internal Whether `nodes` has been parsed from `sourceXml`. */
@@ -75,14 +79,12 @@ export function parseSlide(
   const nodes: SlideNode[] = [];
 
   for (const child of spTree.allChildren()) {
-    const node = parseRenderableChild(child, {
+    const childNodes = parseRenderableChildren(child, {
       rels,
       partPath: slidePath,
       diagramDrawings,
     });
-    if (node) {
-      nodes.push(node);
-    }
+    nodes.push(...childNodes);
   }
 
   // --- Layout relationship ---
@@ -91,6 +93,7 @@ export function parseSlide(
   // --- showMasterSp: if false, layout/master shapes should not be rendered on this slide ---
   const showMasterSp = parseDefaultTrueBoolAttr(root.attr('showMasterSp'));
   const hidden = !parseDefaultTrueBoolAttr(root.attr('show'));
+  const { colorMapOverride, colorMapOverrideMode } = parseColorMapOverride(root);
 
   return {
     index,
@@ -101,6 +104,8 @@ export function parseSlide(
     rels,
     slidePath,
     showMasterSp,
+    colorMapOverride,
+    colorMapOverrideMode,
     nodesMaterialized: true,
   };
 }
@@ -147,6 +152,8 @@ export function materializeSlideData(
   slide.background = parsed.background;
   slide.layoutIndex = resolvedLayoutIndex || parsed.layoutIndex;
   slide.showMasterSp = parsed.showMasterSp;
+  slide.colorMapOverride = parsed.colorMapOverride;
+  slide.colorMapOverrideMode = parsed.colorMapOverrideMode;
   slide.nodesMaterialized = true;
   slide.sourceXml = undefined;
 }

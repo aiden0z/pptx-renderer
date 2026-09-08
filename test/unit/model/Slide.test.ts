@@ -11,11 +11,13 @@ function makeSlideXml(
   opts: {
     bg?: string;
     shapes?: string;
+    clrMapOvr?: string;
     showMasterSp?: string;
   } = {},
 ) {
   const bgXml = opts.bg ? `<bg>${opts.bg}</bg>` : '';
   const shapes = opts.shapes ?? '';
+  const clrMapOvr = opts.clrMapOvr ?? '';
   const showAttr = opts.showMasterSp !== undefined ? ` showMasterSp="${opts.showMasterSp}"` : '';
   return parseXml(`
     <sld${showAttr}
@@ -25,6 +27,7 @@ function makeSlideXml(
         ${bgXml}
         <spTree>${shapes}</spTree>
       </cSld>
+      ${clrMapOvr}
     </sld>
   `);
 }
@@ -61,9 +64,7 @@ describe('parseSlide', () => {
   });
 
   it('parses OOXML false aliases for showMasterSp', () => {
-    expect(parseSlide(makeSlideXml({ showMasterSp: 'f' }), 0, makeRels()).showMasterSp).toBe(
-      false,
-    );
+    expect(parseSlide(makeSlideXml({ showMasterSp: 'f' }), 0, makeRels()).showMasterSp).toBe(false);
     expect(parseSlide(makeSlideXml({ showMasterSp: 'off' }), 0, makeRels()).showMasterSp).toBe(
       false,
     );
@@ -88,6 +89,48 @@ describe('parseSlide', () => {
     expect(slide.nodes).toHaveLength(1);
     expect(slide.nodes[0].nodeType).toBe('shape');
     expect(slide.nodes[0].name).toBe('Rect');
+  });
+
+  it('selects an ordinary fallback shape from AlternateContent', () => {
+    const slide = parseSlide(
+      makeSlideXml({
+        shapes: `
+          <mc:AlternateContent xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                               xmlns:p14="http://schemas.microsoft.com/office/powerpoint/2010/main">
+            <mc:Choice Requires="p14"><p14:contentPart/></mc:Choice>
+            <mc:Fallback>
+              <sp><nvSpPr><cNvPr id="20" name="Fallback shape"/><nvPr/></nvSpPr><spPr/></sp>
+            </mc:Fallback>
+          </mc:AlternateContent>
+        `,
+      }),
+      0,
+      makeRels(),
+    );
+
+    expect(slide.nodes).toHaveLength(1);
+    expect(slide.nodes[0].name).toBe('Fallback shape');
+  });
+
+  it('parses slide color-map overrides and explicit master reset separately from absence', () => {
+    const absent = parseSlide(makeSlideXml(), 0, makeRels());
+    const override = parseSlide(
+      makeSlideXml({
+        clrMapOvr: '<clrMapOvr><overrideClrMapping accent1="accent2"/></clrMapOvr>',
+      }),
+      0,
+      makeRels(),
+    );
+    const reset = parseSlide(
+      makeSlideXml({ clrMapOvr: '<clrMapOvr><masterClrMapping/></clrMapOvr>' }),
+      0,
+      makeRels(),
+    );
+
+    expect(absent.colorMapOverrideMode).toBeUndefined();
+    expect(override.colorMapOverrideMode).toBe('override');
+    expect(override.colorMapOverride?.get('accent1')).toBe('accent2');
+    expect(reset.colorMapOverrideMode).toBe('master');
   });
 
   it('parses cxnSp as shape node', () => {

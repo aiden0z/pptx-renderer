@@ -76,7 +76,7 @@ function findNvProps(node: SafeXmlNode): { cNvPr: SafeXmlNode; nvPr: SafeXmlNode
  * Find the transform (xfrm) node. Shapes use `p:spPr > a:xfrm`,
  * groups use `p:grpSpPr > a:xfrm`, graphic frames use `p:xfrm`.
  */
-function findXfrm(node: SafeXmlNode): SafeXmlNode {
+export function findXfrm(node: SafeXmlNode): SafeXmlNode {
   // Try spPr first (most shapes)
   const spPr = node.child('spPr');
   if (spPr.exists()) {

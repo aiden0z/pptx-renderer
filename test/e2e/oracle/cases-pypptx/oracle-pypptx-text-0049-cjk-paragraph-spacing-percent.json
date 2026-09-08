@@ -1,0 +1,25 @@
+{
+  "name": "oracle-pypptx-text-0049-cjk-paragraph-spacing-percent",
+  "generator": "python-pptx",
+  "slides": [
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    }
+  ],
+  "coverage": {
+    "oracle": "native-powerpoint",
+    "requiredFonts": [
+      "Microsoft YaHei"
+    ],
+    "features": [
+      "text.cjk",
+      "paragraph.multiple",
+      "spcBef.spcPct",
+      "spcAft.spcPct"
+    ]
+  }
+}

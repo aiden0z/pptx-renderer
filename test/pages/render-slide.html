@@ -52,6 +52,8 @@
       import { parseZip, buildPresentation } from '../../src/index.ts';
       import { renderSlide } from '../../src/renderer/SlideRenderer.ts';
       import { TRUSTED_TESTDATA_ZIP_LIMITS } from './zipLimits.ts';
+      import { waitForVisualStability } from './visualStability.ts';
+      import { loadTestFontProfile } from './fontProfile.ts';
 
       const pdfjs = {
         moduleUrl: new URL('pdfjs-dist/build/pdf.min.mjs', import.meta.url).toString(),
@@ -69,11 +71,14 @@
       let currentSlide = 0;
       let mediaCache = new Map();
       let currentHandle = null;
+      let renderGeneration = 0;
 
       // URL params
       const params = new URLSearchParams(location.search);
       const fileParam = params.get('file');
       const slideParam = params.get('slide');
+      const fontProfileParam = params.get('fontProfile');
+      const fontProfilePromise = loadTestFontProfile(fontProfileParam);
 
       // Populate file select from testdata directory
       async function populateFileSelect() {
@@ -138,6 +143,7 @@
           slideSelect.value = String(idx);
           await showSlide(idx);
         } catch (e) {
+          window.__renderError = e?.message || String(e);
           renderLoadError(e);
           statusEl.textContent = `Error: ${e.message}`;
           console.error(e);
@@ -156,6 +162,7 @@
 
       async function showSlide(idx) {
         if (!presentation) return;
+        const generation = ++renderGeneration;
         window.__renderDone = false;
         window.__renderError = undefined;
         currentSlide = idx;
@@ -169,7 +176,13 @@
 
         container.innerHTML = '';
         const slide = presentation.slides[idx];
-        const handle = renderSlide(presentation, slide, { mediaUrlCache: mediaCache, pdfjs });
+        const fontProfile = await fontProfilePromise;
+        window.__fontProfile = fontProfile.id;
+        const handle = renderSlide(presentation, slide, {
+          mediaUrlCache: mediaCache,
+          pdfjs,
+          fontFaces: fontProfile.fontFaces,
+        });
         currentHandle = handle;
 
         const wrapper = document.createElement('div');
@@ -190,7 +203,11 @@
 
         try {
           await handle.ready;
+          if (generation !== renderGeneration || currentHandle !== handle) return;
+          await waitForVisualStability(handle.element);
+          if (generation !== renderGeneration || currentHandle !== handle) return;
         } catch (e) {
+          if (generation !== renderGeneration || currentHandle !== handle) return;
           window.__renderError = e?.message || String(e);
           throw e;
         }

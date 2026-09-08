@@ -189,7 +189,12 @@ export function renderGroup(
 
   let pieCommon: { x: number; y: number; w: number; h: number } | null = null;
   let pieCenterOffsets: Map<number, { x: number; y: number }> | null = null;
-  if (node.children.length === 6 && chExt.w > 0 && chExt.h > 0) {
+  if (
+    node.diagramLayoutId === 'urn:microsoft.com/office/officeart/2005/8/layout/cycle8' &&
+    node.children.length === 6 &&
+    chExt.w > 0 &&
+    chExt.h > 0
+  ) {
     const prst = (c: (typeof node.children)[0]) => c.child('spPr').child('prstGeom').attr('prst');
     const firstPie = node.children.slice(0, 3).every((c) => prst(c) === 'pie');
     const nextArrow = node.children.slice(3, 6).every((c) => prst(c) === 'circularArrow');

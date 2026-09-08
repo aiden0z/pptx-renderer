@@ -438,8 +438,50 @@ describe('serializePresentation', () => {
   });
 
   it('serializes inherited placeholder geometry for lazy group children', () => {
+    const placeholder = makeGroupedPlaceholderXml();
+    placeholder.child('spPr').child('xfrm').element!.remove();
     const group: GroupNodeData = {
-      ...makeBase({ id: '10', name: 'group', position: { x: 50, y: 30 }, size: { w: 200, h: 100 } }),
+      ...makeBase({
+        id: '10',
+        name: 'group',
+        position: { x: 50, y: 30 },
+        size: { w: 200, h: 100 },
+      }),
+      nodeType: 'group',
+      childOffset: { x: 0, y: 0 },
+      childExtent: { w: 400, h: 200 },
+      children: [placeholder],
+    };
+    const pres = makePres([group]);
+    const layoutPath = 'ppt/slideLayouts/slideLayout1.xml';
+    pres.slideToLayout.set(0, layoutPath);
+    pres.layouts.set(layoutPath, {
+      placeholders: [
+        {
+          node: makeLayoutPlaceholderXml(),
+          absoluteXfrm: { position: { x: 100, y: 60 }, size: { w: 40, h: 20 } },
+        },
+      ],
+      spTree: emptyXml,
+      rels: new Map(),
+      showMasterSp: true,
+    });
+
+    const result = serializePresentation(pres);
+    const child = result.slides[0].nodes[0].children![0];
+
+    expect(child.textBody?.totalText).toBe('Serialized inherited placeholder');
+    expect(child.position).toEqual({ x: 100, y: 60 });
+    expect(child.size).toEqual({ w: 80, h: 40 });
+  });
+  it('serializes explicit zero geometry for lazy group placeholders', () => {
+    const group: GroupNodeData = {
+      ...makeBase({
+        id: '10',
+        name: 'group',
+        position: { x: 50, y: 30 },
+        size: { w: 200, h: 100 },
+      }),
       nodeType: 'group',
       childOffset: { x: 0, y: 0 },
       childExtent: { w: 400, h: 200 },
@@ -464,8 +506,8 @@ describe('serializePresentation', () => {
     const child = result.slides[0].nodes[0].children![0];
 
     expect(child.textBody?.totalText).toBe('Serialized inherited placeholder');
-    expect(child.position).toEqual({ x: 100, y: 60 });
-    expect(child.size).toEqual({ w: 80, h: 40 });
+    expect(child.position).toEqual({ x: 0, y: 0 });
+    expect(child.size).toEqual({ w: 0, h: 0 });
   });
 
   it('serializes group with unparseable children gracefully', () => {
@@ -513,7 +555,9 @@ describe('serializePresentation', () => {
     const pres = makePres([]);
     pres.slides.push({
       index: 1,
-      nodes: [{ ...makeBase({ id: '2' }), nodeType: 'shape', adjustments: new Map() } as ShapeNodeData],
+      nodes: [
+        { ...makeBase({ id: '2' }), nodeType: 'shape', adjustments: new Map() } as ShapeNodeData,
+      ],
       rels: new Map(),
       showMasterSp: true,
     });

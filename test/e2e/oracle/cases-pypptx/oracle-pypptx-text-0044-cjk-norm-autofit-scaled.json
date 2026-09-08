@@ -1,0 +1,26 @@
+{
+  "name": "oracle-pypptx-text-0044-cjk-norm-autofit-scaled",
+  "generator": "python-pptx",
+  "slides": [
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    }
+  ],
+  "coverage": {
+    "oracle": "native-powerpoint",
+    "requiredFonts": [
+      "Microsoft YaHei"
+    ],
+    "features": [
+      "text.cjk",
+      "bodyPr.wrap=square",
+      "bodyPr.normAutofit",
+      "normAutofit.fontScale=85000",
+      "normAutofit.lnSpcReduction=10000"
+    ]
+  }
+}

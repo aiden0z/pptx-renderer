@@ -165,6 +165,18 @@ function getStyleSections(
     if (s.exists()) sections.push(s);
   }
 
+  // Corner sections require both intersecting row/column options.
+  const corners: Array<[string, boolean]> = [
+    ['nwCell', isFirstRow && isFirstCol && rowIdx === 0 && colIdx === 0],
+    ['swCell', isLastRow && isFirstCol && rowIdx === totalRows - 1 && colIdx === 0],
+    ['neCell', isFirstRow && isLastCol && rowIdx === 0 && colIdx === totalCols - 1],
+    ['seCell', isLastRow && isLastCol && rowIdx === totalRows - 1 && colIdx === totalCols - 1],
+  ];
+  for (const [name, applies] of corners) {
+    const section = tblStyle.child(name);
+    if (applies && section.exists()) sections.push(section);
+  }
+
   return sections;
 }
 
@@ -312,6 +324,8 @@ function applyStyleBorders(
   colIdx?: number,
   totalRows?: number,
   totalCols?: number,
+  rowSpan = 1,
+  gridSpan = 1,
 ): void {
   const tcBdr = tcStyle.child('tcBdr');
   if (!tcBdr.exists()) return;
@@ -328,7 +342,7 @@ function applyStyleBorders(
   // insideV → borderRight for non-last cols, borderLeft for non-first cols
   const insideH = tcBdr.child('insideH');
   if (insideH.exists() && rowIdx !== undefined && totalRows !== undefined) {
-    if (rowIdx < totalRows - 1) {
+    if (rowIdx + rowSpan < totalRows) {
       borderMap.push(['insideH', 'borderBottom']);
     }
     if (rowIdx > 0) {
@@ -337,7 +351,7 @@ function applyStyleBorders(
   }
   const insideV = tcBdr.child('insideV');
   if (insideV.exists() && colIdx !== undefined && totalCols !== undefined) {
-    if (colIdx < totalCols - 1) {
+    if (colIdx + gridSpan < totalCols) {
       borderMap.push(['insideV', 'borderRight']);
     }
     if (colIdx > 0) {
@@ -353,7 +367,10 @@ function applyStyleBorders(
     const ln = side.child('ln');
     if (ln.exists()) {
       const noFill = ln.child('noFill');
-      if (noFill.exists()) continue;
+      if (noFill.exists()) {
+        td.style[cssProp] = 'none';
+        continue;
+      }
 
       const style = resolveLineStyle(ln, ctx);
       if (style.width > 0 && style.color !== 'transparent') {
@@ -366,7 +383,10 @@ function applyStyleBorders(
     const lnRef = side.child('lnRef');
     if (lnRef.exists()) {
       const idx = lnRef.numAttr('idx') ?? 0;
-      if (idx === 0) continue; // idx 0 = no line
+      if (idx === 0) {
+        td.style[cssProp] = 'none';
+        continue;
+      }
 
       // Resolve color from the lnRef's child color element
       const { color, alpha } = resolveColor(lnRef, ctx);
@@ -543,7 +563,17 @@ export function renderTable(node: TableNodeData, ctx: RenderContext): HTMLElemen
           const tcStyle = section.child('tcStyle');
           if (tcStyle.exists()) {
             applyStyleFill(td, tcStyle, ctx);
-            applyStyleBorders(td, tcStyle, ctx, rowIdx, colIdx, totalRows, totalCols);
+            applyStyleBorders(
+              td,
+              tcStyle,
+              ctx,
+              rowIdx,
+              colIdx,
+              totalRows,
+              totalCols,
+              cell.rowSpan,
+              cell.gridSpan,
+            );
           }
         }
       }

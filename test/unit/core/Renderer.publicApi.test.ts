@@ -23,9 +23,13 @@ const mockPresentation = {
   isWps: false,
 };
 
-vi.mock('../../../src/model/Presentation', () => ({
-  buildPresentation: vi.fn(() => ({ ...mockPresentation })),
-}));
+vi.mock('../../../src/model/Presentation', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../../src/model/Presentation')>();
+  return {
+    buildPresentation: vi.fn(() => ({ ...mockPresentation })),
+    materializeSlideNodes: actual.materializeSlideNodes,
+  };
+});
 
 vi.mock('../../../src/renderer/SlideRenderer', () => ({
   renderSlide: vi.fn(() => {
@@ -839,21 +843,73 @@ describe('PptxRenderer chart instance lifecycle', () => {
     expect(lastCallOptions.chartInstances).toBe(chartSet);
   });
 
-  it('renderSlideToContainer passes chartInstances through to renderSlide', async () => {
-    const { renderSlide: mockRenderSlide } = await import(
-      '../../../src/renderer/SlideRenderer'
-    );
+  it('keeps external media and chart ownership independent until caller disposal', async () => {
+    const { renderSlide: mockRenderSlide } = await import('../../../src/renderer/SlideRenderer');
+    const { renderSlide: realRenderSlide } = await vi.importActual<
+      typeof import('../../../src/renderer/SlideRenderer')
+    >('../../../src/renderer/SlideRenderer');
+    const { parseXml } = await import('../../../src/parser/XmlParser');
+    const { parsePicNode } = await import('../../../src/model/nodes/PicNode');
     const container = document.createElement('div');
     const renderer = new PptxRenderer(container);
     await renderer.preview(new ArrayBuffer(4));
+    const presentation = renderer.presentationData!;
+    const picture = parsePicNode(
+      parseXml(`
+      <p:pic xmlns:p="p" xmlns:a="a" xmlns:r="r">
+        <p:nvPicPr><p:cNvPr id="1" name="external-image"/><p:cNvPicPr/><p:nvPr/></p:nvPicPr>
+        <p:blipFill><a:blip r:embed="image"/><a:stretch/></p:blipFill>
+        <p:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="95250" cy="95250"/></a:xfrm></p:spPr>
+      </p:pic>
+    `),
+    );
+    // Replace per-presentation arrays/maps rather than mutating the shared preview fixture.
+    presentation.slides = [
+      {
+        ...presentation.slides[0],
+        nodes: [picture],
+        rels: new Map([['image', { type: 'image', target: '../media/external.svg' }]]),
+      },
+    ];
+    presentation.media = new Map([
+      [
+        'ppt/media/external.svg',
+        new TextEncoder().encode(
+          '<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"/>',
+        ),
+      ],
+    ]);
+    let nextUrl = 0;
+    vi.spyOn(URL, 'createObjectURL').mockImplementation(() => `blob:external-${++nextUrl}`);
+    const revoke = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
+    const viewerChart = { isDisposed: () => false, dispose: vi.fn(), getDom: vi.fn() };
+    (renderer as any).chartInstances.add(viewerChart);
+    (renderer as any).mediaUrlCache.set('viewer-owned', 'blob:viewer-owned');
 
-    const externalContainer = document.createElement('div');
-    renderer.renderSlideToContainer(0, externalContainer);
+    vi.mocked(mockRenderSlide).mockImplementationOnce(realRenderSlide);
+    const external = renderer.renderSlideToContainer(0, document.createElement('div'))!;
+    vi.mocked(mockRenderSlide).mockImplementationOnce(realRenderSlide);
+    const sibling = renderer.renderSlideToContainer(0, document.createElement('div'))!;
+    await Promise.all([external.ready, sibling.ready]);
+    const externalUrl = external.element.querySelector('img')!.src;
+    const siblingUrl = sibling.element.querySelector('img')!.src;
+    expect(externalUrl).not.toBe(siblingUrl);
+    const externalOptions = vi.mocked(mockRenderSlide).mock.calls.at(-1)![2]!;
+    expect(externalOptions.chartInstances).toBeUndefined();
+    expect(externalOptions.mediaUrlCache).toBeUndefined();
 
-    const chartSet = (renderer as any).chartInstances;
-    const calls = (mockRenderSlide as any).mock.calls;
-    const lastCallOptions = calls[calls.length - 1][2];
-    expect(lastCallOptions.chartInstances).toBe(chartSet);
+    renderer.destroy();
+    expect(viewerChart.dispose).toHaveBeenCalledTimes(1);
+    expect(revoke).toHaveBeenCalledWith('blob:viewer-owned');
+    expect(revoke).not.toHaveBeenCalledWith(externalUrl);
+    expect(revoke).not.toHaveBeenCalledWith(siblingUrl);
+    expect(external.element.querySelector('img')!.src).toBe(externalUrl);
+
+    external.dispose();
+    expect(revoke).toHaveBeenCalledWith(externalUrl);
+    expect(revoke).not.toHaveBeenCalledWith(siblingUrl);
+    sibling.dispose();
+    expect(revoke).toHaveBeenCalledWith(siblingUrl);
   });
 });
 

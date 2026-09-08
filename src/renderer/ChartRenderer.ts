@@ -235,6 +235,48 @@ function defaultLineMarkerSymbol(seriesIndex: number): string {
   return DEFAULT_LINE_MARKER_SYMBOLS[seriesIndex % DEFAULT_LINE_MARKER_SYMBOLS.length];
 }
 
+/** Keep source indices and missing coordinates through the ECharts boundary. */
+function buildXYData(s: SeriesData, mode: DispBlanksAs, bubble = false): (number | null)[][] {
+  const count = Math.max(
+    s.values.length,
+    s.xValues?.length ?? 0,
+    bubble ? (s.bubbleSizes?.length ?? 0) : 0,
+  );
+  const blank = mode === 'zero' ? 0 : null;
+  return Array.from({ length: count }, (_, i) => {
+    const x = s.xValues ? (s.xBlankIndices?.has(i) ? blank : (s.xValues[i] ?? blank)) : i;
+    const y = s.blankIndices?.has(i) ? blank : (s.values[i] ?? blank);
+    return bubble
+      ? [
+          x,
+          y,
+          s.bubbleSizes ? (s.bubbleBlankIndices?.has(i) ? blank : (s.bubbleSizes[i] ?? blank)) : 0,
+        ]
+      : [x, y];
+  });
+}
+
+function smoothXYData(data: (number | null)[][], span: boolean): (number | null)[][] {
+  const result: (number | null)[][] = [];
+  let segment: number[][] = [];
+  const flush = () => {
+    result.push(...buildSmoothScatterLineData(segment));
+    segment = [];
+  };
+  for (const point of data) {
+    if (point.some((v) => v === null)) {
+      if (!span) {
+        flush();
+        result.push(point);
+      }
+    } else {
+      segment.push(point as number[]);
+    }
+  }
+  flush();
+  return result;
+}
+
 function buildSmoothScatterLineData(data: number[][], stepsPerSegment = 24): number[][] {
   if (data.length < 3) return data;
   for (let i = 1; i < data.length; i++) {
@@ -284,6 +326,20 @@ function hasManualGrid(
     manualGrid.width !== undefined ||
     manualGrid.height !== undefined
   );
+}
+
+function hasNegativeSeriesValue(seriesArr: SeriesData[]): boolean {
+  return seriesArr.some((series) => series.values.some((value) => value < 0));
+}
+
+function scaledChartMargin(
+  size: number | undefined,
+  ratio: number,
+  fallback: number,
+  minimum = 0,
+): number {
+  if (size === undefined || !Number.isFinite(size) || size <= 0) return fallback;
+  return Math.max(minimum, Math.round(size * ratio));
 }
 
 // ---------------------------------------------------------------------------
@@ -811,15 +867,21 @@ function buildBarChartOption(
   if (isPercentStacked) forcePercentAxis(valueAxisDef);
   applyAxisInfo(valueAxisDef, valueAxis, 'value');
 
+  const manualGrid = extractManualLayoutGrid(chartNode);
+  const useCompactDefaults =
+    !isHorizontal &&
+    !legendInfo?.overlay &&
+    !hasManualGrid(manualGrid) &&
+    !hasNegativeSeriesValue(seriesArr);
   const hasTitle = !!titleOption;
-  const gridTop = isHorizontal && hasTitle ? 60 : getGridTopPx(hasTitle, legendInfo);
+  const gridTop =
+    isHorizontal && hasTitle ? 60 : getGridTopPx(hasTitle, legendInfo, useCompactDefaults);
   const legendTopPx = getLegendTopPx(hasTitle, legendInfo);
   // When value axis is hidden, reduce left/right padding so bars use full width
-  const gridLeft = isHorizontal ? 15 : valueAxis.deleted ? 4 : 18;
-  const gridRight = isHorizontal ? 28 : 10;
+  const gridLeft = isHorizontal ? 15 : valueAxis.deleted ? 4 : useCompactDefaults ? 12 : 18;
+  const gridRight = isHorizontal ? 28 : useCompactDefaults ? 15 : 10;
   const tooltipFmt = pctFormat || sharedSeriesFormat;
-  const gridBottom = getGridBottomPx(legendInfo);
-  const manualGrid = extractManualLayoutGrid(chartNode);
+  const gridBottom = getGridBottomPx(legendInfo) + (useCompactDefaults ? 3 : 0);
   const containLabel = !hasManualGrid(manualGrid);
 
   return {
@@ -1051,12 +1113,14 @@ function buildLineChartOption(
   };
   applyAxisInfo(xAxisDef, categoryAxis, 'category');
 
-  const gridTop = getGridTopPx(!!titleOption, legendInfo);
-  const legendTopPx = getLegendTopPx(!!titleOption, legendInfo);
-  const gridLeft = valueAxis.deleted ? 4 : 18;
-  const tooltipFmt = pctFormat || sharedSeriesFormat;
-  const gridBottom = getGridBottomPx(legendInfo);
   const manualGrid = extractManualLayoutGrid(chartNode);
+  const useCompactDefaults =
+    !legendInfo?.overlay && !hasManualGrid(manualGrid) && !hasNegativeSeriesValue(seriesArr);
+  const gridTop = getGridTopPx(!!titleOption, legendInfo, useCompactDefaults);
+  const legendTopPx = getLegendTopPx(!!titleOption, legendInfo);
+  const gridLeft = valueAxis.deleted ? 4 : useCompactDefaults ? 12 : 18;
+  const tooltipFmt = pctFormat || sharedSeriesFormat;
+  const gridBottom = getGridBottomPx(legendInfo) + (useCompactDefaults ? 3 : 0);
   const containLabel = !hasManualGrid(manualGrid);
   const legendEntries = seriesArr.map((s, idx) => ({ series: s, idx }));
   const legendOrder = isStacked || isPercentStacked ? [...legendEntries].reverse() : legendEntries;
@@ -1105,7 +1169,7 @@ function buildLineChartOption(
     grid: {
       containLabel,
       left: gridLeft,
-      right: 10,
+      right: useCompactDefaults ? 15 : 10,
       top: gridTop,
       bottom: gridBottom,
       ...manualGrid,
@@ -1458,6 +1522,7 @@ function buildScatterChartOption(
   chartNode: SafeXmlNode,
   seriesArr: SeriesData[],
   ctx: RenderContext,
+  chartSize?: ChartPixelSize,
 ): EChartsTypes.EChartsOption {
   const titleOption = buildChartTitleOption(chartNode, seriesArr, ctx, 14);
   const legendInfo = extractLegendInfo(chartNode, ctx);
@@ -1475,22 +1540,20 @@ function buildScatterChartOption(
   const scatterStyleHidesMarkers = scatterStyle === 'line' || scatterStyle === 'smooth';
 
   const series = seriesArr.map((s, idx) => {
-    // Use xValues if available (parsed from c:xVal), otherwise fall back to index
-    const data = s.values.map((v, i) => {
-      const x = s.xValues && i < s.xValues.length ? s.xValues[i] : i;
-      return [x, v];
-    });
+    const data = buildXYData(s, getDispBlanksAs(chartNode));
     const echartsSymbol = mapOoxmlSymbol(s.markerSymbol) ?? defaultScatterSymbol(scatterStyle, idx);
     const showSymbol = !scatterStyleHidesMarkers && echartsSymbol !== 'none';
     const renderAsLine = (scatterStyleDrawsLine || s.smooth) && !s.lineNoFill;
     if (renderAsLine) {
       const shouldInterpolate = s.smooth ?? scatterStyleIsSmooth;
-      const lineData = shouldInterpolate ? buildSmoothScatterLineData(data) : data;
+      const span = getDispBlanksAs(chartNode) === 'span';
+      const lineData = shouldInterpolate ? smoothXYData(data, span) : data;
       const lineWidth = s.lineWidth ?? 3;
       return {
         type: 'line' as const,
         name: s.name,
         data: lineData,
+        connectNulls: span,
         smooth: false,
         showSymbol,
         ...(showSymbol
@@ -1535,13 +1598,24 @@ function buildScatterChartOption(
   const plotArea = chartNode.child('plotArea');
   const { xAxis: xAxisInfo, yAxis: yAxisInfo } = parseScatterAxes(plotArea, ctx);
 
-  const gridTop = getGridTopPx(!!titleOption, legendInfo);
-  const legendTopPx = getLegendTopPx(!!titleOption, legendInfo);
   const manualGrid = extractManualLayoutGrid(chartNode);
+  const useCompactDefaults =
+    chartSize !== undefined && !legendInfo?.overlay && !hasManualGrid(manualGrid);
+  const gridTop = getGridTopPx(!!titleOption, legendInfo, useCompactDefaults);
+  const legendTopPx = getLegendTopPx(!!titleOption, legendInfo);
   const containLabel = !hasManualGrid(manualGrid);
-  const scatterGridLeft = yAxisInfo.deleted ? 4 : 18;
+  const scatterGridLeft = yAxisInfo.deleted
+    ? 4
+    : useCompactDefaults
+      ? scaledChartMargin(chartSize?.w, 0.018, 18, 4)
+      : 18;
+  const scatterGridRight = useCompactDefaults ? scaledChartMargin(chartSize?.w, 0.01, 10, 4) : 10;
   const scatterGridTop = gridTop;
-  const scatterGridBottom = Math.max(getGridBottomPx(legendInfo), 20);
+  const scatterGridBottom = useCompactDefaults
+    ? getLegendPlacement(legendInfo) === 'bottom'
+      ? getGridBottomPx(legendInfo)
+      : scaledChartMargin(chartSize?.h, 0.04, 20, 8)
+    : getGridBottomPx(legendInfo);
 
   const xAxisDef: Record<string, unknown> = { type: 'value' };
   const yAxisDef: Record<string, unknown> = { type: 'value' };
@@ -1555,7 +1629,7 @@ function buildScatterChartOption(
     grid: {
       containLabel,
       left: scatterGridLeft,
-      right: 10,
+      right: scatterGridRight,
       top: scatterGridTop,
       bottom: scatterGridBottom,
       ...manualGrid,
@@ -1617,6 +1691,7 @@ function buildBubbleChartOption(
   chartNode: SafeXmlNode,
   seriesArr: SeriesData[],
   ctx: RenderContext,
+  chartSize?: ChartPixelSize,
 ): EChartsTypes.EChartsOption {
   const titleOption = buildChartTitleOption(chartNode, seriesArr, ctx, 14);
   const legendInfo = extractLegendInfo(chartNode, ctx);
@@ -1629,20 +1704,14 @@ function buildBubbleChartOption(
   // should follow sqrt(value / maxValue), not a linear min-max interpolation.
   let maxSize = -Infinity;
   for (const s of seriesArr) {
-    if (s.bubbleSizes) {
-      for (const sz of s.bubbleSizes) {
-        if (sz > maxSize) maxSize = sz;
-      }
+    for (const point of buildXYData(s, getDispBlanksAs(chartNode), true)) {
+      if (point.every((value) => value !== null) && point[2]! > maxSize) maxSize = point[2]!;
     }
   }
   const safeMaxBubbleSize = maxSize > 0 ? maxSize : 1;
 
   const series: EChartsTypes.ScatterSeriesOption[] = seriesArr.map((s) => {
-    const data = s.values.map((v, i) => {
-      const x = s.xValues && i < s.xValues.length ? s.xValues[i] : i;
-      const bub = s.bubbleSizes && i < s.bubbleSizes.length ? s.bubbleSizes[i] : 0;
-      return [x, v, bub];
-    });
+    const data = buildXYData(s, getDispBlanksAs(chartNode), true);
     return {
       type: 'scatter' as const,
       name: s.name,
@@ -1658,25 +1727,33 @@ function buildBubbleChartOption(
   const plotArea = chartNode.child('plotArea');
   const { xAxis: xAxisInfo, yAxis: yAxisInfo } = parseScatterAxes(plotArea, ctx);
 
-  const gridTop = getGridTopPx(!!titleOption, legendInfo);
-  const legendTopPx = getLegendTopPx(!!titleOption, legendInfo);
   const manualGrid = extractManualLayoutGrid(chartNode);
+  const useCompactDefaults =
+    chartSize !== undefined && !legendInfo?.overlay && !hasManualGrid(manualGrid);
+  const gridTop = getGridTopPx(!!titleOption, legendInfo, useCompactDefaults);
+  const legendTopPx = getLegendTopPx(!!titleOption, legendInfo);
   const containLabel = !hasManualGrid(manualGrid);
-  const scatterGridLeft = yAxisInfo.deleted ? 4 : 18;
+  const scatterGridLeft = yAxisInfo.deleted
+    ? 4
+    : useCompactDefaults
+      ? scaledChartMargin(chartSize?.w, 0.016, 15, 4)
+      : 18;
+  const scatterGridRight = useCompactDefaults ? scaledChartMargin(chartSize?.w, 0.01, 10, 4) : 10;
   const scatterGridTop = gridTop;
-  const scatterGridBottom = Math.max(getGridBottomPx(legendInfo), 20);
+  const scatterGridBottom = useCompactDefaults
+    ? getLegendPlacement(legendInfo) === 'bottom'
+      ? getGridBottomPx(legendInfo)
+      : scaledChartMargin(chartSize?.h, 0.04, 20, 8)
+    : getGridBottomPx(legendInfo);
 
   const xAxisDef: Record<string, unknown> = { type: 'value' };
   const yAxisDef: Record<string, unknown> = { type: 'value' };
   applyAxisInfo(xAxisDef, xAxisInfo, 'value');
   applyAxisInfo(yAxisDef, yAxisInfo, 'value');
-  const bubblePoints = seriesArr.flatMap((s) =>
-    s.values.map((y, i) => ({
-      x: s.xValues && i < s.xValues.length ? s.xValues[i] : i,
-      y,
-      bubbleSize: s.bubbleSizes && i < s.bubbleSizes.length ? s.bubbleSizes[i] : 0,
-    })),
-  );
+  const bubblePoints = seriesArr
+    .flatMap((s) => buildXYData(s, getDispBlanksAs(chartNode), true))
+    .filter((point): point is number[] => point.every((value) => value !== null))
+    .map(([x, y, bubbleSize]) => ({ x, y, bubbleSize }));
   applyBubbleAxisHeadroom(
     xAxisDef,
     bubblePoints.map((point) => point.x),
@@ -1707,7 +1784,7 @@ function buildBubbleChartOption(
     grid: {
       containLabel,
       left: scatterGridLeft,
-      right: 10,
+      right: scatterGridRight,
       top: scatterGridTop,
       bottom: scatterGridBottom,
       ...manualGrid,
@@ -2094,9 +2171,9 @@ function buildOptionForChartType(
         chartSize,
       );
     case 'scatterChart':
-      return buildScatterChartOption(chartTypeNode, chartNode, seriesArr, ctx);
+      return buildScatterChartOption(chartTypeNode, chartNode, seriesArr, ctx, chartSize);
     case 'bubbleChart':
-      return buildBubbleChartOption(chartTypeNode, chartNode, seriesArr, ctx);
+      return buildBubbleChartOption(chartTypeNode, chartNode, seriesArr, ctx, chartSize);
     case 'stockChart':
       return buildStockChartOption(chartTypeNode, chartNode, seriesArr, ctx);
     default:
@@ -2499,40 +2576,51 @@ export function renderChart(node: ChartNodeData, ctx: RenderContext): HTMLElemen
   // Initialize ECharts after the element is attached to the DOM.
   // Use requestAnimationFrame to ensure the container has dimensions.
   const chartReady = new Promise<void>((resolve) => {
-    const finishInit = (): void => {
-      initChart(chartDiv, option, chartSet);
+    let sizeObserver: ResizeObserver | undefined;
+    let frame: number | undefined;
+    const cancel = () => {
+      if (frame !== undefined) cancelAnimationFrame(frame);
+      sizeObserver?.disconnect();
+      ctx.signal?.removeEventListener('abort', cancel);
       resolve();
     };
-
-    requestAnimationFrame(() => {
-      if (!chartDiv.isConnected) {
-        resolve();
+    const finishInit = (): void => {
+      sizeObserver?.disconnect();
+      ctx.signal?.removeEventListener('abort', cancel);
+      if (!ctx.signal?.aborted && chartDiv.isConnected) {
+        initChart(chartDiv, option, chartSet, ctx.signal);
+      }
+      resolve();
+    };
+    if (ctx.signal?.aborted) {
+      resolve();
+      return;
+    }
+    ctx.signal?.addEventListener('abort', cancel, { once: true });
+    frame = requestAnimationFrame(() => {
+      frame = undefined;
+      if (ctx.signal?.aborted || !chartDiv.isConnected) {
+        cancel();
         return;
       }
-
-      // Guard against 0-size containers (e.g. hidden tabs); defer until non-zero.
       if (chartDiv.offsetWidth === 0 || chartDiv.offsetHeight === 0) {
         if (typeof ResizeObserver === 'undefined') {
           finishInit();
           return;
         }
-
-        const sizeObserver = new ResizeObserver((entries) => {
-          if (!chartDiv.isConnected) {
-            sizeObserver.disconnect();
+        sizeObserver = new ResizeObserver((entries) => {
+          if (ctx.signal?.aborted || !chartDiv.isConnected) {
+            cancel();
             return;
           }
           const { width, height } = entries[0]?.contentRect ?? { width: 0, height: 0 };
-          if (width > 0 && height > 0) {
-            sizeObserver.disconnect();
-            finishInit();
-          }
+          if (width > 0 && height > 0) finishInit();
         });
         sizeObserver.observe(chartDiv);
+        // Hidden charts retain the existing non-blocking ready contract.
         resolve();
         return;
       }
-
       finishInit();
     });
   });
@@ -2546,30 +2634,38 @@ function initChart(
   container: HTMLElement,
   option: EChartsTypes.EChartsOption,
   chartInstances?: Set<EChartsType>,
+  signal?: AbortSignal,
 ): void {
   try {
     const chart = echarts.init(container);
     chart.setOption(option);
     chartInstances?.add(chart);
 
-    if (typeof ResizeObserver === 'undefined') {
-      return;
-    }
+    const dispose = () => {
+      ro?.disconnect();
+      if (!chart.isDisposed()) chart.dispose();
+      chartInstances?.delete(chart);
+      signal?.removeEventListener('abort', dispose);
+    };
+    signal?.addEventListener('abort', dispose, { once: true });
 
     // Handle container resize
-    const ro = new ResizeObserver(() => {
-      if (container.isConnected) {
-        chart.resize();
-      } else {
-        // Container removed from DOM — dispose to prevent leaks
-        ro.disconnect();
-        if (!chart.isDisposed()) {
-          chart.dispose();
-        }
-        chartInstances?.delete(chart);
-      }
-    });
-    ro.observe(container);
+    const ro =
+      typeof ResizeObserver === 'undefined'
+        ? undefined
+        : new ResizeObserver(() => {
+            if (signal?.aborted || chart.isDisposed()) {
+              dispose();
+              return;
+            }
+            if (container.isConnected) {
+              chart.resize();
+            } else {
+              // Container removed from DOM — dispose to prevent leaks
+              dispose();
+            }
+          });
+    ro?.observe(container);
   } catch (e) {
     console.warn('Failed to initialize ECharts:', e);
     container.style.display = 'flex';

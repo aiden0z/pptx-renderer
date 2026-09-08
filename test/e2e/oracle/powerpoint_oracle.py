@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import gc
+import shutil
 import subprocess
 import sys
 import time
@@ -30,6 +31,12 @@ def _as_osascript_literal(value: str) -> str:
     return f'"{escaped}"'
 
 
+def _qualify_macro_name(macro_host_pptm: Path, macro_name: str) -> str:
+    if "!" in macro_name:
+        return macro_name
+    return f"{macro_host_pptm.name}!{macro_name}"
+
+
 def _build_macro_inline_cmd(
     *,
     macro_host_pptm: Path,
@@ -50,9 +57,19 @@ def _build_macro_inline_cmd(
 
     lines.extend(
         [
+            "set openedPresentation to missing value",
             'tell application "Microsoft PowerPoint"',
             "set inPptm to POSIX file inPptmPath",
+            "try",
             "open inPptm",
+            "set presentationPaths to (get full name of every presentation)",
+            "repeat with presentationIndex from 1 to count of presentationPaths",
+            "if (item presentationIndex of presentationPaths as text) is inPptmPath then",
+            "set openedPresentation to presentation presentationIndex",
+            "exit repeat",
+            "end if",
+            "end repeat",
+            'if openedPresentation is missing value then error "PowerPoint opened the macro host but no presentation matched: " & inPptmPath',
             "run VB macro macro name macroName list of parameters macroParams",
         ]
     )
@@ -61,13 +78,21 @@ def _build_macro_inline_cmd(
         lines.extend(
             [
                 "set outPdf to POSIX file outPdfPath",
-                "save active presentation in outPdf as save as PDF",
+                "save openedPresentation in outPdf as save as PDF",
             ]
         )
 
     lines.extend(
         [
-            "close active presentation saving no",
+            "close openedPresentation saving no",
+            "on error errorMessage number errorNumber",
+            "if openedPresentation is not missing value then",
+            "try",
+            "close openedPresentation saving no",
+            "end try",
+            "end if",
+            "error errorMessage number errorNumber",
+            "end try",
             "end tell",
         ]
     )
@@ -112,19 +137,44 @@ def _raise_automation_auth_error(exc: subprocess.CalledProcessError):
     ) from exc
 
 
+def _raise_interactive_timeout(exc: subprocess.TimeoutExpired, action: str):
+    raise PowerPointExportError(
+        f"PowerPoint {action} timed out after {exc.timeout} seconds. "
+        "Keep the macOS user session unlocked and check whether PowerPoint is waiting for "
+        'a "Grant File Access" or macro-security dialog.'
+    ) from exc
+
+
 def _run_with_parse_fallback(
     *,
     runner: Callable[..., object],
     primary_cmd: list[str],
     fallback_cmd: list[str],
+    timeout_sec: float,
 ):
     try:
-        runner(primary_cmd, check=True, capture_output=True, text=True)
+        runner(
+            primary_cmd,
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=timeout_sec,
+        )
+    except subprocess.TimeoutExpired as exc:
+        _raise_interactive_timeout(exc, "macro automation")
     except subprocess.CalledProcessError as exc:
         if _is_applescript_parse_error(exc):
             try:
-                runner(fallback_cmd, check=True, capture_output=True, text=True)
+                runner(
+                    fallback_cmd,
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                    timeout=timeout_sec,
+                )
                 return
+            except subprocess.TimeoutExpired as fallback_exc:
+                _raise_interactive_timeout(fallback_exc, "macro automation")
             except subprocess.CalledProcessError as fallback_exc:
                 if _is_automation_auth_error(fallback_exc):
                     _raise_automation_auth_error(fallback_exc)
@@ -140,35 +190,73 @@ def export_pptx_to_pdf_mac(
     runner: Callable[..., object] = _default_runner,
     retries: int = 2,
     backoff_sec: float = 1.0,
+    runtime_dir: Path | None = None,
+    timeout_sec: float = 120.0,
 ) -> ExportResult:
     """Export a PPTX to PDF using Microsoft PowerPoint on macOS via AppleScript."""
-    src = Path(pptx_path)
-    out = Path(pdf_path)
+    src = Path(pptx_path).resolve()
+    out = Path(pdf_path).resolve()
 
     if not src.exists():
         raise FileNotFoundError(f"PPTX not found: {src}")
 
     out.parent.mkdir(parents=True, exist_ok=True)
 
+    run_src = src
+    run_out = out
+    if runtime_dir is not None:
+        runtime = Path(runtime_dir).resolve()
+        runtime.mkdir(parents=True, exist_ok=True)
+        run_src = runtime / "_pptx-input.pptx"
+        run_out = runtime / "_pptx-output.pdf"
+        if run_src != src:
+            shutil.copy2(src, run_src)
+
     script_path = Path(__file__).resolve().parent / "scripts" / "export_pptx_to_pdf.applescript"
-    cmd = ["osascript", str(script_path), str(src), str(out)]
+    cmd = ["osascript", str(script_path), str(run_src), str(run_out)]
 
     last_error: Exception | None = None
+    attempts_made = 0
     for attempt in range(1, retries + 2):
+        attempts_made = attempt
         try:
-            runner(cmd, check=True, capture_output=True, text=True)
-            if not out.exists() or out.stat().st_size == 0:
-                raise PowerPointExportError(f"PowerPoint reported success but PDF missing/empty: {out}")
+            run_out.unlink(missing_ok=True)
+            runner(
+                cmd,
+                check=True,
+                capture_output=True,
+                text=True,
+                timeout=timeout_sec,
+            )
+            if not run_out.exists() or run_out.stat().st_size == 0:
+                raise PowerPointExportError(
+                    f"PowerPoint reported success but PDF missing/empty: {run_out}"
+                )
+            if run_out != out:
+                shutil.copy2(run_out, out)
             return ExportResult(output_pdf=out, attempts=attempt)
         except Exception as exc:  # pragma: no cover - exercised by tests via fake runners
             last_error = exc
+            if isinstance(exc, subprocess.TimeoutExpired):
+                break
             if attempt > retries:
                 break
             if backoff_sec > 0:
                 time.sleep(backoff_sec)
 
+    if isinstance(last_error, subprocess.TimeoutExpired):
+        access_dir = run_src.parent
+        error_details = (
+            f"PowerPoint automation timed out after {last_error.timeout} seconds. "
+            "Keep the macOS user session unlocked and check whether PowerPoint is waiting for "
+            f'a "Grant File Access" dialog for {access_dir}.'
+        )
+    elif isinstance(last_error, subprocess.CalledProcessError):
+        error_details = _called_process_text(last_error)
+    else:
+        error_details = str(last_error)
     raise PowerPointExportError(
-        f"Failed to export {src} -> {out} after {retries + 1} attempt(s): {last_error}"
+        f"Failed to export {src} -> {out} after {attempts_made} attempt(s): {error_details}"
     )
 
 
@@ -179,15 +267,19 @@ def run_macro_export_mac(
     macro_params: list[str] | None = None,
     export_after_macro: bool = True,
     runner: Callable[..., object] = _default_runner,
+    timeout_sec: float = 120.0,
 ):
-    """Open a macro-enabled PowerPoint file, run a VBA macro, and export current presentation to PDF."""
-    host = Path(macro_host_pptm)
-    out = Path(output_pdf)
+    """Open an exact macro host, run a VBA macro, and optionally export that same host to PDF."""
+    host = Path(macro_host_pptm).resolve()
+    out = Path(output_pdf).resolve()
+    qualified_macro_name = _qualify_macro_name(host, macro_name)
 
     if not host.exists():
         raise FileNotFoundError(f"Macro host PPTM not found: {host}")
 
     out.parent.mkdir(parents=True, exist_ok=True)
+    if export_after_macro:
+        out.unlink(missing_ok=True)
     scripts_dir = Path(__file__).resolve().parent / "scripts"
     if export_after_macro:
         script_path = scripts_dir / "run_macro_export.applescript"
@@ -195,13 +287,13 @@ def run_macro_export_mac(
             "osascript",
             str(script_path),
             str(host),
-            macro_name,
+            qualified_macro_name,
             *(macro_params or []),
             str(out),
         ]
         fallback_cmd = _build_macro_inline_cmd(
             macro_host_pptm=host,
-            macro_name=macro_name,
+            macro_name=qualified_macro_name,
             macro_params=macro_params,
             output_pdf=out,
         )
@@ -211,16 +303,21 @@ def run_macro_export_mac(
             "osascript",
             str(script_path),
             str(host),
-            macro_name,
+            qualified_macro_name,
             *(macro_params or []),
         ]
         fallback_cmd = _build_macro_inline_cmd(
             macro_host_pptm=host,
-            macro_name=macro_name,
+            macro_name=qualified_macro_name,
             macro_params=macro_params,
             output_pdf=None,
         )
-    _run_with_parse_fallback(runner=runner, primary_cmd=primary_cmd, fallback_cmd=fallback_cmd)
+    _run_with_parse_fallback(
+        runner=runner,
+        primary_cmd=primary_cmd,
+        fallback_cmd=fallback_cmd,
+        timeout_sec=timeout_sec,
+    )
 
     if export_after_macro and (not out.exists() or out.stat().st_size == 0):
         raise PowerPointExportError(f"Macro run finished but output PDF missing/empty: {out}")
@@ -233,9 +330,11 @@ def run_macro_only_mac(
     macro_name: str,
     macro_params: list[str] | None = None,
     runner: Callable[..., object] = _default_runner,
+    timeout_sec: float = 120.0,
 ):
     """Open a macro-enabled PowerPoint file and run a VBA macro without post-export checks."""
-    host = Path(macro_host_pptm)
+    host = Path(macro_host_pptm).resolve()
+    qualified_macro_name = _qualify_macro_name(host, macro_name)
     if not host.exists():
         raise FileNotFoundError(f"Macro host PPTM not found: {host}")
 
@@ -244,16 +343,21 @@ def run_macro_only_mac(
         "osascript",
         str(script_path),
         str(host),
-        macro_name,
+        qualified_macro_name,
         *(macro_params or []),
     ]
     fallback_cmd = _build_macro_inline_cmd(
         macro_host_pptm=host,
-        macro_name=macro_name,
+        macro_name=qualified_macro_name,
         macro_params=macro_params,
         output_pdf=None,
     )
-    _run_with_parse_fallback(runner=runner, primary_cmd=primary_cmd, fallback_cmd=fallback_cmd)
+    _run_with_parse_fallback(
+        runner=runner,
+        primary_cmd=primary_cmd,
+        fallback_cmd=fallback_cmd,
+        timeout_sec=timeout_sec,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -611,11 +715,20 @@ def export_pptx_to_pdf(
     pdf_path: Path,
     retries: int = 2,
     backoff_sec: float = 1.0,
+    runtime_dir: Path | None = None,
+    timeout_sec: float = 120.0,
 ) -> ExportResult:
     """Platform-dispatching wrapper: open existing PPTX and export to PDF."""
     if sys.platform == "win32":
         return export_pptx_to_pdf_win(pptx_path, pdf_path, retries=retries, backoff_sec=backoff_sec)
-    return export_pptx_to_pdf_mac(pptx_path, pdf_path, retries=retries, backoff_sec=backoff_sec)
+    return export_pptx_to_pdf_mac(
+        pptx_path,
+        pdf_path,
+        retries=retries,
+        backoff_sec=backoff_sec,
+        runtime_dir=runtime_dir,
+        timeout_sec=timeout_sec,
+    )
 
 
 def export_pptx_ground_truth(
@@ -626,6 +739,8 @@ def export_pptx_ground_truth(
     png_height: int = 0,
     retries: int = 2,
     backoff_sec: float = 1.0,
+    runtime_dir: Path | None = None,
+    timeout_sec: float = 120.0,
 ) -> ExportResult:
     """Platform-dispatching wrapper: export PDF + optional slide PNGs.
 
@@ -639,4 +754,11 @@ def export_pptx_ground_truth(
             retries=retries, backoff_sec=backoff_sec,
         )
     # macOS: PDF only (Slide.Export not available via AppleScript)
-    return export_pptx_to_pdf_mac(pptx_path, pdf_path, retries=retries, backoff_sec=backoff_sec)
+    return export_pptx_to_pdf_mac(
+        pptx_path,
+        pdf_path,
+        retries=retries,
+        backoff_sec=backoff_sec,
+        runtime_dir=runtime_dir,
+        timeout_sec=timeout_sec,
+    )

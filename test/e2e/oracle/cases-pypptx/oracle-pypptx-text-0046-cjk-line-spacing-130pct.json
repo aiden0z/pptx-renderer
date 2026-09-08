@@ -1,0 +1,24 @@
+{
+  "name": "oracle-pypptx-text-0046-cjk-line-spacing-130pct",
+  "generator": "python-pptx",
+  "slides": [
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    }
+  ],
+  "coverage": {
+    "oracle": "native-powerpoint",
+    "requiredFonts": [
+      "Microsoft YaHei"
+    ],
+    "features": [
+      "text.cjk",
+      "paragraph.manualBreaks",
+      "lnSpc.spcPct=130000"
+    ]
+  }
+}
