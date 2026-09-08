@@ -22,13 +22,29 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 - The python-pptx corpus generator now supports native PDF export on macOS, repeatable exact/glob
   case filters, and SHA-256 artifact records while keeping cached case metadata synchronized.
+- Map Office percentage line and paragraph spacing through its native line unit, trim outer
+  first/last paragraph spacing, and use text-container defaults validated by the 12-case CJK matrix.
+- Stage macOS PowerPoint input/output in one fixed ignored runtime directory and use a bounded
+  timeout so local corpus generation does not require a new folder grant for every case.
+- Make the native macro smoke validate a non-empty SmartArt catalog produced in the fixed runtime
+  directory.
+- Install `pytest-timeout` for the declared 180-second E2E limit and remove the unused
+  `asyncio_mode` setting, so pytest no longer ignores both configuration keys with warnings.
+- Allow the resolved `pdfjs-dist` root in the Vite development server so PDF Worker browser tests
+  remain valid when a Git worktree resolves dependencies outside its own directory.
+- Honor `PPTX_E2E_BROWSER_CHANNEL` in pytest browser fixtures as well as the evaluation API, so
+  local E2E runs can consistently use an installed branded Chrome.
 
 ### Fixed
 
 - Keep near-fit, single-paragraph square-wrapped headings on one line with a conservative 2%
   browser-metric correction while preserving deliberate multi-line text.
-- Close only the PowerPoint presentation opened by a failed macOS oracle export and preserve the
-  underlying AppleScript stderr, including environment codes such as `-9074`.
+- Resolve macOS PowerPoint exports and macro hosts by exact full path, close only that presentation,
+  and qualify VBA procedures with the host filename so unrelated open decks cannot become the
+  export/close target and unqualified macros do not fail with `-18`.
+- Preserve AppleScript stderr, including environment codes such as `-9074`; bound exports and
+  macros, remove stale output before native execution, and classify timeouts as an unlocked-session
+  or pending permission problem instead of retrying a blocked UI.
 - Generate CJK soft line breaks as DrawingML `a:br` elements so local oracle inputs do not contain
   visible `_x000B_` escape text.
 

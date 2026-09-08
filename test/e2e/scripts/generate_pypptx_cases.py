@@ -1832,6 +1832,7 @@ def main() -> int:
                     slides_png_dir=slides_d if do_png else None,
                     png_width=args.png_width,
                     png_height=args.png_height,
+                    runtime_dir=testdata_dir / "oracle-runtime",
                 )
 
             generated.append(name)

@@ -37,6 +37,10 @@ function hasExplicitCenteredParagraph(textBody: TextBody): boolean {
 }
 
 const IMPLICIT_SINGLE_LINE_LABEL_MAX_CHARS = 36;
+// Native PowerPoint CJK probes use slightly tighter boxes when separate paragraphs create
+// multiple browser line boxes. Explicit OOXML line spacing still overrides these defaults.
+const OFFICE_SINGLE_PARAGRAPH_LINE_HEIGHT = '1.18';
+const OFFICE_MULTI_PARAGRAPH_LINE_HEIGHT = '1.16';
 
 function visibleTextLength(textBody: TextBody): number {
   const text = textBody.paragraphs
@@ -2678,40 +2682,39 @@ export function renderShape(node: ShapeNodeData, ctx: RenderContext): HTMLElemen
         }
       }
 
-      const textOptions =
-        fontRefColor || isVerticalText || (hasSpAutoFit && !hasNormAutofit)
-          ? {
-              ...(fontRefColor ? { fontRefColor } : {}),
-              ...(isVerticalText ? { isVerticalText } : {}),
-              ...(hasSpAutoFit && !hasNormAutofit
-                ? (() => {
-                    const paragraphCount = visibleParagraphCount(textBody);
-                    const hasExplicitSpacing = hasExplicitParagraphSpacing(textBody);
-                    const shouldUseOfficeWrappedLineHeight =
-                      !hasExplicitSpacing &&
-                      textWrap !== 'none' &&
-                      (paragraphCount > 1 ||
-                        visibleTextLength(textBody) > IMPLICIT_SINGLE_LINE_LABEL_MAX_CHARS);
+      const paragraphCount = visibleParagraphCount(textBody);
+      const textOptions = {
+        trimOuterParagraphSpacing: true,
+        defaultLineHeight:
+          paragraphCount > 1
+            ? OFFICE_MULTI_PARAGRAPH_LINE_HEIGHT
+            : OFFICE_SINGLE_PARAGRAPH_LINE_HEIGHT,
+        ...(fontRefColor ? { fontRefColor } : {}),
+        ...(isVerticalText ? { isVerticalText } : {}),
+        ...(hasSpAutoFit && !hasNormAutofit
+          ? (() => {
+              const hasExplicitSpacing = hasExplicitParagraphSpacing(textBody);
+              const shouldUseOfficeWrappedLineHeight =
+                !hasExplicitSpacing &&
+                textWrap !== 'none' &&
+                (paragraphCount > 1 ||
+                  visibleTextLength(textBody) > IMPLICIT_SINGLE_LINE_LABEL_MAX_CHARS);
 
-                    return {
-                      trimOuterParagraphSpacing: true,
-                      ...(isSingleLineSpAutoFit &&
-                      !isVerticalText &&
-                      (textWrap === 'none' || hasCenteredParagraphs)
-                        ? {
-                            compactSingleLineSpacing: true,
-                            defaultLineHeight: '1',
-                          }
-                        : shouldUseOfficeWrappedLineHeight
-                          ? {
-                              defaultLineHeight: '1.1',
-                            }
-                          : {}),
-                    };
-                  })()
-                : {}),
-            }
-          : undefined;
+              return isSingleLineSpAutoFit &&
+                !isVerticalText &&
+                (textWrap === 'none' || hasCenteredParagraphs)
+                ? {
+                    compactSingleLineSpacing: true,
+                    defaultLineHeight: '1',
+                  }
+                : shouldUseOfficeWrappedLineHeight
+                  ? {
+                      defaultLineHeight: '1.1',
+                    }
+                  : {};
+            })()
+          : {}),
+      };
 
       renderTextBody(textBody, node.placeholder, ctx, textContainer, textOptions);
       wrapper.appendChild(textContainer);

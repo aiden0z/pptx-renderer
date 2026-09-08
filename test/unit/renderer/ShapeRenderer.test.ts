@@ -2369,7 +2369,7 @@ describe('ShapeRenderer', () => {
     const span = textContainer?.querySelector('span') as HTMLElement | null;
 
     expect(textContainer).toBeDefined();
-    expect(para?.style.lineHeight).toBe('');
+    expect(para?.style.lineHeight).toBe('1.18');
     expect(span?.style.fontSize).toBe('72pt');
   });
 
@@ -2847,12 +2847,66 @@ describe('ShapeRenderer', () => {
     );
 
     expect(paragraphs).toHaveLength(2);
-    expect(paragraphs[0].style.lineHeight).toBe('');
-    expect(paragraphs[1].style.lineHeight).toBe('');
+    expect(paragraphs[0].style.lineHeight).toBe('1.16');
+    expect(paragraphs[1].style.lineHeight).toBe('1.16');
     expect(paragraphs[0].style.marginTop).toBe('0px');
     expect(paragraphs[0].style.marginBottom).toBe('12pt');
     expect(paragraphs[1].style.marginTop).toBe('6pt');
     expect(paragraphs[1].style.marginBottom).toBe('0px');
+  });
+
+  it('trims outer paragraph spacing for noAutofit text boxes', () => {
+    const xml = `
+      <p:sp xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
+            xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+        <p:nvSpPr>
+          <p:cNvPr id="4" name="Spacing probe"/>
+          <p:cNvSpPr txBox="1"/>
+          <p:nvPr/>
+        </p:nvSpPr>
+        <p:spPr>
+          <a:xfrm><a:off x="914400" y="457200"/><a:ext cx="9144000" cy="5486400"/></a:xfrm>
+          <a:prstGeom prst="rect"><a:avLst/></a:prstGeom>
+          <a:noFill/>
+        </p:spPr>
+        <p:txBody>
+          <a:bodyPr wrap="square" anchor="ctr"><a:noAutofit/></a:bodyPr>
+          <a:lstStyle/>
+          ${['First', 'Middle', 'Last']
+            .map(
+              (text) => `
+                <a:p>
+                  <a:pPr>
+                    <a:spcBef><a:spcPts val="600"/></a:spcBef>
+                    <a:spcAft><a:spcPts val="1000"/></a:spcAft>
+                    <a:defRPr sz="2600"/>
+                  </a:pPr>
+                  <a:r><a:t>${text}</a:t></a:r>
+                </a:p>`,
+            )
+            .join('')}
+        </p:txBody>
+      </p:sp>
+    `;
+
+    const el = renderShape(parseShapeNode(parseXml(xml)), createMockRenderContext());
+    const textContainer = Array.from(el.querySelectorAll('div')).find(
+      (div) => div.style.flexDirection === 'column' && div.textContent === 'FirstMiddleLast',
+    );
+    const paragraphs = Array.from(textContainer?.children ?? []) as HTMLElement[];
+
+    expect(paragraphs).toHaveLength(3);
+    expect(paragraphs[0].style.marginTop).toBe('0px');
+    expect(paragraphs[0].style.marginBottom).toBe('10pt');
+    expect(paragraphs[1].style.marginTop).toBe('6pt');
+    expect(paragraphs[1].style.marginBottom).toBe('10pt');
+    expect(paragraphs[2].style.marginTop).toBe('6pt');
+    expect(paragraphs[2].style.marginBottom).toBe('0px');
+    expect(paragraphs.map((paragraph) => paragraph.style.lineHeight)).toEqual([
+      '1.16',
+      '1.16',
+      '1.16',
+    ]);
   });
 
   it('renders supported prstTxWarp text as SVG textPath (ai-computing slide 28)', () => {

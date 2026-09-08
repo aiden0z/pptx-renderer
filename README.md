@@ -31,6 +31,11 @@ Visual regression suites compare selected shape, SmartArt, fill/stroke, text, ta
 
 > Ground truth binaries (PPTX/PDF/PNG) stay in the ignored `test/e2e/testdata/` tree. Tracked case definitions and coverage metadata keep that local corpus reproducible. Generate shape/SmartArt corpora with `scripts/one_shot_full_ground_truth.py` or focused text/chart/composite cases with `scripts/generate_pypptx_cases.py`; both macOS and Windows PowerPoint are supported. See [`docs/TESTING.md`](docs/TESTING.md).
 
+On macOS, native exports use one fixed ignored `oracle-runtime` directory, target the requested
+presentation by its exact full path, and require an unlocked interactive PowerPoint session. This
+lets local oracle runs coexist with other open presentations without treating the active window as
+the export target.
+
 ## Install
 
 ```bash
@@ -214,25 +219,25 @@ const viewer = await PptxViewer.open(buffer, container, {
 
 #### `new PptxViewer(container, options?)`
 
-| Option               | Type                       | Default       | Description                                                                                                       |
-| -------------------- | -------------------------- | ------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `width`              | `number`                   | --            | Container width hint (omit for auto-detect)                                                                       |
-| `fitMode`            | `'contain' \| 'none'`      | `'contain'`   | Responsive fit or fixed size                                                                                      |
-| `zoomPercent`        | `number`                   | `100`         | Zoom level (10–400)                                                                                               |
-| `scrollContainer`    | `HTMLElement`              | --            | Scroll container for IntersectionObserver root                                                                    |
-| `zipLimits`          | `ZipParseLimits`           | --            | Security limits for ZIP parsing (used by `.open()`). Use `RECOMMENDED_ZIP_LIMITS` for untrusted input.            |
-| `lazyMedia`          | `boolean`                  | `false`       | Decode embedded media on demand instead of during ZIP parsing. Best for large decks with windowed list rendering. |
-| `lazySlides`         | `boolean`                  | `false`       | Parse slide shape/table/chart nodes on demand. Best for large decks with windowed list rendering.                 |
-| `pdfjs`              | `PdfjsConfig`              | --            | Optional PDF.js URLs for EMF-embedded PDF fallback rendering, or `false` to disable it.                           |
-| `embeddedFontLimits` | `EmbeddedFontLimits`       | safe defaults | Optional embedded-font resource limit overrides. Omitted fields retain the built-in defaults.                     |
+| Option               | Type                        | Default       | Description                                                                                                       |
+| -------------------- | --------------------------- | ------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `width`              | `number`                    | --            | Container width hint (omit for auto-detect)                                                                       |
+| `fitMode`            | `'contain' \| 'none'`       | `'contain'`   | Responsive fit or fixed size                                                                                      |
+| `zoomPercent`        | `number`                    | `100`         | Zoom level (10–400)                                                                                               |
+| `scrollContainer`    | `HTMLElement`               | --            | Scroll container for IntersectionObserver root                                                                    |
+| `zipLimits`          | `ZipParseLimits`            | --            | Security limits for ZIP parsing (used by `.open()`). Use `RECOMMENDED_ZIP_LIMITS` for untrusted input.            |
+| `lazyMedia`          | `boolean`                   | `false`       | Decode embedded media on demand instead of during ZIP parsing. Best for large decks with windowed list rendering. |
+| `lazySlides`         | `boolean`                   | `false`       | Parse slide shape/table/chart nodes on demand. Best for large decks with windowed list rendering.                 |
+| `pdfjs`              | `PdfjsConfig`               | --            | Optional PDF.js URLs for EMF-embedded PDF fallback rendering, or `false` to disable it.                           |
+| `embeddedFontLimits` | `EmbeddedFontLimits`        | safe defaults | Optional embedded-font resource limit overrides. Omitted fields retain the built-in defaults.                     |
 | `fontFaces`          | `readonly FontFaceConfig[]` | --            | Host-provided font faces for typefaces referenced by the PPTX but not embedded in it.                             |
-| `onSlideChange`      | `(index) => void`          | --            | Shorthand for `slidechange` event                                                                                 |
-| `onSlideRendered`    | `(index, element) => void` | --            | Shorthand for `sliderendered` event                                                                               |
-| `onSlideError`       | `(index, error) => void`   | --            | Shorthand for `slideerror` event                                                                                  |
-| `onSlideUnmounted`   | `(index) => void`          | --            | Shorthand for `slideunmounted` event                                                                              |
-| `onNodeError`        | `(nodeId, error) => void`  | --            | Shorthand for `nodeerror` event                                                                                   |
-| `onRenderStart`      | `() => void`               | --            | Shorthand for `renderstart` event                                                                                 |
-| `onRenderComplete`   | `() => void`               | --            | Shorthand for `rendercomplete` event                                                                              |
+| `onSlideChange`      | `(index) => void`           | --            | Shorthand for `slidechange` event                                                                                 |
+| `onSlideRendered`    | `(index, element) => void`  | --            | Shorthand for `sliderendered` event                                                                               |
+| `onSlideError`       | `(index, error) => void`    | --            | Shorthand for `slideerror` event                                                                                  |
+| `onSlideUnmounted`   | `(index) => void`           | --            | Shorthand for `slideunmounted` event                                                                              |
+| `onNodeError`        | `(nodeId, error) => void`   | --            | Shorthand for `nodeerror` event                                                                                   |
+| `onRenderStart`      | `() => void`                | --            | Shorthand for `renderstart` event                                                                                 |
+| `onRenderComplete`   | `() => void`                | --            | Shorthand for `rendercomplete` event                                                                              |
 
 All shorthand callbacks are also available as `EventTarget` events (e.g. `viewer.addEventListener('slidechange', ...)`).
 
@@ -605,6 +610,11 @@ Supported chart combinations include combo charts and secondary axes. Sparse sca
 `mc:AlternateContent` selects one compatible `Choice` (including the supported SVG picture extension), otherwise its `Fallback`, across ordinary slide/template/group content and OLE picture previews. Unknown extension namespaces do not become supported merely because they occur in a `Choice`. Eager and lazy rendering retain selected branch order.
 
 Placeholder inheritance follows the matched layout placeholder into its master category, preserves explicit zero transforms/insets, and resolves omitted body properties and mutually exclusive autofit choices. Explicit no-autofit clipping and whitespace behavior are checked in real browser containers. These combinations do not establish native equivalence for every text/autofit variant.
+
+Percentage line spacing and paragraph before/after spacing follow Office line-unit semantics;
+ordinary text boxes trim spacing outside the first and last visible paragraphs. A 12-case CJK
+native matrix covers wrapping, autofit, line/paragraph spacing, adjacent runs, and parent-shape
+layout, while font availability remains part of the evaluation provenance.
 
 ## Architecture
 

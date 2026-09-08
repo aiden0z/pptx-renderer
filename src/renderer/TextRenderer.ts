@@ -161,6 +161,8 @@ interface MergedParagraphStyle {
   textIndent?: number;
   defaultTabSize?: number;
   lineHeight?: string;
+  /** OOXML spcPct as a 0-1 ratio. One Office line is approximately 1.19 CSS em. */
+  lineHeightPercent?: number;
   /** True when lineHeight comes from spcPts (absolute pt value). For CJK fonts, CSS line-height
    *  with absolute values may not produce exact spacing because the font's content area can exceed
    *  the line-height. When true, we use block-level line wrappers instead of <br> for line breaks. */
@@ -183,6 +185,12 @@ interface MergedParagraphStyle {
   defRPrs?: SafeXmlNode[];
 }
 
+const OFFICE_LINE_HEIGHT_EM = 1.19;
+
+function officeLinePoints(ratio: number, fontSizePt: number): number {
+  return Number((ratio * fontSizePt * OFFICE_LINE_HEIGHT_EM).toFixed(3));
+}
+
 function mergeParagraphProps(target: MergedParagraphStyle, pPr: SafeXmlNode): void {
   if (!pPr.exists()) return;
 
@@ -202,7 +210,9 @@ function mergeParagraphProps(target: MergedParagraphStyle, pPr: SafeXmlNode): vo
   if (defTabSz !== undefined) target.defaultTabSize = emuToPx(defTabSz);
 
   // Line spacing
-  // OOXML spcPct: 100000 = "single spacing" = 1.0× the font's line height.
+  // OOXML spcPct: 100000 = one Office line. PowerPoint's native baseline distance is
+  // approximately 1.19× the font size in the native oracle, while CSS unitless
+  // line-height 1 is only 1em. Keep the Office line unit explicit before mapping to CSS.
   // IMPORTANT: We must use UNITLESS CSS line-height values (e.g., 1.0, 1.2)
   // instead of percentages (e.g., 100%, 120%). CSS percentage line-height is
   // computed once against the element's own font-size and inherited as a FIXED
@@ -216,8 +226,8 @@ function mergeParagraphProps(target: MergedParagraphStyle, pPr: SafeXmlNode): vo
     if (spcPct.exists()) {
       const val = parseTextPercentage(spcPct.attr('val'));
       if (val !== undefined) {
-        // OOXML 100000 → CSS unitless 1.0; OOXML 120000 → CSS 1.2
-        target.lineHeight = `${val.toFixed(3)}`;
+        target.lineHeightPercent = val;
+        target.lineHeight = `${(val * OFFICE_LINE_HEIGHT_EM).toFixed(3)}`;
         target.lineHeightAbsolute = false;
       }
     }
@@ -226,6 +236,7 @@ function mergeParagraphProps(target: MergedParagraphStyle, pPr: SafeXmlNode): vo
       const val = spcPts.numAttr('val');
       if (val !== undefined) {
         target.lineHeight = `${val / 100}pt`;
+        target.lineHeightPercent = undefined;
         target.lineHeightAbsolute = true;
       }
     }
@@ -987,10 +998,17 @@ export function renderTextBody(
     // Compute effective line-height (with optional lnSpcReduction from normAutofit)
     let effectiveLineHeight = merged.lineHeight ?? options?.defaultLineHeight;
     if (effectiveLineHeight) {
-      if (lnSpcReduction > 0 && !effectiveLineHeight.includes('pt')) {
+      if (lnSpcReduction > 0 && merged.lineHeightPercent !== undefined) {
+        effectiveLineHeight = `${(
+          Math.max(0, merged.lineHeightPercent - lnSpcReduction) * OFFICE_LINE_HEIGHT_EM
+        ).toFixed(3)}`;
+      } else if (lnSpcReduction > 0 && !effectiveLineHeight.includes('pt')) {
         const parsed = parseFloat(effectiveLineHeight);
         if (!isNaN(parsed)) {
-          effectiveLineHeight = `${Math.max(0, parsed - lnSpcReduction).toFixed(3)}`;
+          effectiveLineHeight = `${Math.max(
+            0,
+            parsed - lnSpcReduction * OFFICE_LINE_HEIGHT_EM,
+          ).toFixed(3)}`;
         }
       }
       if (options?.isVerticalText && !merged.lineHeightAbsolute) {
@@ -1027,14 +1045,14 @@ export function renderTextBody(
     } else if (merged.spaceBefore !== undefined) {
       paraDiv.style.marginTop = `${merged.spaceBefore}pt`;
     } else if (merged.spaceBeforePct !== undefined) {
-      paraDiv.style.marginTop = `${merged.spaceBeforePct * effectiveFontSize}pt`;
+      paraDiv.style.marginTop = `${officeLinePoints(merged.spaceBeforePct, effectiveFontSize)}pt`;
     }
     if (trimSpaceAfter) {
       paraDiv.style.marginBottom = '0px';
     } else if (merged.spaceAfter !== undefined) {
       paraDiv.style.marginBottom = `${merged.spaceAfter}pt`;
     } else if (merged.spaceAfterPct !== undefined) {
-      paraDiv.style.marginBottom = `${merged.spaceAfterPct * effectiveFontSize}pt`;
+      paraDiv.style.marginBottom = `${officeLinePoints(merged.spaceAfterPct, effectiveFontSize)}pt`;
     }
 
     // ---- Bullets ----

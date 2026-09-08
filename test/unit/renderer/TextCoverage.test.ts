@@ -67,7 +67,7 @@ describe('text choices through ShapeRenderer', () => {
       `<bodyPr><normAutofit lnSpcReduction="${reduction}"/></bodyPr>`,
       '<lnSpc><spcPct val="150%"/></lnSpc>',
     );
-    expect(Number(para.style.lineHeight)).toBeCloseTo(1.3);
+    expect(Number(para.style.lineHeight)).toBeCloseTo(1.547);
   });
   it('does not reduce point line spacing', () => {
     const { para } = renderTextFixture(
@@ -77,22 +77,36 @@ describe('text choices through ShapeRenderer', () => {
     expect(para.style.lineHeight).toBe('30pt');
   });
   it('percentage paragraph spacing clears inherited points', () => {
-    const { para } = renderTextFixture(
+    const { node, ctx } = renderTextFixture(
       undefined,
       '<spcBef><spcPct val="50%"/></spcBef><spcAft><spcPct val="25%"/></spcAft>',
       '<lvl1pPr><spcBef><spcPts val="3000"/></spcBef><spcAft><spcPts val="3000"/></spcAft></lvl1pPr>',
     );
-    expect(para.style.marginTop).toBe('12pt');
-    expect(para.style.marginBottom).toBe('6pt');
+    const template = node.textBody!.paragraphs[0];
+    node.textBody!.paragraphs = [template, { ...template }, { ...template }];
+    const container = document.createElement('div');
+    renderTextBody(node.textBody!, undefined, ctx, container, {
+      trimOuterParagraphSpacing: true,
+    });
+    const middleParagraph = container.children[1] as HTMLElement;
+    expect(middleParagraph.style.marginTop).toBe('14.28pt');
+    expect(middleParagraph.style.marginBottom).toBe('7.14pt');
   });
   it('point paragraph spacing clears inherited percentage', () => {
-    const { para } = renderTextFixture(
+    const { node, ctx } = renderTextFixture(
       undefined,
       '<spcBef><spcPts val="600"/></spcBef><spcAft><spcPts val="300"/></spcAft>',
       '<lvl1pPr><spcBef><spcPct val="100000"/></spcBef><spcAft><spcPct val="100000"/></spcAft></lvl1pPr>',
     );
-    expect(para.style.marginTop).toBe('6pt');
-    expect(para.style.marginBottom).toBe('3pt');
+    const template = node.textBody!.paragraphs[0];
+    node.textBody!.paragraphs = [template, { ...template }, { ...template }];
+    const container = document.createElement('div');
+    renderTextBody(node.textBody!, undefined, ctx, container, {
+      trimOuterParagraphSpacing: true,
+    });
+    const middleParagraph = container.children[1] as HTMLElement;
+    expect(middleParagraph.style.marginTop).toBe('6pt');
+    expect(middleParagraph.style.marginBottom).toBe('3pt');
   });
   it('paragraph fill overrides fontRef and explicit run fill still wins', () => {
     const { element } = renderTextFixture(
@@ -134,7 +148,7 @@ describe('text choices through ShapeRenderer', () => {
       '',
       '<a:r><a:t>Alpha</a:t></a:r><a:br/><a:r><a:t>Beta</a:t></a:r>',
     );
-    expect(Number(para.style.lineHeight)).toBe(1.5);
+    expect(Number(para.style.lineHeight)).toBe(1.785);
     expect(element.querySelector('br')).not.toBeNull();
   });
 

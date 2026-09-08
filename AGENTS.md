@@ -598,6 +598,11 @@ paragraph layout, or compact tokens, inspect `a:bodyPr` first and cover relevant
 text, bullets, multi-paragraph text, and adjacent runs. A `TextRenderer` unit test is not enough
 when the observable bug depends on the `ShapeRenderer` text container.
 
+PowerPoint percentage line/paragraph spacing is based on an Office line unit rather than CSS's
+raw font-size multiplier. Keep the native CJK cases `oracle-pypptx-text-0040` through `0051`
+together when changing this conversion. Preserve first/last paragraph edge trimming and test both
+single- and multi-paragraph containers; browser line boxes differ for those two structures.
+
 #### 9. Verify the metric source before trusting a reported regression
 
 There are multiple report surfaces:
@@ -622,6 +627,13 @@ relevant provenance matches. Use `PPTX_E2E_VITE_SERVER_URL` to point the API at 
 worktree and `PPTX_E2E_BROWSER_CHANNEL`/`PPTX_E2E_FONT_PROFILE` for explicit runtime inputs.
 On macOS, native PowerPoint export requires an unlocked interactive session; `-9074` under a
 locked session is an environment failure and must not be recorded as renderer evidence.
+Stage ordinary PPTX input/output and macro sinks in `test/e2e/testdata/oracle-runtime` so the
+PowerPoint sandbox needs one stable directory grant. AppleScript must resolve the opened
+presentation by exact `full name`, never by `active presentation`, and must close only that object.
+Qualify VBA procedures as `<macro-host-filename>!<macro-name>`; an unqualified name can fail with
+PowerPoint error `-18` when another user presentation is open. Export and macro timeouts should
+stop immediately and prompt inspection for an unlock state, **Grant File Access**, or macro-security
+dialog.
 
 ### One-Shot Large Baseline Generation
 

@@ -25,12 +25,16 @@ pnpm test:browser
 
 On machines with branded Chrome but no downloaded Playwright Chromium, run
 `PLAYWRIGHT_CHANNEL=chrome pnpm test:browser`. The channel applies to the complete browser suite.
+For Python E2E runs, use `PPTX_E2E_BROWSER_CHANNEL=chrome`; the same value is also consumed by the
+evaluation API server.
 
 These tests load the built standalone browser artifact with a tracked PPTX, initialize
 every renderer-supported ECharts series through the modular runtime, verify computed
 overflow behavior for all text-axis combinations, and execute the actual outer-Worker
 plus PDF.js-worker path. CI runs the PDF test against both supported PDF.js major lines;
-Node-only imports are not accepted as browser compatibility evidence.
+Node-only imports are not accepted as browser compatibility evidence. The Vite test server allows
+the resolved `pdfjs-dist` package root explicitly, including when a worktree's dependency symlink
+points outside the worktree. Set `PDFJS_DIST_DIR` to test a different installed PDF.js package.
 
 The dedicated `compatible-content-package.spec.ts` generates an OPC PPTX package and
 loads it through the built exported `parseZip`, `buildPresentation`, `renderSlide`, and
@@ -73,6 +77,9 @@ source .venv/bin/activate
 pip install -e .
 playwright install chromium
 ```
+
+`pytest-timeout` is installed by the E2E package and enforces the suite-wide 180-second per-test
+limit. The suite uses explicit `asyncio.run(...)` calls rather than pytest async test functions.
 
 ### Running
 
@@ -200,8 +207,23 @@ reused and writes artifact fingerprints to
 
 PowerPoint automation on macOS requires an unlocked interactive session. Error `-9074` while the
 same known-good deck exports normally in an unlocked session is an environment failure, not a
-renderer result. The export script closes only the presentation it opened on failure and includes
-AppleScript stderr in the reported error.
+renderer result. Ordinary exports stage `_pptx-input.pptx` and `_pptx-output.pdf` in the ignored
+`testdata/oracle-runtime` directory; grant PowerPoint access to that directory once. Each script
+matches the opened file by exact `full name`, never exports or closes `active presentation`, and
+closes only the matched object on success or failure. Macro names are qualified with their loaded
+`.pptm` filename because an unqualified name can return PowerPoint error `-18` when another deck is
+open. The 120-second export and macro timeouts stop without retry and tell the operator to check
+the unlock state and any pending **Grant File Access** or macro-security dialog. Stale output PDFs
+are removed before each attempt. AppleScript stderr remains in the reported error.
+
+The native macro smoke uses `ExportSmartArtLayouts_ToFile` with a fixed runtime output and verifies
+that the resulting catalog is non-empty. Run it only on a host where the repository macro host is
+trusted:
+
+```bash
+cd test/e2e
+.venv/bin/python -m pytest -q test_oracle_macro_pipeline.py
+```
 
 ### Reproducing Fonts in Oracle Runs
 

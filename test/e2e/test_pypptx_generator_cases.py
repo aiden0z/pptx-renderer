@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import sys
 from pathlib import Path
 from zipfile import ZipFile
 
@@ -186,6 +187,50 @@ def test_case_artifact_record_fingerprints_pdf_and_slide_pngs(tmp_path: Path):
         "slide2.png",
     ]
     assert all(item["sha256"] for item in record["ground_truth_pngs"])
+
+
+def test_generator_uses_one_shared_powerpoint_runtime_directory(
+    tmp_path: Path,
+    monkeypatch,
+):
+    generator = _load_generator_module()
+    case = next(
+        case
+        for case in generator._build_all_case_defs()
+        if case["name"] == "oracle-pypptx-text-0040-cjk-wrap-square-no-autofit"
+    )
+    captured = {}
+
+    def fake_export(pptx_path, pdf_path, **kwargs):
+        captured["runtime_dir"] = kwargs.get("runtime_dir")
+        Path(pdf_path).write_bytes(b"%PDF-1.4\n")
+
+    import oracle.powerpoint_oracle as powerpoint_oracle
+
+    monkeypatch.setattr(generator, "_build_all_case_defs", lambda: [case])
+    monkeypatch.setattr(powerpoint_oracle, "export_pptx_ground_truth", fake_export)
+
+    cases_dir = tmp_path / "definitions"
+    testdata_dir = tmp_path / "testdata"
+    report_path = tmp_path / "report.json"
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            str(GENERATOR_PATH),
+            "--cases-dir",
+            str(cases_dir),
+            "--testdata-dir",
+            str(testdata_dir),
+            "--report-path",
+            str(report_path),
+            "--no-export-png",
+            "--no-reuse",
+        ],
+    )
+
+    assert generator.main() == 0
+    assert captured["runtime_dir"] == (testdata_dir / "oracle-runtime").resolve()
 
 
 def test_cjk_case_json_records_coverage_and_font_requirements(tmp_path: Path):

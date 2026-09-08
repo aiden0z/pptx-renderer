@@ -5,12 +5,17 @@ This directory contains the local-macOS PowerPoint oracle pipeline used to drive
 ## Current Implemented Pieces
 
 1. `powerpoint_oracle.py`
-- `export_pptx_to_pdf_mac(...)`: opens a PPTX in PowerPoint and exports PDF with retry.
-- `run_macro_export_mac(...)`: opens a macro host `.pptm`, runs a VBA macro (with optional parameters), exports PDF.
+- `export_pptx_to_pdf_mac(...)`: stages a PPTX in a fixed runtime directory, opens that exact file
+  in PowerPoint, and exports PDF with retry and a bounded timeout.
+- `run_macro_export_mac(...)`: opens an exact macro host `.pptm`, runs a filename-qualified VBA
+  macro, and optionally exports that same host.
+- `run_macro_only_mac(...)`: runs a filename-qualified VBA macro when the macro writes its own
+  fixed sink artifacts.
 
 2. AppleScript runners
 - `scripts/export_pptx_to_pdf.applescript`
 - `scripts/run_macro_export.applescript`
+- `scripts/run_macro_only.applescript`
 
 3. Case compiler and metrics
 - `case_compiler.py`: compiles JSON case files into a VBA-friendly line spec.
@@ -56,8 +61,11 @@ PPTX_ORACLE_MACRO_HOST=/tmp/pptx-macro-host.pptm \
 
 Optional macro name override:
 ```bash
-PPTX_ORACLE_MACRO_NAME=GenerateProbeDeck_Default
+PPTX_ORACLE_MACRO_NAME=ExportSmartArtLayouts_ToFile
 ```
+
+The smoke passes a fixed catalog path to the macro and verifies that at least one `Id|Name` row is
+written. An override must follow the same one-output-path contract.
 
 3. End-to-end local oracle pipeline
 ```bash
@@ -138,13 +146,19 @@ cd test/e2e
 ```
 
 macOS exports PDF; Windows exports PDF plus optional per-slide PNG. `--pptx-only` works without
-PowerPoint. Each case uses an independent native PowerPoint session for fault isolation. The
-binary artifacts remain ignored under `testdata/`, while tracked case JSON records coverage and
-font requirements. The generation report includes the selected patterns and SHA-256 fingerprints.
+PowerPoint. On macOS each export is isolated to its staged input path and fixed runtime sink;
+PowerPoint itself may remain running. The exporter resolves and closes only the presentation whose
+full path matches that staged input, so unrelated user presentations stay outside the export
+lifecycle. The binary artifacts remain ignored under `testdata/`, while tracked case JSON records
+coverage and font requirements. The generation report includes the selected patterns and SHA-256
+fingerprints.
 
 On macOS the PowerPoint session must be unlocked. A locked session can return `-9074` even for a
-known-good PPTX. The exporter preserves the original AppleScript stderr and closes only the deck
-it opened when export fails.
+known-good PPTX. Export and macro timeouts stop immediately and point to the unlock state or a
+pending **Grant File Access** or macro-security dialog. VBA calls are qualified as
+`<macro-host-filename>!<macro-name>` because an unqualified procedure can return `-18` when another
+presentation is open. The exporter removes stale output before every attempt and preserves the
+original AppleScript stderr.
 
 ## Optional Font Profile
 
@@ -280,6 +294,8 @@ To avoid repeated PowerPoint permission prompts, keep oracle IO in one fixed dir
 
 - Fixed runtime dir: `test/e2e/testdata/oracle-runtime`
 - PowerPoint now writes only to fixed sink files in that dir:
+  - `test/e2e/testdata/oracle-runtime/_pptx-input.pptx`
+  - `test/e2e/testdata/oracle-runtime/_pptx-output.pdf`
   - `test/e2e/testdata/oracle-runtime/_macro-output.pptx`
   - `test/e2e/testdata/oracle-runtime/_macro-output.pdf`
 - Macro spec path is also fixed:
@@ -287,6 +303,11 @@ To avoid repeated PowerPoint permission prompts, keep oracle IO in one fixed dir
   Generated per-case files are copied from these sinks by Python.
 
 Authorize this directory once when prompted by PowerPoint.
+
+The macOS runner also needs an unlocked user session, Automation permission for the calling app to
+control Microsoft PowerPoint, and permission to run the repository-owned macro host. Keep these
+native-oracle permissions on a dedicated development user or machine when running unattended
+corpora; do not mix untrusted macro-enabled documents into that session.
 
 ## Next Steps (TDD Sequence)
 
