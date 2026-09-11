@@ -5843,6 +5843,50 @@ describe('ShapeRenderer', () => {
     expect(hasWhiteText).toBe(true);
   });
 
+  it('keeps paragraph defRPr color over shape fontRef color', () => {
+    const xml = `
+      <p:sp xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
+            xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+        <p:nvSpPr>
+          <p:cNvPr id="102" name="Paragraph Color Override"/>
+          <p:cNvSpPr/>
+          <p:nvPr/>
+        </p:nvSpPr>
+        <p:spPr>
+          <a:xfrm><a:off x="0" y="0"/><a:ext cx="2000000" cy="1000000"/></a:xfrm>
+          <a:prstGeom prst="rect"><a:avLst/></a:prstGeom>
+          <a:solidFill><a:srgbClr val="EAF2F0"/></a:solidFill>
+        </p:spPr>
+        <p:style>
+          <a:lnRef idx="0"><a:schemeClr val="accent1"/></a:lnRef>
+          <a:fillRef idx="0"><a:schemeClr val="accent1"/></a:fillRef>
+          <a:effectRef idx="0"><a:schemeClr val="accent1"/></a:effectRef>
+          <a:fontRef idx="minor"><a:schemeClr val="lt1"/></a:fontRef>
+        </p:style>
+        <p:txBody>
+          <a:bodyPr/>
+          <a:lstStyle/>
+          <a:p>
+            <a:pPr>
+              <a:defRPr>
+                <a:solidFill><a:srgbClr val="243B53"/></a:solidFill>
+              </a:defRPr>
+            </a:pPr>
+            <a:r><a:rPr lang="en-US"/><a:t>Paragraph Color</a:t></a:r>
+          </a:p>
+        </p:txBody>
+      </p:sp>
+    `;
+
+    const el = renderShape(parseShapeNode(parseXml(xml)), createMockRenderContext());
+    const textSpan = Array.from(el.querySelectorAll('span')).find(
+      (span) => span.textContent === 'Paragraph Color',
+    );
+
+    expect(textSpan).toBeDefined();
+    expect(textSpan!.style.color).toBe('rgb(36, 59, 83)');
+  });
+
   // ---------------------------------------------------------------------------
   // Dynamic normAutofit scaling (lines ~1142-1162 in ShapeRenderer.ts)
   // In jsdom, scrollHeight often equals clientHeight, so the scale branch may not

@@ -1279,7 +1279,8 @@ export function renderTextBody(
         element.style.backgroundColor = runStyle.highlightColor;
       }
 
-      // Color priority: explicit paragraph/run color > hlink theme color > cellTextColor (table style tcTxStyle) > fontRef (shape style) > inherited styles > black default
+      // Base color priority before hyperlink post-processing: explicit paragraph/run color > cellTextColor (table style tcTxStyle) > fontRef (shape style) > inherited styles > black default.
+      // Hyperlink theme color may override this base color below.
       // cellTextColor from table style overrides inherited cascade colors but yields to explicit run/paragraph solidFill/gradFill.
       // fontRefColor overrides inherited styles but yields to explicit paragraph/run solidFill/gradFill.
       const runColorKind = getRunColorKind(run.properties);
