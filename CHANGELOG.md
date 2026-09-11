@@ -37,6 +37,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Fixed
 
+- Preserved explicit paragraph `defRPr` text colors when a shape also provides a theme
+  `fontRef` color, preventing light theme text from overriding authored paragraph colors.
 - Keep near-fit, single-paragraph square-wrapped headings on one line with a conservative 2%
   browser-metric correction while preserving deliberate multi-line text.
 - Resolve macOS PowerPoint exports and macro hosts by exact full path, close only that presentation,
