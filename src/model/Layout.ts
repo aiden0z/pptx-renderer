@@ -6,6 +6,9 @@
 import { SafeXmlNode } from '../parser/XmlParser';
 import { emuToPx } from '../parser/units';
 import { parseOoxmlBool } from '../parser/booleans';
+import { expandCompatibleChildren } from './RenderableChild';
+
+export type ColorMapOverrideMode = 'override' | 'master';
 
 export interface PlaceholderXfrm {
   position: { x: number; y: number };
@@ -20,6 +23,8 @@ export interface PlaceholderEntry {
 
 export interface LayoutData {
   colorMapOverride?: Map<string, string>;
+  /** Whether clrMapOvr supplies an override map or explicitly resets to the master map. */
+  colorMapOverrideMode?: ColorMapOverrideMode;
   background?: SafeXmlNode;
   placeholders: PlaceholderEntry[];
   spTree: SafeXmlNode;
@@ -109,7 +114,7 @@ function extractPlaceholdersRecursive(
   groupTransform: { offX: number; offY: number; scaleX: number; scaleY: number } | null,
 ): PlaceholderEntry[] {
   const out: PlaceholderEntry[] = [];
-  for (const child of spTree.allChildren()) {
+  for (const child of spTree.allChildren().flatMap(expandCompatibleChildren)) {
     if (child.localName === 'grpSp') {
       const gx = getGroupXfrmInEmu(child);
       if (gx && gx.chExtCx > 0 && gx.chExtCy > 0) {
@@ -178,6 +183,26 @@ function parseAllAttributes(node: SafeXmlNode): Map<string, string> {
   return result;
 }
 
+export function parseColorMapOverride(root: SafeXmlNode): {
+  colorMapOverride?: Map<string, string>;
+  colorMapOverrideMode?: ColorMapOverrideMode;
+} {
+  const clrMapOvr = root.child('clrMapOvr');
+  if (!clrMapOvr.exists()) return {};
+
+  const overrideMapping = clrMapOvr.child('overrideClrMapping');
+  if (overrideMapping.exists()) {
+    return {
+      colorMapOverride: parseAllAttributes(overrideMapping),
+      colorMapOverrideMode: 'override',
+    };
+  }
+  if (clrMapOvr.child('masterClrMapping').exists()) {
+    return { colorMapOverrideMode: 'master' };
+  }
+  return {};
+}
+
 /**
  * Parse a slide layout XML root (`p:sldLayout`) into LayoutData.
  */
@@ -192,14 +217,7 @@ export function parseLayout(root: SafeXmlNode): LayoutData {
   const spTree = cSld.child('spTree');
 
   // --- Color map override ---
-  let colorMapOverride: Map<string, string> | undefined;
-  const clrMapOvr = root.child('clrMapOvr');
-  if (clrMapOvr.exists()) {
-    const overrideMapping = clrMapOvr.child('overrideClrMapping');
-    if (overrideMapping.exists()) {
-      colorMapOverride = parseAllAttributes(overrideMapping);
-    }
-  }
+  const { colorMapOverride, colorMapOverrideMode } = parseColorMapOverride(root);
 
   // --- Placeholders (recursive so we find title/body inside grpSp; resolve position in slide space) ---
   const placeholders = extractPlaceholdersRecursive(spTree, null);
@@ -209,6 +227,7 @@ export function parseLayout(root: SafeXmlNode): LayoutData {
 
   return {
     colorMapOverride,
+    colorMapOverrideMode,
     background,
     placeholders,
     spTree,

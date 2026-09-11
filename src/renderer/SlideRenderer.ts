@@ -19,11 +19,13 @@ import { ChartNodeData } from '../model/nodes/ChartNode';
 import { BaseNodeData } from '../model/nodes/BaseNode';
 import { SafeXmlNode } from '../parser/XmlParser';
 import type { RelEntry } from '../parser/RelParser';
-import { isPlaceholderNode, parseRenderableChild } from '../model/RenderableChild';
+import { isPlaceholderNode, parseRenderableChildren } from '../model/RenderableChild';
 import type { EChartsType } from 'echarts/core';
 import { useEmbeddedFonts } from './EmbeddedFontLoader';
 import type { EmbeddedFontLimits } from './EmbeddedFontLoader';
 import type { PdfjsConfig } from '../utils/pdfRenderer';
+import { useConfiguredFonts } from './ConfiguredFontLoader';
+import type { FontFaceConfig } from './ConfiguredFontLoader';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -46,6 +48,8 @@ export interface SlideRendererOptions {
   chartInstances?: Set<EChartsType>;
   /** Optional embedded-font resource limit overrides. Defaults remain enforced for omitted fields. */
   embeddedFontLimits?: EmbeddedFontLimits;
+  /** Host-provided faces for fonts referenced by the PPTX but not embedded in it. */
+  fontFaces?: readonly FontFaceConfig[];
 }
 
 /**
@@ -162,13 +166,13 @@ function parseTemplateShapes(
 
   for (const child of spTree.allChildren()) {
     // Skip ALL placeholder shapes — they're templates, not renderable content
-    if (isPlaceholderNode(child)) continue;
-
     try {
-      const node = parseRenderableChild(child, parseContext);
-      // Skip empty/invisible nodes (0x0 size and no text)
-      if (node && (node.size.w > 0 || node.size.h > 0)) {
-        nodes.push(node);
+      for (const node of parseRenderableChildren(child, parseContext)) {
+        if (isPlaceholderNode(node.source)) continue;
+        // Skip empty/invisible nodes (0x0 size and no text)
+        if (node.size.w > 0 || node.size.h > 0) {
+          nodes.push(node);
+        }
       }
     } catch {
       // Skip unparseable template shapes silently
@@ -260,6 +264,8 @@ export function renderSlide(
   const chartInstances = options?.chartInstances ?? new Set<EChartsType>();
   const asyncTasks: Promise<void>[] = [];
   const abortController = new AbortController();
+  const configuredFontUse = useConfiguredFonts(options?.fontFaces);
+  asyncTasks.push(configuredFontUse.ready);
 
   // Create render context (resolves slide -> layout -> master -> theme chain)
   const ctx = createRenderContext(
@@ -376,6 +382,7 @@ export function renderSlide(
     disposed = true;
     abortController.abort();
     embeddedFontUse.dispose();
+    configuredFontUse.dispose();
 
     // Dispose chart instances whose DOM is inside this slide container
     if (chartInstances) {

@@ -5,6 +5,7 @@ description = "E2E tests for pptx-renderer"
 requires-python = ">=3.10"
 dependencies = [
   "pytest>=8.0",
+  "pytest-timeout>=2.3",
   "playwright>=1.40",
   "Pillow>=10.0",
   "scikit-image>=0.22",
@@ -28,7 +29,6 @@ include = []
 
 [tool.pytest.ini_options]
 testpaths = ["."]
-asyncio_mode = "auto"
 timeout = 180
 markers = [
   "local_oracle: tests that require local Microsoft PowerPoint automation",

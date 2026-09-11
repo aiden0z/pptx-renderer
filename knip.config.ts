@@ -3,8 +3,10 @@ import type { KnipConfig } from 'knip';
 const config: KnipConfig = {
   entry: ['src/index.ts'],
   project: ['src/**/*.ts'],
+  // Browser tests use Vite root-relative imports that resolve in Chromium rather than Node.
+  ignoreUnresolved: ['^/(src|test)/'],
   // PDF.js is an optional runtime URL resolved inside a Web Worker, so Knip cannot see the import.
-  ignoreDependencies: ['pdfjs-dist', 'pixelmatch', 'pngjs'],
+  ignoreDependencies: ['pdfjs-dist', 'pixelmatch'],
   // Keep this allow-list narrow so Knip still reports new accidental type exports.
   ignoreIssues: {
     'src/core/Renderer.ts': ['types'],

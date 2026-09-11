@@ -1,6 +1,20 @@
 import { defineConfig } from 'vite';
-import { resolve } from 'path';
+import { createRequire } from 'module';
+import { dirname, resolve } from 'path';
 import fs from 'fs';
+
+const require = createRequire(import.meta.url);
+
+function resolvePdfjsDistDir(): string | undefined {
+  if (process.env.PDFJS_DIST_DIR) return resolve(process.env.PDFJS_DIST_DIR);
+  try {
+    return dirname(dirname(require.resolve('pdfjs-dist/build/pdf.min.mjs')));
+  } catch {
+    return undefined;
+  }
+}
+
+const pdfjsDistDir = resolvePdfjsDistDir();
 
 export default defineConfig({
   define: {
@@ -13,7 +27,7 @@ export default defineConfig({
   },
   server: {
     fs: {
-      allow: ['..', ...(process.env.PDFJS_DIST_DIR ? [process.env.PDFJS_DIST_DIR] : [])],
+      allow: ['..', ...(pdfjsDistDir ? [pdfjsDistDir] : [])],
     },
     proxy: {
       '/api': {
@@ -58,6 +72,11 @@ export default defineConfig({
               jpeg: 'image/jpeg',
               pdf: 'application/pdf',
               pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+              ttf: 'font/ttf',
+              ttc: 'font/collection',
+              otf: 'font/otf',
+              woff: 'font/woff',
+              woff2: 'font/woff2',
               json: 'application/json',
               xml: 'text/xml',
             };

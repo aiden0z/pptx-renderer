@@ -898,8 +898,8 @@ describe('TextRenderer — renderTextBody', () => {
       };
       const container = renderToContainer(body);
       const para = container.children[0] as HTMLElement;
-      // 1.5 * (1 - 0.2) = 1.2
-      expect(parseFloat(para.style.lineHeight)).toBeCloseTo(1.2, 3);
+      // OOXML subtracts the reduction before converting the 1.3 Office lines to CSS em.
+      expect(parseFloat(para.style.lineHeight)).toBeCloseTo(1.547, 3);
     });
   });
 
@@ -1460,7 +1460,7 @@ describe('TextRenderer — renderTextBody', () => {
       });
       const container = renderToContainer(body);
       const para = container.children[0] as HTMLElement;
-      expect(parseFloat(para.style.lineHeight)).toBeCloseTo(1.2, 2);
+      expect(parseFloat(para.style.lineHeight)).toBeCloseTo(1.428, 2);
     });
 
     it('applies spcPts line height', () => {
@@ -2198,8 +2198,8 @@ describe('TextRenderer — renderTextBody', () => {
       const placeholder = { type: 'title' };
       renderTextBody(body, placeholder, ctx, container);
       const paraDiv = container.children[0] as HTMLElement;
-      // Should have 75% line spacing = 0.75 line-height
-      expect(parseFloat(paraDiv.style.lineHeight)).toBeCloseTo(0.75, 2);
+      // 75% of one Office line maps to 0.8925 CSS em.
+      expect(parseFloat(paraDiv.style.lineHeight)).toBeCloseTo(0.8925, 2);
     });
   });
 

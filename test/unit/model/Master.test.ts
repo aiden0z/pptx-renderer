@@ -2,13 +2,15 @@ import { describe, expect, it } from 'vitest';
 import { parseMaster } from '../../../src/model/Master';
 import { parseXml } from '../../../src/parser/XmlParser';
 
-function makeMasterXml(opts: {
-  bg?: string;
-  clrMap?: string;
-  txStyles?: string;
-  defaultTextStyle?: string;
-  shapes?: string;
-} = {}) {
+function makeMasterXml(
+  opts: {
+    bg?: string;
+    clrMap?: string;
+    txStyles?: string;
+    defaultTextStyle?: string;
+    shapes?: string;
+  } = {},
+) {
   const bgXml = opts.bg ? `<bg>${opts.bg}</bg>` : '';
   const clrMap = opts.clrMap ?? '<clrMap bg1="lt1" tx1="dk1" bg2="lt2" tx2="dk2"/>';
   const txStyles = opts.txStyles ?? '';
@@ -42,9 +44,11 @@ describe('parseMaster', () => {
   });
 
   it('parses color map attributes', () => {
-    const master = parseMaster(makeMasterXml({
-      clrMap: '<clrMap bg1="lt1" tx1="dk1" bg2="lt2" tx2="dk2" accent1="accent1" hlink="hlink"/>',
-    }));
+    const master = parseMaster(
+      makeMasterXml({
+        clrMap: '<clrMap bg1="lt1" tx1="dk1" bg2="lt2" tx2="dk2" accent1="accent1" hlink="hlink"/>',
+      }),
+    );
     expect(master.colorMap.get('bg1')).toBe('lt1');
     expect(master.colorMap.get('tx1')).toBe('dk1');
     expect(master.colorMap.get('accent1')).toBe('accent1');
@@ -52,37 +56,44 @@ describe('parseMaster', () => {
   });
 
   it('parses background', () => {
-    const master = parseMaster(makeMasterXml({
-      bg: '<bgPr><solidFill><srgbClr val="003366"/></solidFill></bgPr>',
-    }));
+    const master = parseMaster(
+      makeMasterXml({
+        bg: '<bgPr><solidFill><srgbClr val="003366"/></solidFill></bgPr>',
+      }),
+    );
     expect(master.background).toBeDefined();
     expect(master.background!.exists()).toBe(true);
   });
 
   it('parses text styles', () => {
-    const master = parseMaster(makeMasterXml({
-      txStyles: `
+    const master = parseMaster(
+      makeMasterXml({
+        txStyles: `
         <titleStyle><lvl1pPr><defRPr sz="4400"/></lvl1pPr></titleStyle>
         <bodyStyle><lvl1pPr><defRPr sz="3200"/></lvl1pPr></bodyStyle>
         <otherStyle><lvl1pPr><defRPr sz="1800"/></lvl1pPr></otherStyle>
       `,
-    }));
+      }),
+    );
     expect(master.textStyles.titleStyle).toBeDefined();
     expect(master.textStyles.bodyStyle).toBeDefined();
     expect(master.textStyles.otherStyle).toBeDefined();
   });
 
   it('parses defaultTextStyle', () => {
-    const master = parseMaster(makeMasterXml({
-      defaultTextStyle: '<lvl1pPr><defRPr sz="1800"/></lvl1pPr>',
-    }));
+    const master = parseMaster(
+      makeMasterXml({
+        defaultTextStyle: '<lvl1pPr><defRPr sz="1800"/></lvl1pPr>',
+      }),
+    );
     expect(master.defaultTextStyle).toBeDefined();
     expect(master.defaultTextStyle!.exists()).toBe(true);
   });
 
   it('extracts placeholder shapes from spTree', () => {
-    const master = parseMaster(makeMasterXml({
-      shapes: `
+    const master = parseMaster(
+      makeMasterXml({
+        shapes: `
         <sp>
           <nvSpPr><cNvPr id="2" name="Title"/><nvPr><ph type="title"/></nvPr></nvSpPr>
           <spPr/>
@@ -96,27 +107,52 @@ describe('parseMaster', () => {
           <spPr/>
         </sp>
       `,
-    }));
+      }),
+    );
     // Should find 2 placeholders, skip the non-placeholder
     expect(master.placeholders).toHaveLength(2);
   });
 
+  it('extracts a master placeholder from an unsupported Choice fallback', () => {
+    const master = parseMaster(
+      makeMasterXml({
+        shapes: `
+        <mc:AlternateContent xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+          xmlns:p14="http://schemas.microsoft.com/office/powerpoint/2010/main">
+          <mc:Choice Requires="p14"><p14:contentPart/></mc:Choice>
+          <mc:Fallback>
+            <sp><nvSpPr><cNvPr id="20" name="Master fallback"/><nvPr><ph type="body"/></nvPr></nvSpPr><spPr/></sp>
+          </mc:Fallback>
+        </mc:AlternateContent>
+      `,
+      }),
+    );
+
+    expect(master.placeholders).toHaveLength(1);
+    expect(master.placeholders[0].child('nvSpPr').child('cNvPr').attr('name')).toBe(
+      'Master fallback',
+    );
+  });
+
   it('recognizes pic placeholders via nvPicPr', () => {
-    const master = parseMaster(makeMasterXml({
-      shapes: `
+    const master = parseMaster(
+      makeMasterXml({
+        shapes: `
         <pic>
           <nvPicPr><cNvPr id="5" name="PicPh"/><nvPr><ph type="pic"/></nvPr></nvPicPr>
           <blipFill/>
           <spPr/>
         </pic>
       `,
-    }));
+      }),
+    );
     expect(master.placeholders).toHaveLength(1);
   });
 
   it('recognizes graphicFrame and connector placeholders', () => {
-    const master = parseMaster(makeMasterXml({
-      shapes: `
+    const master = parseMaster(
+      makeMasterXml({
+        shapes: `
         <graphicFrame>
           <nvGraphicFramePr><cNvPr id="6" name="Chart"/><nvPr><ph type="chart"/></nvPr></nvGraphicFramePr>
           <xfrm><off x="0" y="0"/><ext cx="914400" cy="914400"/></xfrm>
@@ -126,18 +162,17 @@ describe('parseMaster', () => {
           <spPr><xfrm><off x="0" y="0"/><ext cx="457200" cy="457200"/></xfrm></spPr>
         </cxnSp>
       `,
-    }));
+      }),
+    );
 
     expect(master.placeholders).toHaveLength(2);
-    expect(master.placeholderEntries?.map((entry) => entry.absoluteXfrm?.size.w)).toEqual([
-      96,
-      48,
-    ]);
+    expect(master.placeholderEntries?.map((entry) => entry.absoluteXfrm?.size.w)).toEqual([96, 48]);
   });
 
   it('extracts grouped placeholder absolute transforms from master spTree', () => {
-    const master = parseMaster(makeMasterXml({
-      shapes: `
+    const master = parseMaster(
+      makeMasterXml({
+        shapes: `
         <grpSp>
           <grpSpPr>
             <xfrm>
@@ -153,7 +188,8 @@ describe('parseMaster', () => {
           </sp>
         </grpSp>
       `,
-    }));
+      }),
+    );
 
     const entry = master.placeholderEntries![0];
     expect(entry.absoluteXfrm?.position.x).toBeCloseTo(144, 0);
@@ -163,8 +199,9 @@ describe('parseMaster', () => {
   });
 
   it('keeps collecting master placeholders when group transforms are missing', () => {
-    const master = parseMaster(makeMasterXml({
-      shapes: `
+    const master = parseMaster(
+      makeMasterXml({
+        shapes: `
         <grpSp>
           <sp>
             <nvSpPr><cNvPr id="9" name="NoGroupXfrm"/><nvPr><ph type="body"/></nvPr></nvSpPr>
@@ -174,15 +211,17 @@ describe('parseMaster', () => {
           </sp>
         </grpSp>
       `,
-    }));
+      }),
+    );
 
     expect(master.placeholders).toHaveLength(1);
     expect(master.placeholderEntries![0].absoluteXfrm?.size.w).toBe(96);
   });
 
   it('guards zero child extents in master grouped placeholders', () => {
-    const master = parseMaster(makeMasterXml({
-      shapes: `
+    const master = parseMaster(
+      makeMasterXml({
+        shapes: `
         <grpSp>
           <grpSpPr>
             <xfrm>
@@ -198,21 +237,24 @@ describe('parseMaster', () => {
           </sp>
         </grpSp>
       `,
-    }));
+      }),
+    );
 
     expect(master.placeholders).toHaveLength(1);
     expect(master.placeholderEntries![0].absoluteXfrm?.size.w).toBeCloseTo(96, 0);
   });
 
   it('defaults missing placeholder xfrm attributes to zero', () => {
-    const master = parseMaster(makeMasterXml({
-      shapes: `
+    const master = parseMaster(
+      makeMasterXml({
+        shapes: `
         <sp>
           <nvSpPr><cNvPr id="11" name="IncompleteXfrm"/><nvPr><ph type="body"/></nvPr></nvSpPr>
           <spPr><xfrm><off/><ext/></xfrm></spPr>
         </sp>
       `,
-    }));
+      }),
+    );
 
     expect(master.placeholders).toHaveLength(1);
     expect(master.placeholderEntries![0].absoluteXfrm).toEqual({
@@ -222,8 +264,9 @@ describe('parseMaster', () => {
   });
 
   it('composes transforms for nested grouped placeholders with sparse group xfrm attrs', () => {
-    const master = parseMaster(makeMasterXml({
-      shapes: `
+    const master = parseMaster(
+      makeMasterXml({
+        shapes: `
         <grpSp>
           <grpSpPr>
             <xfrm>
@@ -245,7 +288,8 @@ describe('parseMaster', () => {
           </grpSp>
         </grpSp>
       `,
-    }));
+      }),
+    );
 
     expect(master.placeholders).toHaveLength(1);
     expect(master.placeholderEntries![0].absoluteXfrm!.position.x).toBeCloseTo(192, 0);

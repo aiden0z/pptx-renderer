@@ -1,0 +1,25 @@
+{
+  "name": "oracle-pypptx-text-0043-cjk-sp-autofit-narrow",
+  "generator": "python-pptx",
+  "slides": [
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    }
+  ],
+  "coverage": {
+    "oracle": "native-powerpoint",
+    "requiredFonts": [
+      "Microsoft YaHei"
+    ],
+    "features": [
+      "text.cjk",
+      "bodyPr.wrap=square",
+      "bodyPr.spAutoFit",
+      "layout.narrow"
+    ]
+  }
+}

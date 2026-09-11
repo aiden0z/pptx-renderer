@@ -34,6 +34,7 @@ import type {
   FitMode,
   ZipParseLimits,
   EmbeddedFontLimits,
+  FontFaceConfig,
   BuildPresentationOptions,
   PresentationData,
   SerializedPresentation,
@@ -91,6 +92,7 @@ type _MediaResolverCompileCheck = MediaResolver;
 type _ResolvedMediaCompileCheck = ResolvedMedia;
 type _BuildPresentationOptionsCompileCheck = BuildPresentationOptions;
 type _EmbeddedFontLimitsCompileCheck = EmbeddedFontLimits;
+type _FontFaceConfigCompileCheck = FontFaceConfig;
 
 describe('package exports', () => {
   it('exports PptxViewer class', () => {

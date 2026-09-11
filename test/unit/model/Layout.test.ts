@@ -2,12 +2,14 @@ import { describe, expect, it } from 'vitest';
 import { parseLayout } from '../../../src/model/Layout';
 import { parseXml } from '../../../src/parser/XmlParser';
 
-function makeLayoutXml(opts: {
-  bg?: string;
-  shapes?: string;
-  clrMapOvr?: string;
-  showMasterSp?: string;
-} = {}) {
+function makeLayoutXml(
+  opts: {
+    bg?: string;
+    shapes?: string;
+    clrMapOvr?: string;
+    showMasterSp?: string;
+  } = {},
+) {
   const bgXml = opts.bg ? `<bg>${opts.bg}</bg>` : '';
   const shapesXml = opts.shapes ?? '';
   const clrMapOvr = opts.clrMapOvr ?? '';
@@ -35,9 +37,11 @@ describe('parseLayout', () => {
   });
 
   it('parses background', () => {
-    const layout = parseLayout(makeLayoutXml({
-      bg: '<bgPr><solidFill><srgbClr val="FF0000"/></solidFill></bgPr>',
-    }));
+    const layout = parseLayout(
+      makeLayoutXml({
+        bg: '<bgPr><solidFill><srgbClr val="FF0000"/></solidFill></bgPr>',
+      }),
+    );
     expect(layout.background).toBeDefined();
     expect(layout.background!.exists()).toBe(true);
   });
@@ -63,28 +67,70 @@ describe('parseLayout', () => {
   });
 
   it('parses colorMapOverride with overrideClrMapping', () => {
-    const layout = parseLayout(makeLayoutXml({
-      clrMapOvr: `
+    const layout = parseLayout(
+      makeLayoutXml({
+        clrMapOvr: `
         <clrMapOvr>
           <overrideClrMapping bg1="lt1" tx1="dk1" bg2="lt2" tx2="dk2"/>
         </clrMapOvr>
       `,
-    }));
+      }),
+    );
     expect(layout.colorMapOverride).toBeDefined();
     expect(layout.colorMapOverride!.get('bg1')).toBe('lt1');
     expect(layout.colorMapOverride!.get('tx1')).toBe('dk1');
   });
 
   it('ignores clrMapOvr without overrideClrMapping', () => {
-    const layout = parseLayout(makeLayoutXml({
-      clrMapOvr: '<clrMapOvr><masterClrMapping/></clrMapOvr>',
-    }));
+    const layout = parseLayout(
+      makeLayoutXml({
+        clrMapOvr: '<clrMapOvr><masterClrMapping/></clrMapOvr>',
+      }),
+    );
     expect(layout.colorMapOverride).toBeUndefined();
+    expect(layout.colorMapOverrideMode).toBe('master');
+  });
+
+  it('keeps an explicit identity override distinct from an absent override', () => {
+    const absent = parseLayout(makeLayoutXml());
+    const identity = parseLayout(
+      makeLayoutXml({
+        clrMapOvr: '<clrMapOvr><overrideClrMapping accent1="accent1"/></clrMapOvr>',
+      }),
+    );
+
+    expect(absent.colorMapOverrideMode).toBeUndefined();
+    expect(identity.colorMapOverrideMode).toBe('override');
+    expect(identity.colorMapOverride?.get('accent1')).toBe('accent1');
+  });
+
+  it('extracts placeholders only from the compatible AlternateContent branch', () => {
+    const layout = parseLayout(
+      makeLayoutXml({
+        shapes: `
+        <mc:AlternateContent xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+          xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
+          <mc:Choice Requires="p">
+            <sp><nvSpPr><cNvPr id="10" name="Choice placeholder"/><nvPr><ph type="body"/></nvPr></nvSpPr><spPr/></sp>
+          </mc:Choice>
+          <mc:Fallback>
+            <sp><nvSpPr><cNvPr id="11" name="Fallback placeholder"/><nvPr><ph type="body"/></nvPr></nvSpPr><spPr/></sp>
+          </mc:Fallback>
+        </mc:AlternateContent>
+      `,
+      }),
+    );
+
+    expect(layout.placeholders).toHaveLength(1);
+    expect(layout.placeholders[0].node.child('nvSpPr').child('cNvPr').attr('name')).toBe(
+      'Choice placeholder',
+    );
   });
 
   it('extracts placeholders from sp with nvSpPr > nvPr > ph', () => {
-    const layout = parseLayout(makeLayoutXml({
-      shapes: `
+    const layout = parseLayout(
+      makeLayoutXml({
+        shapes: `
         <sp>
           <nvSpPr><cNvPr id="2" name="Title"/><nvPr><ph type="title"/></nvPr></nvSpPr>
           <spPr>
@@ -92,7 +138,8 @@ describe('parseLayout', () => {
           </spPr>
         </sp>
       `,
-    }));
+      }),
+    );
     expect(layout.placeholders).toHaveLength(1);
     expect(layout.placeholders[0].absoluteXfrm).toBeDefined();
     expect(layout.placeholders[0].absoluteXfrm!.position.x).toBeCloseTo(96, 0);
@@ -100,8 +147,9 @@ describe('parseLayout', () => {
   });
 
   it('extracts placeholders from nvPicPr', () => {
-    const layout = parseLayout(makeLayoutXml({
-      shapes: `
+    const layout = parseLayout(
+      makeLayoutXml({
+        shapes: `
         <pic>
           <nvPicPr><cNvPr id="3" name="Pic"/><nvPr><ph type="pic"/></nvPr></nvPicPr>
           <spPr>
@@ -109,20 +157,23 @@ describe('parseLayout', () => {
           </spPr>
         </pic>
       `,
-    }));
+      }),
+    );
     expect(layout.placeholders).toHaveLength(1);
   });
 
   it('extracts placeholders from graphicFrame with direct xfrm', () => {
-    const layout = parseLayout(makeLayoutXml({
-      shapes: `
+    const layout = parseLayout(
+      makeLayoutXml({
+        shapes: `
         <graphicFrame>
           <nvGraphicFramePr><cNvPr id="4" name="Chart"/><nvPr><ph type="chart" idx="2"/></nvPr></nvGraphicFramePr>
           <xfrm><off x="914400" y="457200"/><ext cx="1828800" cy="914400"/></xfrm>
           <graphic><graphicData/></graphic>
         </graphicFrame>
       `,
-    }));
+      }),
+    );
 
     expect(layout.placeholders).toHaveLength(1);
     expect(layout.placeholders[0].absoluteXfrm).toBeDefined();
@@ -133,8 +184,9 @@ describe('parseLayout', () => {
   });
 
   it('extracts connector placeholders from nvCxnSpPr', () => {
-    const layout = parseLayout(makeLayoutXml({
-      shapes: `
+    const layout = parseLayout(
+      makeLayoutXml({
+        shapes: `
         <cxnSp>
           <nvCxnSpPr><cNvPr id="6" name="Connector"/><nvPr><ph type="body"/></nvPr></nvCxnSpPr>
           <spPr>
@@ -142,7 +194,8 @@ describe('parseLayout', () => {
           </spPr>
         </cxnSp>
       `,
-    }));
+      }),
+    );
 
     expect(layout.placeholders).toHaveLength(1);
     expect(layout.placeholders[0].absoluteXfrm!.position.x).toBeCloseTo(48, 0);
@@ -150,8 +203,9 @@ describe('parseLayout', () => {
   });
 
   it('skips non-placeholder shapes', () => {
-    const layout = parseLayout(makeLayoutXml({
-      shapes: `
+    const layout = parseLayout(
+      makeLayoutXml({
+        shapes: `
         <sp>
           <nvSpPr><cNvPr id="4" name="Rect"/><nvPr/></nvSpPr>
           <spPr>
@@ -159,25 +213,29 @@ describe('parseLayout', () => {
           </spPr>
         </sp>
       `,
-    }));
+      }),
+    );
     expect(layout.placeholders).toHaveLength(0);
   });
 
   it('extracts placeholder without spPr (no absoluteXfrm)', () => {
-    const layout = parseLayout(makeLayoutXml({
-      shapes: `
+    const layout = parseLayout(
+      makeLayoutXml({
+        shapes: `
         <sp>
           <nvSpPr><cNvPr id="5" name="NoXfrm"/><nvPr><ph type="body"/></nvPr></nvSpPr>
         </sp>
       `,
-    }));
+      }),
+    );
     expect(layout.placeholders).toHaveLength(1);
     expect(layout.placeholders[0].absoluteXfrm).toBeUndefined();
   });
 
   it('extracts placeholders from group shapes recursively', () => {
-    const layout = parseLayout(makeLayoutXml({
-      shapes: `
+    const layout = parseLayout(
+      makeLayoutXml({
+        shapes: `
         <grpSp>
           <grpSpPr>
             <xfrm>
@@ -193,7 +251,8 @@ describe('parseLayout', () => {
           </sp>
         </grpSp>
       `,
-    }));
+      }),
+    );
     expect(layout.placeholders).toHaveLength(1);
     expect(layout.placeholders[0].absoluteXfrm).toBeDefined();
     // 914400 EMU = 96px
@@ -201,8 +260,9 @@ describe('parseLayout', () => {
   });
 
   it('handles group with missing grpSpPr gracefully', () => {
-    const layout = parseLayout(makeLayoutXml({
-      shapes: `
+    const layout = parseLayout(
+      makeLayoutXml({
+        shapes: `
         <grpSp>
           <sp>
             <nvSpPr><cNvPr id="11" name="NoGrpXfrm"/><nvPr><ph type="body"/></nvPr></nvSpPr>
@@ -212,14 +272,16 @@ describe('parseLayout', () => {
           </sp>
         </grpSp>
       `,
-    }));
+      }),
+    );
     // Should still find placeholder through recursive search
     expect(layout.placeholders).toHaveLength(1);
   });
 
   it('computes correct absolute position for scaled group', () => {
-    const layout = parseLayout(makeLayoutXml({
-      shapes: `
+    const layout = parseLayout(
+      makeLayoutXml({
+        shapes: `
         <grpSp>
           <grpSpPr>
             <xfrm>
@@ -235,7 +297,8 @@ describe('parseLayout', () => {
           </sp>
         </grpSp>
       `,
-    }));
+      }),
+    );
     expect(layout.placeholders).toHaveLength(1);
     const xfrm = layout.placeholders[0].absoluteXfrm!;
     // Group scale: 4572000/9144000 = 0.5
@@ -248,8 +311,9 @@ describe('parseLayout', () => {
   });
 
   it('handles group with missing chOff/chExt (defaults to ext)', () => {
-    const layout = parseLayout(makeLayoutXml({
-      shapes: `
+    const layout = parseLayout(
+      makeLayoutXml({
+        shapes: `
         <grpSp>
           <grpSpPr>
             <xfrm>
@@ -264,15 +328,17 @@ describe('parseLayout', () => {
           </sp>
         </grpSp>
       `,
-    }));
+      }),
+    );
     expect(layout.placeholders).toHaveLength(1);
     // Scale should be 1:1 when chExt defaults to ext
     expect(layout.placeholders[0].absoluteXfrm!.size.w).toBeCloseTo(96, 0);
   });
 
   it('guards zero child extents in layout grouped placeholders', () => {
-    const layout = parseLayout(makeLayoutXml({
-      shapes: `
+    const layout = parseLayout(
+      makeLayoutXml({
+        shapes: `
         <grpSp>
           <grpSpPr>
             <xfrm>
@@ -288,7 +354,8 @@ describe('parseLayout', () => {
           </sp>
         </grpSp>
       `,
-    }));
+      }),
+    );
 
     expect(layout.placeholders).toHaveLength(1);
     expect(layout.placeholders[0].absoluteXfrm!.size.w).toBeCloseTo(96, 0);
@@ -296,14 +363,16 @@ describe('parseLayout', () => {
   });
 
   it('defaults missing placeholder xfrm attributes to zero', () => {
-    const layout = parseLayout(makeLayoutXml({
-      shapes: `
+    const layout = parseLayout(
+      makeLayoutXml({
+        shapes: `
         <sp>
           <nvSpPr><cNvPr id="40" name="IncompleteXfrm"/><nvPr><ph type="body"/></nvPr></nvSpPr>
           <spPr><xfrm><off/><ext/></xfrm></spPr>
         </sp>
       `,
-    }));
+      }),
+    );
 
     expect(layout.placeholders).toHaveLength(1);
     expect(layout.placeholders[0].absoluteXfrm).toEqual({
@@ -313,8 +382,9 @@ describe('parseLayout', () => {
   });
 
   it('composes transforms for nested grouped placeholders with sparse group xfrm attrs', () => {
-    const layout = parseLayout(makeLayoutXml({
-      shapes: `
+    const layout = parseLayout(
+      makeLayoutXml({
+        shapes: `
         <grpSp>
           <grpSpPr>
             <xfrm>
@@ -336,7 +406,8 @@ describe('parseLayout', () => {
           </grpSp>
         </grpSp>
       `,
-    }));
+      }),
+    );
 
     expect(layout.placeholders).toHaveLength(1);
     expect(layout.placeholders[0].absoluteXfrm!.position.x).toBeCloseTo(192, 0);

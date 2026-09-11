@@ -9,6 +9,7 @@ export default defineConfig({
   use: {
     baseURL: 'http://127.0.0.1:4174',
     browserName: 'chromium',
+    channel: process.env.PLAYWRIGHT_CHANNEL,
     headless: true,
   },
   webServer: {

@@ -889,7 +889,7 @@ describe('renderTable', () => {
       const el = renderTable(makeTable({ columns: [400], rows }), makeCtx());
       const paragraph = el.querySelector('td div') as HTMLElement;
 
-      expect(parseFloat(paragraph.style.lineHeight)).toBeCloseTo(1.5, 3);
+      expect(parseFloat(paragraph.style.lineHeight)).toBeCloseTo(1.785, 3);
     });
 
     it('trims outer paragraph spacing inside table cells', () => {

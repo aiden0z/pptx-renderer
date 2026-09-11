@@ -7,12 +7,12 @@ vi.mock('../../../src/model/RenderableChild', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../../src/model/RenderableChild')>();
   return {
     ...actual,
-    parseRenderableChild: vi.fn(actual.parseRenderableChild),
+    parseRenderableChildren: vi.fn(actual.parseRenderableChildren),
   };
 });
 
 const { renderSlide } = await import('../../../src/renderer/SlideRenderer');
-const { parseRenderableChild } = await import('../../../src/model/RenderableChild');
+const { parseRenderableChildren } = await import('../../../src/model/RenderableChild');
 
 const emptyXml = new SafeXmlNode(null);
 
@@ -94,7 +94,7 @@ function makeMinimalPres(): PresentationData {
 
 describe('renderSlide template shape cache', () => {
   beforeEach(() => {
-    vi.mocked(parseRenderableChild).mockClear();
+    vi.mocked(parseRenderableChildren).mockClear();
   });
 
   it('parses reusable master/layout template shapes once across repeated slide renders', () => {
@@ -112,6 +112,6 @@ describe('renderSlide template shape cache', () => {
     const second = renderSlide(pres, slide);
     second.dispose();
 
-    expect(parseRenderableChild).toHaveBeenCalledTimes(2);
+    expect(parseRenderableChildren).toHaveBeenCalledTimes(2);
   });
 });

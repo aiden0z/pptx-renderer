@@ -69,15 +69,26 @@ function collectModifiers(colorNode: SafeXmlNode): ColorModifier[] {
  * The theme's colorScheme holds the actual hex values keyed by the mapped name.
  */
 function resolveSchemeColor(schemeName: string, ctx: RenderContext): string {
-  // Apply colorMap remapping (layout override takes priority)
   let mappedName = schemeName;
-  if (ctx.layout.colorMapOverride) {
-    const override = ctx.layout.colorMapOverride.get(schemeName);
-    if (override) mappedName = override;
-  }
-  if (mappedName === schemeName) {
-    const mapped = ctx.master.colorMap.get(schemeName);
-    if (mapped) mappedName = mapped;
+  const slideMode =
+    ctx.slide.colorMapOverrideMode ?? (ctx.slide.colorMapOverride ? 'override' : undefined);
+  const layoutMode =
+    ctx.layout.colorMapOverrideMode ?? (ctx.layout.colorMapOverride ? 'override' : undefined);
+
+  const applyMap = (map: Map<string, string> | undefined): boolean => {
+    if (!map?.has(schemeName)) return false;
+    mappedName = map.get(schemeName) ?? schemeName;
+    return true;
+  };
+
+  if (slideMode === 'override') {
+    if (!applyMap(ctx.slide.colorMapOverride)) applyMap(ctx.master.colorMap);
+  } else if (slideMode === 'master') {
+    applyMap(ctx.master.colorMap);
+  } else if (layoutMode === 'override') {
+    if (!applyMap(ctx.layout.colorMapOverride)) applyMap(ctx.master.colorMap);
+  } else {
+    applyMap(ctx.master.colorMap);
   }
 
   // Look up in theme color scheme

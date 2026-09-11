@@ -87,7 +87,90 @@ describe('chart option post-process helpers', () => {
 
     applyLegendGridMargins(option, chartNode, undefined);
 
-    expect(option.grid.right).toBe(99);
+    expect(option.grid.right).toBe(105);
+    expect(option.legend.right).toBe('1%');
+  });
+
+  it('uses family-specific side legend margins for bars and bubbles', () => {
+    const barOption = {
+      grid: { left: 12, right: 15 },
+      legend: {
+        data: [{ name: 'Curve' }],
+        itemWidth: 18,
+        textStyle: { fontSize: 18 },
+      },
+      xAxis: { type: 'category', data: ['A', 'B'] },
+      yAxis: { type: 'value' },
+      series: [{ type: 'bar' }],
+    };
+    const bubbleOption = {
+      grid: { left: 15, right: 10 },
+      legend: {
+        data: [{ name: 'Curve' }],
+        itemWidth: 18,
+        textStyle: { fontSize: 18 },
+      },
+      xAxis: { type: 'value' },
+      yAxis: { type: 'value' },
+      series: [{ type: 'scatter' }],
+    };
+    const barChart = parseXml(`
+      <c:chart xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart">
+        <c:plotArea><c:barChart/></c:plotArea>
+        <c:legend><c:legendPos val="r"/><c:overlay val="0"/></c:legend>
+      </c:chart>
+    `);
+    const bubbleChart = parseXml(`
+      <c:chart xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart">
+        <c:plotArea><c:bubbleChart/></c:plotArea>
+        <c:legend><c:legendPos val="r"/><c:overlay val="0"/></c:legend>
+      </c:chart>
+    `);
+
+    applyLegendGridMargins(barOption, barChart, undefined);
+    applyLegendGridMargins(bubbleOption, bubbleChart, undefined);
+
+    expect(barOption.grid.right).toBe(105);
+    expect(bubbleOption.grid.right).toBe(100);
+    expect(barOption.legend.right).toBe('1%');
+    expect(bubbleOption.legend.right).toBe('1%');
+  });
+
+  it('preserves side legend defaults for negative columns and horizontal bars', () => {
+    const makeOption = (data: number[]) => ({
+      grid: { left: 18, right: 10 },
+      legend: {
+        right: '2%',
+        data: [{ name: 'Series 1' }],
+        itemWidth: 18,
+        textStyle: { fontSize: 18 },
+      },
+      xAxis: { type: 'category', data: ['A', 'B'] },
+      yAxis: { type: 'value' },
+      series: [{ type: 'bar', data }],
+    });
+    const negativeOption = makeOption([15, -8]);
+    const horizontalOption = makeOption([15, 8]);
+    const negativeChart = parseXml(`
+      <c:chart xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart">
+        <c:plotArea><c:barChart><c:barDir val="col"/></c:barChart></c:plotArea>
+        <c:legend><c:legendPos val="r"/><c:overlay val="0"/></c:legend>
+      </c:chart>
+    `);
+    const horizontalChart = parseXml(`
+      <c:chart xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart">
+        <c:plotArea><c:barChart><c:barDir val="bar"/></c:barChart></c:plotArea>
+        <c:legend><c:legendPos val="r"/><c:overlay val="0"/></c:legend>
+      </c:chart>
+    `);
+
+    applyLegendGridMargins(negativeOption, negativeChart, undefined);
+    applyLegendGridMargins(horizontalOption, horizontalChart, undefined);
+
+    expect(negativeOption.grid.right).toBe(137);
+    expect(horizontalOption.grid.right).toBe(137);
+    expect(negativeOption.legend.right).toBe('2%');
+    expect(horizontalOption.legend.right).toBe('2%');
   });
 
   it('keeps extra right legend padding for scatter charts', () => {
@@ -112,5 +195,28 @@ describe('chart option post-process helpers', () => {
     applyLegendGridMargins(option, chartNode, undefined);
 
     expect(option.grid.right).toBe(108);
+    expect(option.legend.right).toBe('1%');
+  });
+
+  it('keeps the default side inset for non-Cartesian legends', () => {
+    const option = {
+      grid: { left: 20, right: 20 },
+      legend: {
+        right: '2%',
+        data: [{ name: 'Sales' }],
+        textStyle: { fontSize: 18 },
+      },
+      series: [{ type: 'pie' }],
+    };
+    const chartNode = parseXml(`
+      <c:chart xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart">
+        <c:plotArea><c:doughnutChart/></c:plotArea>
+        <c:legend><c:legendPos val="r"/><c:overlay val="0"/></c:legend>
+      </c:chart>
+    `);
+
+    applyLegendGridMargins(option, chartNode, undefined);
+
+    expect(option.legend.right).toBe('2%');
   });
 });

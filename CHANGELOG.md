@@ -11,11 +11,64 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 - Added browser rendering for licensed EOT/MTX fonts embedded in PowerPoint files, with
   bounded face, byte, and processing budgets plus host-font fallback for rejected faces.
+- Added `fontFaces` options to `PptxViewer` and headless `renderSlide()` so host applications can
+  register missing regular/bold font data before PowerPoint text layout is measured.
+- Added a 12-case CJK native-oracle matrix for wrap, autofit, line/paragraph spacing, adjacent
+  run spacing, and parent-shape layout, with tracked coverage/font metadata and ignored binaries.
+- Added optional local font profiles and per-evaluation provenance for PPTX/ground-truth/font
+  hashes, renderer Git state, and the actual browser version.
+
+### Changed
+
+- The python-pptx corpus generator now supports native PDF export on macOS, repeatable exact/glob
+  case filters, and SHA-256 artifact records while keeping cached case metadata synchronized.
+- Map Office percentage line and paragraph spacing through its native line unit, trim outer
+  first/last paragraph spacing, and use text-container defaults validated by the 12-case CJK matrix.
+- Stage macOS PowerPoint input/output in one fixed ignored runtime directory and use a bounded
+  timeout so local corpus generation does not require a new folder grant for every case.
+- Make the native macro smoke validate a non-empty SmartArt catalog produced in the fixed runtime
+  directory.
+- Install `pytest-timeout` for the declared 180-second E2E limit and remove the unused
+  `asyncio_mode` setting, so pytest no longer ignores both configuration keys with warnings.
+- Allow the resolved `pdfjs-dist` root in the Vite development server so PDF Worker browser tests
+  remain valid when a Git worktree resolves dependencies outside its own directory.
+- Honor `PPTX_E2E_BROWSER_CHANNEL` in pytest browser fixtures as well as the evaluation API, so
+  local E2E runs can consistently use an installed branded Chrome.
 
 ### Fixed
 
 - Preserved explicit paragraph `defRPr` text colors when a shape also provides a theme
   `fontRef` color, preventing light theme text from overriding authored paragraph colors.
+- Keep near-fit, single-paragraph square-wrapped headings on one line with a conservative 2%
+  browser-metric correction while preserving deliberate multi-line text.
+- Resolve macOS PowerPoint exports and macro hosts by exact full path, close only that presentation,
+  and qualify VBA procedures with the host filename so unrelated open decks cannot become the
+  export/close target and unqualified macros do not fail with `-18`.
+- Preserve AppleScript stderr, including environment codes such as `-9074`; bound exports and
+  macros, remove stale output before native execution, and classify timeouts as an unlocked-session
+  or pending permission problem instead of retrying a blocked UI.
+- Generate CJK soft line breaks as DrawingML `a:br` elements so local oracle inputs do not contain
+  visible `_x000B_` escape text.
+
+- Align default vertical column, line, area, scatter, and bubble plot areas and side legends
+  more closely with PowerPoint while preserving manual layouts, overlay legends, negative-value
+  columns, and horizontal bars.
+- Wait for fonts, images, and stable chart canvas output before oracle screenshots without
+  changing ECharts animation or the public `SlideHandle.ready` contract.
+- Select one compatible MCE Choice or Fallback across slide/template/group content and
+  OLE picture previews, including the supported SVG picture extension and lazy paths.
+- Preserve slide/layout/master color-map identity/reset semantics and isolate chart-local
+  overrides from the parent slide.
+- Follow matched layout placeholder categories during master inheritance, preserve explicit
+  zero transforms/insets, and resolve body-property/autofit choices and text-container whitespace.
+- Preserve sparse scatter/bubble coordinates and literal chart data; respect explicit negative-bar
+  inversion flags and merged/conditional table borders, including corner styles and no-fill clears.
+- Keep clipped picture effects and asynchronous media work attached to their owning render
+  handle; preserve external handles across viewer reload/destroy and cancel disposed chart setup.
+- Restrict segmented-cycle geometry compensation to matching SmartArt layout provenance.
+
+- Prevented tolerated text metric overhang from turning PowerPoint text boxes into browser
+  scroll containers, which could expose scrollbars and change wrapping on Windows.
 - Sized tables from their column/row grid (Σ column widths × Σ row heights) instead of the
   graphicFrame `<a:ext>`, so tables authored in Google Slides — which export a stale
   placeholder ext — no longer render squished with clipped cell text.

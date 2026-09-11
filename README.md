@@ -4,7 +4,7 @@
 
 A high-fidelity, browser-native PPTX renderer that parses Office Open XML (`.pptx`) files and renders slides as HTML/SVG DOM.
 
-Supports shapes, text, images, tables, charts, SmartArt, groups, backgrounds, gradients, pattern fills, and the full OOXML color pipeline — covering the vast majority of real-world PowerPoint content.
+Supports shapes, text, images, tables, charts, SmartArt fallback data, groups, backgrounds, gradients, pattern fills, and OOXML color inheritance. Rendering fidelity depends on the source features and available preview data; see the support boundaries below.
 
 ## Rendering Example
 
@@ -23,13 +23,18 @@ A complex slide with charts, text styles, shapes, and SmartArt — PowerPoint gr
 
 ## Visual Regression Testing
 
-Every rendering capability is automatically verified against PowerPoint output. **452+ visual regression cases** with zero failures — covering 187+ preset shapes, 134+ SmartArt layouts, 36+ fill/stroke/gradient variants, and 101 python-pptx cases (text, shape adjustments, composites, charts).
+Visual regression suites compare selected shape, SmartArt, fill/stroke, text, table, and chart cases against PowerPoint output. Each API evaluation records the renderer revision, browser, optional font profile, and SHA-256 fingerprints of its PPTX and ground truth so results can be compared against the same inputs. A passing aggregate score does not establish semantic correctness or full PowerPoint parity; structural assertions and targeted browser/native inspection complement the metrics.
 
 <img src="docs/example/e2e-test-page.png" alt="E2E evaluation dashboard" width="800" />
 
 <sup>E2E evaluation dashboard: side-by-side ground truth vs rendered output with SSIM, color histogram, and IoU metrics per slide.</sup>
 
-> Ground truth data (PPTX + PDF pairs) is not committed to the repository due to file size. It can be regenerated locally via `scripts/one_shot_full_ground_truth.py` with Microsoft PowerPoint installed (macOS and Windows both supported) — see [`docs/TESTING.md`](docs/TESTING.md) for details.
+> Ground truth binaries (PPTX/PDF/PNG) stay in the ignored `test/e2e/testdata/` tree. Tracked case definitions and coverage metadata keep that local corpus reproducible. Generate shape/SmartArt corpora with `scripts/one_shot_full_ground_truth.py` or focused text/chart/composite cases with `scripts/generate_pypptx_cases.py`; both macOS and Windows PowerPoint are supported. See [`docs/TESTING.md`](docs/TESTING.md).
+
+On macOS, native exports use one fixed ignored `oracle-runtime` directory, target the requested
+presentation by its exact full path, and require an unlocked interactive PowerPoint session. This
+lets local oracle runs coexist with other open presentations without treating the active window as
+the export target.
 
 ## Install
 
@@ -214,30 +219,49 @@ const viewer = await PptxViewer.open(buffer, container, {
 
 #### `new PptxViewer(container, options?)`
 
-| Option               | Type                       | Default       | Description                                                                                                       |
-| -------------------- | -------------------------- | ------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `width`              | `number`                   | --            | Container width hint (omit for auto-detect)                                                                       |
-| `fitMode`            | `'contain' \| 'none'`      | `'contain'`   | Responsive fit or fixed size                                                                                      |
-| `zoomPercent`        | `number`                   | `100`         | Zoom level (10–400)                                                                                               |
-| `scrollContainer`    | `HTMLElement`              | --            | Scroll container for IntersectionObserver root                                                                    |
-| `zipLimits`          | `ZipParseLimits`           | --            | Security limits for ZIP parsing (used by `.open()`). Use `RECOMMENDED_ZIP_LIMITS` for untrusted input.            |
-| `lazyMedia`          | `boolean`                  | `false`       | Decode embedded media on demand instead of during ZIP parsing. Best for large decks with windowed list rendering. |
-| `lazySlides`         | `boolean`                  | `false`       | Parse slide shape/table/chart nodes on demand. Best for large decks with windowed list rendering.                 |
-| `pdfjs`              | `PdfjsConfig`              | --            | Optional PDF.js URLs for EMF-embedded PDF fallback rendering, or `false` to disable it.                           |
-| `embeddedFontLimits` | `EmbeddedFontLimits`       | safe defaults | Optional embedded-font resource limit overrides. Omitted fields retain the built-in defaults.                     |
-| `onSlideChange`      | `(index) => void`          | --            | Shorthand for `slidechange` event                                                                                 |
-| `onSlideRendered`    | `(index, element) => void` | --            | Shorthand for `sliderendered` event                                                                               |
-| `onSlideError`       | `(index, error) => void`   | --            | Shorthand for `slideerror` event                                                                                  |
-| `onSlideUnmounted`   | `(index) => void`          | --            | Shorthand for `slideunmounted` event                                                                              |
-| `onNodeError`        | `(nodeId, error) => void`  | --            | Shorthand for `nodeerror` event                                                                                   |
-| `onRenderStart`      | `() => void`               | --            | Shorthand for `renderstart` event                                                                                 |
-| `onRenderComplete`   | `() => void`               | --            | Shorthand for `rendercomplete` event                                                                              |
+| Option               | Type                        | Default       | Description                                                                                                       |
+| -------------------- | --------------------------- | ------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `width`              | `number`                    | --            | Container width hint (omit for auto-detect)                                                                       |
+| `fitMode`            | `'contain' \| 'none'`       | `'contain'`   | Responsive fit or fixed size                                                                                      |
+| `zoomPercent`        | `number`                    | `100`         | Zoom level (10–400)                                                                                               |
+| `scrollContainer`    | `HTMLElement`               | --            | Scroll container for IntersectionObserver root                                                                    |
+| `zipLimits`          | `ZipParseLimits`            | --            | Security limits for ZIP parsing (used by `.open()`). Use `RECOMMENDED_ZIP_LIMITS` for untrusted input.            |
+| `lazyMedia`          | `boolean`                   | `false`       | Decode embedded media on demand instead of during ZIP parsing. Best for large decks with windowed list rendering. |
+| `lazySlides`         | `boolean`                   | `false`       | Parse slide shape/table/chart nodes on demand. Best for large decks with windowed list rendering.                 |
+| `pdfjs`              | `PdfjsConfig`               | --            | Optional PDF.js URLs for EMF-embedded PDF fallback rendering, or `false` to disable it.                           |
+| `embeddedFontLimits` | `EmbeddedFontLimits`        | safe defaults | Optional embedded-font resource limit overrides. Omitted fields retain the built-in defaults.                     |
+| `fontFaces`          | `readonly FontFaceConfig[]` | --            | Host-provided font faces for typefaces referenced by the PPTX but not embedded in it.                             |
+| `onSlideChange`      | `(index) => void`           | --            | Shorthand for `slidechange` event                                                                                 |
+| `onSlideRendered`    | `(index, element) => void`  | --            | Shorthand for `sliderendered` event                                                                               |
+| `onSlideError`       | `(index, error) => void`    | --            | Shorthand for `slideerror` event                                                                                  |
+| `onSlideUnmounted`   | `(index) => void`           | --            | Shorthand for `slideunmounted` event                                                                              |
+| `onNodeError`        | `(nodeId, error) => void`   | --            | Shorthand for `nodeerror` event                                                                                   |
+| `onRenderStart`      | `() => void`                | --            | Shorthand for `renderstart` event                                                                                 |
+| `onRenderComplete`   | `() => void`                | --            | Shorthand for `rendercomplete` event                                                                              |
 
 All shorthand callbacks are also available as `EventTarget` events (e.g. `viewer.addEventListener('slidechange', ...)`).
 
 Embedded font decompression is bounded by default. Trusted applications can provide partial
 `embeddedFontLimits` overrides; see the [performance guide](docs/PERFORMANCE.md#embedded-font-limits)
 for defaults, examples, and the soft processing-time boundary.
+
+For decks that reference fonts unavailable in the browser, provide regular/bold faces before
+layout through `fontFaces`. Sources follow the browser `FontFace` API and can be font bytes or a
+CSS `url(...)` source (subject to the host page's CSP and CORS policy):
+
+```ts
+const [regular, bold] = await Promise.all([
+  fetch('/fonts/brand-sans-regular.woff2').then((response) => response.arrayBuffer()),
+  fetch('/fonts/brand-sans-bold.woff2').then((response) => response.arrayBuffer()),
+]);
+
+const viewer = new PptxViewer(container, {
+  fontFaces: [
+    { family: 'Brand Sans', source: regular, descriptors: { weight: '400' } },
+    { family: 'Brand Sans', source: bold, descriptors: { weight: '700' } },
+  ],
+});
+```
 
 #### Instance Methods
 
@@ -472,6 +496,7 @@ const handle = renderSlide(presentation, presentation.slides[0], {
   onNodeError: (nodeId, err) => console.warn(nodeId, err),
   mediaUrlCache: new Map(), // optional shared cache for blob URLs
   pdfjs, // optional, only for EMF-embedded PDF fallback rendering
+  fontFaces, // optional host-provided FontFaceConfig[]
 });
 document.body.appendChild(handle.element);
 
@@ -513,6 +538,7 @@ import type {
   FitMode,
   PreviewInput,
   ViewerOptions,
+  FontFaceConfig,
   ListRenderOptions,
   ThumbnailRenderOptions,
   SearchHighlightHandle,
@@ -567,15 +593,28 @@ OOXML 3D chart elements such as `bar3DChart`, `line3DChart`, `pie3DChart`, `area
 
 - **Fills**: solid, linear/radial/rectangular gradient, 52+ pattern fills, image (stretch/tile)
 - **Strokes**: 8 dash styles, 5 arrowhead types, compound lines, line joins
-- **Colors**: full OOXML pipeline — `schemeClr` → `colorMap` remap → theme lookup → modifiers (lumMod, lumOff, tint, shade, alpha, satMod, etc.). All 6 color spaces supported.
+- **Colors**: OOXML pipeline — `schemeClr` → `colorMap` remap → theme lookup → modifiers (lumMod, lumOff, tint, shade, alpha, satMod, etc.). All 6 color spaces supported. Effective maps follow slide → layout → master overrides, including explicit identity mappings and master resets; chart-local maps remain isolated from the parent slide.
+
+Supported chart combinations include combo charts and secondary axes. Sparse scatter/bubble caches preserve missing coordinates and explicit zeros, with gap/span/zero handling; literal data sources and explicit negative-bar inversion flags are honored. Negative percent-stacked normalization is not newly guaranteed by these checks.
 
 ### SmartArt, Tables, Images & More
 
-- **SmartArt**: 134+ layouts via PowerPoint fallback data. EMF-embedded PDF previews can be rendered with optional [pdfjs-dist](https://mozilla.github.io/pdf.js/) configuration.
-- **Tables**: OOXML table styles, cell merge, border inheritance
-- **Images**: blob URL with crop, stretch/tile, video/audio placeholders
-- **Groups**: coordinate remapping with recursive child rendering
+- **SmartArt**: renders available PowerPoint diagram fallback data; individual layout fidelity varies. EMF-embedded PDF previews can be rendered with optional [pdfjs-dist](https://mozilla.github.io/pdf.js/) configuration.
+- **Tables**: OOXML table styles, merged-cell inside/outer borders, conditional corner styles, explicit no-fill border clearing, and direct-cell overrides
+- **Images**: raster/SVG previews with crop and geometry clipping; grayscale, duotone, luminance, and biLevel effects on clipped pictures. Embedded audio/video playback uses browser-supported codecs, with posters/placeholders when playback data is unavailable.
+- **Groups**: coordinate remapping with recursive child rendering; diagram-specific compensation requires matching diagram layout provenance
 - **Backgrounds**: slide → layout → master inheritance chain
+
+### Compatible Content and Text Inheritance
+
+`mc:AlternateContent` selects one compatible `Choice` (including the supported SVG picture extension), otherwise its `Fallback`, across ordinary slide/template/group content and OLE picture previews. Unknown extension namespaces do not become supported merely because they occur in a `Choice`. Eager and lazy rendering retain selected branch order.
+
+Placeholder inheritance follows the matched layout placeholder into its master category, preserves explicit zero transforms/insets, and resolves omitted body properties and mutually exclusive autofit choices. Explicit no-autofit clipping and whitespace behavior are checked in real browser containers. These combinations do not establish native equivalence for every text/autofit variant.
+
+Percentage line spacing and paragraph before/after spacing follow Office line-unit semantics;
+ordinary text boxes trim spacing outside the first and last visible paragraphs. A 12-case CJK
+native matrix covers wrapping, autofit, line/paragraph spacing, adjacent runs, and parent-shape
+layout, while font availability remains part of the evaluation provenance.
 
 ## Architecture
 
@@ -694,7 +733,7 @@ Dev pages at `http://127.0.0.1:5173`:
 
 ## What's Not Yet Supported
 
-3D effects, true 3D chart perspective/depth/surface meshes, animations/transitions, equations (OMML), full EMF/WMF vector rendering, shadow/reflection/glow effects, embedded OLE objects, and slide notes rendering.
+3D effects, true 3D chart perspective/depth/surface meshes, animations/transitions, equations (OMML), full EMF/WMF vector rendering, shadow/reflection/glow effects, executing/editing embedded OLE objects, and slide notes rendering. Available OLE picture previews can render; they are not an OLE object engine. EMF bitmap and embedded-PDF previews remain supported (PDF previews require PDF.js); arbitrary EMF/WMF vector records remain excluded.
 
 ## FAQ
 

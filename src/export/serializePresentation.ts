@@ -16,7 +16,7 @@ import { GroupNodeData } from '../model/nodes/GroupNode';
 import { ChartNodeData } from '../model/nodes/ChartNode';
 import { BaseNodeData } from '../model/nodes/BaseNode';
 import { SafeXmlNode } from '../parser/XmlParser';
-import { parseRenderableChild } from '../model/RenderableChild';
+import { parseRenderableChildren } from '../model/RenderableChild';
 import type { RelEntry } from '../parser/RelParser';
 import type { LayoutData } from '../model/Layout';
 import type { MasterData } from '../model/Master';
@@ -69,6 +69,8 @@ export interface SerializedSlide {
   index: number;
   hidden?: boolean;
   nodes: SerializedNode[];
+  colorMapOverride?: Record<string, string>;
+  colorMapOverrideMode?: 'override' | 'master';
 }
 
 export interface SerializedPresentation {
@@ -110,7 +112,7 @@ function serializeRow(row: TableRow): SerializedRow {
 /**
  * Parse a raw XML child node from a group into a typed node.
  */
-function parseGroupChild(
+function parseGroupChildren(
   childXml: SafeXmlNode,
   rels: Map<string, RelEntry>,
   partPath: string,
@@ -118,12 +120,12 @@ function parseGroupChild(
   layout?: LayoutData,
   master?: MasterData,
   parentGroup?: GroupNodeData,
-): BaseNodeData | undefined {
-  const child = parseRenderableChild(childXml, { rels, partPath, diagramDrawings });
-  if (child) {
+): BaseNodeData[] {
+  const children = parseRenderableChildren(childXml, { rels, partPath, diagramDrawings });
+  for (const child of children) {
     resolveNodePlaceholderInheritance(child, layout, master, { parentGroup });
   }
-  return child;
+  return children;
 }
 
 function serializeNode(
@@ -174,7 +176,7 @@ function serializeNode(
       const children: SerializedNode[] = [];
       for (const childXml of g.children) {
         try {
-          const parsed = parseGroupChild(
+          const parsedChildren = parseGroupChildren(
             childXml,
             rels,
             partPath,
@@ -183,7 +185,7 @@ function serializeNode(
             master,
             g,
           );
-          if (parsed) {
+          for (const parsed of parsedChildren) {
             children.push(serializeNode(parsed, rels, partPath, diagramDrawings, layout, master));
           }
         } catch {
@@ -218,6 +220,11 @@ export function serializePresentation(pres: PresentationData): SerializedPresent
       return {
         index: i,
         hidden: slide.hidden,
+        colorMapOverride:
+          slide.colorMapOverride === undefined
+            ? undefined
+            : Object.fromEntries(slide.colorMapOverride),
+        colorMapOverrideMode: slide.colorMapOverrideMode,
         nodes: slide.nodes.map((node) =>
           serializeNode(node, slide.rels, slide.slidePath, pres.diagramDrawings, layout, master),
         ),

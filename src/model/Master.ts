@@ -6,6 +6,7 @@
 import { SafeXmlNode } from '../parser/XmlParser';
 import { emuToPx } from '../parser/units';
 import type { PlaceholderEntry } from './Layout';
+import { expandCompatibleChildren } from './RenderableChild';
 
 export interface MasterData {
   colorMap: Map<string, string>;
@@ -103,7 +104,7 @@ function extractPlaceholderEntriesRecursive(
   groupTransform: { offX: number; offY: number; scaleX: number; scaleY: number } | null,
 ): PlaceholderEntry[] {
   const out: PlaceholderEntry[] = [];
-  for (const child of spTree.allChildren()) {
+  for (const child of spTree.allChildren().flatMap(expandCompatibleChildren)) {
     if (child.localName === 'grpSp') {
       const gx = getGroupXfrmInEmu(child);
       if (gx && gx.chExtCx > 0 && gx.chExtCy > 0) {

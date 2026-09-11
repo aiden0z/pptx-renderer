@@ -426,7 +426,7 @@ function renderBlipBackground(
           ctx.presentation.mediaResolver,
         )
           .then((lazyResolved) => {
-            if (!lazyResolved) return;
+            if (ctx.signal?.aborted || !lazyResolved) return;
             const lazyUrl = getOrCreateBlobUrl(
               lazyResolved.mediaPath,
               lazyResolved.data,

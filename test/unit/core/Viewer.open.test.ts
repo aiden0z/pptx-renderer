@@ -201,3 +201,61 @@ describe('viewer.open() instance method', () => {
     expect(viewer.getMountedSlides()).toEqual([0]);
   });
 });
+
+for (const replacement of ['destroy', 'load', 'open', 'zoom'] as const) {
+  it(`pending Blob normalization respects ${replacement} input ownership`, async () => {
+    let release!: (buffer: ArrayBuffer) => void;
+    const blob = new Blob([]);
+    Object.defineProperty(blob, 'arrayBuffer', {
+      value: () =>
+        new Promise((resolve) => {
+          release = resolve;
+        }),
+    });
+    const viewer = new PptxViewer(document.createElement('div'));
+    const pending = viewer.open(blob);
+    if (replacement === 'destroy') viewer.destroy();
+    if (replacement === 'load') viewer.load({ ...mockPresentation, slides: [] });
+    if (replacement === 'open') await viewer.open(new ArrayBuffer(1));
+    if (replacement === 'zoom') viewer.setZoom(125);
+    const buildCount = vi.mocked(buildPresentation).mock.calls.length;
+    release(new ArrayBuffer(4));
+    await pending;
+    expect(vi.mocked(buildPresentation).mock.calls.length - buildCount).toBe(
+      replacement === 'zoom' ? 1 : 0,
+    );
+    expect(viewer.slideCount).toBe(replacement === 'destroy' || replacement === 'load' ? 0 : 2);
+    viewer.destroy();
+  });
+}
+it('superseded ZIP result is inert while explicit AbortSignal remains AbortError', async () => {
+  let release!: (files: any) => void;
+  vi.mocked(parseZip).mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        release = resolve;
+      }),
+  );
+  const viewer = new PptxViewer(document.createElement('div'));
+  const pending = viewer.open(new ArrayBuffer(1));
+  await Promise.resolve();
+  await Promise.resolve();
+  viewer.destroy();
+  release({});
+  await pending;
+  expect(viewer.slideCount).toBe(0);
+  let releaseBlob!: (buffer: ArrayBuffer) => void;
+  const blob = new Blob([]);
+  Object.defineProperty(blob, 'arrayBuffer', {
+    value: () =>
+      new Promise((resolve) => {
+        releaseBlob = resolve;
+      }),
+  });
+  const controller = new AbortController();
+  const aborted = viewer.open(blob, { signal: controller.signal });
+  controller.abort();
+  viewer.destroy();
+  releaseBlob(new ArrayBuffer(1));
+  await expect(aborted).rejects.toMatchObject({ name: 'AbortError' });
+});

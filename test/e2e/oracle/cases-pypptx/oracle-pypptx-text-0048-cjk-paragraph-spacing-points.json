@@ -1,0 +1,25 @@
+{
+  "name": "oracle-pypptx-text-0048-cjk-paragraph-spacing-points",
+  "generator": "python-pptx",
+  "slides": [
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    }
+  ],
+  "coverage": {
+    "oracle": "native-powerpoint",
+    "requiredFonts": [
+      "Microsoft YaHei"
+    ],
+    "features": [
+      "text.cjk",
+      "paragraph.multiple",
+      "spcBef.spcPts",
+      "spcAft.spcPts"
+    ]
+  }
+}

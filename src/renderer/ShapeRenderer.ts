@@ -37,6 +37,10 @@ function hasExplicitCenteredParagraph(textBody: TextBody): boolean {
 }
 
 const IMPLICIT_SINGLE_LINE_LABEL_MAX_CHARS = 36;
+// Native PowerPoint CJK probes use slightly tighter boxes when separate paragraphs create
+// multiple browser line boxes. Explicit OOXML line spacing still overrides these defaults.
+const OFFICE_SINGLE_PARAGRAPH_LINE_HEIGHT = '1.18';
+const OFFICE_MULTI_PARAGRAPH_LINE_HEIGHT = '1.16';
 
 function visibleTextLength(textBody: TextBody): number {
   const text = textBody.paragraphs
@@ -123,7 +127,7 @@ import { applyTint, hexToRgb, rgbToHex } from '../utils/color';
 import { SafeXmlNode } from '../parser/XmlParser';
 import { findMediaByTarget, findMediaByTargetAsync, getOrCreateBlobUrl } from '../utils/media';
 import { isAllowedExternalMediaUrl, isAllowedExternalUrl } from '../utils/urlSafety';
-import { getEffectiveBodyPrChild } from './TextBodyProperties';
+import { getEffectiveBodyPrChild, parseTextPercentage } from './TextBodyProperties';
 import { cssFontFamilyStack, resolveThemeFontStack } from './fontResolver';
 import { resolveSlideNavigationIndex, slideJumpTitle } from './navigation';
 import { scaleCssLengthForTransform } from './cssValues';
@@ -192,6 +196,7 @@ const SINGLE_PARAGRAPH_WRAPPED_AUTOFIT_HEIGHT_TOLERANCE = 1.25;
 const WRAPPED_AUTOFIT_WIDTH_TOLERANCE_PX = 1;
 const NO_AUTOFIT_TITLE_METRIC_SCALE_FLOOR = 0.9;
 const SP_AUTOFIT_UNWRAPPED_WIDTH_SCALE_FLOOR = 0.9;
+const NEAR_FIT_SINGLE_LINE_WRAP_SCALE_FLOOR = 0.98;
 
 function getSupportedTextWarpPreset(textBody: TextBody): 'textArchDown' | 'textArchUp' | null {
   const prstTxWarp = textBody.bodyProperties?.child('prstTxWarp');
@@ -2445,10 +2450,12 @@ export function renderShape(node: ShapeNodeData, ctx: RenderContext): HTMLElemen
       textContainer.style.display = 'flex';
       textContainer.style.flexDirection = 'column';
       textContainer.style.boxSizing = 'border-box';
+      // Isolate text layout from host pre/nowrap styles; bodyPr wrap=none overrides below.
+      textContainer.style.whiteSpace = 'normal';
       // Overflow handling based on bodyPr auto-fit mode:
       // - spAutoFit: shape resizes to fit text → overflow visible
       // - normAutofit: text shrinks to fit shape → apply fontScale, overflow hidden
-      // - noAutofit: text clips → overflow hidden
+      // - noAutofit: fixed font size, with independent explicit clip/overflow axes
       // - (default, no child): PowerPoint implicitly auto-shrinks simple single-line labels
       const spAutoFit = getEffectiveBodyPrChild(textBody, 'spAutoFit');
       const hasSpAutoFit = spAutoFit?.exists();
@@ -2480,11 +2487,27 @@ export function renderShape(node: ShapeNodeData, ctx: RenderContext): HTMLElemen
         (textWrap === 'none' ||
           (textWrap === undefined && isShortImplicitSingleLineLabel(textBody)));
       const usesNoAutofitSingleLineTitleFit =
-        hasNoAutofit && isTitlePlaceholder(node.placeholder) && isSingleLineTextBody(textBody);
+        hasNoAutofit &&
+        horzOverflow !== 'clip' &&
+        vertOverflow !== 'clip' &&
+        isTitlePlaceholder(node.placeholder) &&
+        isSingleLineTextBody(textBody);
+      const usesNearFitSingleLineWrap =
+        !hasSpAutoFit &&
+        !hasNormAutofit &&
+        !hasNoAutofit &&
+        textWrap === 'square' &&
+        isSingleLineTextBody(textBody) &&
+        isShortImplicitSingleLineLabel(textBody) &&
+        !hasBulletParagraph(textBody);
       textContainer.style.overflowX = 'visible';
       // noAutofit means "don't auto-fit" — NOT "clip text". PowerPoint allows text to
       // overflow the shape boundary visibly.
       textContainer.style.overflowY = 'visible';
+      if (hasNoAutofit) {
+        textContainer.style.overflowX = horzOverflow === 'clip' ? 'clip' : 'visible';
+        textContainer.style.overflowY = vertOverflow === 'clip' ? 'clip' : 'visible';
+      }
 
       // normAutofit: PowerPoint stores the computed fontScale (1000ths of percent).
       // Apply it as a CSS transform to shrink text so it fits the shape.
@@ -2492,12 +2515,12 @@ export function renderShape(node: ShapeNodeData, ctx: RenderContext): HTMLElemen
       if (hasNormAutofit && normAutofit) {
         textContainer.style.overflowX = 'hidden';
         textContainer.style.overflowY = 'hidden';
-        const lnSpcReduction = normAutofit.numAttr('lnSpcReduction') ?? 0;
+        const lnSpcReduction = parseTextPercentage(normAutofit.attr('lnSpcReduction')) ?? 0;
         // renderTextBody applies normAutofit@fontScale to run and paragraph font sizes.
         // The container transform is reserved for additional browser-measured shrink.
         needsDynamicAutofit = true;
         if (lnSpcReduction > 0) {
-          const lnFactor = 1 - lnSpcReduction / 100000;
+          const lnFactor = Math.max(0, 1 - lnSpcReduction);
           textContainer.style.lineHeight = `${lnFactor}`;
         }
       }
@@ -2533,6 +2556,12 @@ export function renderShape(node: ShapeNodeData, ctx: RenderContext): HTMLElemen
       if (usesNoAutofitSingleLineTitleFit) {
         needsDynamicAutofit = true;
       }
+      // Office can keep a short, square-wrapped heading on one line when its glyph
+      // metrics only narrowly exceed the text box. Measure these boxes, but accept
+      // at most a 2% width correction so deliberate multi-line layouts stay wrapped.
+      if (usesNearFitSingleLineWrap) {
+        needsDynamicAutofit = true;
+      }
 
       let isVerticalText = false;
       let textAnchor: string | null | undefined;
@@ -2543,7 +2572,7 @@ export function renderShape(node: ShapeNodeData, ctx: RenderContext): HTMLElemen
       // Apply bodyPr (text body properties)
       // Use layout/master bodyPr as fallback for missing attributes
       {
-        if (bodyPr) {
+        {
           // Text wrap: only wrap="none" should force single-line.
           // Title placeholders without explicit wrap should still be allowed to wrap.
           if (textWrap === 'none') {
@@ -2653,40 +2682,39 @@ export function renderShape(node: ShapeNodeData, ctx: RenderContext): HTMLElemen
         }
       }
 
-      const textOptions =
-        fontRefColor || isVerticalText || (hasSpAutoFit && !hasNormAutofit)
-          ? {
-              ...(fontRefColor ? { fontRefColor } : {}),
-              ...(isVerticalText ? { isVerticalText } : {}),
-              ...(hasSpAutoFit && !hasNormAutofit
-                ? (() => {
-                    const paragraphCount = visibleParagraphCount(textBody);
-                    const hasExplicitSpacing = hasExplicitParagraphSpacing(textBody);
-                    const shouldUseOfficeWrappedLineHeight =
-                      !hasExplicitSpacing &&
-                      textWrap !== 'none' &&
-                      (paragraphCount > 1 ||
-                        visibleTextLength(textBody) > IMPLICIT_SINGLE_LINE_LABEL_MAX_CHARS);
+      const paragraphCount = visibleParagraphCount(textBody);
+      const textOptions = {
+        trimOuterParagraphSpacing: true,
+        defaultLineHeight:
+          paragraphCount > 1
+            ? OFFICE_MULTI_PARAGRAPH_LINE_HEIGHT
+            : OFFICE_SINGLE_PARAGRAPH_LINE_HEIGHT,
+        ...(fontRefColor ? { fontRefColor } : {}),
+        ...(isVerticalText ? { isVerticalText } : {}),
+        ...(hasSpAutoFit && !hasNormAutofit
+          ? (() => {
+              const hasExplicitSpacing = hasExplicitParagraphSpacing(textBody);
+              const shouldUseOfficeWrappedLineHeight =
+                !hasExplicitSpacing &&
+                textWrap !== 'none' &&
+                (paragraphCount > 1 ||
+                  visibleTextLength(textBody) > IMPLICIT_SINGLE_LINE_LABEL_MAX_CHARS);
 
-                    return {
-                      trimOuterParagraphSpacing: true,
-                      ...(isSingleLineSpAutoFit &&
-                      !isVerticalText &&
-                      (textWrap === 'none' || hasCenteredParagraphs)
-                        ? {
-                            compactSingleLineSpacing: true,
-                            defaultLineHeight: '1',
-                          }
-                        : shouldUseOfficeWrappedLineHeight
-                          ? {
-                              defaultLineHeight: '1.1',
-                            }
-                          : {}),
-                    };
-                  })()
-                : {}),
-            }
-          : undefined;
+              return isSingleLineSpAutoFit &&
+                !isVerticalText &&
+                (textWrap === 'none' || hasCenteredParagraphs)
+                ? {
+                    compactSingleLineSpacing: true,
+                    defaultLineHeight: '1',
+                  }
+                : shouldUseOfficeWrappedLineHeight
+                  ? {
+                      defaultLineHeight: '1.1',
+                    }
+                  : {};
+            })()
+          : {}),
+      };
 
       renderTextBody(textBody, node.placeholder, ctx, textContainer, textOptions);
       wrapper.appendChild(textContainer);
@@ -2764,7 +2792,8 @@ export function renderShape(node: ShapeNodeData, ctx: RenderContext): HTMLElemen
               !wrappedHeightFits ||
               isSingleLineSpAutoFit ||
               usesImplicitSingleLineFit ||
-              usesNoAutofitSingleLineTitleFit);
+              usesNoAutofitSingleLineTitleFit ||
+              usesNearFitSingleLineWrap);
           let measuredUnwrappedWidth = false;
           if (shouldMeasureUnwrappedWidth) {
             textContainer.style.whiteSpace = 'nowrap';
@@ -2781,7 +2810,10 @@ export function renderShape(node: ShapeNodeData, ctx: RenderContext): HTMLElemen
             wrapper.style.visibility = savedWrapperVisibility;
           }
           let scale = 1;
-          const fitWidthOnly = usesNoAutofitSingleLineTitleFit || usesImplicitSingleLineFit;
+          const fitWidthOnly =
+            usesNoAutofitSingleLineTitleFit ||
+            usesImplicitSingleLineFit ||
+            usesNearFitSingleLineWrap;
           const usesUnwrappedNoScaleFit =
             hasSpAutoFit &&
             !hasNormAutofit &&
@@ -2816,18 +2848,19 @@ export function renderShape(node: ShapeNodeData, ctx: RenderContext): HTMLElemen
               canFitWrappedLinesByWidth ||
               usesSingleLineSpAutoFitWidthFit ||
               usesImplicitSingleLineFit ||
-              usesNoAutofitSingleLineTitleFit;
+              usesNoAutofitSingleLineTitleFit ||
+              usesNearFitSingleLineWrap;
             if (
               canUseUnwrappedWidthScale &&
               (!usesNoAutofitSingleLineTitleFit ||
-                widthScale >= NO_AUTOFIT_TITLE_METRIC_SCALE_FLOOR)
+                widthScale >= NO_AUTOFIT_TITLE_METRIC_SCALE_FLOOR) &&
+              (!usesNearFitSingleLineWrap || widthScale >= NEAR_FIT_SINGLE_LINE_WRAP_SCALE_FLOOR)
             ) {
               scale = Math.min(scale, widthScale);
             }
           }
           const usesUnwrappedWidthFit =
-            hasSpAutoFit &&
-            !hasNormAutofit &&
+            ((hasSpAutoFit && !hasNormAutofit) || usesNearFitSingleLineWrap) &&
             scale < 1 &&
             contentH <= containerH &&
             !wrappedHeightFits;
@@ -2868,6 +2901,12 @@ export function renderShape(node: ShapeNodeData, ctx: RenderContext): HTMLElemen
             hasToleratedVerticalMetricOverhang ||
             hasIgnoredImplicitSingleLineVerticalOverflow
           ) {
+            // Pair visible vertical overflow with clip rather than hidden on the
+            // other axis. CSS otherwise computes hidden/visible as hidden/auto,
+            // creating a scrollbar that also steals text wrapping width.
+            if (textContainer.style.overflowX === 'hidden') {
+              textContainer.style.overflowX = 'clip';
+            }
             textContainer.style.overflowY = 'visible';
           }
         };

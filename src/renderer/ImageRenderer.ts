@@ -41,13 +41,28 @@ function isEmfFormat(path: string): boolean {
 
 let pictureClipPathIdCounter = 0;
 
-function resolveImageRelUrl(rel: RelEntry, ctx: RenderContext): string | undefined {
+function resolveImageRelUrl(
+  rel: RelEntry,
+  ctx: RenderContext,
+): string | undefined | Promise<string | undefined> {
   if (isExternalTargetMode(rel.targetMode)) {
     return isAllowedExternalMediaUrl(rel.target) ? rel.target : undefined;
   }
 
   const resolved = findMediaByTarget(rel.target, ctx.presentation.media);
-  if (!resolved) return undefined;
+  if (!resolved) {
+    if (!ctx.presentation.mediaResolver) return undefined;
+    return findMediaByTargetAsync(
+      rel.target,
+      ctx.presentation.media,
+      ctx.presentation.mediaResolver,
+    )
+      .then((value) => {
+        if (ctx.signal?.aborted || !value || isUnsupportedFormat(value.mediaPath)) return undefined;
+        return getOrCreateBlobUrl(value.mediaPath, value.data, ctx.mediaUrlCache);
+      })
+      .catch(() => undefined);
+  }
   const { mediaPath, data } = resolved;
   if (isUnsupportedFormat(mediaPath)) return undefined;
 
@@ -141,15 +156,22 @@ export function renderImage(node: PicNodeData, ctx: RenderContext): HTMLElement 
             ctx.presentation.mediaResolver,
           )
             .then((lazyResolved) => {
+              if (ctx.signal?.aborted) return;
               if (!lazyResolved) {
                 renderPlaceholder(wrapper, 'Image not found');
                 return;
               }
 
-              renderResolvedImage(node, ctx, wrapper, lazyResolved.mediaPath, lazyResolved.data);
+              return renderResolvedImage(
+                node,
+                ctx,
+                wrapper,
+                lazyResolved.mediaPath,
+                lazyResolved.data,
+              );
             })
             .catch(() => {
-              renderPlaceholder(wrapper, 'Image not found');
+              if (!ctx.signal?.aborted) renderPlaceholder(wrapper, 'Image not found');
             });
           ctx.asyncTasks?.push(task);
           if (!ctx.asyncTasks) void task;
@@ -163,7 +185,17 @@ export function renderImage(node: PicNodeData, ctx: RenderContext): HTMLElement 
       return wrapper;
     }
   } else if (node.blipLink) {
-    url = resolveMediaUrl(node.blipLink, ctx);
+    const linked = resolveMediaUrl(node.blipLink, ctx);
+    if (linked instanceof Promise) {
+      const task = linked.then((linkedUrl) => {
+        if (ctx.signal?.aborted) return;
+        if (linkedUrl) renderImageUrl(node, ctx, wrapper, linkedUrl);
+        else renderPlaceholder(wrapper, 'Image not found');
+      });
+      ctx.asyncTasks?.push(task);
+      return wrapper;
+    }
+    url = linked;
     if (!url) {
       renderPlaceholder(wrapper, 'Image not found');
       return wrapper;
@@ -183,12 +215,12 @@ function renderResolvedImage(
   wrapper: HTMLElement,
   mediaPath: string,
   data: Uint8Array,
-): void {
+): void | Promise<void> {
+  if (ctx.signal?.aborted) return;
   // Handle EMF images — extract embedded PDF/bitmap content
   if (isEmfFormat(mediaPath)) {
     const emfData = data instanceof Uint8Array ? data : new Uint8Array(data);
-    renderEmf(emfData, node, ctx, wrapper, mediaPath);
-    return;
+    return renderEmf(emfData, node, ctx, wrapper, mediaPath);
   }
 
   const url = getOrCreateBlobUrl(mediaPath, data, ctx.mediaUrlCache);
@@ -216,6 +248,17 @@ function renderImageUrl(
     return;
   }
 
+  const fillRect = node.source.child('blipFill').child('stretch').child('fillRect');
+  const fillRectBox = fillRect.exists() ? getFillRectBox(fillRect) : undefined;
+  const geometryClipPath = getPictureGeometryClipPath(node);
+  if (geometryClipPath) {
+    renderClippedSvgImage(node, wrapper, url, geometryClipPath, blip, ctx, fillRectBox);
+    if (blipOpacity < 1) {
+      wrapper.style.opacity = `${Number(blipOpacity.toFixed(4))}`;
+    }
+    return;
+  }
+
   // Create image element
   const img = document.createElement('img');
   img.src = url;
@@ -226,17 +269,6 @@ function renderImageUrl(
   img.style.objectFit = 'fill';
   img.style.display = 'block';
   img.draggable = false;
-
-  const fillRect = node.source.child('blipFill').child('stretch').child('fillRect');
-  const fillRectBox = fillRect.exists() ? getFillRectBox(fillRect) : undefined;
-  const geometryClipPath = getPictureGeometryClipPath(node);
-  if (geometryClipPath) {
-    renderClippedSvgImage(node, wrapper, url, geometryClipPath, fillRectBox);
-    if (blipOpacity < 1) {
-      wrapper.style.opacity = `${Number(blipOpacity.toFixed(4))}`;
-    }
-    return;
-  }
 
   if (fillRectBox) {
     applyImageFillRect(img, fillRectBox);
@@ -289,13 +321,13 @@ function renderImageUrl(
   // Luminance: brightness/contrast adjustment
   const lum = blip.child('lum');
   if (lum.exists()) {
-    applyLumEffect(lum, img);
+    applyLumEffect(lum, img, ctx.signal);
   }
 
   // BiLevel: threshold to black/white
   const biLevel = blip.child('biLevel');
   if (biLevel.exists()) {
-    applyBiLevelEffect(biLevel, img);
+    applyBiLevelEffect(biLevel, img, ctx.signal);
   }
 
   wrapper.appendChild(img);
@@ -367,6 +399,8 @@ function renderClippedSvgImage(
   wrapper: HTMLElement,
   url: string,
   clipPathD: string,
+  blip: SafeXmlNode,
+  ctx: RenderContext,
   fillRectBox?: FillRectBox,
 ): void {
   const svgNs = 'http://www.w3.org/2000/svg';
@@ -395,6 +429,7 @@ function renderClippedSvgImage(
   const image = document.createElementNS(svgNs, 'image');
   image.setAttribute('href', url);
   image.setAttribute('preserveAspectRatio', 'none');
+  applyClippedBlipEffects(image, defs, blip, ctx, clipId);
   if (clipTransform) {
     image.setAttribute('transform', clipTransform);
   }
@@ -427,6 +462,81 @@ function renderClippedSvgImage(
   wrapper.appendChild(svg);
   svg.appendChild(clippedImageGroup);
   clippedImageGroup.appendChild(image);
+}
+
+/** Apply color effects to the existing SVG image, preserving one decoded media resource. */
+function applyClippedBlipEffects(
+  image: SVGImageElement,
+  defs: SVGDefsElement,
+  blip: SafeXmlNode,
+  ctx: RenderContext,
+  id: string,
+): void {
+  const ns = 'http://www.w3.org/2000/svg';
+  const filter = document.createElementNS(ns, 'filter');
+  filter.id = `${id}-effects`;
+  filter.setAttribute('color-interpolation-filters', 'sRGB');
+  const grayscale = () => {
+    const matrix = document.createElementNS(ns, 'feColorMatrix');
+    matrix.setAttribute('type', 'matrix');
+    matrix.setAttribute(
+      'values',
+      '0.2126 0.7152 0.0722 0 0 0.2126 0.7152 0.0722 0 0 0.2126 0.7152 0.0722 0 0 0 0 0 1 0',
+    );
+    filter.appendChild(matrix);
+  };
+  const transfer = (values: Array<{ slope: number; intercept: number }>) => {
+    const component = document.createElementNS(ns, 'feComponentTransfer');
+    for (const [i, channel] of ['R', 'G', 'B'].entries()) {
+      const fn = document.createElementNS(ns, `feFunc${channel}`);
+      fn.setAttribute('type', 'linear');
+      fn.setAttribute('slope', String(values[i].slope));
+      fn.setAttribute('intercept', String(values[i].intercept));
+      component.appendChild(fn);
+    }
+    filter.appendChild(component);
+  };
+  if (blip.child('grayscl').exists()) grayscale();
+  const duotone = blip.child('duotone');
+  const colors = duotone.allChildren().map((color) => resolveColor(color, ctx).color);
+  if (colors.length >= 2 && colors[0] && colors[1]) {
+    const dark = hexToRgb(colors[0]);
+    const light = hexToRgb(colors[1]);
+    grayscale();
+    transfer(
+      (['r', 'g', 'b'] as const).map((channel) => ({
+        slope: (light[channel] - dark[channel]) / 255,
+        intercept: dark[channel] / 255,
+      })),
+    );
+  }
+  const lum = blip.child('lum');
+  if (lum.exists()) {
+    const contrast = (lum.numAttr('contrast') ?? 0) / 100000;
+    const bright = (lum.numAttr('bright') ?? 0) / 100000;
+    transfer(
+      Array.from({ length: 3 }, () => ({ slope: 1 + contrast, intercept: bright - contrast / 2 })),
+    );
+  }
+  const biLevel = blip.child('biLevel');
+  if (biLevel.exists()) {
+    grayscale();
+    const threshold = (biLevel.numAttr('thresh') ?? 50000) / 100000;
+    // First move the threshold to 0.5, then discretize into black/white.
+    transfer(Array.from({ length: 3 }, () => ({ slope: 1, intercept: 0.5 - threshold })));
+    const component = document.createElementNS(ns, 'feComponentTransfer');
+    for (const channel of ['R', 'G', 'B']) {
+      const fn = document.createElementNS(ns, `feFunc${channel}`);
+      fn.setAttribute('type', 'discrete');
+      fn.setAttribute('tableValues', '0 1');
+      component.appendChild(fn);
+    }
+    filter.appendChild(component);
+  }
+  if (filter.children.length) {
+    defs.appendChild(filter);
+    image.setAttribute('filter', `url(#${filter.id})`);
+  }
 }
 
 function applyPictureShapeProperties(
@@ -699,113 +809,90 @@ function resolveBlipOpacity(blip: SafeXmlNode): number {
  * Render a video element inside the wrapper.
  */
 function renderVideo(node: PicNodeData, ctx: RenderContext, wrapper: HTMLElement): void {
-  // Try to get video URL from mediaRId
-  const videoUrl = resolveMediaUrl(node.mediaRId, ctx);
-
-  // Also try to show poster image from blipEmbed
-  let posterUrl: string | undefined;
-  if (node.blipEmbed) {
-    const rel = ctx.slide.rels.get(node.blipEmbed);
-    if (rel) {
-      posterUrl = resolveImageRelUrl(rel, ctx);
-    }
-  }
-
-  if (videoUrl) {
-    const video = document.createElement('video');
-    video.src = videoUrl;
-    video.preload = 'none';
-    video.controls = true;
-    video.style.width = '100%';
-    video.style.height = '100%';
-    video.style.objectFit = 'contain';
-    video.style.backgroundColor = '#000';
-    if (posterUrl) {
-      video.poster = posterUrl;
-    }
-    wrapper.appendChild(video);
-  } else if (posterUrl) {
-    // No video data available — show poster with play overlay
-    const img = document.createElement('img');
-    img.src = posterUrl;
-    img.style.width = '100%';
-    img.style.height = '100%';
-    img.style.objectFit = 'fill';
-    wrapper.appendChild(img);
-
-    const overlay = document.createElement('div');
-    overlay.style.position = 'absolute';
-    overlay.style.inset = '0';
-    overlay.style.display = 'flex';
-    overlay.style.alignItems = 'center';
-    overlay.style.justifyContent = 'center';
-    overlay.style.backgroundColor = 'rgba(0,0,0,0.3)';
-    overlay.style.color = '#fff';
-    overlay.style.fontSize = '24px';
-    overlay.textContent = '\u25B6'; // play symbol
-    wrapper.appendChild(overlay);
-  } else {
-    renderPlaceholder(wrapper, 'Video');
-  }
+  renderAudioVideo(node, ctx, wrapper, 'video');
 }
 
-/**
- * Render an audio element inside the wrapper.
- */
 function renderAudio(node: PicNodeData, ctx: RenderContext, wrapper: HTMLElement): void {
-  const audioUrl = resolveMediaUrl(node.mediaRId, ctx);
+  renderAudioVideo(node, ctx, wrapper, 'audio');
+}
 
-  if (audioUrl) {
-    // Show poster image if available
-    if (node.blipEmbed) {
-      const rel = ctx.slide.rels.get(node.blipEmbed);
-      if (rel) {
-        const cached = resolveImageRelUrl(rel, ctx);
-        if (cached) {
-          const img = document.createElement('img');
-          img.src = cached;
-          img.style.width = '100%';
+function renderAudioVideo(
+  node: PicNodeData,
+  ctx: RenderContext,
+  wrapper: HTMLElement,
+  kind: 'audio' | 'video',
+): void {
+  const media = resolveMediaUrl(node.mediaRId, ctx);
+  const poster = resolveMediaUrl(node.blipEmbed ?? node.blipLink, ctx);
+  const apply = (mediaUrl: string | undefined, posterUrl: string | undefined) => {
+    if (ctx.signal?.aborted) return;
+    if (mediaUrl) {
+      const element = document.createElement(kind);
+      element.src = mediaUrl;
+      element.preload = 'none';
+      element.controls = true;
+      element.style.width = '100%';
+      if (kind === 'video') {
+        element.style.height = '100%';
+        element.style.objectFit = 'contain';
+        element.style.backgroundColor = '#000';
+        if (posterUrl) (element as HTMLVideoElement).poster = posterUrl;
+      } else {
+        if (posterUrl) {
+          const img = createFillImage(posterUrl);
           img.style.height = 'calc(100% - 32px)';
           img.style.objectFit = 'contain';
           wrapper.appendChild(img);
         }
+        element.style.position = 'absolute';
+        element.style.bottom = '0';
+        element.style.left = '0';
       }
+      wrapper.appendChild(element);
+      ctx.signal?.addEventListener(
+        'abort',
+        () => {
+          element.pause();
+          element.removeAttribute('src');
+          element.load();
+        },
+        { once: true },
+      );
+    } else if (posterUrl && kind === 'video') {
+      wrapper.appendChild(createFillImage(posterUrl));
+      const overlay = document.createElement('div');
+      Object.assign(overlay.style, {
+        position: 'absolute',
+        inset: '0',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: 'rgba(0,0,0,0.3)',
+        color: '#fff',
+        fontSize: '24px',
+      });
+      overlay.textContent = '\u25B6';
+      wrapper.appendChild(overlay);
+    } else {
+      renderPlaceholder(wrapper, kind === 'video' ? 'Video' : 'Audio');
     }
-
-    const audio = document.createElement('audio');
-    audio.src = audioUrl;
-    audio.preload = 'none';
-    audio.controls = true;
-    audio.style.width = '100%';
-    audio.style.position = 'absolute';
-    audio.style.bottom = '0';
-    audio.style.left = '0';
-    wrapper.appendChild(audio);
-  } else {
-    renderPlaceholder(wrapper, 'Audio');
-  }
+  };
+  if (media instanceof Promise || poster instanceof Promise) {
+    const task = Promise.all([media, poster]).then(([mediaUrl, posterUrl]) =>
+      apply(mediaUrl, posterUrl),
+    );
+    ctx.asyncTasks?.push(task);
+  } else apply(media, poster);
 }
 
-/**
- * Resolve a media URL from a relationship ID.
- */
-function resolveMediaUrl(rId: string | undefined, ctx: RenderContext): string | undefined {
+/** Resolve embedded eager/lazy media and allowlisted external relationships alike. */
+function resolveMediaUrl(
+  rId: string | undefined,
+  ctx: RenderContext,
+): string | undefined | Promise<string | undefined> {
   if (!rId) return undefined;
-
   const rel = ctx.slide.rels.get(rId);
-  if (!rel) return undefined;
-
-  // Check if target is an external URL
-  if (isExternalTargetMode(rel.targetMode)) {
-    return isAllowedExternalMediaUrl(rel.target) ? rel.target : undefined;
-  }
-
-  // Resolve from embedded media
-  const resolved = findMediaByTarget(rel.target, ctx.presentation.media);
-  if (!resolved) return undefined;
-  const { mediaPath, data } = resolved;
-
-  return getOrCreateBlobUrl(mediaPath, data, ctx.mediaUrlCache);
+  return rel ? resolveImageRelUrl(rel, ctx) : undefined;
 }
 
 /**
@@ -869,16 +956,14 @@ function renderEmf(
   ctx: RenderContext,
   wrapper: HTMLElement,
   mediaPath: string,
-): void {
+): void | Promise<void> {
   const content = parseEmfContent(data);
 
   switch (content.type) {
     case 'pdf':
-      renderEmfPdf(content.data, wrapper, node, ctx, mediaPath);
-      break;
+      return renderEmfPdf(content.data, wrapper, node, ctx, mediaPath);
     case 'bitmap':
-      renderEmfBitmap(content.imageData, wrapper, ctx, mediaPath);
-      break;
+      return renderEmfBitmap(content.imageData, wrapper, ctx, mediaPath);
     case 'empty':
       // Render nothing — transparent placeholder
       break;
@@ -900,7 +985,7 @@ function renderEmfPdf(
   node: PicNodeData,
   ctx: RenderContext,
   mediaPath: string,
-): void {
+): void | Promise<void> {
   const cacheKey = `${mediaPath}:emf-pdf`;
   const cached = ctx.mediaUrlCache.get(cacheKey);
   if (cached) {
@@ -915,13 +1000,20 @@ function renderEmfPdf(
         URL.revokeObjectURL(url);
         return;
       }
-      ctx.mediaUrlCache.set(cacheKey, url);
-      wrapper.appendChild(createFillImage(url));
+      const existing = ctx.mediaUrlCache.get(cacheKey);
+      if (existing) {
+        URL.revokeObjectURL(url);
+        wrapper.appendChild(createFillImage(existing));
+      } else {
+        ctx.mediaUrlCache.set(cacheKey, url);
+        wrapper.appendChild(createFillImage(url));
+      }
     })
     .catch(() => {
       // PDF rendering failed — leave wrapper empty (transparent)
     });
   ctx.asyncTasks?.push(task);
+  return task;
 }
 
 /**
@@ -932,7 +1024,7 @@ function renderEmfBitmap(
   wrapper: HTMLElement,
   ctx: RenderContext,
   mediaPath: string,
-): void {
+): void | Promise<void> {
   const cacheKey = `${mediaPath}:emf-bitmap`;
   const cached = ctx.mediaUrlCache.get(cacheKey);
   if (cached) {
@@ -949,8 +1041,8 @@ function renderEmfBitmap(
   canvasCtx.putImageData(imageData, 0, 0);
   const task = new Promise<void>((resolve) => {
     canvas.toBlob((blob) => {
-      if (blob) {
-        const url = URL.createObjectURL(blob);
+      if (blob && !ctx.signal?.aborted) {
+        const url = ctx.mediaUrlCache.get(cacheKey) ?? URL.createObjectURL(blob);
         ctx.mediaUrlCache.set(cacheKey, url);
         wrapper.appendChild(createFillImage(url));
       }
@@ -958,6 +1050,7 @@ function renderEmfBitmap(
     }, 'image/png');
   });
   ctx.asyncTasks?.push(task);
+  return task;
 }
 
 /**
@@ -1005,6 +1098,7 @@ function applyDuotoneFilter(
 
   // After the image loads, redraw it through a canvas with duotone applied
   const apply = () => {
+    if (ctx.signal?.aborted) return;
     const w = img.naturalWidth;
     const h = img.naturalHeight;
     if (!w || !h) return;
@@ -1051,13 +1145,14 @@ function applyDuotoneFilter(
  * and `contrast` (multiplicative contrast, -100000 to 100000).
  * e.g. bright="100000" makes the entire image white (preserving alpha).
  */
-function applyLumEffect(lum: SafeXmlNode, img: HTMLImageElement): void {
+function applyLumEffect(lum: SafeXmlNode, img: HTMLImageElement, signal?: AbortSignal): void {
   const bright = (lum.numAttr('bright') ?? 0) / 100000; // 0–1
   const contrast = (lum.numAttr('contrast') ?? 0) / 100000; // -1 to 1
 
   if (bright === 0 && contrast === 0) return;
 
   const apply = () => {
+    if (signal?.aborted) return;
     const w = img.naturalWidth;
     const h = img.naturalHeight;
     if (!w || !h) return;
@@ -1109,10 +1204,15 @@ function applyLumEffect(lum: SafeXmlNode, img: HTMLImageElement): void {
  * Each pixel's luminance is compared to the threshold (0–100000 = 0–100%).
  * Pixels above become white, pixels below become black. Alpha is preserved.
  */
-function applyBiLevelEffect(biLevel: SafeXmlNode, img: HTMLImageElement): void {
+function applyBiLevelEffect(
+  biLevel: SafeXmlNode,
+  img: HTMLImageElement,
+  signal?: AbortSignal,
+): void {
   const thresh = (biLevel.numAttr('thresh') ?? 50000) / 100000; // 0–1
 
   const apply = () => {
+    if (signal?.aborted) return;
     const w = img.naturalWidth;
     const h = img.naturalHeight;
     if (!w || !h) return;

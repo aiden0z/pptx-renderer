@@ -1402,8 +1402,8 @@ describe('TextRenderer — branch coverage (uncovered paths)', () => {
       });
       const container = renderToContainer(body);
       const para = container.children[0] as HTMLElement;
-      // 100% of default 12pt = 12pt
-      expect(para.style.marginTop).toBe('12pt');
+      // 100% of one Office line at 12pt = 14.28pt
+      expect(para.style.marginTop).toBe('14.28pt');
     });
 
     it('applies percentage-based space after', () => {
@@ -1418,8 +1418,8 @@ describe('TextRenderer — branch coverage (uncovered paths)', () => {
       });
       const container = renderToContainer(body);
       const para = container.children[0] as HTMLElement;
-      // 200% of 12pt = 24pt
-      expect(para.style.marginBottom).toBe('24pt');
+      // 200% of one Office line at 12pt = 28.56pt
+      expect(para.style.marginBottom).toBe('28.56pt');
     });
   });
 

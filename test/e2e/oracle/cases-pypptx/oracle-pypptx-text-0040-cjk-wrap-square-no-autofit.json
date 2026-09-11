@@ -1,0 +1,24 @@
+{
+  "name": "oracle-pypptx-text-0040-cjk-wrap-square-no-autofit",
+  "generator": "python-pptx",
+  "slides": [
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    }
+  ],
+  "coverage": {
+    "oracle": "native-powerpoint",
+    "requiredFonts": [
+      "Microsoft YaHei"
+    ],
+    "features": [
+      "text.cjk",
+      "bodyPr.wrap=square",
+      "bodyPr.noAutofit"
+    ]
+  }
+}

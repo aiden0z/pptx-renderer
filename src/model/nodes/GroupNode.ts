@@ -8,6 +8,8 @@ import { emuToPx } from '../../parser/units';
 
 export interface GroupNodeData extends BaseNodeData {
   nodeType: 'group';
+  /** Layout identity resolved through a diagram frame's layout relationship. */
+  diagramLayoutId?: string;
   childOffset: Position;
   childExtent: Size;
   /** @internal Raw XML nodes — opaque to consumers. Use serializePresentation() for JSON-safe data. */

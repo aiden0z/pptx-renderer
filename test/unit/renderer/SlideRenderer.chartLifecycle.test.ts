@@ -243,3 +243,25 @@ describe('renderSlide standalone chart lifecycle', () => {
     expect(sharedCharts.has(externalChart)).toBe(true);
   });
 });
+
+it('disposed but connected chart never initializes in its pending frame', async () => {
+  const callbacks: FrameRequestCallback[] = [];
+  const raf = vi.spyOn(window, 'requestAnimationFrame').mockImplementation((cb) => {
+    callbacks.push(cb);
+    return callbacks.length;
+  });
+  mockChartInstance.setOption.mockClear();
+  const p = makePresentation();
+  p.slides[0].nodes = [makeChartNode()];
+  const handle = renderSlide(p, p.slides[0]);
+  document.body.append(handle.element);
+  const div = handle.element.firstElementChild!.firstElementChild!;
+  Object.defineProperty(div, 'offsetWidth', { value: 400 });
+  Object.defineProperty(div, 'offsetHeight', { value: 300 });
+  handle.dispose();
+  callbacks.forEach((cb) => cb(0));
+  await handle.ready;
+  expect(mockChartInstance.setOption).not.toHaveBeenCalled();
+  raf.mockRestore();
+  handle.element.remove();
+});

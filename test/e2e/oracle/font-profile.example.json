@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "id": "local-office-fonts",
+  "fontFaces": [
+    {
+      "family": "Example Office Font",
+      "path": "fonts/example-office-font-regular.woff2",
+      "descriptors": {
+        "weight": "400",
+        "style": "normal"
+      }
+    },
+    {
+      "family": "Example Office Font",
+      "path": "fonts/example-office-font-bold.woff2",
+      "descriptors": {
+        "weight": "700",
+        "style": "normal"
+      }
+    }
+  ]
+}
