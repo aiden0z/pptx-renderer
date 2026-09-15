@@ -84,3 +84,119 @@ test('soft breaks preserve their own run metrics without changing visible text m
   expect(result.visibleFontSize).toBe('13.3333px');
   expect(result.visibleFontFamily).toContain('Courier New');
 });
+
+test('a leading explicit tab stop preserves the issue #23 CJK line on one row', async ({
+  page,
+}) => {
+  await page.goto('/test/browser/blank.html');
+  const result = await page.evaluate(async () => {
+    const { renderTextBody } = await import('/src/renderer/TextRenderer.ts');
+    const { xmlNode } = await import('/test/unit/helpers/xmlNode.ts');
+    const { createMockRenderContext } = await import('/test/unit/helpers/mockContext.ts');
+    const container = document.createElement('div');
+    container.style.width = '650px';
+    const runProperties = (bold = false, spacing = -90) =>
+      xmlNode(
+        `<rPr sz="1700" b="${bold ? 1 : 0}" spc="${spacing}"><ea typeface="微软雅黑"/></rPr>`,
+      );
+    renderTextBody(
+      {
+        bodyProperties: xmlNode('<bodyPr wrap="square" lIns="0" rIns="0"/>'),
+        paragraphs: [
+          {
+            properties: xmlNode(`
+              <pPr marL="424815" eaLnBrk="0">
+                <tabLst><tab pos="536575" algn="l"/></tabLst>
+              </pPr>`),
+            runs: [
+              { text: '\t', properties: runProperties() },
+              { text: '配套保障：', properties: runProperties(true) },
+              { text: '明确容错纠', properties: runProperties() },
+              { text: '错、澄清正名机制，激励担当作为。', properties: runProperties(false, -100) },
+            ],
+            level: 0,
+          },
+        ],
+      },
+      undefined,
+      createMockRenderContext(),
+      container,
+    );
+    document.body.append(container);
+    await document.fonts.ready;
+
+    const paragraph = container.firstElementChild as HTMLElement;
+    const tab = paragraph.querySelector('[data-pptx-tab-stop]') as HTMLElement;
+    const textRects = Array.from(paragraph.querySelectorAll('span'))
+      .filter((span) => span !== tab)
+      .flatMap((span) => Array.from(span.getClientRects()))
+      .filter((rect) => rect.width > 0);
+    return {
+      tabWidth: tab.getBoundingClientRect().width,
+      lineTops: [...new Set(textRects.map((rect) => Math.round(rect.top)))],
+    };
+  });
+
+  expect(result.tabWidth).toBeCloseTo((536575 - 424815) / 9525, 1);
+  expect(result.lineTops).toHaveLength(1);
+});
+
+test('embedded picture text fill is clipped to glyphs in Chromium', async ({ page }) => {
+  await page.goto('/test/browser/blank.html');
+  const result = await page.evaluate(async () => {
+    const { renderTextBody } = await import('/src/renderer/TextRenderer.ts');
+    const { xmlNode } = await import('/test/unit/helpers/xmlNode.ts');
+    const { createMockRenderContext } = await import('/test/unit/helpers/mockContext.ts');
+    const ctx = createMockRenderContext();
+    ctx.slide.rels.set('rId8', {
+      type: 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/image',
+      target: '../media/gold.png',
+    });
+    ctx.presentation.media.set(
+      'ppt/media/gold.png',
+      new Uint8Array([
+        137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 13, 73, 72, 68, 82, 0, 0, 0, 1, 0, 0, 0, 1, 8, 6,
+        0, 0, 0, 31, 21, 196, 137, 0, 0, 0, 13, 73, 68, 65, 84, 8, 215, 99, 248, 207, 192, 240, 31,
+        0, 5, 0, 1, 255, 137, 153, 61, 29, 0, 0, 0, 0, 73, 69, 78, 68, 174, 66, 96, 130,
+      ]),
+    );
+    const container = document.createElement('div');
+    renderTextBody(
+      {
+        paragraphs: [
+          {
+            runs: [
+              {
+                text: 'Picture text',
+                properties: xmlNode(`
+                  <rPr xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+                    <blipFill><blip r:embed="rId8"/><stretch><fillRect/></stretch></blipFill>
+                  </rPr>`),
+              },
+            ],
+            level: 0,
+          },
+        ],
+      },
+      undefined,
+      ctx,
+      container,
+    );
+    document.body.append(container);
+    const span = container.querySelector('span') as HTMLElement;
+    const style = getComputedStyle(span);
+    return {
+      backgroundImage: style.backgroundImage,
+      backgroundSize: style.backgroundSize,
+      backgroundRepeat: style.backgroundRepeat,
+      backgroundClip: style.backgroundClip,
+      color: style.color,
+    };
+  });
+
+  expect(result.backgroundImage).toContain('blob:');
+  expect(result.backgroundSize).toBe('100% 100%');
+  expect(result.backgroundRepeat).toBe('no-repeat');
+  expect(result.backgroundClip).toBe('text');
+  expect(result.color).toBe('rgba(0, 0, 0, 0)');
+});

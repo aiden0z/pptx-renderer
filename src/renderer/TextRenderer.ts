@@ -12,7 +12,8 @@ import { resolveColor, resolveColorToCss, resolveFill } from './StyleResolver';
 import { emuToPx, pctToDecimal, angleToDeg } from '../parser/units';
 import { parseOoxmlBool } from '../parser/booleans';
 import { isExternalTargetMode } from '../parser/RelParser';
-import { isAllowedExternalUrl } from '../utils/urlSafety';
+import { isAllowedExternalMediaUrl, isAllowedExternalUrl } from '../utils/urlSafety';
+import { findMediaByTarget, findMediaByTargetAsync, getOrCreateBlobUrl } from '../utils/media';
 import { getEffectiveBodyPrChild, parseTextPercentage } from './TextBodyProperties';
 import { cssFontFamilyStack, resolveThemeFontStack } from './fontResolver';
 import { resolveSlideNavigationIndex, slideJumpTitle } from './navigation';
@@ -163,6 +164,7 @@ interface MergedParagraphStyle {
   marginLeft?: number;
   textIndent?: number;
   defaultTabSize?: number;
+  tabStops?: { position: number; align: string }[];
   lineHeight?: string;
   /** OOXML spcPct as a 0-1 ratio. One Office line is approximately 1.19 CSS em. */
   lineHeightPercent?: number;
@@ -214,6 +216,19 @@ function mergeParagraphProps(target: MergedParagraphStyle, pPr: SafeXmlNode): vo
 
   const defTabSz = pPr.numAttr('defTabSz');
   if (defTabSz !== undefined) target.defaultTabSize = emuToPx(defTabSz);
+
+  const tabLst = pPr.child('tabLst');
+  if (tabLst.exists()) {
+    target.tabStops = tabLst
+      .children('tab')
+      .flatMap((tab) => {
+        const position = tab.numAttr('pos');
+        return position === undefined
+          ? []
+          : [{ position: emuToPx(position), align: tab.attr('algn') ?? 'l' }];
+      })
+      .sort((a, b) => a.position - b.position);
+  }
 
   // Line spacing
   // OOXML spcPct: 100000 = one Office line. PowerPoint's native baseline distance is
@@ -388,6 +403,8 @@ interface MergedRunStyle {
   textGradientCss?: string;
   /** CSS background for text fill (from rPr > pattFill). */
   textPatternCss?: string;
+  /** Picture fill node clipped to the run glyphs (from rPr > blipFill). */
+  textPictureFill?: SafeXmlNode;
   /** CSS background color for a:highlight. */
   highlightColor?: string;
   /** Explicit underline CSS color from a:uFill. */
@@ -408,7 +425,14 @@ interface MergedRunStyle {
 
 function getRunColorKind(rPr: SafeXmlNode | undefined): 'none' | 'defaultTextScheme' | 'explicit' {
   if (!rPr?.exists()) return 'none';
-  if (rPr.child('gradFill').exists()) return 'explicit';
+  if (
+    rPr.child('gradFill').exists() ||
+    rPr.child('pattFill').exists() ||
+    rPr.child('blipFill').exists() ||
+    rPr.child('noFill').exists()
+  ) {
+    return 'explicit';
+  }
   const solidFill = rPr.child('solidFill');
   if (!solidFill.exists()) return 'none';
   const scheme = solidFill.child('schemeClr').attr('val');
@@ -459,6 +483,7 @@ function mergeRunProps(target: MergedRunStyle, rPr: SafeXmlNode, ctx: RenderCont
   if (solidFill.exists()) {
     delete target.textGradientCss;
     delete target.textPatternCss;
+    delete target.textPictureFill;
     delete target.textNoFill;
     const { color, alpha } = resolveColor(solidFill, ctx);
     const hex = color.startsWith('#') ? color : `#${color}`;
@@ -473,6 +498,7 @@ function mergeRunProps(target: MergedRunStyle, rPr: SafeXmlNode, ctx: RenderCont
   if (gradFill.exists()) {
     delete target.color;
     delete target.textPatternCss;
+    delete target.textPictureFill;
     delete target.textNoFill;
     const css = resolveGradientForText(gradFill, ctx);
     if (css) target.textGradientCss = css;
@@ -481,9 +507,18 @@ function mergeRunProps(target: MergedRunStyle, rPr: SafeXmlNode, ctx: RenderCont
   if (pattFill.exists()) {
     delete target.color;
     delete target.textGradientCss;
+    delete target.textPictureFill;
     delete target.textNoFill;
     const css = resolveFill(rPr, ctx);
     if (css) target.textPatternCss = css;
+  }
+  const blipFill = rPr.child('blipFill');
+  if (blipFill.exists()) {
+    delete target.color;
+    delete target.textGradientCss;
+    delete target.textPatternCss;
+    delete target.textNoFill;
+    target.textPictureFill = blipFill;
   }
 
   // Font family. Office often writes separate Latin/East Asian typefaces in the
@@ -554,6 +589,7 @@ function mergeRunProps(target: MergedRunStyle, rPr: SafeXmlNode, ctx: RenderCont
     delete target.color;
     delete target.textGradientCss;
     delete target.textPatternCss;
+    delete target.textPictureFill;
     target.textNoFill = true;
   }
 
@@ -763,6 +799,99 @@ function applyClippedTextBackground(element: HTMLElement, css: string): void {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (element.style as any).backgroundClip = 'text';
   element.style.color = 'transparent';
+}
+
+function resolveTextPictureUrl(blipFill: SafeXmlNode, ctx: RenderContext): string | undefined {
+  const blip = blipFill.child('blip');
+  const relId =
+    blip.attr('embed') ?? blip.attr('r:embed') ?? blip.attr('link') ?? blip.attr('r:link');
+  if (!relId) return undefined;
+  const rel = ctx.slide.rels.get(relId);
+  if (!rel) return undefined;
+  if (isExternalTargetMode(rel.targetMode)) {
+    return isAllowedExternalMediaUrl(rel.target) ? rel.target : undefined;
+  }
+  const resolved = findMediaByTarget(rel.target, ctx.presentation.media);
+  if (!resolved) return undefined;
+  return getOrCreateBlobUrl(resolved.mediaPath, resolved.data, ctx.mediaUrlCache);
+}
+
+async function resolveTextPictureUrlAsync(
+  blipFill: SafeXmlNode,
+  ctx: RenderContext,
+): Promise<string | undefined> {
+  const blip = blipFill.child('blip');
+  const relId =
+    blip.attr('embed') ?? blip.attr('r:embed') ?? blip.attr('link') ?? blip.attr('r:link');
+  if (!relId) return undefined;
+  const rel = ctx.slide.rels.get(relId);
+  if (!rel) return undefined;
+  if (isExternalTargetMode(rel.targetMode)) {
+    return isAllowedExternalMediaUrl(rel.target) ? rel.target : undefined;
+  }
+  const resolved = await findMediaByTargetAsync(
+    rel.target,
+    ctx.presentation.media,
+    ctx.presentation.mediaResolver,
+  );
+  if (!resolved) return undefined;
+  return getOrCreateBlobUrl(resolved.mediaPath, resolved.data, ctx.mediaUrlCache);
+}
+
+function applyClippedTextPicture(element: HTMLElement, blipFill: SafeXmlNode, url: string): void {
+  const escapedUrl = url.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+  element.style.backgroundImage = `url("${escapedUrl}")`;
+  if (blipFill.child('tile').exists()) {
+    element.style.backgroundRepeat = 'repeat';
+  } else {
+    element.style.backgroundSize = '100% 100%';
+    element.style.backgroundPosition = 'center';
+    element.style.backgroundRepeat = 'no-repeat';
+  }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (element.style as any).webkitBackgroundClip = 'text';
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (element.style as any).backgroundClip = 'text';
+  element.style.color = 'transparent';
+}
+
+function applyTextPictureFill(
+  element: HTMLElement,
+  blipFill: SafeXmlNode,
+  ctx: RenderContext,
+): void {
+  const immediateUrl = resolveTextPictureUrl(blipFill, ctx);
+  if (immediateUrl) {
+    applyClippedTextPicture(element, blipFill, immediateUrl);
+    return;
+  }
+  if (!ctx.presentation.mediaResolver) return;
+
+  const task = resolveTextPictureUrlAsync(blipFill, ctx)
+    .then((url) => {
+      if (!url || ctx.signal?.aborted) return;
+      applyClippedTextPicture(element, blipFill, url);
+    })
+    .catch(() => {
+      // Preserve the normal text fallback when lazy package media cannot be loaded.
+    });
+  ctx.asyncTasks?.push(task);
+  if (!ctx.asyncTasks) void task;
+}
+
+function explicitLeadingTabAdvance(
+  text: string | undefined,
+  cursor: number,
+  tabStops: MergedParagraphStyle['tabStops'],
+): { width: number; cursor: number } | undefined {
+  if (!text || !/^\t+$/.test(text) || !tabStops?.length) return undefined;
+  let nextCursor = cursor;
+  for (let index = 0; index < text.length; index++) {
+    const stop = tabStops.find((candidate) => candidate.position > nextCursor + 0.01);
+    if (!stop || stop.align !== 'l') return undefined;
+    nextCursor = stop.position;
+  }
+  return { width: nextCursor - cursor, cursor: nextCursor };
 }
 
 // ---------------------------------------------------------------------------
@@ -1173,6 +1302,12 @@ export function renderTextBody(
     // ---- Render runs ----
     const compactNumericRunGroups = findCompactNumericRunGroups(paragraph.runs);
     const compactNumericGroupElements = new Map<number, HTMLElement>();
+    let leadingTabCursor = (merged.marginLeft ?? 0) + (merged.textIndent ?? 0);
+    let canResolveLeadingTabs =
+      !bulletPrefix &&
+      merged.rtl !== true &&
+      !options?.isVerticalText &&
+      (merged.align === undefined || merged.align === 'l');
     if (!hasVisibleRuns) {
       // Empty paragraph — still need to maintain spacing
       paraDiv.appendChild(document.createElement('br'));
@@ -1276,6 +1411,7 @@ export function renderTextBody(
       const usesElementLevelTextPaint =
         !!runStyle.textGradientCss ||
         !!runStyle.textPatternCss ||
+        !!runStyle.textPictureFill ||
         !!runStyle.textNoFill ||
         runStyle.textOutlineWidth !== undefined ||
         !!runStyle.textOutlineColor ||
@@ -1285,10 +1421,19 @@ export function renderTextBody(
         !!compactNumericToken &&
         run.text !== compactNumericToken &&
         !usesElementLevelTextPaint;
+      const leadingTabAdvance = canResolveLeadingTabs
+        ? explicitLeadingTabAdvance(run.text, leadingTabCursor, merged.tabStops)
+        : undefined;
       if (run.text === '\n') {
         element.appendChild(document.createElement('br'));
       } else if (run.math) {
         // The MathML subtree already carries the formula text and topology.
+      } else if (leadingTabAdvance) {
+        element.dataset.pptxTabStop = 'explicit';
+        element.setAttribute('aria-hidden', 'true');
+        element.style.display = 'inline-block';
+        element.style.width = `${leadingTabAdvance.width}px`;
+        leadingTabCursor = leadingTabAdvance.cursor;
       } else if (run.text && run.text.includes('\t')) {
         element.textContent = run.text;
         element.style.whiteSpace = 'pre';
@@ -1312,6 +1457,13 @@ export function renderTextBody(
         element.innerHTML = escaped;
       } else {
         element.textContent = run.text;
+      }
+      // The fixed-width shortcut is valid only while the cursor is exactly at the
+      // paragraph's first-line origin. Once any other content is present, keep
+      // browser tab rendering because measuring arbitrary preceding glyphs here
+      // would introduce a second text-layout engine.
+      if (run.math || (run.text && !/^\t+$/.test(run.text))) {
+        canResolveLeadingTabs = false;
       }
       if (
         compactNumericToken &&
@@ -1404,6 +1556,9 @@ export function renderTextBody(
       }
       if (runStyle.textPatternCss) {
         applyClippedTextBackground(element, runStyle.textPatternCss);
+      }
+      if (runStyle.textPictureFill) {
+        applyTextPictureFill(element, runStyle.textPictureFill, ctx);
       }
 
       // Text outline (a:ln on rPr) and noFill handling

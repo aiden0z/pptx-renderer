@@ -228,6 +228,8 @@ host page's `white-space` rule cannot replace the presentation semantics. Explic
 `horzOverflow` and `vertOverflow` values are resolved independently. Paragraph `eaLnBrk="0"`
 uses the browser's unrestricted break opportunity, while the omitted/true default retains East
 Asian typographic rules; both values are explicit so inherited host CSS cannot change the result.
+For a leading left-aligned tab, `a:tabLst/a:tab@pos` is resolved from the paragraph margin and
+first-line indent. Other tab placements keep the default browser tab-size path.
 
 The three autofit choices remain mutually exclusive:
 
@@ -248,14 +250,15 @@ whose size comes only from inheritance remain on the bounded fit path. The nativ
 therefore a finite text-box cohort, not a claim of editor-level parity for every PowerPoint autofit
 context.
 
-### Text color precedence
+### Text fill precedence
 
 `TextRenderer` resolves run styles through the existing master/layout/shape/paragraph/run cascade,
-then applies container color options with an explicit local-precedence check. A color declared on
+then applies container color options with an explicit local-precedence check. A fill declared on
 the run wins first; otherwise a `solidFill` on paragraph `defRPr` wins over the shape's resolved
-`fontRef`. The shape `fontRef` is used only when both local levels omit a text fill. The same path
-handles direct `srgbClr` and theme-backed `schemeClr`, so theme lookup remains in `StyleResolver`
-instead of being duplicated by the precedence layer.
+`fontRef`. The shape `fontRef` is used only when both local levels omit a text fill. Solid, gradient,
+pattern, stretched-picture, and no-fill choices remain mutually exclusive. Stretched picture fills
+resolve embedded or lazy media through the current part's relationships and clip the image to the
+run glyphs. Direct `srgbClr` and theme-backed `schemeClr` still resolve in `StyleResolver`.
 
 The native matrix includes positive paragraph defaults, an explicit run override, the no-local-color
 inverse fallback, and square, wide, and tall containers. This boundary verifies color selection; it

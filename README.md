@@ -570,8 +570,9 @@ geometry are not yet supported.
 
 Text rendering follows the master, layout, placeholder, shape, paragraph, and run cascade. It
 supports theme fonts, CJK text, bullets, hyperlinks, vertical text, superscript/subscript, Office
-percentage spacing, common wrap/overflow combinations, and selected `spAutoFit` growth. Font
-availability remains part of visual-test provenance.
+percentage spacing, explicit leading tab stops, solid/gradient/pattern/stretched-picture run fills,
+common wrap/overflow combinations, and selected `spAutoFit` growth. Font availability remains part
+of visual-test provenance.
 
 ### Tables
 
