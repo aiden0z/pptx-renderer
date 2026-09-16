@@ -95,7 +95,7 @@
       "text.tab.default-size",
       "text.tab.alignment=center|right|decimal",
       "text.tab.rtl=observation-only",
-      "text.tab.vertical=observation-only"
+      "text.tab.vertical-left"
     ]
   }
 }

@@ -368,7 +368,7 @@ describe('ShapeRenderer', () => {
     expect(paragraph!.style.lineHeight).toBe('1');
     expect(paragraph!.style.wordBreak).toBe('keep-all');
     expect(textContainer).toBeDefined();
-    expect(textContainer!.style.justifyContent).toBe('center');
+    expect(textContainer!.style.justifyContent).toBe('flex-start');
     expect(textContainer!.style.alignItems).toBe('flex-start');
   });
 

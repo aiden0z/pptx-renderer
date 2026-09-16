@@ -355,6 +355,86 @@ test('center, right, and decimal explicit tabs align the following field', async
   expect(result.decimal).toBeCloseTo(stop, 0);
 });
 
+test('vertical explicit tabs advance on the inline axis while anchor center keeps the column centered', async ({
+  page,
+}) => {
+  await page.goto('/test/browser/blank.html');
+  const result = await page.evaluate(async () => {
+    const { parseXml } = await import('/src/parser/XmlParser.ts');
+    const { parseShapeNode } = await import('/src/model/nodes/ShapeNode.ts');
+    const { renderShape } = await import('/src/renderer/ShapeRenderer.ts');
+    const { createMockRenderContext } = await import('/test/unit/helpers/mockContext.ts');
+
+    const render = async (withTab: boolean, anchor = 'ctr') => {
+      const ctx = createMockRenderContext({ asyncTasks: [] });
+      const tabProperties = withTab
+        ? '<a:pPr algn="l"><a:tabLst><a:tab pos="1828800" algn="l"/></a:tabLst></a:pPr>'
+        : '<a:pPr algn="l"/>';
+      const tabRun = withTab ? '<a:r><a:rPr sz="2800"/><a:t>\t</a:t></a:r>' : '';
+      const shape = parseShapeNode(
+        parseXml(`
+          <p:sp xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
+                xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+            <p:nvSpPr><p:cNvPr id="1" name="Vertical tab"/><p:cNvSpPr txBox="1"/><p:nvPr/></p:nvSpPr>
+            <p:spPr>
+              <a:xfrm><a:off x="0" y="0"/><a:ext cx="5715000" cy="1828800"/></a:xfrm>
+              <a:prstGeom prst="rect"><a:avLst/></a:prstGeom><a:noFill/>
+            </p:spPr>
+            <p:txBody>
+              <a:bodyPr wrap="none" lIns="0" rIns="0" tIns="0" bIns="0" anchor="${anchor}" vert="eaVert"><a:noAutofit/></a:bodyPr>
+              <a:lstStyle/>
+              <a:p>${tabProperties}${tabRun}<a:r><a:rPr sz="2800"/><a:t>TARGET</a:t></a:r></a:p>
+            </p:txBody>
+          </p:sp>`),
+      );
+      const element = renderShape(shape, ctx);
+      document.body.append(element);
+      await document.fonts.ready;
+      await Promise.all(ctx.asyncTasks ?? []);
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+
+      const target = Array.from(element.querySelectorAll('span')).find(
+        (span) => span.textContent === 'TARGET',
+      ) as HTMLElement;
+      const paragraph = target.closest('div') as HTMLElement;
+      const container = paragraph.parentElement as HTMLElement;
+      const marker = paragraph.querySelector('[data-pptx-tab-stop]') as HTMLElement | null;
+      const elementRect = element.getBoundingClientRect();
+      const targetRect = target.getBoundingClientRect();
+      const paragraphRect = paragraph.getBoundingClientRect();
+      const markerRect = marker?.getBoundingClientRect();
+      const measured = {
+        targetCenterX: targetRect.left + targetRect.width / 2 - elementRect.left,
+        targetTop: targetRect.top - elementRect.top,
+        paragraphWidth: paragraphRect.width,
+        paragraphTop: paragraphRect.top - elementRect.top,
+        markerHeight: markerRect?.height ?? 0,
+        writingMode: getComputedStyle(container).writingMode,
+      };
+      element.remove();
+      return measured;
+    };
+
+    return {
+      top: await render(false, 't'),
+      withoutTab: await render(false),
+      withTab: await render(true),
+      bottom: await render(false, 'b'),
+    };
+  });
+
+  expect(result.withoutTab.writingMode).toBe('vertical-rl');
+  expect(result.top.targetCenterX).toBeGreaterThan(550);
+  expect(result.withoutTab.targetCenterX).toBeCloseTo(300, 0);
+  expect(result.bottom.targetCenterX).toBeLessThan(50);
+  expect(result.withoutTab.targetTop).toBeCloseTo(0, 0);
+  expect(result.withTab.targetCenterX).toBeCloseTo(300, 0);
+  expect(result.withTab.targetTop).toBeCloseTo(192, 0);
+  expect(result.withTab.markerHeight).toBeCloseTo(192, 0);
+  expect(result.withTab.paragraphTop).toBeCloseTo(0, 0);
+  expect(result.withTab.paragraphWidth).toBeLessThan(60);
+});
+
 test('embedded picture text fill is clipped to glyphs in Chromium', async ({ page }) => {
   await page.goto('/test/browser/blank.html');
   const result = await page.evaluate(async () => {

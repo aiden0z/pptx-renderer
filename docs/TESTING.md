@@ -370,8 +370,10 @@ the inverse fallback to `fontRef` when local fills are absent. The cases span sq
 containers and retain exact color values in their tracked OOXML metadata.
 ID 0060 isolates styled soft breaks from the visible run's metrics and bullet color. ID 0061 is an
 eleven-slide native tab-stop matrix covering leading and inline left tabs, multiple stops, bullets,
-mixed-run tabs, the default interval, and explicit center/right/decimal alignment. Its RTL and
-vertical slides are observation controls and do not broaden the supported horizontal LTR scope.
+mixed-run tabs, the default interval, explicit center/right/decimal alignment, and a vertical East
+Asian left tab. The vertical row uses a horizontal guide on the inline axis and is also guarded by
+browser coordinate assertions for column centering and the 2-inch advance. Its RTL slide remains an
+observation control.
 
 ```bash
 cd test/e2e

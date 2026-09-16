@@ -288,8 +288,11 @@ function applyVerticalTextFlow(
   writingMode: 'vertical-rl' | 'vertical-lr' = 'vertical-rl',
 ): void {
   el.style.writingMode = writingMode;
-  el.style.justifyContent = 'center';
-  el.style.alignItems = anchor === 'b' ? 'flex-end' : anchor === 'ctr' ? 'center' : 'flex-start';
+  // In vertical writing the DrawingML anchor maps to the horizontal block axis.
+  // The inline axis still begins at the physical top of the text frame.
+  el.style.justifyContent =
+    anchor === 'b' ? 'flex-end' : anchor === 'ctr' ? 'center' : 'flex-start';
+  el.style.alignItems = 'flex-start';
   if (upright) {
     el.style.textOrientation = 'upright';
     el.style.whiteSpace = 'normal';

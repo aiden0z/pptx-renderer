@@ -571,6 +571,7 @@ geometry are not yet supported.
 Text rendering follows the master, layout, placeholder, shape, paragraph, and run cascade. It
 supports theme fonts, CJK text, bullets, hyperlinks, vertical text, superscript/subscript, Office
 percentage spacing, explicit left/center/right/decimal tab stops in horizontal left-to-right text,
+and explicit left tab stops in vertical East Asian text,
 solid/gradient/pattern/stretched-picture run fills, common wrap/overflow combinations, and selected
 `spAutoFit` growth. Font availability remains part of visual-test provenance.
 

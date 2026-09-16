@@ -1284,7 +1284,7 @@ def _build_text_cases() -> list[CaseDef]:
                 "font_name": "Arial",
             },
             {
-                "title": "Vertical East Asian explicit tab opt-out",
+                "title": "Vertical East Asian explicit left tab",
                 "parts": ["\t", "竖排制表目标"],
                 "paragraph_attrs": {"algn": "l"},
                 "tabs": [(1828800, "l")],
@@ -1355,14 +1355,28 @@ def _build_text_cases() -> list[CaseDef]:
             guides = [(position, alignment) for position, alignment in config["tabs"]]
             guides.extend(config.get("extra_guides", []))
             for guide_index, (position, label) in enumerate(guides):
-                x = probe_left + position / 914400
-                line = slide.shapes.add_connector(
-                    MSO_CONNECTOR.STRAIGHT,
-                    _emu(x),
-                    _emu(1.45),
-                    _emu(x),
-                    _emu(4.65),
-                )
+                if config.get("vertical"):
+                    y = probe_top + position / 914400
+                    line = slide.shapes.add_connector(
+                        MSO_CONNECTOR.STRAIGHT,
+                        _emu(probe_left - 0.3),
+                        _emu(y),
+                        _emu(probe_left + probe_width + 0.3),
+                        _emu(y),
+                    )
+                    label_left = probe_left + 0.03
+                    label_top = y + 0.03
+                else:
+                    x = probe_left + position / 914400
+                    line = slide.shapes.add_connector(
+                        MSO_CONNECTOR.STRAIGHT,
+                        _emu(x),
+                        _emu(1.45),
+                        _emu(x),
+                        _emu(4.65),
+                    )
+                    label_left = x + 0.03
+                    label_top = 1.45
                 line.line.color.rgb = (
                     RGBColor(0x00, 0x80, 0x00)
                     if guide_index == 0
@@ -1370,7 +1384,7 @@ def _build_text_cases() -> list[CaseDef]:
                 )
                 line.line.width = Pt(1)
                 guide_label = slide.shapes.add_textbox(
-                    _emu(x + 0.03), _emu(1.45), _emu(1.4), _emu(0.35)
+                    _emu(label_left), _emu(label_top), _emu(1.4), _emu(0.35)
                 )
                 guide_run = guide_label.text_frame.paragraphs[0].add_run()
                 guide_run.text = f"{position / 914400:g}in {label}"
@@ -1392,7 +1406,7 @@ def _build_text_cases() -> list[CaseDef]:
                 "text.tab.default-size",
                 "text.tab.alignment=center|right|decimal",
                 "text.tab.rtl=observation-only",
-                "text.tab.vertical=observation-only",
+                "text.tab.vertical-left",
             ],
         },
     )

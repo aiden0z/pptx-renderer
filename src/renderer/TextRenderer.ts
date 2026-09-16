@@ -879,7 +879,14 @@ function applyTextPictureFill(
   if (!ctx.asyncTasks) void task;
 }
 
-function appendExplicitTabText(element: HTMLElement, text: string, markers: HTMLElement[]): void {
+type ExplicitTabAxis = 'horizontal' | 'vertical';
+
+function appendExplicitTabText(
+  element: HTMLElement,
+  text: string,
+  markers: HTMLElement[],
+  axis: ExplicitTabAxis,
+): void {
   const parts = text.split('\t');
   for (const [index, part] of parts.entries()) {
     appendWhitespacePreservingText(element, part);
@@ -888,30 +895,40 @@ function appendExplicitTabText(element: HTMLElement, text: string, markers: HTML
     marker.dataset.pptxTabStop = 'explicit';
     marker.setAttribute('aria-hidden', 'true');
     marker.style.display = 'inline-block';
-    marker.style.width = '0px';
-    marker.style.height = '1px';
+    marker.style.width = axis === 'vertical' ? '1px' : '0px';
+    marker.style.height = axis === 'vertical' ? '0px' : '1px';
     marker.style.overflow = 'hidden';
     element.appendChild(marker);
     markers.push(marker);
   }
 }
 
-function rangeWidth(range: Range, scaleX: number): number {
-  const rects = Array.from(range.getClientRects()).filter((rect) => rect.width > 0);
+function rangeInlineSize(range: Range, axis: ExplicitTabAxis, scale: number): number {
+  const rects = Array.from(range.getClientRects()).filter((rect) =>
+    axis === 'vertical' ? rect.height > 0 : rect.width > 0,
+  );
   if (rects.length === 0) return 0;
+  if (axis === 'vertical') {
+    const firstColumnRight = rects[0].right;
+    const firstColumnRects = rects.filter((rect) => Math.abs(rect.right - firstColumnRight) < 1);
+    const top = Math.min(...firstColumnRects.map((rect) => rect.top));
+    const bottom = Math.max(...firstColumnRects.map((rect) => rect.bottom));
+    return (bottom - top) / scale;
+  }
   const firstLineTop = rects[0].top;
   const firstLineRects = rects.filter((rect) => Math.abs(rect.top - firstLineTop) < 1);
   const left = Math.min(...firstLineRects.map((rect) => rect.left));
   const right = Math.max(...firstLineRects.map((rect) => rect.right));
-  return (right - left) / scaleX;
+  return (right - left) / scale;
 }
 
 function decimalFieldOffset(
   paragraph: HTMLElement,
   marker: HTMLElement,
   nextMarker: HTMLElement | undefined,
-  scaleX: number,
-  fallbackWidth: number,
+  axis: ExplicitTabAxis,
+  scale: number,
+  fallbackSize: number,
 ): number {
   const fieldRange = document.createRange();
   fieldRange.setStartAfter(marker);
@@ -931,9 +948,11 @@ function decimalFieldOffset(
     const decimalGlyph = document.createRange();
     decimalGlyph.setStart(node, decimalIndex);
     decimalGlyph.setEnd(node, decimalIndex + 1);
-    return rangeWidth(beforeDecimal, scaleX) + rangeWidth(decimalGlyph, scaleX) / 2;
+    return (
+      rangeInlineSize(beforeDecimal, axis, scale) + rangeInlineSize(decimalGlyph, axis, scale) / 2
+    );
   }
-  return fallbackWidth;
+  return fallbackSize;
 }
 
 function nextTabCandidate(
@@ -954,47 +973,55 @@ function applyExplicitTabLayout(
   markers: HTMLElement[],
   tabStops: NonNullable<MergedParagraphStyle['tabStops']>,
   defaultTabSize: number,
+  axis: ExplicitTabAxis,
 ): void {
-  if (!paragraph.isConnected || paragraph.offsetWidth <= 0) return;
+  const offsetSize = axis === 'vertical' ? paragraph.offsetHeight : paragraph.offsetWidth;
+  if (!paragraph.isConnected || offsetSize <= 0) return;
   const paragraphRect = paragraph.getBoundingClientRect();
-  const scaleX = paragraphRect.width / paragraph.offsetWidth;
-  if (!Number.isFinite(scaleX) || scaleX <= 0) return;
+  const renderedSize = axis === 'vertical' ? paragraphRect.height : paragraphRect.width;
+  const scale = renderedSize / offsetSize;
+  if (!Number.isFinite(scale) || scale <= 0) return;
 
   for (const [index, marker] of markers.entries()) {
-    marker.style.width = '0px';
+    if (axis === 'vertical') marker.style.height = '0px';
+    else marker.style.width = '0px';
     const markerRect = marker.getBoundingClientRect();
-    const cursor = (markerRect.left - paragraphRect.left) / scaleX;
+    const cursor =
+      axis === 'vertical'
+        ? (markerRect.top - paragraphRect.top) / scale
+        : (markerRect.left - paragraphRect.left) / scale;
     const nextMarker = markers[index + 1];
     const fieldRange = document.createRange();
     fieldRange.setStartAfter(marker);
     if (nextMarker) fieldRange.setEndBefore(nextMarker);
     else fieldRange.setEnd(paragraph, paragraph.childNodes.length);
-    const fieldWidth = rangeWidth(fieldRange, scaleX);
+    const fieldSize = rangeInlineSize(fieldRange, axis, scale);
 
     let candidate = nextTabCandidate(cursor, tabStops, defaultTabSize);
     const fieldOffset =
       candidate.align === 'ctr'
-        ? fieldWidth / 2
+        ? fieldSize / 2
         : candidate.align === 'r'
-          ? fieldWidth
+          ? fieldSize
           : candidate.align === 'dec'
-            ? decimalFieldOffset(paragraph, marker, nextMarker, scaleX, fieldWidth)
+            ? decimalFieldOffset(paragraph, marker, nextMarker, axis, scale, fieldSize)
             : 0;
-    let width = candidate.position - cursor - fieldOffset;
+    let spacerSize = candidate.position - cursor - fieldOffset;
 
     // If an aligned field would overlap the preceding content, advance to the
     // next default interval rather than emitting a negative spacer.
-    if (width < 0) {
+    if (spacerSize < 0) {
       candidate = {
         position: (Math.floor((cursor + fieldOffset) / defaultTabSize) + 1) * defaultTabSize,
         align: candidate.align,
       };
-      width = candidate.position - cursor - fieldOffset;
+      spacerSize = candidate.position - cursor - fieldOffset;
     }
 
     marker.dataset.pptxTabAlign = candidate.align;
     marker.dataset.pptxTabPosition = String(candidate.position);
-    marker.style.width = `${Math.max(0, width)}px`;
+    if (axis === 'vertical') marker.style.height = `${Math.max(0, spacerSize)}px`;
+    else marker.style.width = `${Math.max(0, spacerSize)}px`;
   }
 }
 
@@ -1047,6 +1074,7 @@ function scheduleExplicitTabLayout(
   tabStops: NonNullable<MergedParagraphStyle['tabStops']>,
   defaultTabSize: number,
   ctx: RenderContext,
+  axis: ExplicitTabAxis,
 ): void {
   const nextFrame = () =>
     new Promise<void>((resolve) => {
@@ -1059,7 +1087,7 @@ function scheduleExplicitTabLayout(
   const measure = () => {
     if (ctx.signal?.aborted) return;
     withConnectedTabMeasurement(paragraph, ctx, () =>
-      applyExplicitTabLayout(paragraph, markers, tabStops, defaultTabSize),
+      applyExplicitTabLayout(paragraph, markers, tabStops, defaultTabSize, axis),
     );
   };
   const task = nextFrame()
@@ -1484,11 +1512,24 @@ export function renderTextBody(
     const compactNumericRunGroups = findCompactNumericRunGroups(paragraph.runs);
     const compactNumericGroupElements = new Map<number, HTMLElement>();
     const explicitTabMarkers: HTMLElement[] = [];
+    const hasSupportedVerticalTabAlignment =
+      !options?.isVerticalText || merged.tabStops?.every((tab) => tab.align === 'l');
     const canResolveExplicitTabs =
       !!merged.tabStops?.length &&
       merged.rtl !== true &&
-      !options?.isVerticalText &&
+      hasSupportedVerticalTabAlignment &&
       (merged.align === undefined || merged.align === 'l');
+    const explicitTabAxis: ExplicitTabAxis = options?.isVerticalText ? 'vertical' : 'horizontal';
+    if (options?.isVerticalText) {
+      // Vertical DrawingML advances on the physical Y axis. Give each paragraph
+      // the text-frame height for wrapping and let its column shrink to content
+      // so the parent flex container can place the column horizontally.
+      paraDiv.style.width = 'auto';
+      paraDiv.style.maxWidth = 'none';
+      paraDiv.style.height = '100%';
+      paraDiv.style.minHeight = '0px';
+      paraDiv.style.maxHeight = '100%';
+    }
     if (!hasVisibleRuns) {
       // Empty paragraph — still need to maintain spacing
       paraDiv.appendChild(document.createElement('br'));
@@ -1607,7 +1648,7 @@ export function renderTextBody(
       } else if (run.math) {
         // The MathML subtree already carries the formula text and topology.
       } else if (canResolveExplicitTabs && run.text?.includes('\t')) {
-        appendExplicitTabText(element, run.text, explicitTabMarkers);
+        appendExplicitTabText(element, run.text, explicitTabMarkers, explicitTabAxis);
       } else if (run.text && run.text.includes('\t')) {
         element.textContent = run.text;
         element.style.whiteSpace = 'pre';
@@ -1863,6 +1904,7 @@ export function renderTextBody(
         merged.tabStops,
         merged.defaultTabSize ?? 96,
         ctx,
+        explicitTabAxis,
       );
     }
   }

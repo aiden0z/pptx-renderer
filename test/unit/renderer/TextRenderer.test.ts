@@ -2472,26 +2472,64 @@ describe('TextRenderer — renderTextBody', () => {
       expect(container.textContent).toBe(' After');
     });
 
-    it.each([
-      [
-        'right-to-left text',
-        '<pPr rtl="1"><tabLst><tab pos="536575" algn="l"/></tabLst></pPr>',
-        false,
-      ],
-      ['vertical text', '<pPr><tabLst><tab pos="536575" algn="l"/></tabLst></pPr>', true],
-    ])('keeps leading tabs in %s on the browser tab-size path', (_name, pPr, isVerticalText) => {
+    it('keeps leading tabs in right-to-left text on the browser tab-size path', () => {
       const body = makeTextBody({
         paragraphs: [
           {
             runs: [{ text: '\t' }, { text: 'After' }],
-            properties: xmlNode(pPr),
+            properties: xmlNode('<pPr rtl="1"><tabLst><tab pos="536575" algn="l"/></tabLst></pPr>'),
             level: 0,
           },
         ],
       });
       const container = document.createElement('div');
 
-      renderTextBody(body, undefined, createMockRenderContext(), container, { isVerticalText });
+      renderTextBody(body, undefined, createMockRenderContext(), container);
+
+      expect(container.querySelector('[data-pptx-tab-stop]')).toBeNull();
+      expect(container.textContent).toContain('\t');
+    });
+
+    it('marks a vertical explicit tab for inline-axis post-layout alignment', () => {
+      const body = makeTextBody({
+        paragraphs: [
+          {
+            runs: [{ text: '\t' }, { text: 'After' }],
+            properties: xmlNode('<pPr><tabLst><tab pos="1828800" algn="l"/></tabLst></pPr>'),
+            level: 0,
+          },
+        ],
+      });
+      const container = document.createElement('div');
+
+      renderTextBody(body, undefined, createMockRenderContext(), container, {
+        isVerticalText: true,
+      });
+
+      const marker = container.querySelector('[data-pptx-tab-stop]') as HTMLElement | null;
+      expect(marker).not.toBeNull();
+      expect(marker!.style.width).toBe('1px');
+      expect(marker!.style.height).toBe('0px');
+      expect(container.textContent).toBe('After');
+    });
+
+    it('keeps unverified vertical non-left tab alignment on the browser tab-size path', () => {
+      const body = makeTextBody({
+        paragraphs: [
+          {
+            runs: [{ text: '\t' }, { text: 'After' }],
+            properties: xmlNode(
+              '<pPr><tabLst><tab pos="1828800" algn="ctr"/></tabLst></pPr>',
+            ),
+            level: 0,
+          },
+        ],
+      });
+      const container = document.createElement('div');
+
+      renderTextBody(body, undefined, createMockRenderContext(), container, {
+        isVerticalText: true,
+      });
 
       expect(container.querySelector('[data-pptx-tab-stop]')).toBeNull();
       expect(container.textContent).toContain('\t');

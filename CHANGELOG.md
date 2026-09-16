@@ -9,8 +9,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Fixed
 
-- Fixed explicit text tabs (left, center, right, and decimal) and stretched picture-filled runs,
-  including CJK layout and lazy package media.
+- Fixed explicit text tabs (horizontal left, center, right, and decimal; vertical East Asian left)
+  and stretched picture-filled runs, including CJK layout and lazy package media.
 
 ## [1.3.0] - 2026-09-14
 

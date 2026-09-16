@@ -319,7 +319,7 @@ def test_styled_soft_break_case_serializes_break_and_visible_run_properties(tmp_
     )
 
 
-def test_tab_stop_matrix_serializes_explicit_default_and_opt_out_variants(tmp_path: Path):
+def test_tab_stop_matrix_serializes_explicit_rtl_and_vertical_variants(tmp_path: Path):
     generator = _load_generator_module()
     case = next(
         case
@@ -327,6 +327,8 @@ def test_tab_stop_matrix_serializes_explicit_default_and_opt_out_variants(tmp_pa
         if case["name"] == "oracle-pypptx-text-0061-tab-stop-matrix"
     )
     assert case["slide_count"] == 11
+    assert "text.tab.rtl=observation-only" in case["coverage"]["features"]
+    assert "text.tab.vertical-left" in case["coverage"]["features"]
     pptx_path = tmp_path / "source.pptx"
 
     generator._generate_pptx(case, pptx_path)
@@ -375,6 +377,10 @@ def test_tab_stop_matrix_serializes_explicit_default_and_opt_out_variants(tmp_pa
     )
     assert roots[10].xpath(
         "boolean(.//p:sp[p:nvSpPr/p:cNvPr[@name='Tab probe']]/p:txBody/a:bodyPr[@vert='eaVert'])",
+        namespaces=ns,
+    )
+    assert roots[10].xpath(
+        "boolean(.//p:cxnSp/p:spPr/a:xfrm/a:ext[number(@cx) > 0][@cy='0'])",
         namespaces=ns,
     )
 
