@@ -124,9 +124,11 @@ def dev_server_url(request):
 # Playwright Fixtures
 # ---------------------------------------------------------------------------
 
-@pytest.fixture(scope="session")
+# sync_playwright owns an asyncio loop while its context is open. Module scope keeps browser reuse
+# within E2E modules without leaking that loop into later tests that call asyncio.run().
+@pytest.fixture(scope="module")
 def browser():
-    """Launch a Playwright Chromium browser for the test session."""
+    """Launch Chromium for one browser-backed test module."""
     with sync_playwright() as p:
         channel = os.getenv("PPTX_E2E_BROWSER_CHANNEL", "").strip()
         launch_options = {"headless": True}
