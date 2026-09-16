@@ -399,6 +399,85 @@ def _patch_placeholder_idx_inheritance_case(pptx_path: Path) -> None:
     _replace_pptx_entries(pptx_path, entries, patched)
 
 
+def _patch_unlinked_placeholder_collision_case(pptx_path: Path) -> None:
+    """Create the max-idx layout collision reported in issue #26."""
+    slide_part = "ppt/slides/slide1.xml"
+
+    with ZipFile(pptx_path, "r") as zf:
+        entries, data_by_name = _read_pptx_entries(pptx_path)
+        layout_part = _relationship_target(zf, slide_part, "/slideLayout")
+        if layout_part is None:
+            raise RuntimeError("unlinked placeholder case slide has no slideLayout relationship")
+
+        slide_root = etree.fromstring(data_by_name[slide_part])
+        layout_root = etree.fromstring(data_by_name[layout_part])
+
+    slide_body_shapes = slide_root.xpath(
+        ".//p:sp[p:nvSpPr/p:nvPr/p:ph[@idx='1']]", namespaces=NS
+    )
+    layout_body_shapes = layout_root.xpath(
+        ".//p:sp[p:nvSpPr/p:nvPr/p:ph[@idx='1']]", namespaces=NS
+    )
+    if not slide_body_shapes or not layout_body_shapes:
+        raise RuntimeError("unlinked placeholder case has no body placeholder")
+
+    slide_body = slide_body_shapes[0]
+    slide_ph = slide_body.find("./p:nvSpPr/p:nvPr/p:ph", namespaces=NS)
+    slide_ph.set("type", "body")
+    slide_ph.set("idx", "4294967295")
+
+    slide_sp_pr = slide_body.find(qn("p:spPr"))
+    for current in slide_sp_pr.findall(qn("a:xfrm")):
+        slide_sp_pr.remove(current)
+    slide_xfrm = etree.Element(qn("a:xfrm"))
+    etree.SubElement(
+        slide_xfrm,
+        qn("a:off"),
+        x=str(_emu(6.8)),
+        y=str(_emu(1.5)),
+    )
+    etree.SubElement(
+        slide_xfrm,
+        qn("a:ext"),
+        cx=str(_emu(5.7)),
+        cy=str(_emu(4.7)),
+    )
+    slide_sp_pr.insert(0, slide_xfrm)
+
+    layout_body = layout_body_shapes[0]
+    layout_body_ph = layout_body.find("./p:nvSpPr/p:nvPr/p:ph", namespaces=NS)
+    layout_body_ph.set("type", "body")
+    layout_body_ph.set("idx", "4294967295")
+
+    panel_placeholder = etree.fromstring(etree.tostring(layout_body))
+    panel_c_nv_pr = panel_placeholder.find("./p:nvSpPr/p:cNvPr", namespaces=NS)
+    panel_c_nv_pr.set("id", "99")
+    panel_c_nv_pr.set("name", "Unlinked panel placeholder")
+    panel_ph = panel_placeholder.find("./p:nvSpPr/p:nvPr/p:ph", namespaces=NS)
+    panel_ph.attrib.pop("type", None)
+    panel_ph.set("idx", "4294967295")
+
+    panel_lst_style = panel_placeholder.find(
+        "./p:txBody/a:lstStyle", namespaces={**NS, "a": DRAWINGML_NS}
+    )
+    if panel_lst_style is None:
+        raise RuntimeError("unlinked panel placeholder has no list style")
+    for child in list(panel_lst_style):
+        panel_lst_style.remove(child)
+    level = etree.SubElement(panel_lst_style, qn("a:lvl1pPr"))
+    default_run = etree.SubElement(level, qn("a:defRPr"))
+    solid_fill = etree.SubElement(default_run, qn("a:solidFill"))
+    etree.SubElement(solid_fill, qn("a:srgbClr"), val="FFFFFF")
+
+    layout_body.getparent().insert(layout_body.getparent().index(layout_body), panel_placeholder)
+
+    patched = {
+        slide_part: etree.tostring(slide_root, encoding="UTF-8", xml_declaration=True),
+        layout_part: etree.tostring(layout_root, encoding="UTF-8", xml_declaration=True),
+    }
+    _replace_pptx_entries(pptx_path, entries, patched)
+
+
 def _patch_connector_tail_arrows(pptx_path: Path) -> None:
     """Add OOXML tail arrowheads to generated connectors where python-pptx has no API."""
     slide_part = "ppt/slides/slide1.xml"
@@ -1557,6 +1636,49 @@ def _build_text_cases() -> list[CaseDef]:
         },
     )
     cases[-1]["slide_count"] = 9
+
+    def _build_unlinked_placeholder_collision(prs):
+        slide = prs.slides.add_slide(prs.slide_layouts[1])
+        slide.shapes.title.text = "Unlinked placeholder idx collision"
+
+        body = slide.placeholders[1]
+        body.text_frame.clear()
+        paragraph = body.text_frame.paragraphs[0]
+        paragraph.text = "This body text must inherit the master body color and remain black."
+        paragraph.font.name = "Arial"
+        paragraph.font.size = Pt(24)
+
+        panel = slide.shapes.add_shape(
+            MSO_SHAPE.RECTANGLE,
+            _emu(0.6),
+            _emu(1.5),
+            _emu(5.6),
+            _emu(4.7),
+        )
+        panel.fill.solid()
+        panel.fill.fore_color.rgb = RGBColor(31, 41, 55)
+        panel.line.fill.background()
+        panel.text = "The first layout placeholder uses white text.\nIt must not style the body on the right."
+        for panel_paragraph in panel.text_frame.paragraphs:
+            panel_paragraph.font.name = "Arial"
+            panel_paragraph.font.size = Pt(22)
+            panel_paragraph.font.color.rgb = RGBColor(255, 255, 255)
+
+    _add(
+        "unlinked-placeholder-idx-collision",
+        _build_unlinked_placeholder_collision,
+        _patch_unlinked_placeholder_collision_case,
+        coverage={
+            "oracle": "native-powerpoint",
+            "requiredFonts": ["Arial"],
+            "features": [
+                "placeholder.idx=4294967295",
+                "placeholder.layout-collision",
+                "placeholder.layout-match=type",
+                "text.inheritance.master-body",
+            ],
+        },
+    )
 
     return cases
 

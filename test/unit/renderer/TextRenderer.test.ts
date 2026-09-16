@@ -1976,6 +1976,90 @@ describe('TextRenderer — renderTextBody', () => {
       expect(para.style.textAlign).toBe('center');
     });
 
+    it('matches a max-idx layout placeholder by type instead of the first idx collision', () => {
+      const body = makeTextBody({
+        paragraphs: [{ runs: [{ text: 'Visible body text' }], level: 0 }],
+      });
+      const ctx = createMockRenderContext();
+      const panelPlaceholder = xmlNode(`
+        <sp xmlns="http://schemas.openxmlformats.org/drawingml/2006/main">
+          <nvSpPr><cNvPr id="2" name="Panel"/><nvPr><ph idx="4294967295"/></nvPr></nvSpPr>
+          <txBody>
+            <lstStyle><lvl1pPr algn="r"><defRPr><solidFill><srgbClr val="FFFFFF"/></solidFill></defRPr></lvl1pPr></lstStyle>
+            <p><r><t>Panel</t></r></p>
+          </txBody>
+        </sp>
+      `);
+      const bodyPlaceholder = xmlNode(`
+        <sp xmlns="http://schemas.openxmlformats.org/drawingml/2006/main">
+          <nvSpPr><cNvPr id="3" name="Body"/><nvPr><ph type="body" idx="4294967295"/></nvPr></nvSpPr>
+          <txBody>
+            <lstStyle><lvl1pPr algn="ctr"><defRPr><solidFill><srgbClr val="000000"/></solidFill></defRPr></lvl1pPr></lstStyle>
+            <p><r><t>Body</t></r></p>
+          </txBody>
+        </sp>
+      `);
+      ctx.layout.placeholders = [{ node: panelPlaceholder }, { node: bodyPlaceholder }];
+
+      const container = document.createElement('div');
+      renderTextBody(body, { type: 'body', idx: 4294967295 }, ctx, container);
+
+      const paragraph = container.children[0] as HTMLElement;
+      const span = container.querySelector('span') as HTMLElement;
+      expect(paragraph.style.textAlign).toBe('center');
+      expect(span.style.color).toBe('rgb(0, 0, 0)');
+    });
+
+    it('matches a placeholder without idx by type', () => {
+      const body = makeTextBody({
+        paragraphs: [{ runs: [{ text: 'Unindexed body text' }], level: 0 }],
+      });
+      const ctx = createMockRenderContext();
+      const objectPlaceholder = xmlNode(`
+        <sp xmlns="http://schemas.openxmlformats.org/drawingml/2006/main">
+          <nvSpPr><cNvPr id="2" name="Object"/><nvPr><ph/></nvPr></nvSpPr>
+          <txBody><lstStyle><lvl1pPr algn="r"/></lstStyle><p><r><t>Object</t></r></p></txBody>
+        </sp>
+      `);
+      const bodyPlaceholder = xmlNode(`
+        <sp xmlns="http://schemas.openxmlformats.org/drawingml/2006/main">
+          <nvSpPr><cNvPr id="3" name="Body"/><nvPr><ph type="body"/></nvPr></nvSpPr>
+          <txBody><lstStyle><lvl1pPr algn="ctr"/></lstStyle><p><r><t>Body</t></r></p></txBody>
+        </sp>
+      `);
+      ctx.layout.placeholders = [{ node: objectPlaceholder }, { node: bodyPlaceholder }];
+
+      const container = document.createElement('div');
+      renderTextBody(body, { type: 'body' }, ctx, container);
+
+      expect((container.children[0] as HTMLElement).style.textAlign).toBe('center');
+    });
+
+    it('keeps an ordinary explicit idx authoritative over placeholder type', () => {
+      const body = makeTextBody({
+        paragraphs: [{ runs: [{ text: 'Indexed text' }], level: 0 }],
+      });
+      const ctx = createMockRenderContext();
+      const sameTypePlaceholder = xmlNode(`
+        <sp xmlns="http://schemas.openxmlformats.org/drawingml/2006/main">
+          <nvSpPr><cNvPr id="2" name="Body 1"/><nvPr><ph type="body" idx="1"/></nvPr></nvSpPr>
+          <txBody><lstStyle><lvl1pPr algn="l"/></lstStyle><p><r><t>Body</t></r></p></txBody>
+        </sp>
+      `);
+      const sameIdxPlaceholder = xmlNode(`
+        <sp xmlns="http://schemas.openxmlformats.org/drawingml/2006/main">
+          <nvSpPr><cNvPr id="3" name="Object 7"/><nvPr><ph type="obj" idx="7"/></nvPr></nvSpPr>
+          <txBody><lstStyle><lvl1pPr algn="r"/></lstStyle><p><r><t>Object</t></r></p></txBody>
+        </sp>
+      `);
+      ctx.layout.placeholders = [{ node: sameTypePlaceholder }, { node: sameIdxPlaceholder }];
+
+      const container = document.createElement('div');
+      renderTextBody(body, { type: 'body', idx: 7 }, ctx, container);
+
+      expect((container.children[0] as HTMLElement).style.textAlign).toBe('right');
+    });
+
     it('layout placeholder lstStyle overrides master placeholder lstStyle', () => {
       const body = makeTextBody({
         paragraphs: [
@@ -2518,9 +2602,7 @@ describe('TextRenderer — renderTextBody', () => {
         paragraphs: [
           {
             runs: [{ text: '\t' }, { text: 'After' }],
-            properties: xmlNode(
-              '<pPr><tabLst><tab pos="1828800" algn="ctr"/></tabLst></pPr>',
-            ),
+            properties: xmlNode('<pPr><tabLst><tab pos="1828800" algn="ctr"/></tabLst></pPr>'),
             level: 0,
           },
         ],

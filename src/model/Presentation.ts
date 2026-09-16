@@ -3,7 +3,11 @@
  * (themes, masters, layouts, slides) into a single PresentationData structure.
  */
 
-import { masterPlaceholderType } from './placeholderMatching';
+import {
+  findMatchingLayoutPlaceholder,
+  findMatchingMasterPlaceholder,
+  getPlaceholderInfo,
+} from './placeholderMatching';
 import { PptxFiles } from '../parser/ZipParser';
 import type { MediaResolver } from '../utils/media';
 import { parseXml, SafeXmlNode } from '../parser/XmlParser';
@@ -421,28 +425,6 @@ export function buildPresentation(
 // ---------------------------------------------------------------------------
 
 /**
- * Extract placeholder info (type, idx) from a raw placeholder XML node
- * stored in layout/master.
- */
-function getPhInfo(phNode: SafeXmlNode): { type?: string; idx?: number } {
-  // Try nvSpPr > nvPr > ph, or nvPicPr > nvPr > ph
-  for (const wrapper of ['nvSpPr', 'nvPicPr', 'nvGrpSpPr', 'nvGraphicFramePr', 'nvCxnSpPr']) {
-    const nvWrapper = phNode.child(wrapper);
-    if (nvWrapper.exists()) {
-      const nvPr = nvWrapper.child('nvPr');
-      const ph = nvPr.child('ph');
-      if (ph.exists()) {
-        const type = ph.attr('type');
-        const idxStr = ph.attr('idx');
-        const idx = idxStr !== undefined ? Number(idxStr) : undefined;
-        return { type, idx: idx !== undefined && !isNaN(idx) ? idx : undefined };
-      }
-    }
-  }
-  return {};
-}
-
-/**
  * Extract xfrm position/size from a raw placeholder XML node.
  */
 function getPhXfrm(phNode: SafeXmlNode): { position: Position; size: Size } | undefined {
@@ -462,17 +444,6 @@ function getPhXfrm(phNode: SafeXmlNode): { position: Position; size: Size } | un
     }
   }
   return undefined;
-}
-
-/**
- * Find a matching layout placeholder (PlaceholderEntry); use entry.absoluteXfrm when present.
- */
-function findMatchingLayoutPlaceholder(
-  placeholders: PlaceholderEntry[],
-  idx?: number,
-): PlaceholderEntry | undefined {
-  // Slide placeholders inherit from layout by idx (default 0), regardless of type.
-  return placeholders.find((entry) => (getPhInfo(entry.node).idx ?? 0) === (idx ?? 0));
 }
 
 function getMasterPlaceholderEntries(master: MasterData): PlaceholderEntry[] {
@@ -523,7 +494,7 @@ function getPhBodyPr(phNode: SafeXmlNode): SafeXmlNode | undefined {
 function inheritPlaceholderType(target: PlaceholderInfo, sourceNode: SafeXmlNode): void {
   if (target.type) return;
 
-  const source = getPhInfo(sourceNode);
+  const source = getPlaceholderInfo(sourceNode);
   if (source.type) {
     target.type = source.type;
   }
@@ -573,17 +544,18 @@ export function resolveNodePlaceholderInheritance(
 ): void {
   if (!node.placeholder) return;
 
-  const { idx } = node.placeholder;
-  const layoutMatch = layout ? findMatchingLayoutPlaceholder(layout.placeholders, idx) : undefined;
+  const layoutMatch = layout
+    ? findMatchingLayoutPlaceholder(layout.placeholders, node.placeholder, (entry) =>
+        getPlaceholderInfo(entry.node),
+      )
+    : undefined;
   if (layoutMatch) inheritPlaceholderType(node.placeholder, layoutMatch.node);
   // Layout -> master uses type, never idx: master idx values may collide with unrelated types.
   const masterMatch = master
-    ? getMasterPlaceholderEntries(master).find(
-        (entry) =>
-          (getPhInfo(entry.node).type ?? 'obj') ===
-          masterPlaceholderType(
-            layoutMatch ? getPhInfo(layoutMatch.node).type : node.placeholder?.type,
-          ),
+    ? findMatchingMasterPlaceholder(
+        getMasterPlaceholderEntries(master),
+        layoutMatch ? getPlaceholderInfo(layoutMatch.node).type : node.placeholder?.type,
+        (entry) => getPlaceholderInfo(entry.node),
       )
     : undefined;
 

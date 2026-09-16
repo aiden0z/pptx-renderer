@@ -815,6 +815,51 @@ describe('buildPresentation', () => {
       expect(node.size.w).toBeGreaterThan(0);
     });
 
+    it('treats max unsigned idx as unlinked and matches the layout placeholder by type', () => {
+      const slideXml = `
+        <sld xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+          <cSld>
+            <spTree>
+              <sp>
+                <nvSpPr><cNvPr id="2" name="Body"/><nvPr><ph type="body" idx="4294967295"/></nvPr></nvSpPr>
+                <spPr><prstGeom prst="rect"><avLst/></prstGeom></spPr>
+                <txBody><bodyPr/><lstStyle/><p><r><t>Body text</t></r></p></txBody>
+              </sp>
+            </spTree>
+          </cSld>
+        </sld>
+      `;
+      const layoutXml = `
+        <sldLayout>
+          <cSld>
+            <spTree>
+              <sp>
+                <nvSpPr><cNvPr id="3" name="Panel text"/><nvPr><ph idx="4294967295"/></nvPr></nvSpPr>
+                <spPr><xfrm><off x="914400" y="457200"/><ext cx="2743200" cy="914400"/></xfrm></spPr>
+                <txBody><bodyPr anchor="b"/><lstStyle/><p><r><t>Panel</t></r></p></txBody>
+              </sp>
+              <sp>
+                <nvSpPr><cNvPr id="4" name="Body placeholder"/><nvPr><ph type="body" idx="4294967295"/></nvPr></nvSpPr>
+                <spPr><xfrm><off x="1828800" y="1371600"/><ext cx="5486400" cy="2743200"/></xfrm></spPr>
+                <txBody><bodyPr anchor="ctr"/><lstStyle/><p><r><t>Body</t></r></p></txBody>
+              </sp>
+            </spTree>
+          </cSld>
+        </sldLayout>
+      `;
+      const files = makeMinimalFiles({
+        slides: new Map([['ppt/slides/slide1.xml', slideXml]]),
+        slideLayouts: new Map([['ppt/slideLayouts/slideLayout1.xml', layoutXml]]),
+      });
+
+      const pres = buildPresentation(files);
+      const node = pres.slides[0].nodes[0] as any;
+
+      expect(node.position.x).toBeCloseTo(192, 0);
+      expect(node.position.y).toBeCloseTo(144, 0);
+      expect(node.textBody.layoutBodyProperties.attr('anchor')).toBe('ctr');
+    });
+
     it('inherits placeholder type from layout when slide placeholder declares only idx', () => {
       const slideXml = `
         <sld xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">

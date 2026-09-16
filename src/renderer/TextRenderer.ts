@@ -3,7 +3,12 @@
  * with full 7-level style inheritance.
  */
 
-import { masterPlaceholderType } from '../model/placeholderMatching';
+import {
+  findMatchingLayoutPlaceholder,
+  findMatchingMasterPlaceholder,
+  getPlaceholderInfo,
+  masterPlaceholderType,
+} from '../model/placeholderMatching';
 import { SafeXmlNode } from '../parser/XmlParser';
 import { RenderContext } from './RenderContext';
 import type { TextBody, TextParagraph, TextRun } from '../model/nodes/ShapeNode';
@@ -108,38 +113,6 @@ function getPlaceholderCategory(
     return 'body';
   }
   return 'other';
-}
-
-/**
- * Find a placeholder node in a list by matching type and/or idx.
- */
-function findPlaceholderNode(
-  placeholders: SafeXmlNode[],
-  info: PlaceholderInfo,
-  matchBy: 'idx' | 'type',
-): SafeXmlNode | undefined {
-  for (const ph of placeholders) {
-    // Navigate to the ph element to read its attributes
-    let phEl: SafeXmlNode | undefined;
-    const nvSpPr = ph.child('nvSpPr');
-    if (nvSpPr.exists()) {
-      phEl = nvSpPr.child('nvPr').child('ph');
-    }
-    if (!phEl || !phEl.exists()) {
-      const nvPicPr = ph.child('nvPicPr');
-      if (nvPicPr.exists()) {
-        phEl = nvPicPr.child('nvPr').child('ph');
-      }
-    }
-    if (!phEl || !phEl.exists()) continue;
-
-    const phType = phEl.attr('type');
-    const phIdx = phEl.numAttr('idx');
-
-    if (matchBy === 'idx' && (phIdx ?? 0) === (info.idx ?? 0)) return ph;
-    if (matchBy === 'type' && (phType ?? 'obj') === masterPlaceholderType(info.type)) return ph;
-  }
-  return undefined;
 }
 
 /**
@@ -1222,16 +1195,13 @@ export function renderTextBody(
 ): void {
   const textBody = resolveTextFields(sourceTextBody, ctx);
   const layoutPh = placeholder
-    ? findPlaceholderNode(
+    ? findMatchingLayoutPlaceholder(
         ctx.layout.placeholders.map((entry) => entry.node),
         placeholder,
-        'idx',
+        getPlaceholderInfo,
       )
     : undefined;
-  const layoutPhProps = layoutPh?.child('nvSpPr').child('nvPr').child('ph');
-  const layoutPhType = layoutPhProps?.exists()
-    ? layoutPhProps.attr('type')
-    : layoutPh?.child('nvPicPr').child('nvPr').child('ph').attr('type');
+  const layoutPhType = layoutPh ? getPlaceholderInfo(layoutPh).type : undefined;
   // Follow the parent's parent: a local slide type does not rewire layout -> master.
   const masterInfo = layoutPh ? { type: layoutPhType } : placeholder;
   const category = getPlaceholderCategory(
@@ -1309,7 +1279,11 @@ export function renderTextBody(
 
     // Level 4: master placeholder lstStyle
     if (masterInfo) {
-      const masterPh = findPlaceholderNode(ctx.master.placeholders, masterInfo, 'type');
+      const masterPh = findMatchingMasterPlaceholder(
+        ctx.master.placeholders,
+        masterInfo.type,
+        getPlaceholderInfo,
+      );
       if (masterPh) {
         const lstStyle = getPlaceholderLstStyle(masterPh);
         mergeParagraphProps(merged, findStyleAtLevel(lstStyle, level));

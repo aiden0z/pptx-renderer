@@ -282,7 +282,7 @@ This generates/reuses ground truth for all SmartArt layouts available on the loc
 
 For text, shape-adjustment, zero-adjustment flowchart, ordinary-shape and text effects, bounded
 static DrawingML 3D, table, composite, and chart interaction cases, use the python-pptx generator.
-It currently defines 204 cases: 62 text, 31 shape-adjustment, 28 flowchart, 2 shape-effect, 1
+It currently defines 205 cases: 63 text, 31 shape-adjustment, 28 flowchart, 2 shape-effect, 1
 text-effect, 20 static 3D, 8 table, 8 formula, 20 composite, and 24 chart cases. Chart cases 23–24
 exercise readable two-dimensional fallbacks for native 3D column and pie charts; they do not claim
 three-dimensional parity.
@@ -377,6 +377,8 @@ observation control.
 ID 0062 is a nine-slide native vertical-text matrix covering `eaVert`, `mongolianVert`, `vert`,
 `vert270`, `wordArtVert`, and `wordArtVertRtl`, plus top/center/bottom anchors, 12/24/36 pt stacked
 character advance, and mixed CJK/Hangul fallback behavior.
+ID 0063 reproduces duplicate unlinked placeholder indices and verifies that body geometry and text
+styles resolve by placeholder type instead of layout order.
 
 ```bash
 cd test/e2e

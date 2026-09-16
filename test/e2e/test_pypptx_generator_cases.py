@@ -80,11 +80,58 @@ def test_placeholder_idx_inheritance_case_generates_idx_only_slide_placeholders(
     assert {"type": "body", "idx": "1"} in master_placeholders
 
 
+def test_unlinked_placeholder_collision_case_keeps_typed_layout_fallback(tmp_path: Path):
+    generator = _load_generator_module()
+    case_defs = generator._build_all_case_defs()
+    case = next(
+        c
+        for c in case_defs
+        if c["name"]
+        == "oracle-pypptx-text-0063-unlinked-placeholder-idx-collision"
+    )
+    pptx_path = tmp_path / "source.pptx"
+
+    generator._generate_pptx(case, pptx_path)
+
+    with ZipFile(pptx_path) as zf:
+        slide_part = "ppt/slides/slide1.xml"
+        layout_part = generator._relationship_target(zf, slide_part, "/slideLayout")
+        assert layout_part is not None
+        slide_root = etree.fromstring(zf.read(slide_part))
+        layout_root = etree.fromstring(zf.read(layout_part))
+
+    ns = {
+        "p": "http://schemas.openxmlformats.org/presentationml/2006/main",
+        "a": "http://schemas.openxmlformats.org/drawingml/2006/main",
+    }
+    slide_body = slide_root.xpath(
+        ".//p:ph[@type='body'][@idx='4294967295']", namespaces=ns
+    )
+    colliding_layout_shapes = layout_root.xpath(
+        ".//p:sp[p:nvSpPr/p:nvPr/p:ph[@idx='4294967295']]", namespaces=ns
+    )
+
+    assert len(slide_body) == 1
+    assert len(colliding_layout_shapes) == 2
+    assert colliding_layout_shapes[0].xpath(
+        "./p:nvSpPr/p:nvPr/p:ph[not(@type)]", namespaces=ns
+    )
+    assert colliding_layout_shapes[0].xpath(
+        ".//a:srgbClr[@val='FFFFFF']", namespaces=ns
+    )
+    assert colliding_layout_shapes[1].xpath(
+        "./p:nvSpPr/p:nvPr/p:ph[@type='body']", namespaces=ns
+    )
+
+
 def test_cjk_text_layout_matrix_is_registered():
     generator = _load_generator_module()
     case_defs = generator._build_all_case_defs()
     text_names = [
-        case["name"] for case in case_defs if case["name"].startswith("oracle-pypptx-text-")
+        case["name"]
+        for case in case_defs
+        if case["name"].startswith("oracle-pypptx-text-")
+        and not case["name"].startswith("oracle-pypptx-text-effect-")
     ]
 
     expected_names = {
@@ -111,6 +158,7 @@ def test_cjk_text_layout_matrix_is_registered():
         "oracle-pypptx-text-0060-styled-soft-break-matrix",
         "oracle-pypptx-text-0061-tab-stop-matrix",
         "oracle-pypptx-text-0062-vertical-mode-matrix",
+        "oracle-pypptx-text-0063-unlinked-placeholder-idx-collision",
     }
 
     assert expected_names.issubset(text_names)

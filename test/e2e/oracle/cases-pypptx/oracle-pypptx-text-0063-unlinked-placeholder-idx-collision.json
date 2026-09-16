@@ -1,0 +1,25 @@
+{
+  "name": "oracle-pypptx-text-0063-unlinked-placeholder-idx-collision",
+  "generator": "python-pptx",
+  "slides": [
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    }
+  ],
+  "coverage": {
+    "oracle": "native-powerpoint",
+    "requiredFonts": [
+      "Arial"
+    ],
+    "features": [
+      "placeholder.idx=4294967295",
+      "placeholder.layout-collision",
+      "placeholder.layout-match=type",
+      "text.inheritance.master-body"
+    ]
+  }
+}

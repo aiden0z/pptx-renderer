@@ -260,7 +260,7 @@ Oracle case naming:
 
 Case JSON (VBA pipeline): `test/e2e/oracle/cases-full/*.json`. Each declares `kind: “shape”` or `kind: “smartart”` with layout/dimensions.
 
-Python-pptx pipeline cases: `test/e2e/oracle/cases-pypptx/*.json` (204 cases: 62 text,
+Python-pptx pipeline cases: `test/e2e/oracle/cases-pypptx/*.json` (205 cases: 63 text,
 31 shape-adjustment, 28 zero-adjustment flowchart, 2 shape-effect, 1 text-effect, 20 static 3D,
 8 table, 8 formula, 20 composite, and 24 chart).
 Prefix `oracle-pypptx-{category}-{NNNN}-{slug}` where category is `text`, `shape-adj`,
@@ -269,7 +269,8 @@ Prefix `oracle-pypptx-{category}-{NNNN}-{slug}` where category is `text`, `shape
 IDs 0040-0055 are the CJK wrap/autofit/spacing interaction matrix; IDs 0056-0059 cover
 `defRPr`/`fontRef` text-color precedence; ID 0060 covers styled soft breaks; ID 0061 covers the
 native tab-stop matrix; ID 0062 covers every non-horizontal DrawingML vertical mode, anchors,
-stacked-character advance, and mixed CJK/Hangul fallback.
+stacked-character advance, and mixed CJK/Hangul fallback; ID 0063 covers duplicate unlinked
+placeholder indices and type-based layout inheritance.
 
 ### Step 2: Identify the Shape
 
@@ -684,7 +685,7 @@ Report: `test/e2e/reports/oracle-failures/full-ground-truth-one-shot.json`
 | `scripts/run_all_shapes_eval.py`        | `--shape-id-min N --shape-id-max N` | Batch evaluate shapes via POST `/api/evaluate/{case}`         |
 | `scripts/analyze_edge.py`               | `<case> [--slide N]`                | Canny edge IoU analysis with visual overlay output            |
 | `scripts/one_shot_full_ground_truth.py` | `--macro-host ... --cases-dir ...`  | Bulk generate PPTX+PDF ground truth from oracle cases         |
-| `scripts/generate_pypptx_cases.py`      | `[--case PATTERN]`                  | Generate 204 python-pptx cases across the documented matrices |
+| `scripts/generate_pypptx_cases.py`      | `[--case PATTERN]`                  | Generate 205 python-pptx cases across the documented matrices |
 | `scripts/reflection_metrics.py`         | `--case-report PATH`                | Validate local reflection fields and erasure sensitivity      |
 
 Key mechanics:

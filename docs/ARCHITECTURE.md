@@ -87,6 +87,11 @@ Responsibilities:
   serialization consumes that slide.
 - Build model-level text indexes and search results that are independent of mounted DOM.
 
+Slide placeholders with an ordinary explicit `idx` inherit from the layout placeholder with that
+index. A missing `idx`, or the unlinked sentinel `4294967295`, instead matches by the effective
+placeholder type so duplicate sentinel values cannot select an unrelated layout style. Layout to
+master inheritance remains type based.
+
 ## 3) Render Layer
 
 Core modules:
