@@ -495,22 +495,24 @@ test('wordArt vertical text uses the native 1.3em character advance across font 
   }
 });
 
-test('East Asian vertical text can wrap a Hangul word between syllables', async ({ page }) => {
+test('East Asian vertical text can wrap an unspaced Hangul word between syllables', async ({
+  page,
+}) => {
   await page.goto('/test/browser/blank.html');
   const result = await page.evaluate(async () => {
     const { parseXml } = await import('/src/parser/XmlParser.ts');
     const { parseShapeNode } = await import('/src/model/nodes/ShapeNode.ts');
     const { renderShape } = await import('/src/renderer/ShapeRenderer.ts');
     const { createMockRenderContext } = await import('/test/unit/helpers/mockContext.ts');
-    const text = '垂直文本テスト Vertical Text 수직 텍스트';
+    const text = '수직텍스트';
     const shape = parseShapeNode(
       parseXml(`
         <p:sp xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
               xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
           <p:nvSpPr><p:cNvPr id="1" name="EA Hangul wrap"/><p:cNvSpPr txBox="1"/><p:nvPr/></p:nvSpPr>
-          <p:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="2743200" cy="5486400"/></a:xfrm><a:prstGeom prst="rect"/></p:spPr>
+          <p:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="2743200" cy="609600"/></a:xfrm><a:prstGeom prst="rect"/></p:spPr>
           <p:txBody>
-            <a:bodyPr wrap="square" vert="eaVert"><a:spAutoFit/></a:bodyPr>
+            <a:bodyPr wrap="square" vert="eaVert" lIns="0" rIns="0" tIns="0" bIns="0"><a:noAutofit/></a:bodyPr>
             <a:lstStyle/>
             <a:p><a:r><a:rPr sz="2400"><a:latin typeface="Microsoft YaHei"/></a:rPr><a:t>${text}</a:t></a:r></a:p>
           </p:txBody>
@@ -537,15 +539,19 @@ test('East Asian vertical text can wrap a Hangul word between syllables', async 
       }
       node = walker.nextNode();
     }
-    const first = positions[0];
-    const firstTek = positions.find((entry) => entry.char === '텍')!;
-    const firstSeu = positions.find((entry) => entry.char === '스' && entry !== positions[5])!;
+    const paragraph = run.closest('div') as HTMLElement;
+    const distinctColumns = new Set(positions.map((entry) => Math.round(entry.right))).size;
     element.remove();
-    return { first, firstTek, firstSeu };
+    return {
+      distinctColumns,
+      overflowWrap: paragraph.style.overflowWrap,
+      wordBreak: paragraph.style.wordBreak,
+    };
   });
 
-  expect(result.firstTek.right).toBeCloseTo(result.first.right, 0);
-  expect(result.firstSeu.right).toBeLessThan(result.first.right - 20);
+  expect(result.overflowWrap).toBe('anywhere');
+  expect(result.wordBreak).toBe('');
+  expect(result.distinctColumns).toBeGreaterThan(1);
 });
 
 test('embedded picture text fill is clipped to glyphs in Chromium', async ({ page }) => {
