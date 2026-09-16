@@ -1,0 +1,101 @@
+{
+  "name": "oracle-pypptx-text-0061-tab-stop-matrix",
+  "generator": "python-pptx",
+  "slides": [
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    },
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    },
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    },
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    },
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    },
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    },
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    },
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    },
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    },
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    },
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    }
+  ],
+  "coverage": {
+    "oracle": "native-powerpoint",
+    "requiredFonts": [
+      "Microsoft YaHei",
+      "Arial"
+    ],
+    "features": [
+      "text.tab.explicit-left-leading",
+      "text.tab.explicit-left-inline",
+      "text.tab.explicit-left-multiple",
+      "text.tab.bullet",
+      "text.tab.mixed-run",
+      "text.tab.default-size",
+      "text.tab.alignment=center|right|decimal",
+      "text.tab.rtl=observation-only",
+      "text.tab.vertical=observation-only"
+    ]
+  }
+}

@@ -282,7 +282,7 @@ This generates/reuses ground truth for all SmartArt layouts available on the loc
 
 For text, shape-adjustment, zero-adjustment flowchart, ordinary-shape and text effects, bounded
 static DrawingML 3D, table, composite, and chart interaction cases, use the python-pptx generator.
-It currently defines 202 cases: 60 text, 31 shape-adjustment, 28 flowchart, 2 shape-effect, 1
+It currently defines 203 cases: 61 text, 31 shape-adjustment, 28 flowchart, 2 shape-effect, 1
 text-effect, 20 static 3D, 8 table, 8 formula, 20 composite, and 24 chart cases. Chart cases 23–24
 exercise readable two-dimensional fallbacks for native 3D column and pie charts; they do not claim
 three-dimensional parity.
@@ -368,6 +368,10 @@ Text IDs 0056-0059 cover color precedence independently from layout behavior: pa
 `srgbClr` and `schemeClr` over a conflicting shape `fontRef`, an explicit run color over both, and
 the inverse fallback to `fontRef` when local fills are absent. The cases span square, wide, and tall
 containers and retain exact color values in their tracked OOXML metadata.
+ID 0060 isolates styled soft breaks from the visible run's metrics and bullet color. ID 0061 is an
+eleven-slide native tab-stop matrix covering leading and inline left tabs, multiple stops, bullets,
+mixed-run tabs, the default interval, and explicit center/right/decimal alignment. Its RTL and
+vertical slides are observation controls and do not broaden the supported horizontal LTR scope.
 
 ```bash
 cd test/e2e
@@ -377,7 +381,7 @@ cd test/e2e
 
 # Generate the focused text matrices. --case is repeatable and accepts exact names or globs.
 .venv/bin/python scripts/generate_pypptx_cases.py \
-  --case 'oracle-pypptx-text-00[45]*'
+  --case 'oracle-pypptx-text-00[456]*'
 
 # Generate only the bounded static DrawingML 3D matrix.
 .venv/bin/python scripts/generate_pypptx_cases.py \

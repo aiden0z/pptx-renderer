@@ -9,9 +9,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Fixed
 
-- Fixed explicit leading tab stops in CJK text boxes and stretched picture-filled text runs,
-  including lazy package media, so affected content no longer wraps early or loses its authored
-  fill.
+- Fixed explicit text tabs (left, center, right, and decimal) and stretched picture-filled runs,
+  including CJK layout and lazy package media.
 
 ## [1.3.0] - 2026-09-14
 

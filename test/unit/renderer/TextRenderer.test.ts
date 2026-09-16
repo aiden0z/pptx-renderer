@@ -2208,21 +2208,15 @@ describe('TextRenderer — renderTextBody', () => {
       const body = makeTextBody({
         paragraphs: [
           {
-            properties: xmlNode(
-              '<pPr><lnSpc><spcPct val="100000"/></lnSpc></pPr>',
-            ),
+            properties: xmlNode('<pPr><lnSpc><spcPct val="100000"/></lnSpc></pPr>'),
             runs: [
               {
                 text: '\n',
-                properties: xmlNode(
-                  '<rPr sz="3000"><latin typeface="Arial"/></rPr>',
-                ),
+                properties: xmlNode('<rPr sz="3000"><latin typeface="Arial"/></rPr>'),
               },
               {
                 text: 'Visible',
-                properties: xmlNode(
-                  '<rPr sz="1000"><latin typeface="Courier New"/></rPr>',
-                ),
+                properties: xmlNode('<rPr sz="1000"><latin typeface="Courier New"/></rPr>'),
               },
             ],
             level: 0,
@@ -2253,15 +2247,11 @@ describe('TextRenderer — renderTextBody', () => {
             runs: [
               {
                 text: '\n',
-                properties: xmlNode(
-                  '<rPr><solidFill><srgbClr val="FF0000"/></solidFill></rPr>',
-                ),
+                properties: xmlNode('<rPr><solidFill><srgbClr val="FF0000"/></solidFill></rPr>'),
               },
               {
                 text: 'Visible',
-                properties: xmlNode(
-                  '<rPr><solidFill><srgbClr val="0000FF"/></solidFill></rPr>',
-                ),
+                properties: xmlNode('<rPr><solidFill><srgbClr val="0000FF"/></solidFill></rPr>'),
               },
             ],
             level: 0,
@@ -2423,7 +2413,7 @@ describe('TextRenderer — renderTextBody', () => {
       expect(paraDiv.style.tabSize).toBe('128px');
     });
 
-    it('advances a leading tab to the explicit OOXML tab stop after the paragraph margin (issue #23)', () => {
+    it('marks a leading explicit OOXML tab for post-layout alignment (issue #23)', () => {
       const body = makeTextBody({
         paragraphs: [
           {
@@ -2447,13 +2437,10 @@ describe('TextRenderer — renderTextBody', () => {
 
       expect(parseFloat(paraDiv.style.paddingLeft)).toBeCloseTo(424815 / 9525, 3);
       expect(tabSpacer).not.toBeNull();
-      expect(parseFloat(tabSpacer!.style.width)).toBeCloseTo((536575 - 424815) / 9525, 3);
-      expect(
-        parseFloat(paraDiv.style.paddingLeft) + parseFloat(tabSpacer!.style.width),
-      ).toBeCloseTo(536575 / 9525, 3);
+      expect(tabSpacer!.getAttribute('aria-hidden')).toBe('true');
     });
 
-    it('keeps a non-leading tab on the existing browser tab-size path', () => {
+    it('marks a non-leading explicit tab for post-layout alignment', () => {
       const body = makeTextBody({
         paragraphs: [
           {
@@ -2465,11 +2452,11 @@ describe('TextRenderer — renderTextBody', () => {
       });
 
       const container = renderToContainer(body);
-      expect(container.querySelector('[data-pptx-tab-stop]')).toBeNull();
-      expect(container.textContent).toContain('\t');
+      expect(container.querySelectorAll('[data-pptx-tab-stop]')).toHaveLength(1);
+      expect(container.textContent).toBe('BeforeAfter');
     });
 
-    it('keeps a tab after leading whitespace on the browser tab-size path', () => {
+    it('marks an explicit tab after leading whitespace for post-layout alignment', () => {
       const body = makeTextBody({
         paragraphs: [
           {
@@ -2481,12 +2468,16 @@ describe('TextRenderer — renderTextBody', () => {
       });
 
       const container = renderToContainer(body);
-      expect(container.querySelector('[data-pptx-tab-stop]')).toBeNull();
-      expect(container.textContent).toContain('\t');
+      expect(container.querySelectorAll('[data-pptx-tab-stop]')).toHaveLength(1);
+      expect(container.textContent).toBe(' After');
     });
 
     it.each([
-      ['right-to-left text', '<pPr rtl="1"><tabLst><tab pos="536575" algn="l"/></tabLst></pPr>', false],
+      [
+        'right-to-left text',
+        '<pPr rtl="1"><tabLst><tab pos="536575" algn="l"/></tabLst></pPr>',
+        false,
+      ],
       ['vertical text', '<pPr><tabLst><tab pos="536575" algn="l"/></tabLst></pPr>', true],
     ])('keeps leading tabs in %s on the browser tab-size path', (_name, pPr, isVerticalText) => {
       const body = makeTextBody({

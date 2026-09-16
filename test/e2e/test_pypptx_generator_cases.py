@@ -109,10 +109,11 @@ def test_cjk_text_layout_matrix_is_registered():
         "oracle-pypptx-text-0058-run-color-over-defrpr-tall",
         "oracle-pypptx-text-0059-fontref-fallback-no-defrpr",
         "oracle-pypptx-text-0060-styled-soft-break-matrix",
+        "oracle-pypptx-text-0061-tab-stop-matrix",
     }
 
     assert expected_names.issubset(text_names)
-    assert len(text_names) == 61
+    assert len(text_names) == 62
 
 
 def test_cjk_text_layout_matrix_serializes_autofit_and_spacing_ooxml(tmp_path: Path):
@@ -314,6 +315,66 @@ def test_styled_soft_break_case_serializes_break_and_visible_run_properties(tmp_
     )
     assert paragraphs[1].xpath(
         "boolean(./a:r/a:rPr/a:solidFill/a:srgbClr[@val='0070C0'])",
+        namespaces=ns,
+    )
+
+
+def test_tab_stop_matrix_serializes_explicit_default_and_opt_out_variants(tmp_path: Path):
+    generator = _load_generator_module()
+    case = next(
+        case
+        for case in generator._build_all_case_defs()
+        if case["name"] == "oracle-pypptx-text-0061-tab-stop-matrix"
+    )
+    assert case["slide_count"] == 11
+    pptx_path = tmp_path / "source.pptx"
+
+    generator._generate_pptx(case, pptx_path)
+
+    ns = {
+        "p": "http://schemas.openxmlformats.org/presentationml/2006/main",
+        "a": "http://schemas.openxmlformats.org/drawingml/2006/main",
+    }
+    with ZipFile(pptx_path) as zf:
+        roots = [
+            etree.fromstring(zf.read(f"ppt/slides/slide{index}.xml"))
+            for index in range(1, 12)
+        ]
+
+    expected_alignments = ["l", "l", "l", "l", "l", None, "ctr", "r", "dec", "l", "l"]
+    for root, alignment in zip(roots, expected_alignments):
+        paragraphs = root.xpath(".//p:sp[p:nvSpPr/p:cNvPr[@name='Tab probe']]/p:txBody/a:p", namespaces=ns)
+        assert len(paragraphs) == 1
+        paragraph = paragraphs[0]
+        assert "\t" in "".join(paragraph.xpath(".//a:t/text()", namespaces=ns))
+        tabs = paragraph.xpath("./a:pPr/a:tabLst/a:tab", namespaces=ns)
+        if alignment is None:
+            assert tabs == []
+            assert paragraph.xpath("boolean(./a:pPr[@defTabSz='914400'])", namespaces=ns)
+        else:
+            assert tabs
+            assert all(tab.get("algn") == alignment for tab in tabs)
+
+    assert roots[0].xpath(
+        "boolean(.//p:sp[p:nvSpPr/p:cNvPr[@name='Tab probe']]//a:pPr[@marL='457200']/a:tabLst/a:tab[@pos='1371600'])",
+        namespaces=ns,
+    )
+    assert len(
+        roots[2].xpath(
+            ".//p:sp[p:nvSpPr/p:cNvPr[@name='Tab probe']]//a:pPr/a:tabLst/a:tab",
+            namespaces=ns,
+        )
+    ) == 2
+    assert roots[3].xpath(
+        "boolean(.//p:sp[p:nvSpPr/p:cNvPr[@name='Tab probe']]//a:pPr/a:buChar[@char='•'])",
+        namespaces=ns,
+    )
+    assert roots[9].xpath(
+        "boolean(.//p:sp[p:nvSpPr/p:cNvPr[@name='Tab probe']]//a:pPr[@rtl='1'])",
+        namespaces=ns,
+    )
+    assert roots[10].xpath(
+        "boolean(.//p:sp[p:nvSpPr/p:cNvPr[@name='Tab probe']]/p:txBody/a:bodyPr[@vert='eaVert'])",
         namespaces=ns,
     )
 

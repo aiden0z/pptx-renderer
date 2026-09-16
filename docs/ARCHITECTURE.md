@@ -228,8 +228,12 @@ host page's `white-space` rule cannot replace the presentation semantics. Explic
 `horzOverflow` and `vertOverflow` values are resolved independently. Paragraph `eaLnBrk="0"`
 uses the browser's unrestricted break opportunity, while the omitted/true default retains East
 Asian typographic rules; both values are explicit so inherited host CSS cannot change the result.
-For a leading left-aligned tab, `a:tabLst/a:tab@pos` is resolved from the paragraph margin and
-first-line indent. Other tab placements keep the default browser tab-size path.
+For horizontal left-to-right paragraphs, explicit `a:tabLst/a:tab@pos` targets are resolved after
+fonts load from the current browser-laid-out cursor. This preserves the text-frame-relative OOXML
+position across paragraph margins, first-line indents, inline or mixed-run tabs, multiple stops,
+and bullet gutters. Left, center, right, and decimal alignments use the measured following field;
+paragraphs without `a:tabLst` retain the browser `tab-size` path. Right-to-left and vertical text
+also retain that fallback until they have separate native matrices.
 
 The three autofit choices remain mutually exclusive:
 

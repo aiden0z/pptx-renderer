@@ -95,6 +95,7 @@ test('a leading explicit tab stop preserves the issue #23 CJK line on one row', 
     const { createMockRenderContext } = await import('/test/unit/helpers/mockContext.ts');
     const container = document.createElement('div');
     container.style.width = '650px';
+    const ctx = createMockRenderContext({ asyncTasks: [] });
     const runProperties = (bold = false, spacing = -90) =>
       xmlNode(
         `<rPr sz="1700" b="${bold ? 1 : 0}" spc="${spacing}"><ea typeface="微软雅黑"/></rPr>`,
@@ -119,11 +120,12 @@ test('a leading explicit tab stop preserves the issue #23 CJK line on one row', 
         ],
       },
       undefined,
-      createMockRenderContext(),
+      ctx,
       container,
     );
     document.body.append(container);
     await document.fonts.ready;
+    await Promise.all(ctx.asyncTasks ?? []);
 
     const paragraph = container.firstElementChild as HTMLElement;
     const tab = paragraph.querySelector('[data-pptx-tab-stop]') as HTMLElement;
@@ -139,6 +141,218 @@ test('a leading explicit tab stop preserves the issue #23 CJK line on one row', 
 
   expect(result.tabWidth).toBeCloseTo((536575 - 424815) / 9525, 1);
   expect(result.lineTops).toHaveLength(1);
+});
+
+test('explicit tabs finish layout when ready is awaited before the slide is mounted', async ({
+  page,
+}) => {
+  await page.goto('/test/browser/blank.html');
+  const result = await page.evaluate(async () => {
+    const { renderTextBody } = await import('/src/renderer/TextRenderer.ts');
+    const { xmlNode } = await import('/test/unit/helpers/xmlNode.ts');
+    const { createMockRenderContext } = await import('/test/unit/helpers/mockContext.ts');
+    const container = document.createElement('div');
+    container.style.width = '650px';
+    const ctx = createMockRenderContext({ asyncTasks: [], measurementRoot: container });
+    renderTextBody(
+      {
+        paragraphs: [
+          {
+            properties: xmlNode('<pPr><tabLst><tab pos="1828800" algn="l"/></tabLst></pPr>'),
+            runs: [{ text: 'Prefix' }, { text: '\t' }, { text: 'TARGET' }],
+            level: 0,
+          },
+        ],
+      },
+      undefined,
+      ctx,
+      container,
+    );
+
+    await Promise.all(ctx.asyncTasks ?? []);
+    const marker = container.querySelector('[data-pptx-tab-stop]') as HTMLElement;
+    const detachedWidth = parseFloat(marker.style.width);
+    document.body.append(container);
+    const paragraph = container.firstElementChild as HTMLElement;
+    const target = Array.from(paragraph.querySelectorAll('span')).find(
+      (span) => span.textContent === 'TARGET',
+    ) as HTMLElement;
+    return {
+      detachedWidth,
+      targetLeft: target.getBoundingClientRect().left - paragraph.getBoundingClientRect().left,
+    };
+  });
+
+  expect(result.detachedWidth).toBeGreaterThan(0);
+  expect(result.targetLeft).toBeCloseTo(1828800 / 9525, 0);
+});
+
+test('explicit left tab stops align inline, multiple, bullet, and mixed-run fields', async ({
+  page,
+}) => {
+  await page.goto('/test/browser/blank.html');
+  const result = await page.evaluate(async () => {
+    const { renderTextBody } = await import('/src/renderer/TextRenderer.ts');
+    const { xmlNode } = await import('/test/unit/helpers/xmlNode.ts');
+    const { createMockRenderContext } = await import('/test/unit/helpers/mockContext.ts');
+
+    const textLeft = (root: HTMLElement, text: string): number => {
+      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+      while (walker.nextNode()) {
+        const node = walker.currentNode as Text;
+        const index = node.data.indexOf(text);
+        if (index < 0) continue;
+        const range = document.createRange();
+        range.setStart(node, index);
+        range.setEnd(node, index + text.length);
+        return range.getBoundingClientRect().left - root.getBoundingClientRect().left;
+      }
+      throw new Error(`Missing text: ${text}`);
+    };
+
+    const render = async (
+      runs: string[],
+      paragraphXml: string,
+    ): Promise<{ paragraph: HTMLElement; container: HTMLElement }> => {
+      const container = document.createElement('div');
+      container.style.width = '700px';
+      const ctx = createMockRenderContext({ asyncTasks: [] });
+      renderTextBody(
+        {
+          bodyProperties: xmlNode('<bodyPr wrap="none" lIns="0" rIns="0"><noAutofit/></bodyPr>'),
+          paragraphs: [
+            {
+              properties: xmlNode(paragraphXml),
+              runs: runs.map((text) => ({ text })),
+              level: 0,
+            },
+          ],
+        },
+        undefined,
+        ctx,
+        container,
+      );
+      document.body.append(container);
+      await Promise.all(ctx.asyncTasks ?? []);
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+      return { paragraph: container.firstElementChild as HTMLElement, container };
+    };
+
+    const inline = await render(
+      ['Prefix', '\t', 'INLINE'],
+      '<pPr><tabLst><tab pos="2743200" algn="l"/></tabLst></pPr>',
+    );
+    const multiple = await render(
+      ['A', '\t', 'B', '\t', 'C'],
+      '<pPr><tabLst><tab pos="1828800" algn="l"/><tab pos="3657600" algn="l"/></tabLst></pPr>',
+    );
+    const bullet = await render(
+      ['\t', 'BULLET'],
+      '<pPr marL="731520" indent="-274320"><buChar char="•"/><tabLst><tab pos="1371600" algn="l"/></tabLst></pPr>',
+    );
+    const mixed = await render(
+      ['Same run prefix\tMIXED'],
+      '<pPr><tabLst><tab pos="2743200" algn="l"/></tabLst></pPr>',
+    );
+
+    const measured = {
+      inline: textLeft(inline.paragraph, 'INLINE'),
+      multipleB: textLeft(multiple.paragraph, 'B'),
+      multipleC: textLeft(multiple.paragraph, 'C'),
+      bullet: textLeft(bullet.paragraph, 'BULLET'),
+      mixed: textLeft(mixed.paragraph, 'MIXED'),
+      markerCounts: [inline, multiple, bullet, mixed].map(
+        ({ paragraph }) => paragraph.querySelectorAll('[data-pptx-tab-stop]').length,
+      ),
+    };
+    inline.container.remove();
+    multiple.container.remove();
+    bullet.container.remove();
+    mixed.container.remove();
+    return measured;
+  });
+
+  expect(result.inline).toBeCloseTo(2743200 / 9525, 0);
+  expect(result.multipleB).toBeCloseTo(1828800 / 9525, 0);
+  expect(result.multipleC).toBeCloseTo(3657600 / 9525, 0);
+  expect(result.bullet).toBeCloseTo(1371600 / 9525, 0);
+  expect(result.mixed).toBeCloseTo(2743200 / 9525, 0);
+  expect(result.markerCounts).toEqual([1, 2, 1, 1]);
+});
+
+test('center, right, and decimal explicit tabs align the following field', async ({ page }) => {
+  await page.goto('/test/browser/blank.html');
+  const result = await page.evaluate(async () => {
+    const { renderTextBody } = await import('/src/renderer/TextRenderer.ts');
+    const { xmlNode } = await import('/test/unit/helpers/xmlNode.ts');
+    const { createMockRenderContext } = await import('/test/unit/helpers/mockContext.ts');
+
+    const textRect = (root: HTMLElement, text: string): DOMRect => {
+      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+      while (walker.nextNode()) {
+        const node = walker.currentNode as Text;
+        const index = node.data.indexOf(text);
+        if (index < 0) continue;
+        const range = document.createRange();
+        range.setStart(node, index);
+        range.setEnd(node, index + text.length);
+        return range.getBoundingClientRect();
+      }
+      throw new Error(`Missing text: ${text}`);
+    };
+
+    const render = async (alignment: string, targetRuns: string[]) => {
+      const container = document.createElement('div');
+      container.style.width = '700px';
+      const ctx = createMockRenderContext({ asyncTasks: [] });
+      renderTextBody(
+        {
+          bodyProperties: xmlNode('<bodyPr wrap="none" lIns="0" rIns="0"><noAutofit/></bodyPr>'),
+          paragraphs: [
+            {
+              properties: xmlNode(
+                `<pPr><tabLst><tab pos="3657600" algn="${alignment}"/></tabLst></pPr>`,
+              ),
+              runs: [{ text: 'Prefix' }, { text: '\t' }, ...targetRuns.map((text) => ({ text }))],
+              level: 0,
+            },
+          ],
+        },
+        undefined,
+        ctx,
+        container,
+      );
+      document.body.append(container);
+      await Promise.all(ctx.asyncTasks ?? []);
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+      return { paragraph: container.firstElementChild as HTMLElement, container };
+    };
+
+    const center = await render('ctr', ['CEN', 'TER']);
+    const right = await render('r', ['RI', 'GHT']);
+    const decimal = await render('dec', ['123', '.', '45']);
+    const centerLeftRect = textRect(center.paragraph, 'CEN');
+    const centerRightRect = textRect(center.paragraph, 'TER');
+    const rightRect = textRect(right.paragraph, 'GHT');
+    const decimalRect = textRect(decimal.paragraph, '.');
+    const measured = {
+      center:
+        (centerLeftRect.left + centerRightRect.right) / 2 -
+        center.paragraph.getBoundingClientRect().left,
+      right: rightRect.right - right.paragraph.getBoundingClientRect().left,
+      decimal:
+        (decimalRect.left + decimalRect.right) / 2 - decimal.paragraph.getBoundingClientRect().left,
+    };
+    center.container.remove();
+    right.container.remove();
+    decimal.container.remove();
+    return measured;
+  });
+
+  const stop = 3657600 / 9525;
+  expect(result.center).toBeCloseTo(stop, 0);
+  expect(result.right).toBeCloseTo(stop, 0);
+  expect(result.decimal).toBeCloseTo(stop, 0);
 });
 
 test('embedded picture text fill is clipped to glyphs in Chromium', async ({ page }) => {

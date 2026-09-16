@@ -879,19 +879,200 @@ function applyTextPictureFill(
   if (!ctx.asyncTasks) void task;
 }
 
-function explicitLeadingTabAdvance(
-  text: string | undefined,
-  cursor: number,
-  tabStops: MergedParagraphStyle['tabStops'],
-): { width: number; cursor: number } | undefined {
-  if (!text || !/^\t+$/.test(text) || !tabStops?.length) return undefined;
-  let nextCursor = cursor;
-  for (let index = 0; index < text.length; index++) {
-    const stop = tabStops.find((candidate) => candidate.position > nextCursor + 0.01);
-    if (!stop || stop.align !== 'l') return undefined;
-    nextCursor = stop.position;
+function appendExplicitTabText(element: HTMLElement, text: string, markers: HTMLElement[]): void {
+  const parts = text.split('\t');
+  for (const [index, part] of parts.entries()) {
+    appendWhitespacePreservingText(element, part);
+    if (index === parts.length - 1) continue;
+    const marker = document.createElement('span');
+    marker.dataset.pptxTabStop = 'explicit';
+    marker.setAttribute('aria-hidden', 'true');
+    marker.style.display = 'inline-block';
+    marker.style.width = '0px';
+    marker.style.height = '1px';
+    marker.style.overflow = 'hidden';
+    element.appendChild(marker);
+    markers.push(marker);
   }
-  return { width: nextCursor - cursor, cursor: nextCursor };
+}
+
+function rangeWidth(range: Range, scaleX: number): number {
+  const rects = Array.from(range.getClientRects()).filter((rect) => rect.width > 0);
+  if (rects.length === 0) return 0;
+  const firstLineTop = rects[0].top;
+  const firstLineRects = rects.filter((rect) => Math.abs(rect.top - firstLineTop) < 1);
+  const left = Math.min(...firstLineRects.map((rect) => rect.left));
+  const right = Math.max(...firstLineRects.map((rect) => rect.right));
+  return (right - left) / scaleX;
+}
+
+function decimalFieldOffset(
+  paragraph: HTMLElement,
+  marker: HTMLElement,
+  nextMarker: HTMLElement | undefined,
+  scaleX: number,
+  fallbackWidth: number,
+): number {
+  const fieldRange = document.createRange();
+  fieldRange.setStartAfter(marker);
+  if (nextMarker) fieldRange.setEndBefore(nextMarker);
+  else fieldRange.setEnd(paragraph, paragraph.childNodes.length);
+
+  const walker = document.createTreeWalker(paragraph, NodeFilter.SHOW_TEXT);
+  while (walker.nextNode()) {
+    const node = walker.currentNode as Text;
+    if (!fieldRange.intersectsNode(node)) continue;
+    const decimalIndex = node.data.search(/[.,\u066b\u066c]/);
+    if (decimalIndex < 0) continue;
+
+    const beforeDecimal = document.createRange();
+    beforeDecimal.setStartAfter(marker);
+    beforeDecimal.setEnd(node, decimalIndex);
+    const decimalGlyph = document.createRange();
+    decimalGlyph.setStart(node, decimalIndex);
+    decimalGlyph.setEnd(node, decimalIndex + 1);
+    return rangeWidth(beforeDecimal, scaleX) + rangeWidth(decimalGlyph, scaleX) / 2;
+  }
+  return fallbackWidth;
+}
+
+function nextTabCandidate(
+  cursor: number,
+  tabStops: NonNullable<MergedParagraphStyle['tabStops']>,
+  defaultTabSize: number,
+): { position: number; align: string } {
+  const explicit = tabStops.find((candidate) => candidate.position > cursor + 0.01);
+  if (explicit) return explicit;
+  return {
+    position: (Math.floor(cursor / defaultTabSize) + 1) * defaultTabSize,
+    align: 'l',
+  };
+}
+
+function applyExplicitTabLayout(
+  paragraph: HTMLElement,
+  markers: HTMLElement[],
+  tabStops: NonNullable<MergedParagraphStyle['tabStops']>,
+  defaultTabSize: number,
+): void {
+  if (!paragraph.isConnected || paragraph.offsetWidth <= 0) return;
+  const paragraphRect = paragraph.getBoundingClientRect();
+  const scaleX = paragraphRect.width / paragraph.offsetWidth;
+  if (!Number.isFinite(scaleX) || scaleX <= 0) return;
+
+  for (const [index, marker] of markers.entries()) {
+    marker.style.width = '0px';
+    const markerRect = marker.getBoundingClientRect();
+    const cursor = (markerRect.left - paragraphRect.left) / scaleX;
+    const nextMarker = markers[index + 1];
+    const fieldRange = document.createRange();
+    fieldRange.setStartAfter(marker);
+    if (nextMarker) fieldRange.setEndBefore(nextMarker);
+    else fieldRange.setEnd(paragraph, paragraph.childNodes.length);
+    const fieldWidth = rangeWidth(fieldRange, scaleX);
+
+    let candidate = nextTabCandidate(cursor, tabStops, defaultTabSize);
+    const fieldOffset =
+      candidate.align === 'ctr'
+        ? fieldWidth / 2
+        : candidate.align === 'r'
+          ? fieldWidth
+          : candidate.align === 'dec'
+            ? decimalFieldOffset(paragraph, marker, nextMarker, scaleX, fieldWidth)
+            : 0;
+    let width = candidate.position - cursor - fieldOffset;
+
+    // If an aligned field would overlap the preceding content, advance to the
+    // next default interval rather than emitting a negative spacer.
+    if (width < 0) {
+      candidate = {
+        position: (Math.floor((cursor + fieldOffset) / defaultTabSize) + 1) * defaultTabSize,
+        align: candidate.align,
+      };
+      width = candidate.position - cursor - fieldOffset;
+    }
+
+    marker.dataset.pptxTabAlign = candidate.align;
+    marker.dataset.pptxTabPosition = String(candidate.position);
+    marker.style.width = `${Math.max(0, width)}px`;
+  }
+}
+
+function withConnectedTabMeasurement(
+  paragraph: HTMLElement,
+  ctx: RenderContext,
+  measure: () => void,
+): void {
+  if (paragraph.isConnected) {
+    measure();
+    return;
+  }
+
+  const root = ctx.measurementRoot;
+  if (!root || root.isConnected || !root.contains(paragraph) || !document.body) return;
+  const originalParent = root.parentNode;
+  const originalNextSibling = root.nextSibling;
+  const previous = {
+    position: root.style.position,
+    left: root.style.left,
+    top: root.style.top,
+    visibility: root.style.visibility,
+    pointerEvents: root.style.pointerEvents,
+    contain: root.style.contain,
+  };
+  root.style.position = 'fixed';
+  root.style.left = '-100000px';
+  root.style.top = '0';
+  root.style.visibility = 'hidden';
+  root.style.pointerEvents = 'none';
+  root.style.contain = 'layout style paint';
+  document.body.appendChild(root);
+  try {
+    measure();
+  } finally {
+    if (originalParent) originalParent.insertBefore(root, originalNextSibling);
+    else root.remove();
+    root.style.position = previous.position;
+    root.style.left = previous.left;
+    root.style.top = previous.top;
+    root.style.visibility = previous.visibility;
+    root.style.pointerEvents = previous.pointerEvents;
+    root.style.contain = previous.contain;
+  }
+}
+
+function scheduleExplicitTabLayout(
+  paragraph: HTMLElement,
+  markers: HTMLElement[],
+  tabStops: NonNullable<MergedParagraphStyle['tabStops']>,
+  defaultTabSize: number,
+  ctx: RenderContext,
+): void {
+  const nextFrame = () =>
+    new Promise<void>((resolve) => {
+      if (typeof requestAnimationFrame === 'function') {
+        requestAnimationFrame(() => resolve());
+      } else {
+        setTimeout(resolve, 0);
+      }
+    });
+  const measure = () => {
+    if (ctx.signal?.aborted) return;
+    withConnectedTabMeasurement(paragraph, ctx, () =>
+      applyExplicitTabLayout(paragraph, markers, tabStops, defaultTabSize),
+    );
+  };
+  const task = nextFrame()
+    .then(() => {
+      measure();
+      return document.fonts?.ready;
+    })
+    .then(() => {
+      if (ctx.signal?.aborted) return;
+      measure();
+    });
+  ctx.asyncTasks?.push(task);
+  if (!ctx.asyncTasks) void task;
 }
 
 // ---------------------------------------------------------------------------
@@ -1302,9 +1483,9 @@ export function renderTextBody(
     // ---- Render runs ----
     const compactNumericRunGroups = findCompactNumericRunGroups(paragraph.runs);
     const compactNumericGroupElements = new Map<number, HTMLElement>();
-    let leadingTabCursor = (merged.marginLeft ?? 0) + (merged.textIndent ?? 0);
-    let canResolveLeadingTabs =
-      !bulletPrefix &&
+    const explicitTabMarkers: HTMLElement[] = [];
+    const canResolveExplicitTabs =
+      !!merged.tabStops?.length &&
       merged.rtl !== true &&
       !options?.isVerticalText &&
       (merged.align === undefined || merged.align === 'l');
@@ -1421,19 +1602,12 @@ export function renderTextBody(
         !!compactNumericToken &&
         run.text !== compactNumericToken &&
         !usesElementLevelTextPaint;
-      const leadingTabAdvance = canResolveLeadingTabs
-        ? explicitLeadingTabAdvance(run.text, leadingTabCursor, merged.tabStops)
-        : undefined;
       if (run.text === '\n') {
         element.appendChild(document.createElement('br'));
       } else if (run.math) {
         // The MathML subtree already carries the formula text and topology.
-      } else if (leadingTabAdvance) {
-        element.dataset.pptxTabStop = 'explicit';
-        element.setAttribute('aria-hidden', 'true');
-        element.style.display = 'inline-block';
-        element.style.width = `${leadingTabAdvance.width}px`;
-        leadingTabCursor = leadingTabAdvance.cursor;
+      } else if (canResolveExplicitTabs && run.text?.includes('\t')) {
+        appendExplicitTabText(element, run.text, explicitTabMarkers);
       } else if (run.text && run.text.includes('\t')) {
         element.textContent = run.text;
         element.style.whiteSpace = 'pre';
@@ -1457,13 +1631,6 @@ export function renderTextBody(
         element.innerHTML = escaped;
       } else {
         element.textContent = run.text;
-      }
-      // The fixed-width shortcut is valid only while the cursor is exactly at the
-      // paragraph's first-line origin. Once any other content is present, keep
-      // browser tab rendering because measuring arbitrary preceding glyphs here
-      // would introduce a second text-layout engine.
-      if (run.math || (run.text && !/^\t+$/.test(run.text))) {
-        canResolveLeadingTabs = false;
       }
       if (
         compactNumericToken &&
@@ -1689,5 +1856,14 @@ export function renderTextBody(
     }
 
     container.appendChild(paraDiv);
+    if (canResolveExplicitTabs && explicitTabMarkers.length > 0 && merged.tabStops) {
+      scheduleExplicitTabLayout(
+        paraDiv,
+        explicitTabMarkers,
+        merged.tabStops,
+        merged.defaultTabSize ?? 96,
+        ctx,
+      );
+    }
   }
 }
