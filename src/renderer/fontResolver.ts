@@ -133,6 +133,11 @@ const CJK_SANS_FALLBACKS = [
   'Hiragino Sans GB',
   'Noto Sans CJK SC',
   'Source Han Sans SC',
+  'Malgun Gothic',
+  'AppleGothic',
+  'Apple SD Gothic Neo',
+  'Noto Sans CJK KR',
+  'Noto Sans KR',
   'Arial Unicode MS',
   'sans-serif',
 ];

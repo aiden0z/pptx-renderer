@@ -110,10 +110,11 @@ def test_cjk_text_layout_matrix_is_registered():
         "oracle-pypptx-text-0059-fontref-fallback-no-defrpr",
         "oracle-pypptx-text-0060-styled-soft-break-matrix",
         "oracle-pypptx-text-0061-tab-stop-matrix",
+        "oracle-pypptx-text-0062-vertical-mode-matrix",
     }
 
     assert expected_names.issubset(text_names)
-    assert len(text_names) == 62
+    assert len(text_names) == 63
 
 
 def test_cjk_text_layout_matrix_serializes_autofit_and_spacing_ooxml(tmp_path: Path):
@@ -381,6 +382,69 @@ def test_tab_stop_matrix_serializes_explicit_rtl_and_vertical_variants(tmp_path:
     )
     assert roots[10].xpath(
         "boolean(.//p:cxnSp/p:spPr/a:xfrm/a:ext[number(@cx) > 0][@cy='0'])",
+        namespaces=ns,
+    )
+
+
+def test_vertical_mode_matrix_serializes_every_non_horizontal_ooxml_mode(tmp_path: Path):
+    generator = _load_generator_module()
+    case = next(
+        case
+        for case in generator._build_all_case_defs()
+        if case["name"] == "oracle-pypptx-text-0062-vertical-mode-matrix"
+    )
+    assert case["slide_count"] == 9
+    assert case["coverage"]["oracle"] == "native-powerpoint"
+    pptx_path = tmp_path / "source.pptx"
+
+    generator._generate_pptx(case, pptx_path)
+
+    ns = {
+        "p": "http://schemas.openxmlformats.org/presentationml/2006/main",
+        "a": "http://schemas.openxmlformats.org/drawingml/2006/main",
+    }
+    with ZipFile(pptx_path) as zf:
+        roots = [
+            etree.fromstring(zf.read(f"ppt/slides/slide{index}.xml"))
+            for index in range(1, 10)
+        ]
+
+    expected_modes = [
+        "eaVert",
+        "mongolianVert",
+        "vert",
+        "vert270",
+        "wordArtVert",
+        "wordArtVertRtl",
+    ]
+    for root, mode in zip(roots[:6], expected_modes):
+        assert root.xpath(
+            f"boolean(.//p:sp[p:nvSpPr/p:cNvPr[@name='Vertical probe']]/p:txBody/a:bodyPr[@vert='{mode}'])",
+            namespaces=ns,
+        )
+        assert len(
+            root.xpath(
+                ".//p:sp[p:nvSpPr/p:cNvPr[@name='Vertical probe']]/p:txBody/a:p",
+                namespaces=ns,
+            )
+        ) == 2
+
+    sizes = roots[6].xpath(
+        ".//p:sp[starts-with(p:nvSpPr/p:cNvPr/@name, 'Stacked size ')]//a:rPr/@sz",
+        namespaces=ns,
+    )
+    assert sizes == ["1200", "2400", "3600"]
+    anchors = roots[7].xpath(
+        ".//p:sp[starts-with(p:nvSpPr/p:cNvPr/@name, 'EA anchor ')]/p:txBody/a:bodyPr/@anchor",
+        namespaces=ns,
+    )
+    assert anchors == ["t", "ctr", "b"]
+    assert roots[8].xpath(
+        "boolean(.//p:sp[p:nvSpPr/p:cNvPr[@name='Hangul fallback probe']]/p:txBody/a:bodyPr[@vert='eaVert'])",
+        namespaces=ns,
+    )
+    assert roots[8].xpath(
+        "boolean(.//p:sp[p:nvSpPr/p:cNvPr[@name='Hangul fallback probe']]//a:r/a:rPr/a:latin[@typeface='Microsoft YaHei'])",
         namespaces=ns,
     )
 

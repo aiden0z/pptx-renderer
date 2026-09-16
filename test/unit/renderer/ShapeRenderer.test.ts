@@ -308,6 +308,45 @@ describe('ShapeRenderer', () => {
     expect(textContainer!.style.whiteSpace).toBe('normal');
   });
 
+  it.each([
+    ['mongolianVert', 'vertical-lr', '', ''],
+    ['vert', 'vertical-rl', 'sideways', ''],
+    ['vert270', 'vertical-rl', 'sideways', 'rotate(180deg)'],
+    ['wordArtVertRtl', 'vertical-rl', 'upright', ''],
+  ])(
+    'maps DrawingML %s to the matching CSS flow, orientation, and rotation',
+    (verticalMode, writingMode, textOrientation, transform) => {
+      const xml = `
+        <p:sp xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
+              xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+          <p:nvSpPr><p:cNvPr id="35" name="Vertical mode"/><p:cNvSpPr txBox="1"/><p:nvPr/></p:nvSpPr>
+          <p:spPr>
+            <a:xfrm><a:off x="0" y="0"/><a:ext cx="914400" cy="1828800"/></a:xfrm>
+            <a:prstGeom prst="rect"><a:avLst/></a:prstGeom>
+          </p:spPr>
+          <p:txBody>
+            <a:bodyPr vert="${verticalMode}" wrap="square" lIns="0" tIns="0" rIns="0" bIns="0">
+              <a:noAutofit/>
+            </a:bodyPr>
+            <a:lstStyle/>
+            <a:p><a:r><a:t>ALPHA中文</a:t></a:r></a:p>
+          </p:txBody>
+        </p:sp>
+      `;
+
+      const el = renderShape(parseShapeNode(parseXml(xml)), createMockRenderContext());
+      const span = Array.from(el.querySelectorAll('span')).find((node) =>
+        node.textContent?.includes('ALPHA'),
+      ) as HTMLElement | undefined;
+      const textContainer = span?.closest('div')?.parentElement as HTMLElement | undefined;
+
+      expect(textContainer).toBeDefined();
+      expect(textContainer!.style.writingMode).toBe(writingMode);
+      expect(textContainer!.style.textOrientation).toBe(textOrientation);
+      expect(textContainer!.style.transform).toBe(transform);
+    },
+  );
+
   it('keeps master text size for vertical text boxes without applying wide CSS line-height (ai-computing slide 22)', () => {
     const xml = `
       <p:sp xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
@@ -366,7 +405,7 @@ describe('ShapeRenderer', () => {
     expect(span!.style.fontSize).toBe('24pt');
     expect(paragraph).toBeDefined();
     expect(paragraph!.style.lineHeight).toBe('1');
-    expect(paragraph!.style.wordBreak).toBe('keep-all');
+    expect(paragraph!.style.wordBreak).toBe('');
     expect(textContainer).toBeDefined();
     expect(textContainer!.style.justifyContent).toBe('flex-start');
     expect(textContainer!.style.alignItems).toBe('flex-start');

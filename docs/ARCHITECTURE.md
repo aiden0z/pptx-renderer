@@ -233,7 +233,13 @@ fonts load from the current browser-laid-out cursor. This preserves the text-fra
 position across paragraph margins, first-line indents, inline or mixed-run tabs, multiple stops,
 and bullet gutters. Left, center, right, and decimal alignments use the measured following field;
 paragraphs without `a:tabLst` retain the browser `tab-size` path. Right-to-left and vertical text
-also retain that fallback until they have separate native matrices.
+also retain that fallback, except for the native-verified East Asian vertical left-tab lane, which
+measures the stop on the vertical inline axis.
+
+For `a:bodyPr@vert`, the renderer maps all six non-horizontal DrawingML values to their matching
+column direction and glyph orientation. Stacked WordArt adds PowerPoint's character advance, and
+the CJK sans fallback stack prefers Korean platform fonts before the generic Unicode fallback so
+mixed CJK/Hangul vertical text keeps native-like glyph metrics and column breaks.
 
 The three autofit choices remain mutually exclusive:
 

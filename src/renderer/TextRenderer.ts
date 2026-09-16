@@ -1166,6 +1166,14 @@ function toRoman(num: number): string {
  * 8. run rPr
  */
 /** Optional overrides when rendering text (e.g. table cell style text properties from tcTxStyle). */
+export type DrawingMLVerticalTextMode =
+  | 'eaVert'
+  | 'mongolianVert'
+  | 'vert'
+  | 'vert270'
+  | 'wordArtVert'
+  | 'wordArtVertRtl';
+
 interface RenderTextBodyOptions {
   /** When set, used as text color when the run has no explicit color (e.g. table style tcTxStyle). */
   cellTextColor?: string;
@@ -1179,6 +1187,8 @@ interface RenderTextBodyOptions {
   fontRefColor?: string;
   /** True when the text container uses vertical writing mode. */
   isVerticalText?: boolean;
+  /** Effective DrawingML bodyPr@vert mode for mode-specific layout semantics. */
+  verticalTextMode?: DrawingMLVerticalTextMode;
   /** Fallback CSS line-height when OOXML inheritance does not specify one. */
   defaultLineHeight?: string;
   /** Collapse paragraph spacing outside the first/last visible paragraph. */
@@ -1267,7 +1277,10 @@ export function renderTextBody(
     paraDiv.style.boxSizing = 'border-box';
     paraDiv.style.overflowWrap = 'anywhere';
     const level = paragraph.level;
-    if (options?.isVerticalText) {
+    if (
+      options?.verticalTextMode === 'wordArtVert' ||
+      options?.verticalTextMode === 'wordArtVertRtl'
+    ) {
       paraDiv.style.wordBreak = 'keep-all';
     }
     const hasLineBreaks = paragraph.runs.some((r) => r.text === '\n');
@@ -1833,8 +1846,17 @@ export function renderTextBody(
       }
 
       // Character spacing (a:spc) — compact/tracking in points
+      const usesWordArtVerticalAdvance =
+        options?.verticalTextMode === 'wordArtVert' ||
+        options?.verticalTextMode === 'wordArtVertRtl';
       if (runStyle.letterSpacingPt !== undefined) {
-        element.style.letterSpacing = `${runStyle.letterSpacingPt}pt`;
+        element.style.letterSpacing = usesWordArtVerticalAdvance
+          ? `calc(0.2em + ${runStyle.letterSpacingPt}pt)`
+          : `${runStyle.letterSpacingPt}pt`;
+      } else if (usesWordArtVerticalAdvance) {
+        // PowerPoint's stacked WordArt advances glyphs at 1.3x the font size.
+        // Chromium's upright glyph box supplies the remaining ~1.1em.
+        element.style.letterSpacing = '0.2em';
       }
       // Kerning (a:kern): val = min font size (pt) to kern; 0 = always kern
       if (runStyle.kern !== undefined) {

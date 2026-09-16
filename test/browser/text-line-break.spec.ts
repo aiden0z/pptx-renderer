@@ -435,6 +435,119 @@ test('vertical explicit tabs advance on the inline axis while anchor center keep
   expect(result.withTab.paragraphWidth).toBeLessThan(60);
 });
 
+test('wordArt vertical text uses the native 1.3em character advance across font sizes', async ({
+  page,
+}) => {
+  await page.goto('/test/browser/blank.html');
+  const result = await page.evaluate(async () => {
+    const { parseXml } = await import('/src/parser/XmlParser.ts');
+    const { parseShapeNode } = await import('/src/model/nodes/ShapeNode.ts');
+    const { renderShape } = await import('/src/renderer/ShapeRenderer.ts');
+    const { createMockRenderContext } = await import('/test/unit/helpers/mockContext.ts');
+
+    const characterTops = (root: HTMLElement): number[] => {
+      const tops: number[] = [];
+      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+      let node = walker.nextNode();
+      while (node) {
+        for (let index = 0; index < (node.textContent?.length ?? 0); index++) {
+          const range = document.createRange();
+          range.setStart(node, index);
+          range.setEnd(node, index + 1);
+          tops.push(range.getBoundingClientRect().top);
+        }
+        node = walker.nextNode();
+      }
+      return tops;
+    };
+
+    const advances = [];
+    for (const sizePt of [12, 24, 36]) {
+      const size = sizePt * 100;
+      const shape = parseShapeNode(
+        parseXml(`
+          <p:sp xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
+                xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+            <p:nvSpPr><p:cNvPr id="1" name="Stacked ${sizePt}"/><p:cNvSpPr txBox="1"/><p:nvPr/></p:nvSpPr>
+            <p:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="952500" cy="5715000"/></a:xfrm><a:prstGeom prst="rect"/></p:spPr>
+            <p:txBody>
+              <a:bodyPr wrap="square" vert="wordArtVert" lIns="0" rIns="0" tIns="0" bIns="0"><a:noAutofit/></a:bodyPr>
+              <a:lstStyle/>
+              <a:p><a:r><a:rPr sz="${size}"><a:latin typeface="Arial"/></a:rPr><a:t>STACKED</a:t></a:r></a:p>
+            </p:txBody>
+          </p:sp>`),
+      );
+      const element = renderShape(shape, createMockRenderContext());
+      document.body.append(element);
+      const run = [...element.querySelectorAll('span')].find(
+        (span) => span.textContent === 'STACKED',
+      ) as HTMLElement;
+      await document.fonts.ready;
+      const tops = characterTops(run);
+      advances.push(tops[1] - tops[0]);
+      element.remove();
+    }
+    return advances;
+  });
+
+  for (const [index, sizePt] of [12, 24, 36].entries()) {
+    expect(Math.abs(result[index] - (sizePt * 96 * 1.3) / 72)).toBeLessThanOrEqual(1);
+  }
+});
+
+test('East Asian vertical text can wrap a Hangul word between syllables', async ({ page }) => {
+  await page.goto('/test/browser/blank.html');
+  const result = await page.evaluate(async () => {
+    const { parseXml } = await import('/src/parser/XmlParser.ts');
+    const { parseShapeNode } = await import('/src/model/nodes/ShapeNode.ts');
+    const { renderShape } = await import('/src/renderer/ShapeRenderer.ts');
+    const { createMockRenderContext } = await import('/test/unit/helpers/mockContext.ts');
+    const text = '垂直文本テスト Vertical Text 수직 텍스트';
+    const shape = parseShapeNode(
+      parseXml(`
+        <p:sp xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
+              xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+          <p:nvSpPr><p:cNvPr id="1" name="EA Hangul wrap"/><p:cNvSpPr txBox="1"/><p:nvPr/></p:nvSpPr>
+          <p:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="2743200" cy="5486400"/></a:xfrm><a:prstGeom prst="rect"/></p:spPr>
+          <p:txBody>
+            <a:bodyPr wrap="square" vert="eaVert"><a:spAutoFit/></a:bodyPr>
+            <a:lstStyle/>
+            <a:p><a:r><a:rPr sz="2400"><a:latin typeface="Microsoft YaHei"/></a:rPr><a:t>${text}</a:t></a:r></a:p>
+          </p:txBody>
+        </p:sp>`),
+    );
+    const element = renderShape(shape, createMockRenderContext());
+    document.body.append(element);
+    await document.fonts.ready;
+    const run = [...element.querySelectorAll('span')].find(
+      (span) => span.textContent === text,
+    ) as HTMLElement;
+    const positions: Array<{ char: string; right: number }> = [];
+    const walker = document.createTreeWalker(run, NodeFilter.SHOW_TEXT);
+    let node = walker.nextNode();
+    while (node) {
+      for (let index = 0; index < (node.textContent?.length ?? 0); index++) {
+        const range = document.createRange();
+        range.setStart(node, index);
+        range.setEnd(node, index + 1);
+        positions.push({
+          char: node.textContent![index],
+          right: range.getBoundingClientRect().right,
+        });
+      }
+      node = walker.nextNode();
+    }
+    const first = positions[0];
+    const firstTek = positions.find((entry) => entry.char === '텍')!;
+    const firstSeu = positions.find((entry) => entry.char === '스' && entry !== positions[5])!;
+    element.remove();
+    return { first, firstTek, firstSeu };
+  });
+
+  expect(result.firstTek.right).toBeCloseTo(result.first.right, 0);
+  expect(result.firstSeu.right).toBeLessThan(result.first.right - 20);
+});
+
 test('embedded picture text fill is clipped to glyphs in Chromium', async ({ page }) => {
   await page.goto('/test/browser/blank.html');
   const result = await page.evaluate(async () => {

@@ -1,0 +1,87 @@
+{
+  "name": "oracle-pypptx-text-0062-vertical-mode-matrix",
+  "generator": "python-pptx",
+  "slides": [
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    },
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    },
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    },
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    },
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    },
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    },
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    },
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    },
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    }
+  ],
+  "coverage": {
+    "oracle": "native-powerpoint",
+    "requiredFonts": [
+      "Microsoft YaHei",
+      "Arial"
+    ],
+    "features": [
+      "text.vertical.eaVert",
+      "text.vertical.mongolianVert",
+      "text.vertical.vert",
+      "text.vertical.vert270",
+      "text.vertical.wordArtVert",
+      "text.vertical.wordArtVertRtl",
+      "text.vertical.anchor=t|ctr|b",
+      "text.vertical.wordArt-character-advance",
+      "text.vertical.east-asian-font-fallback"
+    ]
+  }
+}

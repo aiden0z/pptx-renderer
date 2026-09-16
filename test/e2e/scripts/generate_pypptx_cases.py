@@ -1412,6 +1412,152 @@ def _build_text_cases() -> list[CaseDef]:
     )
     cases[-1]["slide_count"] = 11
 
+    def _build_vertical_mode_matrix(prs):
+        def _add_title(slide, text: str) -> None:
+            title_box = slide.shapes.add_textbox(
+                _emu(0.65), _emu(0.25), _emu(12.0), _emu(0.55)
+            )
+            title_run = title_box.text_frame.paragraphs[0].add_run()
+            title_run.text = text
+            title_run.font.name = "Arial"
+            title_run.font.size = Pt(20)
+            title_run.font.bold = True
+
+        def _configure_vertical_probe(
+            shape,
+            *,
+            mode: str,
+            anchor: str = "t",
+            paragraphs: tuple[str, ...],
+            font_name: str,
+            font_size_pt: int,
+        ) -> None:
+            shape.line.color.rgb = RGBColor(0x80, 0x80, 0x80)
+            shape.line.width = Pt(1)
+            text_frame = shape.text_frame
+            text_frame.clear()
+            text_frame.word_wrap = True
+            text_frame.margin_left = 0
+            text_frame.margin_right = 0
+            text_frame.margin_top = 0
+            text_frame.margin_bottom = 0
+            _configure_text_body(
+                text_frame,
+                wrap="square",
+                autofit="noAutofit",
+                anchor=anchor,
+            )
+            text_frame._txBody.find(qn("a:bodyPr")).set("vert", mode)
+            for paragraph_index, text in enumerate(paragraphs):
+                paragraph = (
+                    text_frame.paragraphs[0]
+                    if paragraph_index == 0
+                    else text_frame.add_paragraph()
+                )
+                run = paragraph.add_run()
+                run.text = text
+                run.font.name = font_name
+                run.font.size = Pt(font_size_pt)
+
+        mode_rows = [
+            ("eaVert", "East Asian vertical", ("甲A수직", "乙B텍스트"), "Microsoft YaHei"),
+            (
+                "mongolianVert",
+                "Mongolian vertical column flow",
+                ("甲A수직", "乙B텍스트"),
+                "Microsoft YaHei",
+            ),
+            ("vert", "90-degree vertical lines", ("ALPHA中文", "BETA日本"), "Arial"),
+            ("vert270", "270-degree vertical lines", ("ALPHA中文", "BETA日本"), "Arial"),
+            ("wordArtVert", "Stacked WordArt", ("FIRST", "SECOND"), "Arial"),
+            (
+                "wordArtVertRtl",
+                "Stacked WordArt right-to-left columns",
+                ("FIRST", "SECOND"),
+                "Arial",
+            ),
+        ]
+        for mode, label, paragraphs, font_name in mode_rows:
+            slide = prs.slides.add_slide(prs.slide_layouts[6])
+            _add_title(slide, f"{mode}: {label}")
+            probe = slide.shapes.add_textbox(
+                _emu(4.65), _emu(1.0), _emu(4.0), _emu(5.8)
+            )
+            probe.name = "Vertical probe"
+            _configure_vertical_probe(
+                probe,
+                mode=mode,
+                paragraphs=paragraphs,
+                font_name=font_name,
+                font_size_pt=30,
+            )
+
+        slide = prs.slides.add_slide(prs.slide_layouts[6])
+        _add_title(slide, "wordArtVert automatic character advance by font size")
+        for index, font_size_pt in enumerate((12, 24, 36)):
+            probe = slide.shapes.add_textbox(
+                _emu(0.9 + index * 4.15), _emu(1.15), _emu(3.0), _emu(5.6)
+            )
+            probe.name = f"Stacked size {font_size_pt}pt"
+            _configure_vertical_probe(
+                probe,
+                mode="wordArtVert",
+                paragraphs=("STACKED",),
+                font_name="Arial",
+                font_size_pt=font_size_pt,
+            )
+
+        slide = prs.slides.add_slide(prs.slide_layouts[6])
+        _add_title(slide, "eaVert DrawingML anchor matrix")
+        for index, (anchor, label) in enumerate((("t", "top"), ("ctr", "center"), ("b", "bottom"))):
+            probe = slide.shapes.add_textbox(
+                _emu(0.9 + index * 4.15), _emu(1.15), _emu(3.0), _emu(5.6)
+            )
+            probe.name = f"EA anchor {label}"
+            _configure_vertical_probe(
+                probe,
+                mode="eaVert",
+                anchor=anchor,
+                paragraphs=("垂直锚点",),
+                font_name="Microsoft YaHei",
+                font_size_pt=28,
+            )
+
+        slide = prs.slides.add_slide(prs.slide_layouts[6])
+        _add_title(slide, "eaVert mixed CJK and Hangul fallback advance")
+        probe = slide.shapes.add_textbox(
+            _emu(4.15), _emu(1.0), _emu(5.0), _emu(5.8)
+        )
+        probe.name = "Hangul fallback probe"
+        _configure_vertical_probe(
+            probe,
+            mode="eaVert",
+            paragraphs=("垂直文本테스트수직混合",),
+            font_name="Microsoft YaHei",
+            font_size_pt=24,
+        )
+
+    _add(
+        "vertical-mode-matrix",
+        _build_vertical_mode_matrix,
+        coverage={
+            "oracle": "native-powerpoint",
+            "requiredFonts": ["Microsoft YaHei", "Arial"],
+            "features": [
+                "text.vertical.eaVert",
+                "text.vertical.mongolianVert",
+                "text.vertical.vert",
+                "text.vertical.vert270",
+                "text.vertical.wordArtVert",
+                "text.vertical.wordArtVertRtl",
+                "text.vertical.anchor=t|ctr|b",
+                "text.vertical.wordArt-character-advance",
+                "text.vertical.east-asian-font-fallback",
+            ],
+        },
+    )
+    cases[-1]["slide_count"] = 9
+
     return cases
 
 

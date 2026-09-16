@@ -124,7 +124,7 @@ import {
   resolveThemeFillReference,
   getFocusedGradientStops,
 } from './StyleResolver';
-import { renderTextBody, resolveTextFields } from './TextRenderer';
+import { renderTextBody, resolveTextFields, type DrawingMLVerticalTextMode } from './TextRenderer';
 import { renderCustomGeometry } from '../shapes/customGeometry';
 import {
   getPresetShapePath,
@@ -284,7 +284,7 @@ function expandCssLengthForScale(length: string, scale: number): string {
 function applyVerticalTextFlow(
   el: HTMLElement,
   anchor: string | null | undefined,
-  upright = false,
+  textOrientation?: 'upright' | 'sideways',
   writingMode: 'vertical-rl' | 'vertical-lr' = 'vertical-rl',
 ): void {
   el.style.writingMode = writingMode;
@@ -293,8 +293,10 @@ function applyVerticalTextFlow(
   el.style.justifyContent =
     anchor === 'b' ? 'flex-end' : anchor === 'ctr' ? 'center' : 'flex-start';
   el.style.alignItems = 'flex-start';
-  if (upright) {
-    el.style.textOrientation = 'upright';
+  if (textOrientation) {
+    el.style.textOrientation = textOrientation;
+  }
+  if (textOrientation === 'upright') {
     el.style.whiteSpace = 'normal';
   }
 }
@@ -3059,6 +3061,7 @@ export function renderShape(node: ShapeNodeData, ctx: RenderContext): HTMLElemen
       }
 
       let isVerticalText = false;
+      let verticalTextMode: DrawingMLVerticalTextMode | undefined;
       let textAnchor: string | null | undefined;
       const isSingleLineSpAutoFit =
         !!hasSpAutoFit && !hasNormAutofit && isSingleLineTextBody(textBody);
@@ -3130,16 +3133,28 @@ export function renderShape(node: ShapeNodeData, ctx: RenderContext): HTMLElemen
         if (vert === 'eaVert') {
           applyVerticalTextFlow(textContainer, textAnchor);
           isVerticalText = true;
+          verticalTextMode = vert;
+        } else if (vert === 'mongolianVert') {
+          applyVerticalTextFlow(textContainer, textAnchor, undefined, 'vertical-lr');
+          isVerticalText = true;
+          verticalTextMode = vert;
         } else if (vert === 'wordArtVert') {
-          applyVerticalTextFlow(textContainer, textAnchor, true, 'vertical-lr');
+          applyVerticalTextFlow(textContainer, textAnchor, 'upright', 'vertical-lr');
           isVerticalText = true;
+          verticalTextMode = vert;
+        } else if (vert === 'wordArtVertRtl') {
+          applyVerticalTextFlow(textContainer, textAnchor, 'upright');
+          isVerticalText = true;
+          verticalTextMode = vert;
         } else if (vert === 'vert') {
-          applyVerticalTextFlow(textContainer, textAnchor);
+          applyVerticalTextFlow(textContainer, textAnchor, 'sideways');
           isVerticalText = true;
+          verticalTextMode = vert;
         } else if (vert === 'vert270') {
-          applyVerticalTextFlow(textContainer, textAnchor);
+          applyVerticalTextFlow(textContainer, textAnchor, 'sideways');
           appendTransform(textContainer, 'rotate(180deg)');
           isVerticalText = true;
+          verticalTextMode = vert;
         }
 
         if (
@@ -3186,6 +3201,7 @@ export function renderShape(node: ShapeNodeData, ctx: RenderContext): HTMLElemen
             : OFFICE_SINGLE_PARAGRAPH_LINE_HEIGHT,
         ...(fontRefColor ? { fontRefColor } : {}),
         ...(isVerticalText ? { isVerticalText } : {}),
+        ...(verticalTextMode ? { verticalTextMode } : {}),
         ...(hasSpAutoFit && !hasNormAutofit
           ? (() => {
               const hasExplicitSpacing = hasExplicitParagraphSpacing(textBody);

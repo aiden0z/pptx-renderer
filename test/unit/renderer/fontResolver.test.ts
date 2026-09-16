@@ -109,7 +109,10 @@ describe('fontResolver', () => {
     expect(cssFontFamilyStack('Aptos')).toBe(
       '"Aptos", system-ui, "Arial", "Helvetica", sans-serif',
     );
-    expect(cssFontFamilyStack('微软雅黑')).toContain('"PingFang SC"');
+    const cjkStack = cssFontFamilyStack('微软雅黑');
+    expect(cjkStack).toContain('"PingFang SC"');
+    expect(cjkStack).toContain('"Malgun Gothic"');
+    expect(cjkStack.indexOf('"AppleGothic"')).toBeLessThan(cjkStack.indexOf('"Arial Unicode MS"'));
     expect(cssFontFamilyStack('A "Quoted" \\ Font')).toBe('"A \\"Quoted\\" \\\\ Font"');
   });
 });

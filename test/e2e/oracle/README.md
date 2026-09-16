@@ -237,16 +237,17 @@ Report (default):
 ## Python-pptx Ground Truth Pipeline
 
 A second pipeline uses `python-pptx` for PPTX creation and native PowerPoint automation for
-ground-truth export. It defines 203 cases under `oracle/cases-pypptx/` with the
+ground-truth export. It defines 204 cases under `oracle/cases-pypptx/` with the
 `oracle-pypptx-*` prefix:
 
-- **Text** (61 cases): fonts, sizes, styles, alignment, colors, bullets, vertical text,
+- **Text** (62 cases): fonts, sizes, styles, alignment, colors, bullets, vertical text,
   placeholder inheritance, plus a 16-case CJK wrap/autofit/line-spacing interaction matrix whose
   final four cases cover square/wide/tall `spAutoFit` growth and explicit-overflow opt-out, and a
   four-case `defRPr`/`fontRef` color-precedence matrix with explicit-run and inverse controls. The
-  final two cases isolate styled soft breaks and an eleven-slide native tab-stop matrix; explicit
-  left/center/right/decimal tabs are verified for horizontal LTR text, while RTL and vertical rows
-  remain observation controls
+  final three cases isolate styled soft breaks, an eleven-slide native tab-stop matrix, and a
+  nine-slide matrix for every non-horizontal DrawingML vertical mode, anchors, stacked-character
+  advance, and mixed CJK/Hangul fallback. Explicit left/center/right/decimal tabs and the vertical
+  tab row are verified; the RTL tab row remains an observation control
 - **Shape adjustments** (31 cases): adjustment handles for roundRect, chevron, arrow, star, donut, cross, trapezoid, blockArc, bevel, triangle, pentagon, can, heart, moon, brace
 - **Zero-adjustment flowcharts** (28 cases, 84 slides): presets in shape IDs 61-88, each with
   square explicit paint, wide theme-reference paint, and grouped-tall rendering
@@ -287,7 +288,8 @@ ground-truth export. It defines 203 cases under `oracle/cases-pypptx/` with the
   matrix, and a function; recognized choices render as Presentation MathML while unknown OMML
   constructs must keep the authored fallback
 - **Composites** (20 cases): multi-element layouts combining shapes, text, tables, charts, connectors, merged cells, vertical text, transparent overlaps, and scaled groups
-- **Charts** (21 cases): column, bar, line, pie, doughnut, area, scatter, radar, bubble variants
+- **Charts** (24 cases): column, bar, line, pie, doughnut, area, scatter, radar, bubble, stock,
+  combo, and bounded native-3D fallback variants
 
 Generate cases:
 
@@ -295,7 +297,7 @@ Generate cases:
 cd test/e2e
 .venv/bin/python3 scripts/generate_pypptx_cases.py
 
-# Focus one or more exact/glob patterns; this example selects text IDs 0040-0061.
+# Focus one or more exact/glob patterns; this example selects text IDs 0040-0062.
 .venv/bin/python3 scripts/generate_pypptx_cases.py \
   --case 'oracle-pypptx-text-00[456]*'
 
