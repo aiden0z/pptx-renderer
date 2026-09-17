@@ -48,6 +48,35 @@ function appendWhitespacePreservingText(parent: HTMLElement, text: string): void
   parent.appendChild(document.createTextNode(text.replace(/ {2}/g, ' \u00a0')));
 }
 
+const TERMINAL_HANGING_PUNCTUATION = /^(.*?)(\S)([)\]}〉》」』】〕〗〙〛）］｝”’]+)(\s*)$/su;
+
+function appendTerminalHangingPunctuation(parent: HTMLElement, text: string): boolean {
+  const match = TERMINAL_HANGING_PUNCTUATION.exec(text);
+  if (!match) return false;
+
+  const [, prefix, anchorGlyph, punctuation, trailingWhitespace] = match;
+  appendWhitespacePreservingText(parent, prefix);
+
+  const cluster = document.createElement('span');
+  cluster.dataset.pptxHangingPunctuationCluster = 'true';
+  cluster.style.display = 'inline-block';
+  cluster.style.whiteSpace = 'nowrap';
+  cluster.appendChild(document.createTextNode(anchorGlyph));
+
+  const hanging = document.createElement('span');
+  hanging.dataset.pptxHangingPunctuation = 'true';
+  hanging.style.display = 'inline-block';
+  hanging.style.width = '0px';
+  hanging.style.overflow = 'visible';
+  hanging.style.whiteSpace = 'nowrap';
+  hanging.textContent = punctuation;
+  cluster.appendChild(hanging);
+  parent.appendChild(cluster);
+
+  appendWhitespacePreservingText(parent, trailingWhitespace);
+  return true;
+}
+
 function findCompactNumericRunGroups(runs: TextRun[]): Map<number, number> {
   const groups = new Map<number, number>();
   let nextGroupId = 1;
@@ -134,6 +163,8 @@ interface MergedParagraphStyle {
   rtl?: boolean;
   /** Whether Office East Asian typography and line-breaking rules are enabled. */
   eastAsianLineBreak?: boolean;
+  /** Whether terminal punctuation may hang outside the authored text bounds. */
+  hangingPunctuation?: boolean;
   marginLeft?: number;
   textIndent?: number;
   defaultTabSize?: number;
@@ -180,6 +211,9 @@ function mergeParagraphProps(target: MergedParagraphStyle, pPr: SafeXmlNode): vo
 
   const eaLnBrk = pPr.attr('eaLnBrk');
   if (eaLnBrk !== undefined) target.eastAsianLineBreak = parseOoxmlBool(eaLnBrk);
+
+  const hangingPunct = pPr.attr('hangingPunct');
+  if (hangingPunct !== undefined) target.hangingPunctuation = parseOoxmlBool(hangingPunct);
 
   const marL = pPr.numAttr('marL');
   if (marL !== undefined) target.marginLeft = emuToPx(marL);
@@ -998,7 +1032,7 @@ function applyExplicitTabLayout(
   }
 }
 
-function withConnectedTabMeasurement(
+function withConnectedTextMeasurement(
   paragraph: HTMLElement,
   ctx: RenderContext,
   measure: () => void,
@@ -1041,6 +1075,65 @@ function withConnectedTabMeasurement(
   }
 }
 
+function scheduleTerminalHangingPunctuation(
+  paragraph: HTMLElement,
+  element: HTMLElement,
+  text: string,
+  ctx: RenderContext,
+): void {
+  const match = TERMINAL_HANGING_PUNCTUATION.exec(text);
+  if (!match) return;
+  const [, prefix, anchorGlyph, punctuation] = match;
+  const anchorStart = prefix.length;
+  const punctuationStart = anchorStart + anchorGlyph.length;
+  const punctuationEnd = punctuationStart + punctuation.length;
+
+  const nextFrame = () =>
+    new Promise<void>((resolve) => {
+      if (typeof requestAnimationFrame === 'function') {
+        requestAnimationFrame(() => resolve());
+      } else {
+        setTimeout(resolve, 0);
+      }
+    });
+  const measure = () => {
+    if (ctx.signal?.aborted) return;
+    withConnectedTextMeasurement(paragraph, ctx, () => {
+      element.replaceChildren(document.createTextNode(text));
+      const textNode = element.firstChild;
+      if (!(textNode instanceof Text)) return;
+
+      const anchorRange = document.createRange();
+      anchorRange.setStart(textNode, anchorStart);
+      anchorRange.setEnd(textNode, punctuationStart);
+      const punctuationRange = document.createRange();
+      punctuationRange.setStart(textNode, punctuationStart);
+      punctuationRange.setEnd(textNode, punctuationEnd);
+      const anchorRect = anchorRange.getBoundingClientRect();
+      const punctuationRects = Array.from(punctuationRange.getClientRects());
+      const isOrphaned = punctuationRects.some(
+        (rect) => rect.width > 0 && Math.abs(rect.top - anchorRect.top) > 1,
+      );
+      if (!isOrphaned) return;
+
+      element.replaceChildren();
+      appendTerminalHangingPunctuation(element, text);
+    });
+  };
+  const task = nextFrame()
+    .then(() => {
+      measure();
+      return document.fonts?.ready;
+    })
+    .then(() => nextFrame())
+    .then(() => {
+      if (ctx.signal?.aborted) return;
+      measure();
+    });
+  ctx.asyncTasks?.push(task);
+  if (!ctx.asyncTasks) void task;
+}
+
 function scheduleExplicitTabLayout(
   paragraph: HTMLElement,
   markers: HTMLElement[],
@@ -1059,7 +1152,7 @@ function scheduleExplicitTabLayout(
     });
   const measure = () => {
     if (ctx.signal?.aborted) return;
-    withConnectedTabMeasurement(paragraph, ctx, () =>
+    withConnectedTextMeasurement(paragraph, ctx, () =>
       applyExplicitTabLayout(paragraph, markers, tabStops, defaultTabSize, axis),
     );
   };
@@ -1498,6 +1591,15 @@ export function renderTextBody(
     // ---- Render runs ----
     const compactNumericRunGroups = findCompactNumericRunGroups(paragraph.runs);
     const compactNumericGroupElements = new Map<number, HTMLElement>();
+    const terminalHangingCandidates: { element: HTMLElement; text: string }[] = [];
+    let lastContentRunIndex = -1;
+    for (let index = paragraph.runs.length - 1; index >= 0; index--) {
+      const run = paragraph.runs[index];
+      if (run.math || (run.text !== undefined && run.text.length > 0)) {
+        lastContentRunIndex = index;
+        break;
+      }
+    }
     const explicitTabMarkers: HTMLElement[] = [];
     const hasSupportedVerticalTabAlignment =
       !options?.isVerticalText || merged.tabStops?.every((tab) => tab.align === 'l');
@@ -1639,6 +1741,18 @@ export function renderTextBody(
       } else if (run.text && run.text.includes('\t')) {
         element.textContent = run.text;
         element.style.whiteSpace = 'pre';
+      } else if (
+        merged.hangingPunctuation === true &&
+        runIndex === lastContentRunIndex &&
+        run.text &&
+        !run.text.includes('  ') &&
+        TERMINAL_HANGING_PUNCTUATION.test(run.text)
+      ) {
+        // Preserve normal layout unless the browser actually strands the final
+        // punctuation on another line. The post-layout pass applies the fallback
+        // only for that unsupported CSS hanging-punctuation case.
+        element.textContent = run.text;
+        terminalHangingCandidates.push({ element, text: run.text });
       } else if (shouldSplitCompactNumericToken) {
         const tokenStart = run.text.indexOf(compactNumericToken);
         const tokenEnd = tokenStart + compactNumericToken.length;
@@ -1893,6 +2007,9 @@ export function renderTextBody(
     }
 
     container.appendChild(paraDiv);
+    for (const candidate of terminalHangingCandidates) {
+      scheduleTerminalHangingPunctuation(paraDiv, candidate.element, candidate.text, ctx);
+    }
     if (canResolveExplicitTabs && explicitTabMarkers.length > 0 && merged.tabStops) {
       scheduleExplicitTabLayout(
         paraDiv,

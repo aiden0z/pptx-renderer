@@ -35,6 +35,13 @@ function renderToContainer(textBody: TextBody, placeholder?: any, options?: any)
   return container;
 }
 
+function renderToContainerWithTasks(textBody: TextBody) {
+  const ctx = createMockRenderContext({ asyncTasks: [] });
+  const container = document.createElement('div');
+  renderTextBody(textBody, undefined, ctx, container);
+  return { container, ctx };
+}
+
 describe('TextRenderer — branch coverage (uncovered paths)', () => {
   // ============================================================================
   // Run-level gradient fill (textGradientCss)
@@ -258,6 +265,84 @@ describe('TextRenderer — branch coverage (uncovered paths)', () => {
 
       const paragraph = renderToContainer(body).children[0] as HTMLElement;
       expect(paragraph.style.lineBreak).toBe('anywhere');
+    });
+  });
+
+  // ============================================================================
+  // Hanging punctuation (hangingPunct)
+  // ============================================================================
+  describe('hanging punctuation (hangingPunct)', () => {
+    it('schedules inherited hanging punctuation for browser layout without changing text', async () => {
+      const body = makeTextBody({
+        listStyle: '<lstStyle><lvl1pPr hangingPunct="1"/></lstStyle>',
+        paragraphs: [
+          {
+            runs: [{ text: '为民用权(价值导向)' }],
+            level: 0,
+          },
+        ],
+      });
+
+      const { container, ctx } = renderToContainerWithTasks(body);
+      const paragraph = container.children[0] as HTMLElement;
+      expect(ctx.asyncTasks).toHaveLength(1);
+      await Promise.all(ctx.asyncTasks ?? []);
+      expect(paragraph.textContent).toBe('为民用权(价值导向)');
+      expect(paragraph.querySelector('[data-pptx-hanging-punctuation]')).toBeNull();
+    });
+
+    it.each([
+      ['false', '<pPr hangingPunct="0"/>'],
+      ['omitted', '<pPr/>'],
+    ])('does not synthesize hanging punctuation when hangingPunct is %s', (_name, properties) => {
+      const body = makeTextBody({
+        paragraphs: [
+          {
+            properties: xmlNode(properties),
+            runs: [{ text: '为民用权(价值导向)' }],
+            level: 0,
+          },
+        ],
+      });
+
+      const { container, ctx } = renderToContainerWithTasks(body);
+      const paragraph = container.children[0] as HTMLElement;
+      expect(ctx.asyncTasks).toHaveLength(0);
+      expect(paragraph.querySelector('[data-pptx-hanging-punctuation]')).toBeNull();
+      expect(paragraph.textContent).toBe('为民用权(价值导向)');
+    });
+
+    it('lets paragraph properties disable inherited hanging punctuation', () => {
+      const body = makeTextBody({
+        listStyle: '<lstStyle><lvl1pPr hangingPunct="1"/></lstStyle>',
+        paragraphs: [
+          {
+            properties: xmlNode('<pPr hangingPunct="0"/>'),
+            runs: [{ text: '为民用权(价值导向)' }],
+            level: 0,
+          },
+        ],
+      });
+
+      const { container, ctx } = renderToContainerWithTasks(body);
+      const paragraph = container.children[0] as HTMLElement;
+      expect(ctx.asyncTasks).toHaveLength(0);
+      expect(paragraph.querySelector('[data-pptx-hanging-punctuation]')).toBeNull();
+    });
+
+    it('does not apply the closing-mark fallback to sentence punctuation', () => {
+      const body = makeTextBody({
+        paragraphs: [
+          {
+            properties: xmlNode('<pPr hangingPunct="1"/>'),
+            runs: [{ text: '不收敛、不收手。' }],
+            level: 0,
+          },
+        ],
+      });
+
+      const { ctx } = renderToContainerWithTasks(body);
+      expect(ctx.asyncTasks).toHaveLength(0);
     });
   });
 

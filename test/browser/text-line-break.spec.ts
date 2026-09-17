@@ -28,6 +28,133 @@ test('eaLnBrk isolates East Asian line-breaking semantics from host CSS', async 
   });
 });
 
+test('hangingPunct keeps a terminal closing mark on the prior CJK line', async ({ page }) => {
+  await page.goto('/test/browser/blank.html');
+  const result = await page.evaluate(async () => {
+    const { renderTextBody } = await import('/src/renderer/TextRenderer.ts');
+    const { xmlNode } = await import('/test/unit/helpers/xmlNode.ts');
+    const { createMockRenderContext } = await import('/test/unit/helpers/mockContext.ts');
+    const text = '为民用权(价值导向)';
+
+    document.body.style.lineBreak = 'strict';
+
+    const render = (
+      hangingPunct: boolean | undefined,
+      width?: number,
+      inheritHangingPunct = false,
+    ) => {
+      const container = document.createElement('div');
+      if (width !== undefined) container.style.width = `${width}px`;
+      const ctx = createMockRenderContext({ asyncTasks: [] });
+      const hangingAttribute =
+        hangingPunct === undefined ? '' : ` hangingPunct="${hangingPunct ? 1 : 0}"`;
+      renderTextBody(
+        {
+          bodyProperties: xmlNode('<bodyPr wrap="square" lIns="0" rIns="0"><noAutofit/></bodyPr>'),
+          listStyle: inheritHangingPunct
+            ? xmlNode('<lstStyle><lvl1pPr hangingPunct="1"/></lstStyle>')
+            : undefined,
+          paragraphs: [
+            {
+              properties: xmlNode(`<pPr eaLnBrk="0"${hangingAttribute}/>`),
+              runs: [
+                {
+                  text,
+                  properties: xmlNode(
+                    '<rPr sz="2400" spc="160"><ea typeface="Microsoft YaHei"/></rPr>',
+                  ),
+                },
+              ],
+              level: 0,
+            },
+          ],
+        },
+        undefined,
+        ctx,
+        container,
+      );
+      document.body.append(container);
+      return { container, ctx };
+    };
+
+    const glyphRect = (root: HTMLElement, offset: number): DOMRect => {
+      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+      let remaining = offset;
+      while (walker.nextNode()) {
+        const node = walker.currentNode as Text;
+        if (remaining < node.length) {
+          const range = document.createRange();
+          range.setStart(node, remaining);
+          range.setEnd(node, remaining + 1);
+          return range.getBoundingClientRect();
+        }
+        remaining -= node.length;
+      }
+      throw new Error(`Missing glyph at offset ${offset}`);
+    };
+
+    const probe = render(false).container;
+    probe.style.position = 'absolute';
+    probe.style.width = 'max-content';
+    probe.style.whiteSpace = 'nowrap';
+    await document.fonts.ready;
+    const probeParagraph = probe.firstElementChild as HTMLElement;
+    const priorWidth =
+      glyphRect(probeParagraph, text.length - 2).right -
+      probeParagraph.getBoundingClientRect().left;
+    const punctuationWidth = glyphRect(probeParagraph, text.length - 1).width;
+    const constrainedWidth = priorWidth + Math.max(1, punctuationWidth * 0.25);
+    const fullWidth = probeParagraph.scrollWidth;
+    probe.remove();
+
+    const disabled = render(false, constrainedWidth);
+    const enabled = render(true, constrainedWidth);
+    const inherited = render(undefined, constrainedWidth, true);
+    const overridden = render(false, constrainedWidth, true);
+    const wideEnabled = render(true, fullWidth + punctuationWidth + 10);
+    await Promise.all([
+      ...(disabled.ctx.asyncTasks ?? []),
+      ...(enabled.ctx.asyncTasks ?? []),
+      ...(inherited.ctx.asyncTasks ?? []),
+      ...(overridden.ctx.asyncTasks ?? []),
+      ...(wideEnabled.ctx.asyncTasks ?? []),
+    ]);
+
+    const measure = (container: HTMLElement) => {
+      const paragraph = container.firstElementChild as HTMLElement;
+      const prior = glyphRect(paragraph, text.length - 2);
+      const punctuation = glyphRect(paragraph, text.length - 1);
+      return {
+        priorTop: Math.round(prior.top),
+        punctuationTop: Math.round(punctuation.top),
+        punctuationRight: punctuation.right,
+        paragraphRight: paragraph.getBoundingClientRect().right,
+        hasHangingMarker: !!paragraph.querySelector('[data-pptx-hanging-punctuation]'),
+      };
+    };
+
+    return {
+      disabled: measure(disabled.container),
+      enabled: measure(enabled.container),
+      inherited: measure(inherited.container),
+      overridden: measure(overridden.container),
+      wideEnabled: measure(wideEnabled.container),
+    };
+  });
+
+  expect(result.disabled.hasHangingMarker).toBe(false);
+  expect(result.disabled.punctuationTop).toBeGreaterThan(result.disabled.priorTop);
+  expect(result.enabled.hasHangingMarker).toBe(true);
+  expect(result.enabled.punctuationTop).toBe(result.enabled.priorTop);
+  expect(result.enabled.punctuationRight).toBeGreaterThan(result.enabled.paragraphRight);
+  expect(result.inherited.hasHangingMarker).toBe(true);
+  expect(result.inherited.punctuationTop).toBe(result.inherited.priorTop);
+  expect(result.overridden.hasHangingMarker).toBe(false);
+  expect(result.overridden.punctuationTop).toBeGreaterThan(result.overridden.priorTop);
+  expect(result.wideEnabled.hasHangingMarker).toBe(false);
+  expect(result.wideEnabled.punctuationTop).toBe(result.wideEnabled.priorTop);
+});
+
 test('soft breaks preserve their own run metrics without changing visible text metrics', async ({
   page,
 }) => {

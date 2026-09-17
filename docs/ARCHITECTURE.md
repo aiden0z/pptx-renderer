@@ -233,6 +233,8 @@ host page's `white-space` rule cannot replace the presentation semantics. Explic
 `horzOverflow` and `vertOverflow` values are resolved independently. Paragraph `eaLnBrk="0"`
 uses the browser's unrestricted break opportunity, while the omitted/true default retains East
 Asian typographic rules; both values are explicit so inherited host CSS cannot change the result.
+Paragraph `hangingPunct="1"` keeps terminal closing punctuation with the preceding glyph and lets
+the mark occupy the text frame's trailing inset instead of wrapping onto a line by itself.
 For horizontal left-to-right paragraphs, explicit `a:tabLst/a:tab@pos` targets are resolved after
 fonts load from the current browser-laid-out cursor. This preserves the text-frame-relative OOXML
 position across paragraph margins, first-line indents, inline or mixed-run tabs, multiple stops,

@@ -9,9 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Fixed
 
-- Fixed explicit text tabs, all DrawingML vertical text flows, stacked WordArt spacing, CJK/Korean
-  font fallback, stretched picture-filled runs including lazy package media, and placeholder style
-  inheritance when layouts reuse an unlinked placeholder index.
+- Fixed explicit text tabs, terminal hanging punctuation, all DrawingML vertical text flows,
+  stacked WordArt spacing, CJK/Korean font fallback, stretched picture-filled runs including lazy
+  package media, and placeholder style inheritance when layouts reuse an unlinked placeholder
+  index.
 
 ## [1.3.0] - 2026-09-14
 
