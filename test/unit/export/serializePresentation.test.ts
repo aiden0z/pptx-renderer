@@ -658,3 +658,137 @@ describe('serializePresentation', () => {
     expect(result.slides[1].nodes).toHaveLength(1);
   });
 });
+
+describe('serializePresentation layout and master template shapes', () => {
+  function templateXml(name: string, ph?: string) {
+    const nvPr = ph ? `<p:nvPr>${ph}</p:nvPr>` : '<p:nvPr/>';
+    return `
+      <p:sp>
+        <p:nvSpPr><p:cNvPr id="1" name="${name}"/><p:cNvSpPr/>${nvPr}</p:nvSpPr>
+        <p:spPr>
+          <a:xfrm><a:off x="0" y="0"/><a:ext cx="1828800" cy="914400"/></a:xfrm>
+          <a:prstGeom prst="rect"><a:avLst/></a:prstGeom>
+        </p:spPr>
+      </p:sp>
+    `;
+  }
+
+  function spTreeXml(shapes: string) {
+    return parseXml(`
+      <p:spTree xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
+                xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+        ${shapes}
+      </p:spTree>
+    `);
+  }
+
+  function presWithTemplates(opts: { layout?: string; master?: string; showMasterSp?: boolean }) {
+    const pres = makePres([]);
+    pres.slides[0].showMasterSp = opts.showMasterSp ?? true;
+
+    if (opts.layout !== undefined) {
+      pres.layouts.set('ppt/slideLayouts/slideLayout1.xml', {
+        placeholders: [],
+        spTree: spTreeXml(opts.layout),
+        rels: new Map(),
+        showMasterSp: true,
+      });
+      pres.slideToLayout.set(0, 'ppt/slideLayouts/slideLayout1.xml');
+    }
+    if (opts.master !== undefined) {
+      pres.masters.set('ppt/slideMasters/slideMaster1.xml', {
+        colorMap: new Map(),
+        textStyles: {},
+        placeholders: [],
+        spTree: spTreeXml(opts.master),
+        rels: new Map(),
+      });
+      pres.layoutToMaster.set(
+        'ppt/slideLayouts/slideLayout1.xml',
+        'ppt/slideMasters/slideMaster1.xml',
+      );
+    }
+    return pres;
+  }
+
+  it('emits empty collections for a presentation with no layouts or masters', () => {
+    const result = serializePresentation(makePres([]));
+    expect(result.layouts).toEqual([]);
+    expect(result.masters).toEqual([]);
+    expect(result.slides[0].layoutPath).toBeUndefined();
+    expect(result.slides[0].masterPath).toBeUndefined();
+  });
+
+  it('serializes layout decoration shapes as typed nodes', () => {
+    const result = serializePresentation(
+      presWithTemplates({ layout: templateXml('Freeform 28') + templateXml('Oval 29') }),
+    );
+    expect(result.layouts).toHaveLength(1);
+    expect(result.layouts[0].path).toBe('ppt/slideLayouts/slideLayout1.xml');
+    expect(result.layouts[0].nodes.map((n) => n.name)).toEqual(['Freeform 28', 'Oval 29']);
+    expect(result.layouts[0].nodes[0].nodeType).toBe('shape');
+    expect(result.layouts[0].nodes[0].size).toEqual({ w: 192, h: 96 });
+  });
+
+  it('serializes master decoration shapes as typed nodes', () => {
+    const result = serializePresentation(
+      presWithTemplates({ layout: '', master: templateXml('Master logo') }),
+    );
+    expect(result.masters).toHaveLength(1);
+    expect(result.masters[0].path).toBe('ppt/slideMasters/slideMaster1.xml');
+    expect(result.masters[0].nodes.map((n) => n.name)).toEqual(['Master logo']);
+  });
+
+  it('omits placeholder shapes from both collections', () => {
+    const result = serializePresentation(
+      presWithTemplates({
+        layout: templateXml('Title 1', '<p:ph type="title"/>') + templateXml('Rectangle 3'),
+        master: templateXml('Body 2', '<p:ph type="body" idx="1"/>'),
+      }),
+    );
+    expect(result.layouts[0].nodes.map((n) => n.name)).toEqual(['Rectangle 3']);
+    expect(result.masters[0].nodes).toEqual([]);
+  });
+
+  it('links each slide to its layout and master', () => {
+    const result = serializePresentation(
+      presWithTemplates({ layout: templateXml('deco'), master: templateXml('logo') }),
+    );
+    expect(result.slides[0].layoutPath).toBe('ppt/slideLayouts/slideLayout1.xml');
+    expect(result.slides[0].masterPath).toBe('ppt/slideMasters/slideMaster1.xml');
+  });
+
+  it('reports showMasterSp so a consumer can honor master suppression', () => {
+    const result = serializePresentation(
+      presWithTemplates({ layout: '', master: templateXml('logo'), showMasterSp: false }),
+    );
+    expect(result.slides[0].showMasterSp).toBe(false);
+    expect(result.layouts[0].showMasterSp).toBe(true);
+    // The master is still serialized; whether it draws is the consumer's decision.
+    expect(result.masters[0].nodes).toHaveLength(1);
+  });
+
+  it('serializes a shared layout once, not once per slide', () => {
+    const pres = presWithTemplates({ layout: templateXml('deco') });
+    pres.slides.push({ index: 1, nodes: [], rels: new Map(), showMasterSp: true });
+    pres.slideToLayout.set(1, 'ppt/slideLayouts/slideLayout1.xml');
+    const result = serializePresentation(pres);
+    expect(result.layouts).toHaveLength(1);
+    expect(result.slides.map((s) => s.layoutPath)).toEqual([
+      'ppt/slideLayouts/slideLayout1.xml',
+      'ppt/slideLayouts/slideLayout1.xml',
+    ]);
+  });
+
+  it('omits a layout no slide uses', () => {
+    const pres = presWithTemplates({ layout: templateXml('deco') });
+    pres.layouts.set('ppt/slideLayouts/slideLayout9.xml', {
+      placeholders: [],
+      spTree: spTreeXml(templateXml('unused')),
+      rels: new Map(),
+      showMasterSp: true,
+    });
+    const result = serializePresentation(pres);
+    expect(result.layouts.map((l) => l.path)).toEqual(['ppt/slideLayouts/slideLayout1.xml']);
+  });
+});

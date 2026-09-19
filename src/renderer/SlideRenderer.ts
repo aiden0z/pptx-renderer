@@ -19,7 +19,7 @@ import { ChartNodeData } from '../model/nodes/ChartNode';
 import { BaseNodeData } from '../model/nodes/BaseNode';
 import { SafeXmlNode } from '../parser/XmlParser';
 import type { RelEntry } from '../parser/RelParser';
-import { isPlaceholderNode, parseRenderableChildren } from '../model/RenderableChild';
+import { parseTemplateShapes } from '../model/TemplateShapes';
 import type { EChartsType } from 'echarts/core';
 import { useEmbeddedFonts } from './EmbeddedFontLoader';
 import type { EmbeddedFontLimits } from './EmbeddedFontLoader';
@@ -144,43 +144,6 @@ interface TemplateShapeCacheEntry {
 
 const templateShapeCache = new WeakMap<SafeXmlNode, TemplateShapeCacheEntry>();
 
-/**
- * Parse and collect renderable shapes from a master or layout spTree.
- * Only includes NON-placeholder shapes (decorative elements, logos, footers).
- * Placeholder shapes are never rendered from master/layout — they only serve
- * as position/size inheritance templates.
- */
-function parseTemplateShapes(
-  spTree: SafeXmlNode,
-  rels?: Map<string, RelEntry>,
-  partPath?: string,
-  diagramDrawings?: Map<string, string>,
-): BaseNodeData[] {
-  const nodes: BaseNodeData[] = [];
-  if (!spTree || !spTree.exists || !spTree.exists()) return nodes;
-  const parseContext = {
-    rels: rels ?? new Map<string, RelEntry>(),
-    partPath,
-    diagramDrawings,
-  };
-
-  for (const child of spTree.allChildren()) {
-    // Skip ALL placeholder shapes — they're templates, not renderable content
-    try {
-      for (const node of parseRenderableChildren(child, parseContext)) {
-        if (isPlaceholderNode(node.source)) continue;
-        // Skip empty/invisible nodes (0x0 size and no text)
-        if (node.size.w > 0 || node.size.h > 0) {
-          nodes.push(node);
-        }
-      }
-    } catch {
-      // Skip unparseable template shapes silently
-    }
-  }
-  return nodes;
-}
-
 function getTemplateShapes(
   spTree: SafeXmlNode,
   rels?: Map<string, RelEntry>,
@@ -197,7 +160,7 @@ function getTemplateShapes(
     return cached.nodes;
   }
 
-  const nodes = parseTemplateShapes(spTree, rels, partPath, diagramDrawings);
+  const nodes = parseTemplateShapes(spTree, { rels, partPath, diagramDrawings });
   templateShapeCache.set(spTree, {
     nodes,
     rels,

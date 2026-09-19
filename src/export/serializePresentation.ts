@@ -17,6 +17,7 @@ import { ChartNodeData } from '../model/nodes/ChartNode';
 import { BaseNodeData } from '../model/nodes/BaseNode';
 import { SafeXmlNode } from '../parser/XmlParser';
 import { parseRenderableChildren } from '../model/RenderableChild';
+import { parseTemplateShapes } from '../model/TemplateShapes';
 import type { RelEntry } from '../parser/RelParser';
 import type { LayoutData } from '../model/Layout';
 import type { MasterData } from '../model/Master';
@@ -77,6 +78,24 @@ export interface SerializedSlide {
   nodes: SerializedNode[];
   colorMapOverride?: Record<string, string>;
   colorMapOverrideMode?: 'override' | 'master';
+  /** Key into `SerializedPresentation.layouts`, when the slide resolves to one. */
+  layoutPath?: string;
+  /** Key into `SerializedPresentation.masters`, when the layout resolves to one. */
+  masterPath?: string;
+  /** When false, this slide suppresses its master's template shapes. */
+  showMasterSp: boolean;
+}
+
+/**
+ * The non-placeholder shapes a layout or master contributes to the slides
+ * that use it. Placeholder shapes are excluded: they are inheritance
+ * templates, not drawn content.
+ */
+export interface SerializedTemplate {
+  path: string;
+  nodes: SerializedNode[];
+  /** Layouts only: when false, the layout suppresses its master's shapes. */
+  showMasterSp?: boolean;
 }
 
 export interface SerializedPresentation {
@@ -84,6 +103,16 @@ export interface SerializedPresentation {
   height: number;
   slideCount: number;
   slides: SerializedSlide[];
+  /**
+   * Slide layouts that at least one slide uses, keyed by part path.
+   *
+   * Draw order for a slide is master shapes, then layout shapes, then the
+   * slide's own `nodes` — and the master is skipped when either the slide's
+   * or the layout's `showMasterSp` is false.
+   */
+  layouts: SerializedTemplate[];
+  /** Slide masters that at least one used layout resolves to, keyed by part path. */
+  masters: SerializedTemplate[];
 }
 
 // ---------------------------------------------------------------------------
@@ -233,31 +262,85 @@ function serializeNode(
 // Main Export
 // ---------------------------------------------------------------------------
 
+/**
+ * Serialize one layout's or master's template shapes.
+ *
+ * Template shapes are decoration rather than placeholders, so they resolve no
+ * placeholder inheritance and are serialized with the part's own rels.
+ */
+function serializeTemplate(
+  path: string,
+  spTree: SafeXmlNode,
+  rels: Map<string, RelEntry>,
+  diagramDrawings: Map<string, string> | undefined,
+  showMasterSp?: boolean,
+): SerializedTemplate {
+  const nodes = parseTemplateShapes(spTree, { rels, partPath: path, diagramDrawings }).map((node) =>
+    serializeNode(node, rels, path, diagramDrawings),
+  );
+  return showMasterSp === undefined ? { path, nodes } : { path, nodes, showMasterSp };
+}
+
 export function serializePresentation(pres: PresentationData): SerializedPresentation {
+  const layoutPaths = new Set<string>();
+  const masterPaths = new Set<string>();
+
+  const slides = pres.slides.map((slide, i) => {
+    materializeSlideNodes(pres, slide);
+
+    const layoutPath = pres.slideToLayout.get(slide.index) || slide.layoutIndex;
+    const layout = pres.layouts.get(layoutPath);
+    const masterPath = layoutPath ? pres.layoutToMaster.get(layoutPath) : '';
+    const master = masterPath ? pres.masters.get(masterPath) : undefined;
+
+    if (layoutPath && layout) layoutPaths.add(layoutPath);
+    if (masterPath && master) masterPaths.add(masterPath);
+
+    return {
+      index: i,
+      hidden: slide.hidden,
+      colorMapOverride:
+        slide.colorMapOverride === undefined
+          ? undefined
+          : Object.fromEntries(slide.colorMapOverride),
+      colorMapOverrideMode: slide.colorMapOverrideMode,
+      layoutPath: layout ? layoutPath : undefined,
+      masterPath: master ? masterPath : undefined,
+      showMasterSp: slide.showMasterSp,
+      nodes: slide.nodes.map((node) =>
+        serializeNode(node, slide.rels, slide.slidePath, pres.diagramDrawings, layout, master),
+      ),
+    };
+  });
+
+  const layouts: SerializedTemplate[] = [];
+  for (const path of layoutPaths) {
+    const layout = pres.layouts.get(path);
+    if (!layout) continue;
+    layouts.push(
+      serializeTemplate(
+        path,
+        layout.spTree,
+        layout.rels,
+        pres.diagramDrawings,
+        layout.showMasterSp,
+      ),
+    );
+  }
+
+  const masters: SerializedTemplate[] = [];
+  for (const path of masterPaths) {
+    const master = pres.masters.get(path);
+    if (!master) continue;
+    masters.push(serializeTemplate(path, master.spTree, master.rels, pres.diagramDrawings));
+  }
+
   return {
     width: pres.width,
     height: pres.height,
     slideCount: pres.slides.length,
-    slides: pres.slides.map((slide, i) => {
-      materializeSlideNodes(pres, slide);
-
-      const layoutPath = pres.slideToLayout.get(slide.index) || slide.layoutIndex;
-      const layout = pres.layouts.get(layoutPath);
-      const masterPath = layoutPath ? pres.layoutToMaster.get(layoutPath) : '';
-      const master = masterPath ? pres.masters.get(masterPath) : undefined;
-
-      return {
-        index: i,
-        hidden: slide.hidden,
-        colorMapOverride:
-          slide.colorMapOverride === undefined
-            ? undefined
-            : Object.fromEntries(slide.colorMapOverride),
-        colorMapOverrideMode: slide.colorMapOverrideMode,
-        nodes: slide.nodes.map((node) =>
-          serializeNode(node, slide.rels, slide.slidePath, pres.diagramDrawings, layout, master),
-        ),
-      };
-    }),
+    slides,
+    layouts,
+    masters,
   };
 }

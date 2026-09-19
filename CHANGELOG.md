@@ -7,6 +7,13 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added
+
+- `serializePresentation()` now reports slide layout and slide master template shapes as typed
+  nodes in `layouts` and `masters`, with each slide naming its own through `layoutPath`,
+  `masterPath` and `showMasterSp`. Consumers that need the structure of a deck rather than its
+  pixels can now reach layout and master decoration, which was previously renderer-only.
+
 ### Fixed
 
 - Fixed explicit text tabs, terminal hanging punctuation, all DrawingML vertical text flows,

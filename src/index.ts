@@ -30,6 +30,7 @@ export { serializePresentation } from './export/serializePresentation';
 export type {
   SerializedPresentation,
   SerializedSlide,
+  SerializedTemplate,
   SerializedNode,
 } from './export/serializePresentation';
 
