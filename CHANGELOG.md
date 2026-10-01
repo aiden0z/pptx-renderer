@@ -18,8 +18,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 - Fixed explicit text tabs, terminal hanging punctuation, all DrawingML vertical text flows,
   stacked WordArt spacing, CJK/Korean font fallback, stretched picture-filled runs including lazy
-  package media, and placeholder style inheritance when layouts reuse an unlinked placeholder
-  index.
+  package media, placeholder style inheritance when layouts reuse an unlinked placeholder
+  index, and shape background fills that follow the resolved slide, layout, or master background.
 
 ## [1.3.0] - 2026-09-14
 
