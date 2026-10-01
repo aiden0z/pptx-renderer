@@ -1,7 +1,7 @@
 import { SafeXmlNode } from '../../parser/XmlParser';
 import { emuToPx } from '../../parser/units';
 import { RenderContext } from '../RenderContext';
-import { parseOoxmlBoolElement } from './ooxml';
+import { parseOoxmlBoolElement, parseOoxmlBoolValue } from './ooxml';
 import { resolveColorToHex } from './style';
 import { extractTxPrColor, extractTxPrStyle } from './text';
 import type { DataLabelConfig, DataLabelManualLayout } from './types';
@@ -25,6 +25,14 @@ function parseDataLabelManualLayout(node: SafeXmlNode): DataLabelManualLayout | 
   return Object.keys(out).length > 0 ? out : undefined;
 }
 
+function parseDataLabelFormatCode(node: SafeXmlNode): string | undefined {
+  const numFmt = node.child('numFmt');
+  if (!numFmt.exists() || parseOoxmlBoolValue(numFmt.attr('sourceLinked'), false)) {
+    return undefined;
+  }
+  return numFmt.attr('formatCode') || undefined;
+}
+
 export function parseDataLabels(
   node: SafeXmlNode,
   ctx: RenderContext,
@@ -40,6 +48,7 @@ export function parseDataLabels(
   const posNode = dLbls.child('dLblPos');
   const position = posNode.exists() ? posNode.attr('val') || undefined : undefined;
   const manualLayout = parseDataLabelManualLayout(dLbls);
+  const formatCode = parseDataLabelFormatCode(dLbls);
 
   const txStyle = extractTxPrStyle(dLbls, ctx);
   const color = txStyle?.color ?? extractTxPrColor(dLbls, ctx);
@@ -57,6 +66,7 @@ export function parseDataLabels(
     position,
     showLeaderLines,
     manualLayout,
+    formatCode,
     color,
     fontSize,
     bold,
@@ -129,6 +139,7 @@ export function parsePointDataLabelOverrides(
     const showPercent = parseDlblBoolOptional(dLbl, 'showPercent');
     const showLeaderLines = parseDlblBoolOptional(dLbl, 'showLeaderLines');
     const manualLayout = parseDataLabelManualLayout(dLbl);
+    const formatCode = parseDataLabelFormatCode(dLbl);
     if (showVal !== undefined) cfg.showVal = showVal;
     if (showCatName !== undefined) cfg.showCatName = showCatName;
     if (showSerName !== undefined) cfg.showSerName = showSerName;
@@ -142,6 +153,7 @@ export function parsePointDataLabelOverrides(
     }
     if (showLeaderLines !== undefined) cfg.showLeaderLines = showLeaderLines;
     if (manualLayout) cfg.manualLayout = manualLayout;
+    if (formatCode) cfg.formatCode = formatCode;
     if (posNode.exists()) cfg.position = posNode.attr('val') || undefined;
     if (txStyle?.color) cfg.color = txStyle.color;
     else {

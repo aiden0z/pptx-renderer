@@ -542,6 +542,7 @@ function mergeDataLabelConfig(
     position: base?.position,
     showLeaderLines: base?.showLeaderLines,
     manualLayout: base?.manualLayout,
+    formatCode: base?.formatCode,
     color: base?.color,
     fontSize: base?.fontSize,
     bold: base?.bold,
@@ -604,7 +605,9 @@ function buildPieLabelOption(
       const parts: string[] = [];
       if (labelCfg.showSerName && seriesName) parts.push(seriesName);
       if (labelCfg.showCatName) parts.push(params.name);
-      if (labelCfg.showVal) parts.push(formatValue(params.value, formatCode));
+      if (labelCfg.showVal) {
+        parts.push(formatValue(params.value, labelCfg.formatCode ?? formatCode));
+      }
       if (labelCfg.showPercent) parts.push(`${params.percent}%`);
       return parts.join(' ');
     },
@@ -748,7 +751,7 @@ function buildBarChartOption(
           const val =
             rawVal && typeof rawVal === 'object' && 'value' in rawVal ? rawVal.value : rawVal;
           if (val === 0 || val === null) return '';
-          return formatValue(val, isPercentStacked ? '0%' : fc);
+          return formatValue(val, isPercentStacked ? '0%' : (cfg.formatCode ?? fc));
         },
       };
       return cfg.fontSize !== undefined ? markExplicitFontSize(label) : label;
@@ -790,6 +793,7 @@ function buildBarChartOption(
           position: perSeriesLabels?.position,
           showLeaderLines: perSeriesLabels?.showLeaderLines,
           manualLayout: perSeriesLabels?.manualLayout,
+          formatCode: perSeriesLabels?.formatCode,
           color: perSeriesLabels?.color,
           fontSize: perSeriesLabels?.fontSize,
           bold: perSeriesLabels?.bold,
@@ -1022,7 +1026,7 @@ function buildLineChartOption(
           if (labelCfg.showSerName && params?.seriesName) parts.push(params.seriesName);
           if (labelCfg.showCatName && params?.name) parts.push(params.name);
           if (labelCfg.showVal && typeof val === 'number') {
-            parts.push(formatValue(val, isPercentStacked ? '0%' : fc));
+            parts.push(formatValue(val, isPercentStacked ? '0%' : (labelCfg.formatCode ?? fc)));
           }
           if (labelCfg.showPercent && typeof params?.percent === 'number') {
             parts.push(`${params.percent}%`);

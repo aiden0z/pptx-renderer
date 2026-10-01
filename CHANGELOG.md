@@ -20,6 +20,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   stacked WordArt spacing, CJK/Korean font fallback, stretched picture-filled runs including lazy
   package media, and placeholder style inheritance when layouts reuse an unlinked placeholder
   index.
+- Fixed chart data labels ignoring their own `c:numFmt`: bar, line, area and pie labels now use
+  it unless it is source-linked, and fall back to the series source format otherwise.
 
 ## [1.3.0] - 2026-09-14
 

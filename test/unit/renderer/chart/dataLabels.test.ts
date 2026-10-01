@@ -38,6 +38,23 @@ describe('chart data label helpers', () => {
     });
   });
 
+  it('reads the label numFmt unless it is linked to the source data', () => {
+    const parse = (numFmt: string) =>
+      parseDataLabels(
+        parseXml(`
+          <c:barChart xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart">
+            <c:dLbls>${numFmt}<c:showVal val="1"/></c:dLbls>
+          </c:barChart>
+        `),
+        createMockRenderContext(),
+      )?.formatCode;
+
+    expect(parse('<c:numFmt formatCode="#,##0" sourceLinked="0"/>')).toBe('#,##0');
+    expect(parse('<c:numFmt formatCode="#,##0"/>')).toBe('#,##0');
+    expect(parse('<c:numFmt formatCode="#,##0" sourceLinked="1"/>')).toBeUndefined();
+    expect(parse('')).toBeUndefined();
+  });
+
   it('parses per-point data label overrides by index', () => {
     const dLbls = parseXml(`
       <c:dLbls xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart">

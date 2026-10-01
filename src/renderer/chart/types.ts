@@ -82,6 +82,7 @@ export interface DataLabelConfig {
   position?: string;
   showLeaderLines?: boolean;
   manualLayout?: DataLabelManualLayout;
+  formatCode?: string;
   color?: string;
   fontSize?: number;
   bold?: boolean;
