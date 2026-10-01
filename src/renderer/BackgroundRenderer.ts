@@ -248,6 +248,148 @@ function tryRenderSvgGradientBackgroundData(
   return true;
 }
 
+interface BackgroundSource {
+  bgNode: SafeXmlNode | undefined;
+  bgRels: Map<string, RelEntry>;
+}
+
+function findBackgroundSource(ctx: RenderContext): BackgroundSource {
+  if (ctx.slide.background) return { bgNode: ctx.slide.background, bgRels: ctx.slide.rels };
+  if (ctx.layout.background) return { bgNode: ctx.layout.background, bgRels: ctx.layout.rels };
+  if (ctx.master.background) return { bgNode: ctx.master.background, bgRels: ctx.master.rels };
+  return { bgNode: undefined, bgRels: ctx.slide.rels };
+}
+
+export interface ResolvedBackgroundShapeFill {
+  fillCss: string;
+  gradientFillData: GradientFillData | null;
+  blipFill: SafeXmlNode | undefined;
+  pattFill: SafeXmlNode | undefined;
+  paintKind: 'solid' | 'gradient' | 'pattern' | 'picture' | 'none' | 'unknown';
+  rels: Map<string, RelEntry>;
+  hasBackground: boolean;
+}
+
+/**
+ * Resolve the effective slide, layout, or master background as an opaque shape fill.
+ * Semi-transparent background colors are composited on white so the shape occludes
+ * content behind it instead of turning transparent.
+ */
+export function resolveBackgroundShapeFill(ctx: RenderContext): ResolvedBackgroundShapeFill {
+  const { bgNode, bgRels } = findBackgroundSource(ctx);
+  const none: ResolvedBackgroundShapeFill = {
+    fillCss: '',
+    gradientFillData: null,
+    blipFill: undefined,
+    pattFill: undefined,
+    paintKind: 'unknown',
+    rels: bgRels,
+    hasBackground: false,
+  };
+  if (!bgNode) return none;
+  const bgPr = bgNode.child('bgPr');
+  if (bgPr.exists()) {
+    const solidFill = bgPr.child('solidFill');
+    if (solidFill.exists()) {
+      const { color, alpha } = resolveColor(solidFill, ctx);
+      const hex = color.startsWith('#') ? color : `#${color}`;
+      if (alpha < 1) {
+        const { r, g, b } = hexToRgb(hex);
+        return {
+          ...none,
+          fillCss: compositeOnWhite(r, g, b, alpha),
+          paintKind: 'solid',
+          hasBackground: true,
+        };
+      }
+      return { ...none, fillCss: hex, paintKind: 'solid', hasBackground: true };
+    }
+    const gradFill = bgPr.child('gradFill');
+    if (gradFill.exists()) {
+      const gradientFillData = resolveGradientFill(bgPr, ctx);
+      const fillCss = resolveFill(bgPr, ctx);
+      if (fillCss || gradientFillData) {
+        return {
+          ...none,
+          fillCss,
+          gradientFillData,
+          paintKind: 'gradient',
+          hasBackground: true,
+        };
+      }
+      return none;
+    }
+    const pattFill = bgPr.child('pattFill');
+    if (pattFill.exists()) {
+      return {
+        ...none,
+        fillCss: resolveFill(bgPr, ctx),
+        pattFill: pattFill.exists() ? pattFill : undefined,
+        paintKind: 'pattern',
+        hasBackground: true,
+      };
+    }
+    const blipFill = bgPr.child('blipFill');
+    if (blipFill.exists()) {
+      return {
+        ...none,
+        blipFill: blipFill.exists() ? blipFill : undefined,
+        paintKind: 'picture',
+        hasBackground: true,
+      };
+    }
+    const noFill = bgPr.child('noFill');
+    if (noFill.exists()) {
+      return { ...none, fillCss: '#FFFFFF', paintKind: 'solid', hasBackground: true };
+    }
+    return none;
+  }
+  const bgRef = bgNode.child('bgRef');
+  if (bgRef.exists()) {
+    const idx = bgRef.numAttr('idx') ?? 0;
+    const hasThemeFill =
+      (idx >= 1001 && idx - 1000 <= (ctx.theme.bgFillStyles?.length ?? 0)) ||
+      (idx > 0 && idx <= (ctx.theme.fillStyles?.length ?? 0));
+    if (hasThemeFill) {
+      const { fillCss, gradientFillData } = resolveThemeBackgroundFillReference(bgRef, ctx);
+      const themeFill =
+        idx >= 1001 ? ctx.theme.bgFillStyles?.[idx - 1001] : ctx.theme.fillStyles?.[idx - 1];
+      const kind =
+        themeFill?.localName === 'gradFill'
+          ? 'gradient'
+          : themeFill?.localName === 'pattFill'
+            ? 'pattern'
+            : themeFill?.localName === 'noFill'
+              ? 'none'
+              : 'solid';
+      return {
+        ...none,
+        fillCss,
+        gradientFillData,
+        pattFill: kind === 'pattern' && themeFill?.exists() ? themeFill : undefined,
+        paintKind: kind === 'none' ? 'none' : kind,
+        hasBackground: true,
+      };
+    }
+    const { color, alpha } = resolveColor(bgRef, ctx);
+    if (color && color !== '#000000') {
+      const hex = color.startsWith('#') ? color : `#${color}`;
+      if (alpha < 1) {
+        const { r, g, b } = hexToRgb(hex);
+        return {
+          ...none,
+          fillCss: compositeOnWhite(r, g, b, alpha),
+          paintKind: 'solid',
+          hasBackground: true,
+        };
+      }
+      return { ...none, fillCss: hex, paintKind: 'solid', hasBackground: true };
+    }
+    return { ...none, fillCss: '#FFFFFF', paintKind: 'solid', hasBackground: true };
+  }
+  return none;
+}
+
 /**
  * Render the background for a slide onto the container element.
  *
@@ -255,21 +397,7 @@ function tryRenderSvgGradientBackgroundData(
  * The first found background is used.
  */
 export function renderBackground(ctx: RenderContext, container: HTMLElement): void {
-  // Find the first available background in the inheritance chain,
-  // and track which rels map to use for resolving image references
-  let bgNode: SafeXmlNode | undefined;
-  let bgRels: Map<string, RelEntry> = ctx.slide.rels;
-
-  if (ctx.slide.background) {
-    bgNode = ctx.slide.background;
-    bgRels = ctx.slide.rels;
-  } else if (ctx.layout.background) {
-    bgNode = ctx.layout.background;
-    bgRels = ctx.layout.rels;
-  } else if (ctx.master.background) {
-    bgNode = ctx.master.background;
-    bgRels = ctx.master.rels;
-  }
+  const { bgNode, bgRels } = findBackgroundSource(ctx);
 
   if (!bgNode) {
     container.style.backgroundColor = '#FFFFFF';
