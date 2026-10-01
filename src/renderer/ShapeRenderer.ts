@@ -3314,12 +3314,18 @@ export function renderShape(node: ShapeNodeData, ctx: RenderContext): HTMLElemen
             wrappedWidthFits &&
             wrappedContentH > containerH &&
             containerH > 0;
+          // Wrapped normAutofit text shrinks to its wrapped height. Skip the single-line
+          // width probe when wrapping already fits the width so the font follows the
+          // wrapped lines instead of the unwrapped line width.
+          const wrappedTextCanReflow = textWrap !== 'none';
+          const normAutofitPrefersWrappedMeasurement =
+            hasNormAutofit && !hasSpAutoFit && wrappedTextCanReflow && wrappedWidthFits;
           const shouldMeasureUnwrappedWidth =
             !isVerticalText &&
             !spAutoFitAllowsHorizontalOverflow &&
             !wrappedFits &&
+            !normAutofitPrefersWrappedMeasurement &&
             (!wrappedWidthFits ||
-              !wrappedHeightFits ||
               isSingleLineSpAutoFit ||
               usesImplicitSingleLineFit ||
               usesNoAutofitSingleLineTitleFit ||
