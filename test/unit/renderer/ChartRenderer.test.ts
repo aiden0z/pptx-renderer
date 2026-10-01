@@ -4552,6 +4552,64 @@ describe('ChartRenderer', () => {
     });
   });
 
+  describe('python-pptx LINE_MARKERS chart with a bottom legend', () => {
+    const xml = `<c:chartSpace
+      xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart"
+      xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+      <c:chart>
+        <c:autoTitleDeleted val="0"/>
+        <c:plotArea>
+          <c:lineChart>
+            <c:grouping val="standard"/>
+            <c:varyColors val="0"/>
+            ${[
+              ['Asia - North Europe', [2310, 2205, 2140]],
+              ['Asia - Mediterranean', [2480, 2390, 2275]],
+            ]
+              .map(
+                ([name, values], i) => `<c:ser>
+              <c:idx val="${i}"/><c:order val="${i}"/>
+              <c:tx><c:strRef><c:strCache><c:ptCount val="1"/><c:pt idx="0"><c:v>${name}</c:v></c:pt></c:strCache></c:strRef></c:tx>
+              <c:cat><c:strRef><c:strCache><c:ptCount val="3"/><c:pt idx="0"><c:v>Jul</c:v></c:pt><c:pt idx="1"><c:v>Aug</c:v></c:pt><c:pt idx="2"><c:v>Sep</c:v></c:pt></c:strCache></c:strRef></c:cat>
+              <c:val><c:numRef><c:numCache><c:formatCode>General</c:formatCode><c:ptCount val="3"/>${(
+                values as number[]
+              )
+                .map((v, p) => `<c:pt idx="${p}"><c:v>${v}</c:v></c:pt>`)
+                .join('')}</c:numCache></c:numRef></c:val>
+              <c:smooth val="0"/>
+            </c:ser>`,
+              )
+              .join('')}
+            <c:marker val="1"/>
+            <c:axId val="1"/><c:axId val="2"/>
+          </c:lineChart>
+          <c:catAx><c:axId val="1"/><c:scaling><c:orientation val="minMax"/></c:scaling><c:delete val="0"/><c:axPos val="b"/><c:crossAx val="2"/></c:catAx>
+          <c:valAx><c:axId val="2"/><c:scaling/><c:delete val="0"/><c:axPos val="l"/><c:majorGridlines/><c:crossAx val="1"/></c:valAx>
+        </c:plotArea>
+        <c:legend><c:legendPos val="b"/><c:layout/><c:overlay val="0"/></c:legend>
+        <c:plotVisOnly val="1"/>
+      </c:chart>
+    </c:chartSpace>`;
+
+    it('starts the value axis above zero for values between 2140 and 2480', () => {
+      const yAxis = parseChartOption(xml).option.yAxis as any;
+
+      expect(yAxis.min).toBe(2100);
+      expect(yAxis.max).toBe(2500);
+    });
+
+    it('reserves room for the legend below the category labels on a 6.5 in chart', () => {
+      const size = { w: 1152, h: 624 };
+      const { option } = parseChartXml(parseXml(xml), createMockRenderContext(), undefined, size);
+      const legend = option.legend as any;
+      const grid = option.grid as any;
+
+      expect(legend.bottom).toBe('5%');
+      expect(grid.bottom).toBeGreaterThanOrEqual(0.05 * size.h + legend.textStyle.fontSize * 1.2);
+      expect(grid.bottom).toBeGreaterThan((parseChartOption(xml).option.grid as any).bottom);
+    });
+  });
+
   // ==========================================================================
   // Coverage: resolveGradientStop sysClr fallback (lines 276-285, 288-289)
   // ==========================================================================
@@ -6643,7 +6701,7 @@ describe('ChartRenderer', () => {
                 <c:idx val="0"/><c:order val="0"/>
                 <c:tx><c:strRef><c:strCache><c:ptCount val="1"/><c:pt idx="0"><c:v>Actual</c:v></c:pt></c:strCache></c:strRef></c:tx>
                 <c:cat><c:strRef><c:strCache><c:ptCount val="3"/><c:pt idx="0"><c:v>W1</c:v></c:pt><c:pt idx="1"><c:v>W2</c:v></c:pt><c:pt idx="2"><c:v>W3</c:v></c:pt></c:strCache></c:strRef></c:cat>
-                <c:val><c:numRef><c:numCache><c:formatCode>General</c:formatCode><c:ptCount val="3"/><c:pt idx="0"><c:v>82</c:v></c:pt><c:pt idx="1"><c:v>90</c:v></c:pt><c:pt idx="2"><c:v>96</c:v></c:pt></c:numCache></c:numRef></c:val>
+                <c:val><c:numRef><c:numCache><c:formatCode>General</c:formatCode><c:ptCount val="3"/><c:pt idx="0"><c:v>79</c:v></c:pt><c:pt idx="1"><c:v>90</c:v></c:pt><c:pt idx="2"><c:v>96</c:v></c:pt></c:numCache></c:numRef></c:val>
                 <c:smooth val="0"/>
               </c:ser>
               <c:marker val="1"/>

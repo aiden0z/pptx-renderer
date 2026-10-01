@@ -2478,7 +2478,7 @@ export function parseChartXml(
     applyDefaultTextColors(option);
 
     // Adjust grid margins for legend placement (non-overlay)
-    applyLegendGridMargins(option, chart, defaultFs);
+    applyLegendGridMargins(option, chart, defaultFs, chartSize);
 
     // Apply PowerPoint-like nice axis range (adds headroom beyond data max)
     applyNiceAxisRange(option, chartSize);
