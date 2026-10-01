@@ -32,6 +32,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   reserves the legend's inset and row height.
 - Automatic value axes now start above zero when all values are positive and the minimum is at
   least 5/6 of the maximum, following Office's automatic axis scaling.
+- Fixed shape background fills that follow the resolved slide, layout, or master background.
 
 ## [1.3.0] - 2026-09-14
 
