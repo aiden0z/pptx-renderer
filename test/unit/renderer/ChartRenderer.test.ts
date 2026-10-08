@@ -4523,6 +4523,31 @@ describe('ChartRenderer', () => {
       expect(series.data[1].label.formatter({ value: 3480 })).toBe('3,480.0');
     });
 
+    it.each(['barChart', 'lineChart', 'pieChart'] as const)(
+      'resets a %s point label to the source format when its numFmt is source-linked',
+      (chartType) => {
+        const xml = buildLabelChartXml({
+          chartType,
+          serDLbls: `<c:dLbls>
+            <c:dLbl>
+              <c:idx val="1"/>
+              <c:numFmt formatCode="0.00" sourceLinked="1"/>
+              <c:showVal val="1"/>
+            </c:dLbl>
+            <c:numFmt formatCode="0%" sourceLinked="0"/>
+            <c:showVal val="1"/>
+          </c:dLbls>`,
+          cacheFormatCode: '0.00',
+          values: [0.5, 0.213],
+        });
+
+        const series = (parseChartOption(xml).option.series as any[])[0];
+        const params = { name: 'C1', value: 0.213, percent: 29.9 };
+        expect(series.label.formatter({ ...params, value: 0.5 })).toBe('50%');
+        expect(series.data[1].label.formatter(params)).toBe('0.21');
+      },
+    );
+
     it('formats line labels with a series-level numFmt', () => {
       const xml = buildLabelChartXml({
         chartType: 'lineChart',

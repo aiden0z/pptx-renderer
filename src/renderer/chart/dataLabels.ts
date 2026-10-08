@@ -25,11 +25,10 @@ function parseDataLabelManualLayout(node: SafeXmlNode): DataLabelManualLayout | 
   return Object.keys(out).length > 0 ? out : undefined;
 }
 
-function parseDataLabelFormatCode(node: SafeXmlNode): string | undefined {
+function parseDataLabelFormatCode(node: SafeXmlNode): string | null | undefined {
   const numFmt = node.child('numFmt');
-  if (!numFmt.exists() || parseOoxmlBoolValue(numFmt.attr('sourceLinked'), false)) {
-    return undefined;
-  }
+  if (!numFmt.exists()) return undefined;
+  if (parseOoxmlBoolValue(numFmt.attr('sourceLinked'), false)) return null;
   return numFmt.attr('formatCode') || undefined;
 }
 
@@ -153,7 +152,7 @@ export function parsePointDataLabelOverrides(
     }
     if (showLeaderLines !== undefined) cfg.showLeaderLines = showLeaderLines;
     if (manualLayout) cfg.manualLayout = manualLayout;
-    if (formatCode) cfg.formatCode = formatCode;
+    if (formatCode !== undefined) cfg.formatCode = formatCode;
     if (posNode.exists()) cfg.position = posNode.attr('val') || undefined;
     if (txStyle?.color) cfg.color = txStyle.color;
     else {

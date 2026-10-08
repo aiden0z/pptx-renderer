@@ -38,7 +38,7 @@ describe('chart data label helpers', () => {
     });
   });
 
-  it('reads the label numFmt unless it is linked to the source data', () => {
+  it('reads the label numFmt and marks a source-linked one as null', () => {
     const parse = (numFmt: string) =>
       parseDataLabels(
         parseXml(`
@@ -51,7 +51,7 @@ describe('chart data label helpers', () => {
 
     expect(parse('<c:numFmt formatCode="#,##0" sourceLinked="0"/>')).toBe('#,##0');
     expect(parse('<c:numFmt formatCode="#,##0"/>')).toBe('#,##0');
-    expect(parse('<c:numFmt formatCode="#,##0" sourceLinked="1"/>')).toBeUndefined();
+    expect(parse('<c:numFmt formatCode="#,##0" sourceLinked="1"/>')).toBeNull();
     expect(parse('')).toBeUndefined();
   });
 
