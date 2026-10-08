@@ -4,7 +4,7 @@ import {
   applyDefaultTextColors,
   applyNiceAxisRange,
 } from '../../../../src/renderer/chart/postProcess';
-import { parseXml } from '../../../../src/parser/XmlParser';
+import { parseXml, type SafeXmlNode } from '../../../../src/parser/XmlParser';
 
 describe('chart option post-process helpers', () => {
   it('fills Office-like default text colors when chart text omits explicit color', () => {
@@ -243,5 +243,133 @@ describe('chart option post-process helpers', () => {
     applyLegendGridMargins(option, chartNode, undefined);
 
     expect(option.legend.right).toBe('2%');
+  });
+
+  describe('bottom legend grid margin', () => {
+    const bottomLegendChart = (legendXml = '<c:legendPos val="b"/><c:overlay val="0"/>') =>
+      parseXml(`
+        <c:chart xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart">
+          <c:plotArea><c:lineChart/></c:plotArea>
+          <c:legend>${legendXml}</c:legend>
+        </c:chart>
+      `);
+    const bottomLegendOption = (fontSize: number) => ({
+      grid: { bottom: 35 },
+      legend: {
+        bottom: '5%',
+        itemHeight: 22,
+        data: [
+          { name: 'Asia - North Europe', icon: 'path://M2 4.5 L22 4.5', marker: 'diamond' },
+          { name: 'Asia - Mediterranean', icon: 'path://M2 4.5 L22 4.5', marker: 'rect' },
+        ],
+        textStyle: { fontSize },
+      },
+      series: [
+        { type: 'line', name: 'Asia - North Europe', symbolSize: 12 },
+        { type: 'line', name: 'Asia - Mediterranean', symbolSize: 12 },
+      ],
+    });
+
+    it('reserves the legend inset and row below the category labels', () => {
+      const option = bottomLegendOption(24);
+
+      applyLegendGridMargins(option, bottomLegendChart(), undefined, { w: 1152, h: 624 });
+
+      // 5% of 624 + 1.2 * 24 + 4 px gap
+      expect(option.grid.bottom).toBe(64);
+    });
+
+    it('sizes the legend row from a marker larger than the text', () => {
+      const option = bottomLegendOption(10);
+      option.series[1].symbolSize = 30;
+
+      applyLegendGridMargins(option, bottomLegendChart(), undefined, { w: 1152, h: 624 });
+
+      expect(option.grid.bottom).toBe(66);
+    });
+
+    it('keeps a larger existing margin', () => {
+      const option = bottomLegendOption(10);
+
+      applyLegendGridMargins(option, bottomLegendChart(), undefined, { w: 400, h: 160 });
+
+      expect(option.grid.bottom).toBe(35);
+    });
+
+    it('leaves the margin alone without a chart size, for overlay legends and manual layouts', () => {
+      const size = { w: 1152, h: 624 };
+      const cases: [ReturnType<typeof bottomLegendOption>, SafeXmlNode, typeof size | undefined][] =
+        [
+          [bottomLegendOption(24), bottomLegendChart(), undefined],
+          [
+            bottomLegendOption(24),
+            bottomLegendChart('<c:legendPos val="b"/><c:overlay val="1"/>'),
+            size,
+          ],
+          [
+            bottomLegendOption(24),
+            bottomLegendChart(
+              '<c:legendPos val="b"/><c:layout><c:manualLayout><c:y val="0.9"/></c:manualLayout></c:layout><c:overlay val="0"/>',
+            ),
+            size,
+          ],
+        ];
+
+      for (const [option, chartNode, chartSize] of cases) {
+        applyLegendGridMargins(option, chartNode, undefined, chartSize);
+        expect(option.grid.bottom).toBe(35);
+      }
+    });
+  });
+
+  describe('automatic value-axis minimum', () => {
+    const lineOption = (series: { data: number[]; stack?: string }[]) => ({
+      xAxis: { type: 'category' },
+      yAxis: { type: 'value' } as Record<string, unknown>,
+      series: series.map((s) => ({ type: 'line', ...s })),
+    });
+
+    it('starts above zero when the minimum is at least 5/6 of the maximum', () => {
+      const option = lineOption([{ data: [2310, 2205, 2140] }, { data: [2480, 2390, 2275] }]);
+
+      applyNiceAxisRange(option);
+
+      expect(option.yAxis).toMatchObject({ min: 1950, max: 2500, interval: 50 });
+    });
+
+    it('applies to the value axis of bar charts too', () => {
+      const option = lineOption([{ data: [4120, 3480] }]);
+      option.series[0].type = 'bar';
+
+      applyNiceAxisRange(option);
+
+      expect(option.yAxis).toMatchObject({ min: 3100, max: 4200, interval: 100 });
+    });
+
+    it('stays at zero below the 5/6 line (oracle-pypptx-chart-0008 data)', () => {
+      const option = lineOption([
+        { data: [82, 85, 79, 91, 88, 94, 87, 96] },
+        { data: [85, 85, 85, 85, 90, 90, 90, 90] },
+      ]);
+
+      applyNiceAxisRange(option);
+
+      expect(option.yAxis.min).toBe(0);
+    });
+
+    it('stays at zero for stacked series, an explicit max, and constant data', () => {
+      const stacked = lineOption([
+        { data: [2310, 2205], stack: 'total' },
+        { data: [2480, 2390], stack: 'total' },
+      ]);
+      const explicitMax = lineOption([{ data: [2310, 2205, 2140] }]);
+      explicitMax.yAxis.max = 3000;
+      const constant = lineOption([{ data: [2140, 2140] }]);
+
+      for (const option of [stacked, explicitMax, constant]) {
+        applyNiceAxisRange(option);
+        expect(option.yAxis.min).toBe(0);
+      }
+    });
   });
 });

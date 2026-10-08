@@ -21,6 +21,8 @@ export interface ChartPixelSize {
   h: number;
 }
 
+const BOTTOM_LEGEND_GAP_PX = 4;
+
 function getRadarNameTextStyles(option: echarts.EChartsOption): Record<string, unknown>[] {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const opt = option as any;
@@ -176,6 +178,7 @@ export function applyLegendGridMargins(
   option: echarts.EChartsOption,
   chartNode: SafeXmlNode,
   defaultFs: number | undefined,
+  chartSize?: ChartPixelSize,
 ): void {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const opt = option as any;
@@ -263,6 +266,27 @@ export function applyLegendGridMargins(
       opt.grid.right = gridMarginPx;
     } else {
       opt.grid.left = gridMarginPx;
+    }
+  } else if (posVal === 'b' && chartSize && opt.legend.bottom !== undefined) {
+    if (legend.child('layout').child('manualLayout').exists()) return;
+    // The legend overlay sits at legend.bottom; keep the axis labels above its row.
+    const fs = opt.legend.textStyle?.fontSize ?? 10;
+    const seriesOptions = Array.isArray(opt.series) ? opt.series : opt.series ? [opt.series] : [];
+    const legendData = (opt.legend.data ?? []) as (string | { name: string; marker?: string })[];
+    let iconPx = Number(opt.legend.itemHeight) || fs;
+    for (const item of legendData) {
+      if (typeof item === 'string' || !item.marker || item.marker === 'none') continue;
+      const series = seriesOptions.find((s: { name?: string }) => s?.name === item.name);
+      if (typeof series?.symbolSize === 'number') {
+        iconPx = Math.max(iconPx, Math.ceil(series.symbolSize));
+      }
+    }
+    const legendRowPx = Math.max(fs * 1.2, iconPx);
+    const reservedPx = Math.ceil(
+      gridEdgePx(opt.legend.bottom, chartSize.h, 0) + legendRowPx + BOTTOM_LEGEND_GAP_PX,
+    );
+    if (reservedPx > gridEdgePx(opt.grid.bottom, chartSize.h, 0)) {
+      opt.grid.bottom = reservedPx;
     }
   }
 }
@@ -462,6 +486,16 @@ export function applyNiceAxisRange(
         opt.grid,
         labelSpacingFactor,
       );
+      const zoomed =
+        stackGroups.size === 0 && ax.min === undefined && ax.max === undefined
+          ? zoomedAxisExtent(dataMax, dataMin, desiredTicks)
+          : undefined;
+      if (zoomed) {
+        ax.min = zoomed.min;
+        ax.max = zoomed.max;
+        if (ax.interval === undefined) ax.interval = zoomed.interval;
+        return;
+      }
       const interval = niceAxisInterval(dataMax, dataMin, desiredTicks);
 
       if (ax.max === undefined) {
@@ -502,15 +536,39 @@ export function niceAxisInterval(dataMax: number, dataMin: number, desiredTicks 
   if (dataMax === 0 && dataMin === 0) return 1;
   const range = dataMax - Math.min(0, dataMin);
   if (range === 0) return dataMax > 0 ? dataMax * 1.2 : 1;
-  const rawInterval = range / desiredTicks;
+  return roundNiceInterval(range / desiredTicks);
+}
+
+function roundNiceInterval(rawInterval: number): number {
   const magnitude = Math.pow(10, Math.floor(Math.log10(rawInterval)));
   const residual = rawInterval / magnitude;
-  let niceInterval: number;
-  if (residual <= 1) niceInterval = magnitude;
-  else if (residual <= 2) niceInterval = 2 * magnitude;
-  else if (residual <= 5) niceInterval = 5 * magnitude;
-  else niceInterval = 10 * magnitude;
-  return niceInterval;
+  if (residual <= 1) return magnitude;
+  if (residual <= 2) return 2 * magnitude;
+  if (residual <= 5) return 5 * magnitude;
+  return 10 * magnitude;
+}
+
+/**
+ * Office starts an automatic value axis above zero when all values are positive and the
+ * minimum is at least 5/6 of the maximum (Microsoft KB214075). The minimum is the first major
+ * unit at or below `dataMin - (dataMax - dataMin) / 2`, as in the KB and in PowerPoint 16.113;
+ * the maximum gets the same tick of headroom as a zero-based axis.
+ */
+function zoomedAxisExtent(
+  dataMax: number,
+  dataMin: number,
+  desiredTicks: number,
+): { min: number; max: number; interval: number } | undefined {
+  if (dataMin <= 0 || dataMin >= dataMax || dataMin < (dataMax * 5) / 6) return undefined;
+  const span = dataMax - dataMin;
+  const interval = roundNiceInterval((span * 1.1) / desiredTicks);
+  let max = (Math.floor(dataMax / interval) + 1) * interval;
+  if (max - dataMax < interval * 0.25) max += interval;
+  return {
+    min: Math.floor((dataMin - span / 2) / interval) * interval,
+    max,
+    interval,
+  };
 }
 
 export function extractChartDefaultFontSize(chartSpaceNode: SafeXmlNode): number | undefined {
