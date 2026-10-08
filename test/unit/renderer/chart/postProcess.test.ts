@@ -334,7 +334,7 @@ describe('chart option post-process helpers', () => {
 
       applyNiceAxisRange(option);
 
-      expect(option.yAxis).toMatchObject({ min: 2100, max: 2500, interval: 50 });
+      expect(option.yAxis).toMatchObject({ min: 1950, max: 2500, interval: 50 });
     });
 
     it('applies to the value axis of bar charts too', () => {
@@ -343,9 +343,7 @@ describe('chart option post-process helpers', () => {
 
       applyNiceAxisRange(option);
 
-      expect(option.yAxis.min).toBeGreaterThan(0);
-      expect(option.yAxis.min).toBeLessThanOrEqual(3480 - (4120 - 3480) / 20);
-      expect(option.yAxis.max).toBeGreaterThan(4120 + (4120 - 3480) / 20);
+      expect(option.yAxis).toMatchObject({ min: 3100, max: 4200, interval: 100 });
     });
 
     it('stays at zero below the 5/6 line (oracle-pypptx-chart-0008 data)', () => {

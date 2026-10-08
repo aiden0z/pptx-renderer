@@ -550,9 +550,9 @@ function roundNiceInterval(rawInterval: number): number {
 
 /**
  * Office starts an automatic value axis above zero when all values are positive and the
- * minimum is at least 5/6 of the maximum: min is the first major unit at or below
- * `dataMin - (dataMax - dataMin) / 20`, max the first major unit above
- * `dataMax + (dataMax - dataMin) / 20` (Microsoft KB214075).
+ * minimum is at least 5/6 of the maximum (Microsoft KB214075). The minimum is the first major
+ * unit at or below `dataMin - (dataMax - dataMin) / 2`, as in the KB and in PowerPoint 16.113;
+ * the maximum gets the same tick of headroom as a zero-based axis.
  */
 function zoomedAxisExtent(
   dataMax: number,
@@ -560,11 +560,13 @@ function zoomedAxisExtent(
   desiredTicks: number,
 ): { min: number; max: number; interval: number } | undefined {
   if (dataMin <= 0 || dataMin >= dataMax || dataMin < (dataMax * 5) / 6) return undefined;
-  const pad = (dataMax - dataMin) / 20;
-  const interval = roundNiceInterval((dataMax - dataMin + 2 * pad) / desiredTicks);
+  const span = dataMax - dataMin;
+  const interval = roundNiceInterval((span * 1.1) / desiredTicks);
+  let max = (Math.floor(dataMax / interval) + 1) * interval;
+  if (max - dataMax < interval * 0.25) max += interval;
   return {
-    min: Math.floor((dataMin - pad) / interval) * interval,
-    max: (Math.floor((dataMax + pad) / interval) + 1) * interval,
+    min: Math.floor((dataMin - span / 2) / interval) * interval,
+    max,
     interval,
   };
 }

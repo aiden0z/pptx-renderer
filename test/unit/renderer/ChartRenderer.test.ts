@@ -4619,7 +4619,7 @@ describe('ChartRenderer', () => {
     it('starts the value axis above zero for values between 2140 and 2480', () => {
       const yAxis = parseChartOption(xml).option.yAxis as any;
 
-      expect(yAxis.min).toBe(2100);
+      expect(yAxis.min).toBe(1950);
       expect(yAxis.max).toBe(2500);
     });
 
@@ -4632,6 +4632,50 @@ describe('ChartRenderer', () => {
       expect(legend.bottom).toBe('5%');
       expect(grid.bottom).toBeGreaterThanOrEqual(0.05 * size.h + legend.textStyle.fontSize * 1.2);
       expect(grid.bottom).toBeGreaterThan((parseChartOption(xml).option.grid as any).bottom);
+    });
+  });
+
+  describe('automatic value axis matches PowerPoint 16.113 on an 844.8 x 460.8 px chart', () => {
+    const size = { w: 844.8, h: 460.8 };
+    const buildXml = (
+      chartType: 'lineChart' | 'barChart',
+      values: readonly number[],
+    ) => `<c:chartSpace
+      xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart"
+      xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+      <c:chart>
+        <c:autoTitleDeleted val="0"/>
+        <c:plotArea>
+          <c:${chartType}>
+            ${chartType === 'barChart' ? '<c:barDir val="col"/><c:grouping val="clustered"/>' : '<c:grouping val="standard"/>'}
+            <c:ser>
+              <c:idx val="0"/><c:order val="0"/>
+              <c:tx><c:strRef><c:strCache><c:ptCount val="1"/><c:pt idx="0"><c:v>S</c:v></c:pt></c:strCache></c:strRef></c:tx>
+              <c:cat><c:strRef><c:strCache><c:ptCount val="${values.length}"/>${values.map((_, i) => `<c:pt idx="${i}"><c:v>C${i}</c:v></c:pt>`).join('')}</c:strCache></c:strRef></c:cat>
+              <c:val><c:numRef><c:numCache><c:formatCode>General</c:formatCode><c:ptCount val="${values.length}"/>${values.map((v, i) => `<c:pt idx="${i}"><c:v>${v}</c:v></c:pt>`).join('')}</c:numCache></c:numRef></c:val>
+            </c:ser>
+            <c:axId val="1"/><c:axId val="2"/>
+          </c:${chartType}>
+          <c:catAx><c:axId val="1"/><c:delete val="0"/><c:axPos val="b"/><c:crossAx val="2"/></c:catAx>
+          <c:valAx><c:axId val="2"/><c:scaling/><c:delete val="0"/><c:axPos val="l"/><c:majorGridlines/><c:crossAx val="1"/></c:valAx>
+        </c:plotArea>
+        <c:legend><c:legendPos val="b"/><c:overlay val="0"/></c:legend>
+      </c:chart>
+      <c:txPr><a:bodyPr/><a:lstStyle/><a:p><a:pPr><a:defRPr sz="1800"/></a:pPr><a:endParaRPr lang="en-US"/></a:p></c:txPr>
+    </c:chartSpace>`;
+
+    it.each([
+      ['line', 'lineChart', [2140, 2205, 2480], { min: 1900, max: 2600, interval: 100 }],
+      ['column', 'barChart', [3480, 4120], { min: 3000, max: 4200, interval: 200 }],
+    ] as const)('%s chart', (_name, chartType, values, expected) => {
+      const { option } = parseChartXml(
+        parseXml(buildXml(chartType, values)),
+        createMockRenderContext(),
+        undefined,
+        size,
+      );
+
+      expect(option.yAxis).toMatchObject(expected);
     });
   });
 
