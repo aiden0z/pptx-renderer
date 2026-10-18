@@ -1,0 +1,24 @@
+{
+  "name": "oracle-pypptx-composite-0021-hidden-nodes",
+  "generator": "python-pptx",
+  "slides": [
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    }
+  ],
+  "coverage": {
+    "oracle": "native-powerpoint",
+    "requiredFonts": [
+      "Arial"
+    ],
+    "features": [
+      "node.hidden.true-false",
+      "node.hidden.group-subtree",
+      "node.hidden.layout-master"
+    ]
+  }
+}

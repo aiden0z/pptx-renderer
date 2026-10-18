@@ -414,7 +414,7 @@ function renderBlipBackground(
 
   let url: string | undefined;
   if (isExternalTargetMode(rel.targetMode)) {
-    if (!isAllowedExternalMediaUrl(rel.target)) return;
+    if (!isAllowedExternalMediaUrl(rel.target, ctx.externalMedia)) return;
     url = rel.target;
   } else {
     const resolved = findMediaByTarget(rel.target, ctx.presentation.media);

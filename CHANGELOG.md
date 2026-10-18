@@ -7,8 +7,12 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-10-18
+
 ### Added
 
+- Added `externalMedia: 'allow' | 'block'` to viewer and standalone rendering options so hosts can
+  disable external media relationships, including picture fills and audio/video posters (#32).
 - `serializePresentation()` now reports slide layout and slide master template shapes as typed
   nodes in `layouts` and `masters`, with each slide naming its own through `layoutPath`,
   `masterPath` and `showMasterSp`. Consumers that need the structure of a deck rather than its
@@ -16,6 +20,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Fixed
 
+- Lay out preset shape text within its standard text rectangle, including document flowcharts,
+  adjusted presets and grouped shapes; explicit diagram text transforms keep priority (#37).
+- Honor `cNvPr@hidden` on slide, layout, and master nodes, including hidden group subtrees,
+  while retaining visibility metadata in the parsed and serialized model (#36).
 - Fixed explicit text tabs, terminal hanging punctuation, all DrawingML vertical text flows,
   stacked WordArt spacing, CJK/Korean font fallback, stretched picture-filled runs including lazy
   package media, placeholder style inheritance when layouts reuse an unlinked placeholder
@@ -26,6 +34,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   reserves the legend's inset and row height.
 - Automatic value axes now start above zero when all values are positive and the minimum is at
   least 5/6 of the maximum, following Office's automatic axis scaling.
+- Fixed `useBgFill` shapes to sample the effective slide background in slide coordinates,
+  including rotated/flipped/grouped geometry, lazy image backgrounds, template relationships,
+  and implicit-white occlusion. Template shapes retain their master/layout background ownership;
+  explicit local fills retain priority (#34).
 
 ## [1.3.0] - 2026-09-14
 

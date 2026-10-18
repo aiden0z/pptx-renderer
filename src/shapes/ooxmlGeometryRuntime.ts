@@ -1,6 +1,7 @@
 import {
   OOXML_PRESET_GEOMETRY_DEFINITIONS,
   OOXML_PRESET_GEOMETRY_SOURCE_SHA256,
+  OOXML_PRESET_TEXT_RECTANGLE_DEFINITIONS,
 } from './generated/ooxmlPresetGeometrySubset';
 
 type OoxmlFormulaOperator =
@@ -74,11 +75,30 @@ interface OoxmlPath {
   readonly commands: readonly OoxmlPathCommand[];
 }
 
-interface OoxmlPresetDefinition {
+interface OoxmlGuideDefinition {
   readonly name: string;
   readonly adjustmentGuides: readonly OoxmlGuide[];
   readonly calculatedGuides: readonly OoxmlGuide[];
+}
+
+interface OoxmlPresetDefinition extends OoxmlGuideDefinition {
   readonly paths: readonly OoxmlPath[];
+}
+
+interface OoxmlTextRectangleDefinition extends OoxmlGuideDefinition {
+  readonly textRectangle: {
+    readonly left: OoxmlReference;
+    readonly top: OoxmlReference;
+    readonly right: OoxmlReference;
+    readonly bottom: OoxmlReference;
+  };
+}
+
+interface PresetTextRectangle {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
 }
 
 interface EvaluatedPoint {
@@ -148,6 +168,11 @@ const runtimeDefinitions =
   OOXML_PRESET_GEOMETRY_DEFINITIONS as unknown as readonly OoxmlPresetDefinition[];
 const runtimeByName = new Map(
   runtimeDefinitions.map((definition) => [definition.name.toLowerCase(), definition]),
+);
+const textRectangleByName = new Map(
+  (
+    OOXML_PRESET_TEXT_RECTANGLE_DEFINITIONS as unknown as readonly OoxmlTextRectangleDefinition[]
+  ).map((definition) => [definition.name.toLowerCase(), definition]),
 );
 
 export const ooxmlPresetRuntimeShapeNames: readonly string[] = Object.freeze(
@@ -368,12 +393,12 @@ function evaluateCommand(
   }
 }
 
-function evaluateDefinition(
-  definition: OoxmlPresetDefinition,
+function createDefinitionEnvironment(
+  definition: OoxmlGuideDefinition,
   width: number,
   height: number,
   adjustments: ReadonlyMap<string, number>,
-): EvaluatedPath[] {
+): Map<string, number> {
   const environment = createGuideEnvironment(width, height);
   const adjustmentNames = new Set(definition.adjustmentGuides.map(({ name }) => name));
   for (const [name, value] of adjustments) {
@@ -388,6 +413,16 @@ function evaluateDefinition(
   for (const guide of definition.calculatedGuides) {
     environment.set(guide.name, evaluateFormula(guide.formula, environment));
   }
+  return environment;
+}
+
+function evaluateDefinition(
+  definition: OoxmlPresetDefinition,
+  width: number,
+  height: number,
+  adjustments: ReadonlyMap<string, number>,
+): EvaluatedPath[] {
+  const environment = createDefinitionEnvironment(definition, width, height, adjustments);
   return definition.paths.map((path, pathIndex) => ({
     width:
       path.width === null
@@ -547,6 +582,38 @@ function emitPath(
     stroke: path.stroke,
     extrusionOk: path.extrusionOk,
   };
+}
+
+/** Resolve a preset's authored text rect in the same pixel space as its rendered geometry. */
+export function getOoxmlPresetTextRectangle(
+  shapeType: string,
+  width: number,
+  height: number,
+  adjustments: ReadonlyMap<string, number> = new Map(),
+): PresetTextRectangle | null {
+  const definition = textRectangleByName.get(shapeType.toLowerCase());
+  if (
+    !definition ||
+    !Number.isFinite(width) ||
+    !Number.isFinite(height) ||
+    width <= 0 ||
+    height <= 0
+  ) {
+    return null;
+  }
+  try {
+    const environment = createDefinitionEnvironment(definition, width, height, adjustments);
+    const rect = definition.textRectangle;
+    const x = resolveReference(rect.left, environment, `${definition.name} rect left`);
+    const y = resolveReference(rect.top, environment, `${definition.name} rect top`);
+    const right = resolveReference(rect.right, environment, `${definition.name} rect right`);
+    const bottom = resolveReference(rect.bottom, environment, `${definition.name} rect bottom`);
+    return { x, y, w: right - x, h: bottom - y };
+  } catch {
+    // Valid degenerate paths (for example arrow adj2=0) can have undefined text guides.
+    // Keep their geometry/label renderable with the existing full-bounds fallback.
+    return null;
+  }
 }
 
 export function getOoxmlPresetShapePaths(

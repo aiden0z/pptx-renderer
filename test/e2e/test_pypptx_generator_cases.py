@@ -159,10 +159,11 @@ def test_cjk_text_layout_matrix_is_registered():
         "oracle-pypptx-text-0061-tab-stop-matrix",
         "oracle-pypptx-text-0062-vertical-mode-matrix",
         "oracle-pypptx-text-0063-unlinked-placeholder-idx-collision",
+        "oracle-pypptx-text-0064-preset-text-rectangles",
     }
 
     assert expected_names.issubset(text_names)
-    assert len(text_names) == 63
+    assert len(text_names) == 64
 
 
 def test_cjk_text_layout_matrix_serializes_autofit_and_spacing_ooxml(tmp_path: Path):

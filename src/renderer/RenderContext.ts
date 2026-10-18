@@ -10,10 +10,14 @@ import { LayoutData } from '../model/Layout';
 import { SafeXmlNode } from '../parser/XmlParser';
 import type { EChartsType } from 'echarts/core';
 import type { PdfjsConfig } from '../utils/pdfRenderer';
+import type { AffineMatrix } from './coordinateTransform';
+import type { ExternalMediaPolicy } from '../utils/urlSafety';
 
 export interface RenderContext {
   presentation: PresentationData;
   slide: SlideData;
+  /** Current parent DOM coordinates mapped into slide coordinates (2D groups). */
+  parentToSlide?: AffineMatrix;
   theme: ThemeData;
   master: MasterData;
   layout: LayoutData;
@@ -33,6 +37,8 @@ export interface RenderContext {
   signal?: AbortSignal;
   /** Optional pdfjs URLs for EMF-embedded PDF fallback rendering. */
   pdfjs?: PdfjsConfig;
+  /** External media relationship policy; omitted means allow. */
+  externalMedia?: ExternalMediaPolicy;
   /** Shared set of live ECharts instances for explicit disposal. */
   chartInstances?: Set<EChartsType>;
   /** Fill node from parent group's grpSpPr, used to resolve `a:grpFill` in children. */

@@ -3,7 +3,7 @@ import type { ZipParseLimits } from '../parser/ZipParser';
 import { buildPresentation, PresentationData } from '../model/Presentation';
 import { renderSlide as renderSlideInternal } from '../renderer/SlideRenderer';
 import type { SlideHandle } from '../renderer/SlideRenderer';
-import { isAllowedExternalUrl } from '../utils/urlSafety';
+import { isAllowedExternalUrl, type ExternalMediaPolicy } from '../utils/urlSafety';
 import {
   buildTextIndex,
   searchText as searchTextInIndex,
@@ -24,6 +24,8 @@ export type FitMode = 'contain' | 'none';
 export type PreviewInput = ArrayBuffer | Uint8Array | Blob;
 
 export interface ViewerOptions {
+  /** Allow or block external media relationships. Default `allow`; embedded media is unaffected. */
+  externalMedia?: ExternalMediaPolicy;
   width?: number;
   /** Scaling mode. contain = fit container width, none = use intrinsic slide size. */
   fitMode?: FitMode;
@@ -492,6 +494,7 @@ export class PptxViewer extends EventTarget {
       onNodeError: (nodeId, error) => this.emitNodeError(nodeId, error),
       onNavigate: (target) => this.handleNavigate(target),
       pdfjs: this.viewerOptions.pdfjs,
+      externalMedia: this.viewerOptions.externalMedia,
       embeddedFontLimits: this.viewerOptions.embeddedFontLimits,
       fontFaces: this.viewerOptions.fontFaces,
     });
@@ -989,6 +992,7 @@ export class PptxViewer extends EventTarget {
         onNavigate: (target) => this.handleNavigate(target),
         mediaUrlCache: this.mediaUrlCache,
         pdfjs: this.viewerOptions.pdfjs,
+        externalMedia: this.viewerOptions.externalMedia,
         embeddedFontLimits: this.viewerOptions.embeddedFontLimits,
         fontFaces: this.viewerOptions.fontFaces,
         chartInstances: this.chartInstances,
@@ -1221,6 +1225,7 @@ export class PptxViewer extends EventTarget {
         onNavigate: (target) => this.handleNavigate(target),
         mediaUrlCache: this.mediaUrlCache,
         pdfjs: this.viewerOptions.pdfjs,
+        externalMedia: this.viewerOptions.externalMedia,
         embeddedFontLimits: this.viewerOptions.embeddedFontLimits,
         fontFaces: this.viewerOptions.fontFaces,
         chartInstances: this.chartInstances,

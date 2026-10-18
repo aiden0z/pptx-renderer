@@ -3,6 +3,7 @@
  */
 
 import { SafeXmlNode } from '../../parser/XmlParser';
+import { parseOoxmlBool } from '../../parser/booleans';
 import { emuToPx, angleToDeg } from '../../parser/units';
 import { BaseNodeData, parseBaseProps } from './BaseNode';
 import { parseShape3DProperties, Shape3DProperties } from './Shape3D';
@@ -62,6 +63,8 @@ export interface ShapeNodeData extends BaseNodeData {
   nodeType: 'shape';
   presetGeometry?: string;
   adjustments: Map<string, number>;
+  /** True when p:sp@useBgFill requests the slide background as the shape fill. */
+  useBackgroundFill?: boolean;
   /** @internal Raw XML node — opaque to consumers. Use serializePresentation() for JSON-safe data. */
   customGeometry?: SafeXmlNode;
   /** @internal Raw XML node — opaque to consumers. Use serializePresentation() for JSON-safe data. */
@@ -221,6 +224,7 @@ export function parseAdjustments(avLst: SafeXmlNode): Map<string, number> {
  */
 export function parseShapeNode(spNode: SafeXmlNode): ShapeNodeData {
   const base = parseBaseProps(spNode);
+  const useBackgroundFill = parseOoxmlBool(spNode.attr('useBgFill'));
   const spPr = spNode.child('spPr');
 
   // --- Preset geometry ---
@@ -306,6 +310,7 @@ export function parseShapeNode(spNode: SafeXmlNode): ShapeNodeData {
     nodeType: 'shape',
     presetGeometry,
     adjustments,
+    ...(useBackgroundFill ? { useBackgroundFill: true as const } : {}),
     customGeometry,
     fill,
     line,

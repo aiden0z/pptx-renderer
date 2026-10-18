@@ -7,6 +7,22 @@ function base(xml: string) {
 }
 
 describe('parseBaseProps', () => {
+  for (const wrapper of ['nvSpPr', 'nvPicPr', 'nvGrpSpPr', 'nvGraphicFramePr', 'nvCxnSpPr']) {
+    it.each([
+      ['1', true],
+      ['true', true],
+      ['0', false],
+      ['false', false],
+      [undefined, false],
+    ] as const)(`reads hidden=%s from ${wrapper} (issue #36)`, (value, expected) => {
+      const flag = value === undefined ? '' : ` hidden="${value}"`;
+      const props = base(
+        `<node><${wrapper}><cNvPr id="1" name="visibility"${flag}/><nvPr/></${wrapper}></node>`,
+      );
+      expect(props.hidden ?? false).toBe(expected);
+    });
+  }
+
   it('parses id and name from nvSpPr > cNvPr', () => {
     const props = base(`
       <sp>

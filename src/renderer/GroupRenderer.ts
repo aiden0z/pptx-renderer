@@ -2,6 +2,7 @@
  * Group renderer — renders grouped shapes with coordinate space remapping.
  */
 
+import { composeTransforms, nodeTransform } from './coordinateTransform';
 import { GroupNodeData } from '../model/nodes/GroupNode';
 import { RenderContext } from './RenderContext';
 import { BaseNodeData } from '../model/nodes/BaseNode';
@@ -214,7 +215,7 @@ function applyGroupEffects(
 export function renderGroup(
   node: GroupNodeData,
   ctx: RenderContext,
-  renderNode: (childNode: BaseNodeData, ctx: RenderContext) => HTMLElement,
+  renderNode: (childNode: BaseNodeData, ctx: RenderContext) => HTMLElement | null,
 ): HTMLElement {
   const wrapper = document.createElement('div');
   wrapper.style.position = 'absolute';
@@ -244,6 +245,8 @@ export function renderGroup(
   const childCtx: RenderContext = {
     ...ctx,
     groupDepth: (ctx.groupDepth ?? 0) + 1,
+    // Child positions/flips are already remapped below; the wrapper adds only translation/rotation.
+    parentToSlide: composeTransforms(ctx.parentToSlide, nodeTransform(node, false)),
     groupTransformHasRotationOrFlip: Boolean(
       ctx.groupTransformHasRotationOrFlip || node.rotation !== 0 || node.flipH || node.flipV,
     ),
@@ -374,7 +377,7 @@ export function renderGroup(
   for (const index of indices) {
     try {
       const childNode = parseByIndex(index);
-      if (!childNode) continue;
+      if (!childNode || childNode.hidden) continue;
       const originalSize = childNode.size;
 
       // Remap child coordinates from child space to group space
@@ -452,7 +455,7 @@ export function renderGroup(
         y: originalSize.h > 0 ? childNode.size.h / originalSize.h : 1,
       };
       const el = renderNode(childNode, { ...childCtx, groupChildScale });
-      childHost.appendChild(el);
+      if (el) childHost.appendChild(el);
     } catch {
       // Per-child error handling — create error placeholder
       const errDiv = document.createElement('div');

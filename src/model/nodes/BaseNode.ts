@@ -42,6 +42,8 @@ export interface BaseNodeData {
   rotation: number;
   flipH: boolean;
   flipV: boolean;
+  /** cNvPr@hidden suppresses rendering of this node and any grouped descendants. */
+  hidden?: boolean;
   placeholder?: PlaceholderInfo;
   /** Shape-level hyperlink/click action (action buttons, clickable shapes). */
   hlinkClick?: HlinkAction;
@@ -121,6 +123,8 @@ export function parseBaseProps(spNode: SafeXmlNode): Omit<BaseNodeData, 'nodeTyp
 
   const id = cNvPr.attr('id') ?? '';
   const name = cNvPr.attr('name') ?? '';
+  const hiddenAttr = cNvPr.attr('hidden');
+  const hidden = hiddenAttr === undefined ? undefined : parseOoxmlBool(hiddenAttr);
 
   // --- Transform ---
   const xfrm = findXfrm(spNode);
@@ -158,6 +162,7 @@ export function parseBaseProps(spNode: SafeXmlNode): Omit<BaseNodeData, 'nodeTyp
   return {
     id,
     name,
+    hidden,
     position,
     size,
     rotation,

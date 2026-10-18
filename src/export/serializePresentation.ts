@@ -57,6 +57,8 @@ export interface SerializedNode {
   rotation: number;
   flipH: boolean;
   flipV: boolean;
+  /** Authored cNvPr visibility flag, retained even when this node is not rendered. */
+  hidden?: boolean;
   presetGeometry?: string;
   shape3d?: SerializedShape3D;
   textBody?: SerializedTextBody;
@@ -227,6 +229,7 @@ function serializeNode(node: SlideNode | BaseNodeData, ctx: SerializeNodeContext
     rotation: node.rotation,
     flipH: node.flipH,
     flipV: node.flipV,
+    ...(node.hidden !== undefined ? { hidden: node.hidden } : {}),
   };
 
   switch (node.nodeType) {

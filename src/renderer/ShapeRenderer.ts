@@ -124,6 +124,7 @@ import {
   resolveThemeFillReference,
   getFocusedGradientStops,
 } from './StyleResolver';
+import { applyShapeBackgroundFill } from './ShapeBackgroundFill';
 import { renderTextBody, resolveTextFields, type DrawingMLVerticalTextMode } from './TextRenderer';
 import { renderCustomGeometry } from '../shapes/customGeometry';
 import {
@@ -132,7 +133,10 @@ import {
   getMultiPathPreset,
   PresetSubPath,
 } from '../shapes/presets';
-import { ooxmlPresetRuntimeMultiPathShapeNames } from '../shapes/ooxmlGeometryRuntime';
+import {
+  getOoxmlPresetTextRectangle,
+  ooxmlPresetRuntimeMultiPathShapeNames,
+} from '../shapes/ooxmlGeometryRuntime';
 import { emuToPx } from '../parser/units';
 import { applyTint, hexToRgb, rgbToHex } from '../utils/color';
 import { SafeXmlNode } from '../parser/XmlParser';
@@ -424,7 +428,7 @@ function resolveShapeBlipUrl(blipFill: SafeXmlNode, ctx: RenderContext): string 
   const rel = ctx.slide.rels.get(relId);
   if (!rel) return null;
   if (isExternalTargetMode(rel.targetMode)) {
-    return isAllowedExternalMediaUrl(rel.target) ? rel.target : null;
+    return isAllowedExternalMediaUrl(rel.target, ctx.externalMedia) ? rel.target : null;
   }
   const resolved = findMediaByTarget(rel.target, ctx.presentation.media);
   if (!resolved) return null;
@@ -444,7 +448,7 @@ async function resolveShapeBlipUrlAsync(
   const rel = ctx.slide.rels.get(relId);
   if (!rel) return null;
   if (isExternalTargetMode(rel.targetMode)) {
-    return isAllowedExternalMediaUrl(rel.target) ? rel.target : null;
+    return isAllowedExternalMediaUrl(rel.target, ctx.externalMedia) ? rel.target : null;
   }
   const resolved = await findMediaByTargetAsync(
     rel.target,
@@ -1887,6 +1891,9 @@ export function renderShape(node: ShapeNodeData, ctx: RenderContext): HTMLElemen
 
   // ---- Resolve fill and line styles ----
   const spPr = node.source.child('spPr');
+  // Explicit local fill wins, matching native PowerPoint. The background flag is the
+  // fallback paint source, ahead of the style reference.
+  const useBackgroundFill = node.useBackgroundFill === true && !node.fill?.exists() && !isLineLike;
   let fillCss = '';
   // Resolve structured gradient fill data (for SVG gradient elements)
   let gradientFillData = node.fill ? resolveGradientFill(spPr, ctx) : null;
@@ -1926,6 +1933,12 @@ export function renderShape(node: ShapeNodeData, ctx: RenderContext): HTMLElemen
     const resolvedThemeFill = resolveThemeFillReference(fillRef, ctx);
     fillCss = resolvedThemeFill.fillCss;
     if (!gradientFillData) gradientFillData = resolvedThemeFill.gradientFillData;
+  }
+  if (useBackgroundFill) {
+    // A temporary opaque silhouette lets the shared geometry path select filled contours.
+    // applyShapeBackgroundFill replaces it with slide-space paint below.
+    fillCss = '#FFFFFF';
+    gradientFillData = null;
   }
   // Connectors and other line-like presets are stroke-only in OOXML. They may still
   // carry style fillRefs, but those must not become filled ribbons in SVG.
@@ -2766,21 +2779,23 @@ export function renderShape(node: ShapeNodeData, ctx: RenderContext): HTMLElemen
       }
 
       const hasResolvedSolidShapeFill = !gradientFillData && /^#[0-9a-f]{6}$/i.test(fillCss);
-      const shape3dPaintKind = blipFill.exists()
-        ? 'picture'
-        : spPr.child('gradFill').exists() || gradientFillData
-          ? 'gradient'
-          : spPr.child('pattFill').exists()
-            ? 'pattern'
-            : spPr.child('grpFill').exists()
-              ? 'group'
-              : spPr.child('noFill').exists()
-                ? 'none'
-                : spPr.child('solidFill').exists() ||
-                    node.fill?.localName === 'solidFill' ||
-                    hasResolvedSolidShapeFill
-                  ? 'solid'
-                  : 'unknown';
+      const shape3dPaintKind = useBackgroundFill
+        ? 'unknown'
+        : blipFill.exists()
+          ? 'picture'
+          : spPr.child('gradFill').exists() || gradientFillData
+            ? 'gradient'
+            : spPr.child('pattFill').exists()
+              ? 'pattern'
+              : spPr.child('grpFill').exists()
+                ? 'group'
+                : spPr.child('noFill').exists()
+                  ? 'none'
+                  : spPr.child('solidFill').exists() ||
+                      node.fill?.localName === 'solidFill' ||
+                      hasResolvedSolidShapeFill
+                    ? 'solid'
+                    : 'unknown';
       const shape3dSourceTextBody = node.textBody;
       const ownShape3dBodyPr = shape3dSourceTextBody?.bodyProperties;
       const shape3dAutofit = (['spAutoFit', 'normAutofit', 'noAutofit'] as const).find((mode) =>
@@ -2906,6 +2921,10 @@ export function renderShape(node: ShapeNodeData, ctx: RenderContext): HTMLElemen
     }
   }
 
+  if (useBackgroundFill && mainSvg) {
+    applyShapeBackgroundFill(mainSvg, node, ctx);
+  }
+
   // ---- Render text overlay (only when there is visible text; skip for decorative shapes with empty txBody) ----
   const textBody = node.textBody ? resolveTextFields(node.textBody, ctx) : undefined;
   if (textBody && textBody.paragraphs.length > 0 && hasVisibleText(textBody)) {
@@ -2918,11 +2937,27 @@ export function renderShape(node: ShapeNodeData, ctx: RenderContext): HTMLElemen
     } else {
       const textContainer = document.createElement('div');
       textContainer.style.position = 'absolute';
-      if (node.textBoxBounds) {
-        textContainer.style.left = `${node.textBoxBounds.x}px`;
-        textContainer.style.top = `${node.textBoxBounds.y}px`;
-        textContainer.style.width = `${node.textBoxBounds.w}px`;
-        textContainer.style.height = `${node.textBoxBounds.h}px`;
+      const presetTextBounds =
+        !node.textBoxBounds && !node.customGeometry?.exists()
+          ? getOoxmlPresetTextRectangle(node.presetGeometry ?? '', w, h, node.adjustments)
+          : null;
+      // Keep the full-shape percentage layout and independent txXfrm semantics intact.
+      const textBounds =
+        node.textBoxBounds ??
+        (presetTextBounds &&
+        !(
+          presetTextBounds.x === 0 &&
+          presetTextBounds.y === 0 &&
+          presetTextBounds.w === w &&
+          presetTextBounds.h === h
+        )
+          ? presetTextBounds
+          : undefined);
+      if (textBounds) {
+        textContainer.style.left = `${textBounds.x}px`;
+        textContainer.style.top = `${textBounds.y}px`;
+        textContainer.style.width = `${textBounds.w}px`;
+        textContainer.style.height = `${textBounds.h}px`;
       } else {
         textContainer.style.left = '0';
         textContainer.style.top = '0';
@@ -3114,7 +3149,7 @@ export function renderShape(node: ShapeNodeData, ctx: RenderContext): HTMLElemen
         const topPad = tIns !== undefined ? emuToPx(tIns) : emuToPx(45720);
         const rightPad = rIns !== undefined ? emuToPx(rIns) : emuToPx(91440);
         const bottomPad = bIns !== undefined ? emuToPx(bIns) : emuToPx(45720);
-        const textBoxHeight = node.textBoxBounds?.h ?? node.size.h;
+        const textBoxHeight = textBounds?.h ?? node.size.h;
         const collapseVerticalInsets =
           usesImplicitSingleLineFit &&
           !vert &&

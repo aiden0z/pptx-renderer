@@ -12,6 +12,7 @@
 - [Contributing](CONTRIBUTING.md) — PR checklist, code style, test requirements
 - [Security](SECURITY.md) — ZIP parse limits, URL filtering, vulnerability reporting
 - [Releasing](RELEASING.md) — Release checklist and versioning
+- [v1.4.0 Release Notes](releases/v1.4.0.md) — External media controls, template export, hidden shapes, text and chart fixes
 - [v1.3.0 Release Notes](releases/v1.3.0.md) — Equations, bounded static 3D and effects, CJK text, tables, charts, and standards-based geometry
 - [v1.2.4 Release Notes](releases/v1.2.4.md) — Browser distribution, optional runtime lifecycle, parser hardening, and compact text overflow fixes
 - [v1.2.3 Release Notes](releases/v1.2.3.md) — Connector marker and compact numeric text wrapping fixes

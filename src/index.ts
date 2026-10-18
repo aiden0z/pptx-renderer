@@ -18,6 +18,7 @@ export type { RendererOptions } from './core/Renderer';
 export { parseZip, parseZipLazyMedia, RECOMMENDED_ZIP_LIMITS } from './parser/ZipParser';
 export type { ZipParseLimits } from './parser/ZipParser';
 export type { MediaResolver, ResolvedMedia } from './utils/media';
+export type { ExternalMediaPolicy } from './utils/urlSafety';
 
 export {
   buildPresentation,

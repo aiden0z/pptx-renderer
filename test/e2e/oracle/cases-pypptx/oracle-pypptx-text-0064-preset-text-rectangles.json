@@ -1,0 +1,31 @@
+{
+  "name": "oracle-pypptx-text-0064-preset-text-rectangles",
+  "generator": "python-pptx",
+  "slides": [
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    },
+    {
+      "nodes": [
+        {
+          "kind": "pypptx-generated"
+        }
+      ]
+    }
+  ],
+  "coverage": {
+    "oracle": "native-powerpoint",
+    "requiredFonts": [
+      "Arial"
+    ],
+    "features": [
+      "text.preset-rectangle",
+      "text.anchor.top-center-bottom",
+      "text.preset-rectangle.group-scale"
+    ]
+  }
+}

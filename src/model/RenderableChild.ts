@@ -137,6 +137,8 @@ export function parseOleFrameAsPicture(graphicFrame: SafeXmlNode): PicNodeData |
   return {
     ...fallbackPic,
     ...base,
+    // The preview remains hidden if either its frame or its own cNvPr suppresses it.
+    hidden: base.hidden || fallbackPic.hidden ? true : (base.hidden ?? fallbackPic.hidden),
     nodeType: 'picture',
     source: pic,
   };

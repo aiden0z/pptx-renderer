@@ -52,7 +52,7 @@ function resolveImageRelUrl(
   ctx: RenderContext,
 ): string | undefined | Promise<string | undefined> {
   if (isExternalTargetMode(rel.targetMode)) {
-    return isAllowedExternalMediaUrl(rel.target) ? rel.target : undefined;
+    return isAllowedExternalMediaUrl(rel.target, ctx.externalMedia) ? rel.target : undefined;
   }
 
   const resolved = findMediaByTarget(rel.target, ctx.presentation.media);
@@ -141,7 +141,7 @@ export function renderImage(node: PicNodeData, ctx: RenderContext): HTMLElement 
     }
 
     if (isExternalTargetMode(rel.targetMode)) {
-      url = isAllowedExternalMediaUrl(rel.target) ? rel.target : undefined;
+      url = isAllowedExternalMediaUrl(rel.target, ctx.externalMedia) ? rel.target : undefined;
       if (!url) {
         renderPlaceholder(wrapper, 'Image not found');
         return wrapper;

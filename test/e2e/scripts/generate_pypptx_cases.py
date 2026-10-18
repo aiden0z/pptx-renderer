@@ -5319,6 +5319,7 @@ def _build_chart_cases() -> list[CaseDef]:
 # ---------------------------------------------------------------------------
 
 def _build_all_case_defs(*, include_local_shape3d: bool = False) -> list[CaseDef]:
+    from scripts.renderer_issue_cases import issue_case_definitions
     all_cases: list[CaseDef] = []
     all_cases.extend(_build_text_cases())
     all_cases.extend(_build_shape_adj_cases())
@@ -5331,6 +5332,7 @@ def _build_all_case_defs(*, include_local_shape3d: bool = False) -> list[CaseDef
     all_cases.extend(_build_formula_cases())
     all_cases.extend(_build_composite_cases())
     all_cases.extend(_build_chart_cases())
+    all_cases.extend(issue_case_definitions())
     return all_cases
 
 
