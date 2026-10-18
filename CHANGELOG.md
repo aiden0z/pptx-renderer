@@ -7,6 +7,11 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Documentation
+
+- Complete v1.4.0 API, security, visibility/background ownership, and validation guidance;
+  synchronize oracle case counts and document verified-archive publishing and registry readback.
+
 ## [1.4.0] - 2026-10-18
 
 ### Added
