@@ -4433,6 +4433,252 @@ describe('ChartRenderer', () => {
     });
   });
 
+  describe('data label numFmt', () => {
+    function buildLabelChartXml(opts: {
+      chartType: 'barChart' | 'lineChart' | 'pieChart';
+      plotDLbls?: string;
+      serDLbls?: string;
+      cacheFormatCode?: string;
+      values: number[];
+    }): string {
+      const typeHead = opts.chartType === 'barChart' ? '<c:barDir val="col"/>' : '';
+      const axes =
+        opts.chartType === 'pieChart'
+          ? ''
+          : `<c:catAx><c:axId val="1"/><c:crossAx val="2"/></c:catAx>
+             <c:valAx><c:axId val="2"/><c:crossAx val="1"/></c:valAx>`;
+      const axIds = opts.chartType === 'pieChart' ? '' : '<c:axId val="1"/><c:axId val="2"/>';
+      const cats = opts.values.map((_, i) => `<c:pt idx="${i}"><c:v>C${i}</c:v></c:pt>`).join('');
+      const vals = opts.values.map((v, i) => `<c:pt idx="${i}"><c:v>${v}</c:v></c:pt>`).join('');
+      return `<c:chartSpace
+        xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart"
+        xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+        <c:chart>
+          <c:autoTitleDeleted val="1"/>
+          <c:plotArea>
+            <c:${opts.chartType}>
+              ${typeHead}
+              <c:ser>
+                <c:idx val="0"/><c:order val="0"/>
+                <c:tx><c:v>S</c:v></c:tx>
+                ${opts.serDLbls ?? ''}
+                <c:cat><c:strRef><c:strCache><c:ptCount val="${opts.values.length}"/>${cats}</c:strCache></c:strRef></c:cat>
+                <c:val><c:numRef><c:numCache><c:formatCode>${opts.cacheFormatCode ?? 'General'}</c:formatCode><c:ptCount val="${opts.values.length}"/>${vals}</c:numCache></c:numRef></c:val>
+              </c:ser>
+              ${opts.plotDLbls ?? ''}
+              ${axIds}
+            </c:${opts.chartType}>
+            ${axes}
+          </c:plotArea>
+        </c:chart>
+      </c:chartSpace>`;
+    }
+
+    it('formats bar labels with a plot-level numFmt over a General source (python-pptx data_labels.number_format)', () => {
+      const xml = buildLabelChartXml({
+        chartType: 'barChart',
+        plotDLbls: `<c:dLbls>
+          <c:numFmt formatCode="#,##0" sourceLinked="0"/>
+          <c:showVal val="1"/>
+        </c:dLbls>`,
+        values: [4120, 3480],
+      });
+
+      const series = (parseChartOption(xml).option.series as any[])[0];
+      expect(series.label.formatter({ value: 4120 })).toBe('4,120');
+    });
+
+    it('keeps the source format when the label numFmt is source-linked', () => {
+      const xml = buildLabelChartXml({
+        chartType: 'barChart',
+        plotDLbls: `<c:dLbls>
+          <c:numFmt formatCode="0%" sourceLinked="1"/>
+          <c:showVal val="1"/>
+        </c:dLbls>`,
+        cacheFormatCode: '0.0%',
+        values: [0.213],
+      });
+
+      const series = (parseChartOption(xml).option.series as any[])[0];
+      expect(series.label.formatter({ value: 0.213 })).toBe('21.3%');
+    });
+
+    it('applies a point-level numFmt over the shared label numFmt', () => {
+      const xml = buildLabelChartXml({
+        chartType: 'barChart',
+        plotDLbls: `<c:dLbls>
+          <c:dLbl>
+            <c:idx val="1"/>
+            <c:numFmt formatCode="#,##0.0" sourceLinked="0"/>
+            <c:showVal val="1"/>
+          </c:dLbl>
+          <c:numFmt formatCode="#,##0" sourceLinked="0"/>
+          <c:showVal val="1"/>
+        </c:dLbls>`,
+        values: [4120, 3480],
+      });
+
+      const series = (parseChartOption(xml).option.series as any[])[0];
+      expect(series.label.formatter({ value: 4120 })).toBe('4,120');
+      expect(series.data[1].label.formatter({ value: 3480 })).toBe('3,480.0');
+    });
+
+    it.each(['barChart', 'lineChart', 'pieChart'] as const)(
+      'resets a %s point label to the source format when its numFmt is source-linked',
+      (chartType) => {
+        const xml = buildLabelChartXml({
+          chartType,
+          serDLbls: `<c:dLbls>
+            <c:dLbl>
+              <c:idx val="1"/>
+              <c:numFmt formatCode="0.00" sourceLinked="1"/>
+              <c:showVal val="1"/>
+            </c:dLbl>
+            <c:numFmt formatCode="0%" sourceLinked="0"/>
+            <c:showVal val="1"/>
+          </c:dLbls>`,
+          cacheFormatCode: '0.00',
+          values: [0.5, 0.213],
+        });
+
+        const series = (parseChartOption(xml).option.series as any[])[0];
+        const params = { name: 'C1', value: 0.213, percent: 29.9 };
+        expect(series.label.formatter({ ...params, value: 0.5 })).toBe('50%');
+        expect(series.data[1].label.formatter(params)).toBe('0.21');
+      },
+    );
+
+    it('formats line labels with a series-level numFmt', () => {
+      const xml = buildLabelChartXml({
+        chartType: 'lineChart',
+        serDLbls: `<c:dLbls>
+          <c:numFmt formatCode="#,##0.00" sourceLinked="0"/>
+          <c:showVal val="1"/>
+        </c:dLbls>`,
+        values: [2310, 2205],
+      });
+
+      const series = (parseChartOption(xml).option.series as any[])[0];
+      expect(series.label.formatter({ value: 2310 })).toBe('2,310.00');
+    });
+
+    it('formats pie value labels with the label numFmt', () => {
+      const xml = buildLabelChartXml({
+        chartType: 'pieChart',
+        serDLbls: `<c:dLbls>
+          <c:numFmt formatCode="0%" sourceLinked="0"/>
+          <c:showVal val="1"/>
+        </c:dLbls>`,
+        values: [0.456, 0.544],
+      });
+
+      const series = (parseChartOption(xml).option.series as any[])[0];
+      expect(series.label.formatter({ name: 'C0', value: 0.456, percent: 45.6 })).toBe('46%');
+    });
+  });
+
+  describe('python-pptx LINE_MARKERS chart with a bottom legend', () => {
+    const xml = `<c:chartSpace
+      xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart"
+      xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+      <c:chart>
+        <c:autoTitleDeleted val="0"/>
+        <c:plotArea>
+          <c:lineChart>
+            <c:grouping val="standard"/>
+            <c:varyColors val="0"/>
+            ${[
+              ['Asia - North Europe', [2310, 2205, 2140]],
+              ['Asia - Mediterranean', [2480, 2390, 2275]],
+            ]
+              .map(
+                ([name, values], i) => `<c:ser>
+              <c:idx val="${i}"/><c:order val="${i}"/>
+              <c:tx><c:strRef><c:strCache><c:ptCount val="1"/><c:pt idx="0"><c:v>${name}</c:v></c:pt></c:strCache></c:strRef></c:tx>
+              <c:cat><c:strRef><c:strCache><c:ptCount val="3"/><c:pt idx="0"><c:v>Jul</c:v></c:pt><c:pt idx="1"><c:v>Aug</c:v></c:pt><c:pt idx="2"><c:v>Sep</c:v></c:pt></c:strCache></c:strRef></c:cat>
+              <c:val><c:numRef><c:numCache><c:formatCode>General</c:formatCode><c:ptCount val="3"/>${(
+                values as number[]
+              )
+                .map((v, p) => `<c:pt idx="${p}"><c:v>${v}</c:v></c:pt>`)
+                .join('')}</c:numCache></c:numRef></c:val>
+              <c:smooth val="0"/>
+            </c:ser>`,
+              )
+              .join('')}
+            <c:marker val="1"/>
+            <c:axId val="1"/><c:axId val="2"/>
+          </c:lineChart>
+          <c:catAx><c:axId val="1"/><c:scaling><c:orientation val="minMax"/></c:scaling><c:delete val="0"/><c:axPos val="b"/><c:crossAx val="2"/></c:catAx>
+          <c:valAx><c:axId val="2"/><c:scaling/><c:delete val="0"/><c:axPos val="l"/><c:majorGridlines/><c:crossAx val="1"/></c:valAx>
+        </c:plotArea>
+        <c:legend><c:legendPos val="b"/><c:layout/><c:overlay val="0"/></c:legend>
+        <c:plotVisOnly val="1"/>
+      </c:chart>
+    </c:chartSpace>`;
+
+    it('starts the value axis above zero for values between 2140 and 2480', () => {
+      const yAxis = parseChartOption(xml).option.yAxis as any;
+
+      expect(yAxis.min).toBe(1950);
+      expect(yAxis.max).toBe(2500);
+    });
+
+    it('reserves room for the legend below the category labels on a 6.5 in chart', () => {
+      const size = { w: 1152, h: 624 };
+      const { option } = parseChartXml(parseXml(xml), createMockRenderContext(), undefined, size);
+      const legend = option.legend as any;
+      const grid = option.grid as any;
+
+      expect(legend.bottom).toBe('5%');
+      expect(grid.bottom).toBeGreaterThanOrEqual(0.05 * size.h + legend.textStyle.fontSize * 1.2);
+      expect(grid.bottom).toBeGreaterThan((parseChartOption(xml).option.grid as any).bottom);
+    });
+  });
+
+  describe('automatic value axis matches PowerPoint 16.113 on an 844.8 x 460.8 px chart', () => {
+    const size = { w: 844.8, h: 460.8 };
+    const buildXml = (
+      chartType: 'lineChart' | 'barChart',
+      values: readonly number[],
+    ) => `<c:chartSpace
+      xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart"
+      xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+      <c:chart>
+        <c:autoTitleDeleted val="0"/>
+        <c:plotArea>
+          <c:${chartType}>
+            ${chartType === 'barChart' ? '<c:barDir val="col"/><c:grouping val="clustered"/>' : '<c:grouping val="standard"/>'}
+            <c:ser>
+              <c:idx val="0"/><c:order val="0"/>
+              <c:tx><c:strRef><c:strCache><c:ptCount val="1"/><c:pt idx="0"><c:v>S</c:v></c:pt></c:strCache></c:strRef></c:tx>
+              <c:cat><c:strRef><c:strCache><c:ptCount val="${values.length}"/>${values.map((_, i) => `<c:pt idx="${i}"><c:v>C${i}</c:v></c:pt>`).join('')}</c:strCache></c:strRef></c:cat>
+              <c:val><c:numRef><c:numCache><c:formatCode>General</c:formatCode><c:ptCount val="${values.length}"/>${values.map((v, i) => `<c:pt idx="${i}"><c:v>${v}</c:v></c:pt>`).join('')}</c:numCache></c:numRef></c:val>
+            </c:ser>
+            <c:axId val="1"/><c:axId val="2"/>
+          </c:${chartType}>
+          <c:catAx><c:axId val="1"/><c:delete val="0"/><c:axPos val="b"/><c:crossAx val="2"/></c:catAx>
+          <c:valAx><c:axId val="2"/><c:scaling/><c:delete val="0"/><c:axPos val="l"/><c:majorGridlines/><c:crossAx val="1"/></c:valAx>
+        </c:plotArea>
+        <c:legend><c:legendPos val="b"/><c:overlay val="0"/></c:legend>
+      </c:chart>
+      <c:txPr><a:bodyPr/><a:lstStyle/><a:p><a:pPr><a:defRPr sz="1800"/></a:pPr><a:endParaRPr lang="en-US"/></a:p></c:txPr>
+    </c:chartSpace>`;
+
+    it.each([
+      ['line', 'lineChart', [2140, 2205, 2480], { min: 1900, max: 2600, interval: 100 }],
+      ['column', 'barChart', [3480, 4120], { min: 3000, max: 4200, interval: 200 }],
+    ] as const)('%s chart', (_name, chartType, values, expected) => {
+      const { option } = parseChartXml(
+        parseXml(buildXml(chartType, values)),
+        createMockRenderContext(),
+        undefined,
+        size,
+      );
+
+      expect(option.yAxis).toMatchObject(expected);
+    });
+  });
+
   // ==========================================================================
   // Coverage: resolveGradientStop sysClr fallback (lines 276-285, 288-289)
   // ==========================================================================
@@ -6524,7 +6770,7 @@ describe('ChartRenderer', () => {
                 <c:idx val="0"/><c:order val="0"/>
                 <c:tx><c:strRef><c:strCache><c:ptCount val="1"/><c:pt idx="0"><c:v>Actual</c:v></c:pt></c:strCache></c:strRef></c:tx>
                 <c:cat><c:strRef><c:strCache><c:ptCount val="3"/><c:pt idx="0"><c:v>W1</c:v></c:pt><c:pt idx="1"><c:v>W2</c:v></c:pt><c:pt idx="2"><c:v>W3</c:v></c:pt></c:strCache></c:strRef></c:cat>
-                <c:val><c:numRef><c:numCache><c:formatCode>General</c:formatCode><c:ptCount val="3"/><c:pt idx="0"><c:v>82</c:v></c:pt><c:pt idx="1"><c:v>90</c:v></c:pt><c:pt idx="2"><c:v>96</c:v></c:pt></c:numCache></c:numRef></c:val>
+                <c:val><c:numRef><c:numCache><c:formatCode>General</c:formatCode><c:ptCount val="3"/><c:pt idx="0"><c:v>79</c:v></c:pt><c:pt idx="1"><c:v>90</c:v></c:pt><c:pt idx="2"><c:v>96</c:v></c:pt></c:numCache></c:numRef></c:val>
                 <c:smooth val="0"/>
               </c:ser>
               <c:marker val="1"/>

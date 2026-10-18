@@ -20,6 +20,12 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   stacked WordArt spacing, CJK/Korean font fallback, stretched picture-filled runs including lazy
   package media, placeholder style inheritance when layouts reuse an unlinked placeholder
   index, and wrapped text autofit measurement that follows wrapped line height.
+- Fixed chart data labels ignoring their own `c:numFmt`: bar, line, area and pie labels now use
+  it, and a source-linked one, on the series or on a single point, keeps the series source format.
+- Fixed bottom legends overlapping the category axis labels on taller charts; the plot now
+  reserves the legend's inset and row height.
+- Automatic value axes now start above zero when all values are positive and the minimum is at
+  least 5/6 of the maximum, following Office's automatic axis scaling.
 
 ## [1.3.0] - 2026-09-14
 

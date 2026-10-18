@@ -82,6 +82,8 @@ export interface DataLabelConfig {
   position?: string;
   showLeaderLines?: boolean;
   manualLayout?: DataLabelManualLayout;
+  // null: linked to the source format, which also clears a format inherited from c:dLbls
+  formatCode?: string | null;
   color?: string;
   fontSize?: number;
   bold?: boolean;
