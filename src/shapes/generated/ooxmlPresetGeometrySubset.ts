@@ -5817,3 +5817,28207 @@ export const OOXML_PRESET_GEOMETRY_DEFINITIONS = [
     ]
   }
 ] as const;
+
+export const OOXML_PRESET_TEXT_RECTANGLE_DEFINITIONS = [
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [],
+    "name": "accentBorderCallout1",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "b"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "l"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "r"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "t"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [],
+    "name": "accentBorderCallout2",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "b"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "l"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "r"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "t"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [],
+    "name": "accentBorderCallout3",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "b"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "l"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "r"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "t"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [],
+    "name": "accentCallout1",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "b"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "l"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "r"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "t"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [],
+    "name": "accentCallout2",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "b"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "l"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "r"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "t"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [],
+    "name": "accentCallout3",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "b"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "l"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "r"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "t"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [],
+    "name": "actionButtonBackPrevious",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "b"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "l"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "r"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "t"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [],
+    "name": "actionButtonBeginning",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "b"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "l"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "r"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "t"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [],
+    "name": "actionButtonBlank",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "b"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "l"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "r"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "t"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [],
+    "name": "actionButtonDocument",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "b"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "l"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "r"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "t"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [],
+    "name": "actionButtonEnd",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "b"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "l"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "r"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "t"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [],
+    "name": "actionButtonForwardNext",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "b"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "l"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "r"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "t"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [],
+    "name": "actionButtonHelp",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "b"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "l"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "r"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "t"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [],
+    "name": "actionButtonHome",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "b"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "l"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "r"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "t"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [],
+    "name": "actionButtonInformation",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "b"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "l"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "r"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "t"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [],
+    "name": "actionButtonMovie",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "b"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "l"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "r"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "t"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [],
+    "name": "actionButtonReturn",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "b"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "l"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "r"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "t"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [],
+    "name": "actionButtonSound",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "b"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "l"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "r"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "t"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 16200000
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj2",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj1"
+            },
+            {
+              "kind": "literal",
+              "value": 21599999
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "stAng",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj2"
+            },
+            {
+              "kind": "literal",
+              "value": 21599999
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "enAng",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "enAng"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "stAng"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "sw11",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "sw11"
+            },
+            {
+              "kind": "literal",
+              "value": 21600000
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "sw12",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "sw11"
+            },
+            {
+              "kind": "guide",
+              "name": "sw11"
+            },
+            {
+              "kind": "guide",
+              "name": "sw12"
+            }
+          ],
+          "operator": "?:"
+        },
+        "name": "swAng",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "wd2"
+            },
+            {
+              "kind": "guide",
+              "name": "stAng"
+            }
+          ],
+          "operator": "sin"
+        },
+        "name": "wt1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hd2"
+            },
+            {
+              "kind": "guide",
+              "name": "stAng"
+            }
+          ],
+          "operator": "cos"
+        },
+        "name": "ht1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "wd2"
+            },
+            {
+              "kind": "guide",
+              "name": "ht1"
+            },
+            {
+              "kind": "guide",
+              "name": "wt1"
+            }
+          ],
+          "operator": "cat2"
+        },
+        "name": "dx1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hd2"
+            },
+            {
+              "kind": "guide",
+              "name": "ht1"
+            },
+            {
+              "kind": "guide",
+              "name": "wt1"
+            }
+          ],
+          "operator": "sat2"
+        },
+        "name": "dy1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "wd2"
+            },
+            {
+              "kind": "guide",
+              "name": "enAng"
+            }
+          ],
+          "operator": "sin"
+        },
+        "name": "wt2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hd2"
+            },
+            {
+              "kind": "guide",
+              "name": "enAng"
+            }
+          ],
+          "operator": "cos"
+        },
+        "name": "ht2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "wd2"
+            },
+            {
+              "kind": "guide",
+              "name": "ht2"
+            },
+            {
+              "kind": "guide",
+              "name": "wt2"
+            }
+          ],
+          "operator": "cat2"
+        },
+        "name": "dx2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hd2"
+            },
+            {
+              "kind": "guide",
+              "name": "ht2"
+            },
+            {
+              "kind": "guide",
+              "name": "wt2"
+            }
+          ],
+          "operator": "sat2"
+        },
+        "name": "dy2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "guide",
+              "name": "dx1"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "x1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "guide",
+              "name": "dy1"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "y1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "guide",
+              "name": "dx2"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "x2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "guide",
+              "name": "dy2"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "y2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 21600000
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "stAng"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "sw0",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "swAng"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "sw0"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "da1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "x1"
+            },
+            {
+              "kind": "guide",
+              "name": "x2"
+            }
+          ],
+          "operator": "max"
+        },
+        "name": "g1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "da1"
+            },
+            {
+              "kind": "guide",
+              "name": "r"
+            },
+            {
+              "kind": "guide",
+              "name": "g1"
+            }
+          ],
+          "operator": "?:"
+        },
+        "name": "ir",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "cd4"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "stAng"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "sw1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 27000000
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "stAng"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "sw2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "sw1"
+            },
+            {
+              "kind": "guide",
+              "name": "sw1"
+            },
+            {
+              "kind": "guide",
+              "name": "sw2"
+            }
+          ],
+          "operator": "?:"
+        },
+        "name": "sw3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "swAng"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "sw3"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "da2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "y1"
+            },
+            {
+              "kind": "guide",
+              "name": "y2"
+            }
+          ],
+          "operator": "max"
+        },
+        "name": "g5",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "da2"
+            },
+            {
+              "kind": "guide",
+              "name": "b"
+            },
+            {
+              "kind": "guide",
+              "name": "g5"
+            }
+          ],
+          "operator": "?:"
+        },
+        "name": "ib",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "cd2"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "stAng"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "sw4",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 32400000
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "stAng"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "sw5",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "sw4"
+            },
+            {
+              "kind": "guide",
+              "name": "sw4"
+            },
+            {
+              "kind": "guide",
+              "name": "sw5"
+            }
+          ],
+          "operator": "?:"
+        },
+        "name": "sw6",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "swAng"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "sw6"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "da3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "x1"
+            },
+            {
+              "kind": "guide",
+              "name": "x2"
+            }
+          ],
+          "operator": "min"
+        },
+        "name": "g9",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "da3"
+            },
+            {
+              "kind": "guide",
+              "name": "l"
+            },
+            {
+              "kind": "guide",
+              "name": "g9"
+            }
+          ],
+          "operator": "?:"
+        },
+        "name": "il",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "3cd4"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "stAng"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "sw7",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 37800000
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "stAng"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "sw8",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "sw7"
+            },
+            {
+              "kind": "guide",
+              "name": "sw7"
+            },
+            {
+              "kind": "guide",
+              "name": "sw8"
+            }
+          ],
+          "operator": "?:"
+        },
+        "name": "sw9",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "swAng"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "sw9"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "da4",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "y1"
+            },
+            {
+              "kind": "guide",
+              "name": "y2"
+            }
+          ],
+          "operator": "min"
+        },
+        "name": "g13",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "da4"
+            },
+            {
+              "kind": "guide",
+              "name": "t"
+            },
+            {
+              "kind": "guide",
+              "name": "g13"
+            }
+          ],
+          "operator": "?:"
+        },
+        "name": "it",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "arc",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "ib"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "il"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "ir"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "it"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [],
+    "name": "bentArrow",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "b"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "l"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "r"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "t"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [],
+    "name": "bentConnector2",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "b"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "l"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "r"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "t"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [],
+    "name": "bentConnector3",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "b"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "l"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "r"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "t"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [],
+    "name": "bentConnector4",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "b"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "l"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "r"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "t"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [],
+    "name": "bentConnector5",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "b"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "l"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "r"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "t"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 25000
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 25000
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj2",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj1"
+            },
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj2"
+            },
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "guide",
+              "name": "a2"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "dx3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "r"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dx3"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "x3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "guide",
+              "name": "a1"
+            },
+            {
+              "kind": "literal",
+              "value": 200000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "dx2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "x3"
+            },
+            {
+              "kind": "guide",
+              "name": "dx2"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "x4",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "guide",
+              "name": "a1"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "dy2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "b"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dy2"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "y2",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "bentUpArrow",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "b"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "l"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "x4"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "y2"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 12500
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj"
+            },
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "guide",
+              "name": "a"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "x1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "r"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "x1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "x2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "b"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "x1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "y2",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "bevel",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "y2"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "x1"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "x2"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "x1"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 10800000
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 25000
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj3",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj1"
+            },
+            {
+              "kind": "literal",
+              "value": 21599999
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "stAng",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj2"
+            },
+            {
+              "kind": "literal",
+              "value": 21599999
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "istAng",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj3"
+            },
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "istAng"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "stAng"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "sw11",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "sw11"
+            },
+            {
+              "kind": "literal",
+              "value": 21600000
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "sw12",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "sw11"
+            },
+            {
+              "kind": "guide",
+              "name": "sw11"
+            },
+            {
+              "kind": "guide",
+              "name": "sw12"
+            }
+          ],
+          "operator": "?:"
+        },
+        "name": "swAng",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "wd2"
+            },
+            {
+              "kind": "guide",
+              "name": "stAng"
+            }
+          ],
+          "operator": "sin"
+        },
+        "name": "wt1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hd2"
+            },
+            {
+              "kind": "guide",
+              "name": "stAng"
+            }
+          ],
+          "operator": "cos"
+        },
+        "name": "ht1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "wd2"
+            },
+            {
+              "kind": "guide",
+              "name": "istAng"
+            }
+          ],
+          "operator": "sin"
+        },
+        "name": "wt3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hd2"
+            },
+            {
+              "kind": "guide",
+              "name": "istAng"
+            }
+          ],
+          "operator": "cos"
+        },
+        "name": "ht3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "wd2"
+            },
+            {
+              "kind": "guide",
+              "name": "ht1"
+            },
+            {
+              "kind": "guide",
+              "name": "wt1"
+            }
+          ],
+          "operator": "cat2"
+        },
+        "name": "dx1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hd2"
+            },
+            {
+              "kind": "guide",
+              "name": "ht1"
+            },
+            {
+              "kind": "guide",
+              "name": "wt1"
+            }
+          ],
+          "operator": "sat2"
+        },
+        "name": "dy1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "wd2"
+            },
+            {
+              "kind": "guide",
+              "name": "ht3"
+            },
+            {
+              "kind": "guide",
+              "name": "wt3"
+            }
+          ],
+          "operator": "cat2"
+        },
+        "name": "dx3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hd2"
+            },
+            {
+              "kind": "guide",
+              "name": "ht3"
+            },
+            {
+              "kind": "guide",
+              "name": "wt3"
+            }
+          ],
+          "operator": "sat2"
+        },
+        "name": "dy3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "guide",
+              "name": "dx1"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "x1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "guide",
+              "name": "dy1"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "y1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "guide",
+              "name": "dx3"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "x3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "guide",
+              "name": "dy3"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "y3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "guide",
+              "name": "a3"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "dr",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "wd2"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dr"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "iwd2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hd2"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dr"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ihd2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "iwd2"
+            },
+            {
+              "kind": "guide",
+              "name": "istAng"
+            }
+          ],
+          "operator": "sin"
+        },
+        "name": "wt2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ihd2"
+            },
+            {
+              "kind": "guide",
+              "name": "istAng"
+            }
+          ],
+          "operator": "cos"
+        },
+        "name": "ht2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "iwd2"
+            },
+            {
+              "kind": "guide",
+              "name": "stAng"
+            }
+          ],
+          "operator": "sin"
+        },
+        "name": "wt4",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ihd2"
+            },
+            {
+              "kind": "guide",
+              "name": "stAng"
+            }
+          ],
+          "operator": "cos"
+        },
+        "name": "ht4",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "iwd2"
+            },
+            {
+              "kind": "guide",
+              "name": "ht2"
+            },
+            {
+              "kind": "guide",
+              "name": "wt2"
+            }
+          ],
+          "operator": "cat2"
+        },
+        "name": "dx2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ihd2"
+            },
+            {
+              "kind": "guide",
+              "name": "ht2"
+            },
+            {
+              "kind": "guide",
+              "name": "wt2"
+            }
+          ],
+          "operator": "sat2"
+        },
+        "name": "dy2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "iwd2"
+            },
+            {
+              "kind": "guide",
+              "name": "ht4"
+            },
+            {
+              "kind": "guide",
+              "name": "wt4"
+            }
+          ],
+          "operator": "cat2"
+        },
+        "name": "dx4",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ihd2"
+            },
+            {
+              "kind": "guide",
+              "name": "ht4"
+            },
+            {
+              "kind": "guide",
+              "name": "wt4"
+            }
+          ],
+          "operator": "sat2"
+        },
+        "name": "dy4",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "guide",
+              "name": "dx2"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "x2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "guide",
+              "name": "dy2"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "y2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "guide",
+              "name": "dx4"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "x4",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "guide",
+              "name": "dy4"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "y4",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 21600000
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "stAng"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "sw0",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "swAng"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "sw0"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "da1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "x1"
+            },
+            {
+              "kind": "guide",
+              "name": "x2"
+            }
+          ],
+          "operator": "max"
+        },
+        "name": "g1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "x3"
+            },
+            {
+              "kind": "guide",
+              "name": "x4"
+            }
+          ],
+          "operator": "max"
+        },
+        "name": "g2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "g1"
+            },
+            {
+              "kind": "guide",
+              "name": "g2"
+            }
+          ],
+          "operator": "max"
+        },
+        "name": "g3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "da1"
+            },
+            {
+              "kind": "guide",
+              "name": "r"
+            },
+            {
+              "kind": "guide",
+              "name": "g3"
+            }
+          ],
+          "operator": "?:"
+        },
+        "name": "ir",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "cd4"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "stAng"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "sw1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 27000000
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "stAng"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "sw2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "sw1"
+            },
+            {
+              "kind": "guide",
+              "name": "sw1"
+            },
+            {
+              "kind": "guide",
+              "name": "sw2"
+            }
+          ],
+          "operator": "?:"
+        },
+        "name": "sw3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "swAng"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "sw3"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "da2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "y1"
+            },
+            {
+              "kind": "guide",
+              "name": "y2"
+            }
+          ],
+          "operator": "max"
+        },
+        "name": "g5",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "y3"
+            },
+            {
+              "kind": "guide",
+              "name": "y4"
+            }
+          ],
+          "operator": "max"
+        },
+        "name": "g6",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "g5"
+            },
+            {
+              "kind": "guide",
+              "name": "g6"
+            }
+          ],
+          "operator": "max"
+        },
+        "name": "g7",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "da2"
+            },
+            {
+              "kind": "guide",
+              "name": "b"
+            },
+            {
+              "kind": "guide",
+              "name": "g7"
+            }
+          ],
+          "operator": "?:"
+        },
+        "name": "ib",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "cd2"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "stAng"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "sw4",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 32400000
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "stAng"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "sw5",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "sw4"
+            },
+            {
+              "kind": "guide",
+              "name": "sw4"
+            },
+            {
+              "kind": "guide",
+              "name": "sw5"
+            }
+          ],
+          "operator": "?:"
+        },
+        "name": "sw6",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "swAng"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "sw6"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "da3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "x1"
+            },
+            {
+              "kind": "guide",
+              "name": "x2"
+            }
+          ],
+          "operator": "min"
+        },
+        "name": "g9",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "x3"
+            },
+            {
+              "kind": "guide",
+              "name": "x4"
+            }
+          ],
+          "operator": "min"
+        },
+        "name": "g10",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "g9"
+            },
+            {
+              "kind": "guide",
+              "name": "g10"
+            }
+          ],
+          "operator": "min"
+        },
+        "name": "g11",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "da3"
+            },
+            {
+              "kind": "guide",
+              "name": "l"
+            },
+            {
+              "kind": "guide",
+              "name": "g11"
+            }
+          ],
+          "operator": "?:"
+        },
+        "name": "il",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "3cd4"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "stAng"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "sw7",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 37800000
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "stAng"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "sw8",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "sw7"
+            },
+            {
+              "kind": "guide",
+              "name": "sw7"
+            },
+            {
+              "kind": "guide",
+              "name": "sw8"
+            }
+          ],
+          "operator": "?:"
+        },
+        "name": "sw9",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "swAng"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "sw9"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "da4",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "y1"
+            },
+            {
+              "kind": "guide",
+              "name": "y2"
+            }
+          ],
+          "operator": "min"
+        },
+        "name": "g13",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "y3"
+            },
+            {
+              "kind": "guide",
+              "name": "y4"
+            }
+          ],
+          "operator": "min"
+        },
+        "name": "g14",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "g13"
+            },
+            {
+              "kind": "guide",
+              "name": "g14"
+            }
+          ],
+          "operator": "min"
+        },
+        "name": "g15",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "da4"
+            },
+            {
+              "kind": "guide",
+              "name": "t"
+            },
+            {
+              "kind": "guide",
+              "name": "g15"
+            }
+          ],
+          "operator": "?:"
+        },
+        "name": "it",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "blockArc",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "ib"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "il"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "ir"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "it"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [],
+    "name": "borderCallout1",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "b"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "l"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "r"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "t"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [],
+    "name": "borderCallout2",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "b"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "l"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "r"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "t"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [],
+    "name": "borderCallout3",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "b"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "l"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "r"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "t"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 8333
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj"
+            },
+            {
+              "kind": "literal",
+              "value": 25000
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "guide",
+              "name": "a"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "x1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "x1"
+            },
+            {
+              "kind": "literal",
+              "value": 29289
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "it",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "x1"
+            },
+            {
+              "kind": "guide",
+              "name": "it"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "il",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "r"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "il"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ir",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "b"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "it"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ib",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "bracePair",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "ib"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "il"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "ir"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "il"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 16667
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj"
+            },
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "guide",
+              "name": "a"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "x1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "x1"
+            },
+            {
+              "kind": "literal",
+              "value": 29289
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "il",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "r"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "il"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ir",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "b"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "il"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ib",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "bracketPair",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "ib"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "il"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "ir"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "il"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [],
+    "name": "callout1",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "b"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "l"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "r"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "t"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [],
+    "name": "callout2",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "b"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "l"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "r"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "t"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [],
+    "name": "callout3",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "b"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "l"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "r"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "t"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 25000
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 50000
+            },
+            {
+              "kind": "guide",
+              "name": "h"
+            },
+            {
+              "kind": "guide",
+              "name": "ss"
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "maxAdj",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj"
+            },
+            {
+              "kind": "guide",
+              "name": "maxAdj"
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "guide",
+              "name": "a"
+            },
+            {
+              "kind": "literal",
+              "value": 200000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "y1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "y1"
+            },
+            {
+              "kind": "guide",
+              "name": "y1"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "y2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "b"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "y1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "y3",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "can",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "y3"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "l"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "r"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "y2"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 100000
+            },
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "guide",
+              "name": "ss"
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "maxAdj",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj"
+            },
+            {
+              "kind": "guide",
+              "name": "maxAdj"
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "guide",
+              "name": "a"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "x1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "r"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "x1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "x2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "x2"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "x1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "dx",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "dx"
+            },
+            {
+              "kind": "guide",
+              "name": "x1"
+            },
+            {
+              "kind": "guide",
+              "name": "l"
+            }
+          ],
+          "operator": "?:"
+        },
+        "name": "il",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "dx"
+            },
+            {
+              "kind": "guide",
+              "name": "x2"
+            },
+            {
+              "kind": "guide",
+              "name": "r"
+            }
+          ],
+          "operator": "?:"
+        },
+        "name": "ir",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "chevron",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "b"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "il"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "ir"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "t"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "wd2"
+            },
+            {
+              "kind": "literal",
+              "value": 2700000
+            }
+          ],
+          "operator": "cos"
+        },
+        "name": "idx",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hd2"
+            },
+            {
+              "kind": "literal",
+              "value": 2700000
+            }
+          ],
+          "operator": "sin"
+        },
+        "name": "idy",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "idx"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "il",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "guide",
+              "name": "idx"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ir",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "idy"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "it",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "guide",
+              "name": "idy"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ib",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "chord",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "ib"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "il"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "ir"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "it"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 12500
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 12500
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj5",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj5"
+            },
+            {
+              "kind": "literal",
+              "value": 25000
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a5",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "a5"
+            },
+            {
+              "kind": "literal",
+              "value": 2
+            },
+            {
+              "kind": "literal",
+              "value": 1
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "maxAdj1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj1"
+            },
+            {
+              "kind": "guide",
+              "name": "maxAdj1"
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "guide",
+              "name": "a1"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "th",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "guide",
+              "name": "a5"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "thh",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "th"
+            },
+            {
+              "kind": "literal",
+              "value": 1
+            },
+            {
+              "kind": "literal",
+              "value": 2
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "th2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "wd2"
+            },
+            {
+              "kind": "guide",
+              "name": "th2"
+            },
+            {
+              "kind": "guide",
+              "name": "thh"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "rw1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hd2"
+            },
+            {
+              "kind": "guide",
+              "name": "th2"
+            },
+            {
+              "kind": "guide",
+              "name": "thh"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "rh1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "rw1"
+            },
+            {
+              "kind": "literal",
+              "value": 2700000
+            }
+          ],
+          "operator": "cos"
+        },
+        "name": "idx",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "rh1"
+            },
+            {
+              "kind": "literal",
+              "value": 2700000
+            }
+          ],
+          "operator": "sin"
+        },
+        "name": "idy",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "idx"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "il",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "guide",
+              "name": "idx"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ir",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "idy"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "it",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "guide",
+              "name": "idy"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ib",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "circularArrow",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "ib"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "il"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "ir"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "it"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "literal",
+              "value": 2977
+            },
+            {
+              "kind": "literal",
+              "value": 21600
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "il",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "h"
+            },
+            {
+              "kind": "literal",
+              "value": 3262
+            },
+            {
+              "kind": "literal",
+              "value": 21600
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "it",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "literal",
+              "value": 17087
+            },
+            {
+              "kind": "literal",
+              "value": 21600
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "ir",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "h"
+            },
+            {
+              "kind": "literal",
+              "value": 17337
+            },
+            {
+              "kind": "literal",
+              "value": 21600
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "ib",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "cloud",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "ib"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "il"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "ir"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "it"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "literal",
+              "value": 2977
+            },
+            {
+              "kind": "literal",
+              "value": 21600
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "il",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "h"
+            },
+            {
+              "kind": "literal",
+              "value": 3262
+            },
+            {
+              "kind": "literal",
+              "value": 21600
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "it",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "literal",
+              "value": 17087
+            },
+            {
+              "kind": "literal",
+              "value": 21600
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "ir",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "h"
+            },
+            {
+              "kind": "literal",
+              "value": 17337
+            },
+            {
+              "kind": "literal",
+              "value": 21600
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "ib",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "cloudCallout",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "ib"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "il"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "ir"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "it"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj2",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 100000
+            },
+            {
+              "kind": "guide",
+              "name": "h"
+            },
+            {
+              "kind": "guide",
+              "name": "ss"
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "maxAdj1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 100000
+            },
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "guide",
+              "name": "ss"
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "maxAdj2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj1"
+            },
+            {
+              "kind": "guide",
+              "name": "maxAdj1"
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj2"
+            },
+            {
+              "kind": "guide",
+              "name": "maxAdj2"
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "guide",
+              "name": "a2"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "x1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "guide",
+              "name": "a1"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "dy1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "b"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dy1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "y1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "h"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "d",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "d"
+            },
+            {
+              "kind": "guide",
+              "name": "y1"
+            },
+            {
+              "kind": "guide",
+              "name": "t"
+            }
+          ],
+          "operator": "?:"
+        },
+        "name": "it",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "d"
+            },
+            {
+              "kind": "guide",
+              "name": "r"
+            },
+            {
+              "kind": "guide",
+              "name": "x1"
+            }
+          ],
+          "operator": "?:"
+        },
+        "name": "ir",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "corner",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "b"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "l"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "ir"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "it"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "guide",
+              "name": "h"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "mod"
+        },
+        "name": "md",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 1
+            },
+            {
+              "kind": "guide",
+              "name": "md"
+            },
+            {
+              "kind": "literal",
+              "value": 20
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "dx",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "b"
+            },
+            {
+              "kind": "guide",
+              "name": "dx"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "y1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "r"
+            },
+            {
+              "kind": "guide",
+              "name": "dx"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "x1",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "cornerTabs",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "y1"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "dx"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "x1"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "dx"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 25000
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "guide",
+              "name": "a"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "y1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "r"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "y1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "x4",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "cube",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "b"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "l"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "x4"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "y1"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [],
+    "name": "curvedConnector2",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "b"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "l"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "r"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "t"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [],
+    "name": "curvedConnector3",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "b"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "l"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "r"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "t"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [],
+    "name": "curvedConnector4",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "b"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "l"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "r"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "t"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [],
+    "name": "curvedConnector5",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "b"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "l"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "r"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "t"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [],
+    "name": "curvedDownArrow",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "b"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "l"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "r"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "t"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [],
+    "name": "curvedLeftArrow",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "b"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "l"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "r"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "t"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [],
+    "name": "curvedRightArrow",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "b"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "l"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "r"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "t"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [],
+    "name": "curvedUpArrow",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "b"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "l"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "r"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "t"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 105146
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "vf",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hd2"
+            },
+            {
+              "kind": "guide",
+              "name": "vf"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "shd2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "wd2"
+            },
+            {
+              "kind": "literal",
+              "value": 2160000
+            }
+          ],
+          "operator": "cos"
+        },
+        "name": "dx1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dx1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "x1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "guide",
+              "name": "dx1"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "x4",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "shd2"
+            },
+            {
+              "kind": "literal",
+              "value": 2160000
+            }
+          ],
+          "operator": "sin"
+        },
+        "name": "dy2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dy2"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "y2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "guide",
+              "name": "dy2"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "y3",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "decagon",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "y3"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "x1"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "x4"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "y2"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "guide",
+              "name": "a"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "x2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "x2"
+            },
+            {
+              "kind": "guide",
+              "name": "r"
+            },
+            {
+              "kind": "literal",
+              "value": 2
+            }
+          ],
+          "operator": "+/"
+        },
+        "name": "x3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "h"
+            },
+            {
+              "kind": "guide",
+              "name": "a"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "y2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "y2"
+            },
+            {
+              "kind": "guide",
+              "name": "b"
+            },
+            {
+              "kind": "literal",
+              "value": 2
+            }
+          ],
+          "operator": "+/"
+        },
+        "name": "y3",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "diagStripe",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "y3"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "l"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "x3"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "t"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "literal",
+              "value": 3
+            },
+            {
+              "kind": "literal",
+              "value": 4
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "ir",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "h"
+            },
+            {
+              "kind": "literal",
+              "value": 3
+            },
+            {
+              "kind": "literal",
+              "value": 4
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "ib",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "diamond",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "ib"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "wd4"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "ir"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "hd4"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "literal",
+              "value": 2894
+            },
+            {
+              "kind": "literal",
+              "value": 21600
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "x1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "literal",
+              "value": 18706
+            },
+            {
+              "kind": "literal",
+              "value": 21600
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "x4",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "h"
+            },
+            {
+              "kind": "literal",
+              "value": 2894
+            },
+            {
+              "kind": "literal",
+              "value": 21600
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "y1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "h"
+            },
+            {
+              "kind": "literal",
+              "value": 18706
+            },
+            {
+              "kind": "literal",
+              "value": 21600
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "y4",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "dodecagon",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "y4"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "x1"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "x4"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "y1"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "wd2"
+            },
+            {
+              "kind": "literal",
+              "value": 2700000
+            }
+          ],
+          "operator": "cos"
+        },
+        "name": "idx",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hd2"
+            },
+            {
+              "kind": "literal",
+              "value": 2700000
+            }
+          ],
+          "operator": "sin"
+        },
+        "name": "idy",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "idx"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "il",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "guide",
+              "name": "idx"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ir",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "idy"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "it",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "guide",
+              "name": "idy"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ib",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "donut",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "ib"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "il"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "ir"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "it"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 6250
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj2",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj1"
+            },
+            {
+              "kind": "literal",
+              "value": 12500
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": -10000
+            },
+            {
+              "kind": "guide",
+              "name": "adj2"
+            },
+            {
+              "kind": "literal",
+              "value": 10000
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "guide",
+              "name": "a2"
+            },
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "of2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "of2"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "of2"
+            }
+          ],
+          "operator": "?:"
+        },
+        "name": "dx2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "l"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dx2"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "x2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "of2"
+            },
+            {
+              "kind": "guide",
+              "name": "of2"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "?:"
+        },
+        "name": "dx8",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "r"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dx8"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "x8",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "l"
+            },
+            {
+              "kind": "guide",
+              "name": "dx8"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "x9",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "r"
+            },
+            {
+              "kind": "guide",
+              "name": "dx2"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "x15",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "x2"
+            },
+            {
+              "kind": "guide",
+              "name": "x9"
+            }
+          ],
+          "operator": "max"
+        },
+        "name": "il",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "x8"
+            },
+            {
+              "kind": "guide",
+              "name": "x15"
+            }
+          ],
+          "operator": "min"
+        },
+        "name": "ir",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "h"
+            },
+            {
+              "kind": "guide",
+              "name": "a1"
+            },
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "it",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "b"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "it"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ib",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "doubleWave",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "ib"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "il"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "ir"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "it"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj2",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 100000
+            },
+            {
+              "kind": "guide",
+              "name": "h"
+            },
+            {
+              "kind": "guide",
+              "name": "ss"
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "maxAdj2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj1"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj2"
+            },
+            {
+              "kind": "guide",
+              "name": "maxAdj2"
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "guide",
+              "name": "a2"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "dy1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "b"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dy1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "y1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "guide",
+              "name": "a1"
+            },
+            {
+              "kind": "literal",
+              "value": 200000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "dx1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dx1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "x1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "guide",
+              "name": "dx1"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "x2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "x1"
+            },
+            {
+              "kind": "guide",
+              "name": "dy1"
+            },
+            {
+              "kind": "guide",
+              "name": "wd2"
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "dy2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "y1"
+            },
+            {
+              "kind": "guide",
+              "name": "dy2"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "y2",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "downArrow",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "y2"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "x1"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "x2"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "t"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 25000
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 64977
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj4",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 100000
+            },
+            {
+              "kind": "guide",
+              "name": "h"
+            },
+            {
+              "kind": "guide",
+              "name": "ss"
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "maxAdj3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj3"
+            },
+            {
+              "kind": "guide",
+              "name": "maxAdj3"
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "a3"
+            },
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "guide",
+              "name": "h"
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "q2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 100000
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "q2"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "maxAdj4",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj4"
+            },
+            {
+              "kind": "guide",
+              "name": "maxAdj4"
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a4",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "h"
+            },
+            {
+              "kind": "guide",
+              "name": "a4"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "y2",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "downArrowCallout",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "y2"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "l"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "r"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "t"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "wd2"
+            },
+            {
+              "kind": "literal",
+              "value": 2700000
+            }
+          ],
+          "operator": "cos"
+        },
+        "name": "idx",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hd2"
+            },
+            {
+              "kind": "literal",
+              "value": 2700000
+            }
+          ],
+          "operator": "sin"
+        },
+        "name": "idy",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "idx"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "il",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "guide",
+              "name": "idx"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ir",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "idy"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "it",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "guide",
+              "name": "idy"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ib",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "ellipse",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "ib"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "il"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "ir"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "it"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 25000
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 12500
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj3",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj1"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 25000
+            },
+            {
+              "kind": "guide",
+              "name": "adj2"
+            },
+            {
+              "kind": "literal",
+              "value": 75000
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 100000
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "a1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "q10",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "q10"
+            },
+            {
+              "kind": "literal",
+              "value": 1
+            },
+            {
+              "kind": "literal",
+              "value": 2
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "q11",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "a1"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "q11"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "q12",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "q12"
+            }
+          ],
+          "operator": "max"
+        },
+        "name": "minAdj3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "minAdj3"
+            },
+            {
+              "kind": "guide",
+              "name": "adj3"
+            },
+            {
+              "kind": "guide",
+              "name": "a1"
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "guide",
+              "name": "a2"
+            },
+            {
+              "kind": "literal",
+              "value": 200000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "dx2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dx2"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "x2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "r"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "x2"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "x5",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "h"
+            },
+            {
+              "kind": "guide",
+              "name": "a3"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "dy1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 4
+            },
+            {
+              "kind": "guide",
+              "name": "dy1"
+            },
+            {
+              "kind": "guide",
+              "name": "w"
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "f1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "h"
+            },
+            {
+              "kind": "guide",
+              "name": "a1"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "q1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "q1"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dy1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "dy3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "x2"
+            },
+            {
+              "kind": "guide",
+              "name": "x2"
+            },
+            {
+              "kind": "guide",
+              "name": "w"
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "q3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "x2"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "q3"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "q4",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "f1"
+            },
+            {
+              "kind": "guide",
+              "name": "q4"
+            },
+            {
+              "kind": "literal",
+              "value": 1
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "q5",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "q5"
+            },
+            {
+              "kind": "guide",
+              "name": "dy3"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "y3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "b"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "q1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "rh",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "y3"
+            },
+            {
+              "kind": "guide",
+              "name": "rh"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "y6",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "ellipseRibbon",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "y6"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "x2"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "x5"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "q1"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 25000
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 12500
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj3",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj1"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 25000
+            },
+            {
+              "kind": "guide",
+              "name": "adj2"
+            },
+            {
+              "kind": "literal",
+              "value": 75000
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 100000
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "a1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "q10",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "q10"
+            },
+            {
+              "kind": "literal",
+              "value": 1
+            },
+            {
+              "kind": "literal",
+              "value": 2
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "q11",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "a1"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "q11"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "q12",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "q12"
+            }
+          ],
+          "operator": "max"
+        },
+        "name": "minAdj3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "minAdj3"
+            },
+            {
+              "kind": "guide",
+              "name": "adj3"
+            },
+            {
+              "kind": "guide",
+              "name": "a1"
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "guide",
+              "name": "a2"
+            },
+            {
+              "kind": "literal",
+              "value": 200000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "dx2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dx2"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "x2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "r"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "x2"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "x5",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "h"
+            },
+            {
+              "kind": "guide",
+              "name": "a3"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "dy1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 4
+            },
+            {
+              "kind": "guide",
+              "name": "dy1"
+            },
+            {
+              "kind": "guide",
+              "name": "w"
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "f1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "h"
+            },
+            {
+              "kind": "guide",
+              "name": "a1"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "q1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "q1"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dy1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "dy3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "x2"
+            },
+            {
+              "kind": "guide",
+              "name": "x2"
+            },
+            {
+              "kind": "guide",
+              "name": "w"
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "q3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "x2"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "q3"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "q4",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "f1"
+            },
+            {
+              "kind": "guide",
+              "name": "q4"
+            },
+            {
+              "kind": "literal",
+              "value": 1
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "q5",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "q5"
+            },
+            {
+              "kind": "guide",
+              "name": "dy3"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "u3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "b"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "q1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "rh",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "u3"
+            },
+            {
+              "kind": "guide",
+              "name": "rh"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "u6",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "b"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "u6"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "y6",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "ellipseRibbon2",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "rh"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "x2"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "x5"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "y6"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ssd6"
+            },
+            {
+              "kind": "literal",
+              "value": 29289
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "il",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "r"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "il"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ir",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "b"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "il"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ib",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "flowChartAlternateProcess",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "ib"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "il"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "ir"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "il"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "literal",
+              "value": 3
+            },
+            {
+              "kind": "literal",
+              "value": 4
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "ir",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "h"
+            },
+            {
+              "kind": "literal",
+              "value": 3
+            },
+            {
+              "kind": "literal",
+              "value": 4
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "ib",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "flowChartCollate",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "ib"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "wd4"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "ir"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "hd4"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "wd2"
+            },
+            {
+              "kind": "literal",
+              "value": 2700000
+            }
+          ],
+          "operator": "cos"
+        },
+        "name": "idx",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hd2"
+            },
+            {
+              "kind": "literal",
+              "value": 2700000
+            }
+          ],
+          "operator": "sin"
+        },
+        "name": "idy",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "idx"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "il",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "guide",
+              "name": "idx"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ir",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "idy"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "it",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "guide",
+              "name": "idy"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ib",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "flowChartConnector",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "ib"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "il"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "ir"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "it"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "literal",
+              "value": 3
+            },
+            {
+              "kind": "literal",
+              "value": 4
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "ir",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "h"
+            },
+            {
+              "kind": "literal",
+              "value": 3
+            },
+            {
+              "kind": "literal",
+              "value": 4
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "ib",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "flowChartDecision",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "ib"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "wd4"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "ir"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "hd4"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "wd2"
+            },
+            {
+              "kind": "literal",
+              "value": 2700000
+            }
+          ],
+          "operator": "cos"
+        },
+        "name": "idx",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hd2"
+            },
+            {
+              "kind": "literal",
+              "value": 2700000
+            }
+          ],
+          "operator": "sin"
+        },
+        "name": "idy",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "guide",
+              "name": "idx"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ir",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "idy"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "it",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "guide",
+              "name": "idy"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ib",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "flowChartDelay",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "ib"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "l"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "ir"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "it"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "literal",
+              "value": 5
+            },
+            {
+              "kind": "literal",
+              "value": 6
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "x2",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "flowChartDisplay",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "b"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "wd6"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "x2"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "t"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "h"
+            },
+            {
+              "kind": "literal",
+              "value": 17322
+            },
+            {
+              "kind": "literal",
+              "value": 21600
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "y1",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "flowChartDocument",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "y1"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "l"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "r"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "t"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "literal",
+              "value": 3
+            },
+            {
+              "kind": "literal",
+              "value": 4
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "x2",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "flowChartExtract",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "b"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "wd4"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "x2"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "vc"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "literal",
+              "value": 4
+            },
+            {
+              "kind": "literal",
+              "value": 5
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "x5",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "flowChartInputOutput",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "b"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "wd5"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "x5"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "t"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [],
+    "name": "flowChartInternalStorage",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "b"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "wd8"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "r"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "hd8"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "h"
+            },
+            {
+              "kind": "literal",
+              "value": 5
+            },
+            {
+              "kind": "literal",
+              "value": 6
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "y3",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "flowChartMagneticDisk",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "y3"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "l"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "r"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "hd3"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "literal",
+              "value": 2
+            },
+            {
+              "kind": "literal",
+              "value": 3
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "x2",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "flowChartMagneticDrum",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "b"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "wd6"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "x2"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "t"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "wd2"
+            },
+            {
+              "kind": "literal",
+              "value": 2700000
+            }
+          ],
+          "operator": "cos"
+        },
+        "name": "idx",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hd2"
+            },
+            {
+              "kind": "literal",
+              "value": 2700000
+            }
+          ],
+          "operator": "sin"
+        },
+        "name": "idy",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "idx"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "il",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "guide",
+              "name": "idx"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ir",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "idy"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "it",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "guide",
+              "name": "idy"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ib",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "flowChartMagneticTape",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "ib"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "il"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "ir"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "it"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [],
+    "name": "flowChartManualInput",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "b"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "l"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "r"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "hd5"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "literal",
+              "value": 4
+            },
+            {
+              "kind": "literal",
+              "value": 5
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "x3",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "flowChartManualOperation",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "b"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "wd5"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "x3"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "t"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "literal",
+              "value": 3
+            },
+            {
+              "kind": "literal",
+              "value": 4
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "x2",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "flowChartMerge",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "vc"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "wd4"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "x2"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "t"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "h"
+            },
+            {
+              "kind": "literal",
+              "value": 3675
+            },
+            {
+              "kind": "literal",
+              "value": 21600
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "y2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "h"
+            },
+            {
+              "kind": "literal",
+              "value": 20782
+            },
+            {
+              "kind": "literal",
+              "value": 21600
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "y8",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "literal",
+              "value": 18595
+            },
+            {
+              "kind": "literal",
+              "value": 21600
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "x5",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "flowChartMultidocument",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "y8"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "l"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "x5"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "y2"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "literal",
+              "value": 3
+            },
+            {
+              "kind": "literal",
+              "value": 4
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "x4",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "flowChartOfflineStorage",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "vc"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "wd4"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "x4"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "t"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "h"
+            },
+            {
+              "kind": "literal",
+              "value": 4
+            },
+            {
+              "kind": "literal",
+              "value": 5
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "y1",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "flowChartOffpageConnector",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "y1"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "l"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "r"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "t"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "literal",
+              "value": 5
+            },
+            {
+              "kind": "literal",
+              "value": 6
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "x2",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "flowChartOnlineStorage",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "b"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "wd6"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "x2"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "t"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "wd2"
+            },
+            {
+              "kind": "literal",
+              "value": 2700000
+            }
+          ],
+          "operator": "cos"
+        },
+        "name": "idx",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hd2"
+            },
+            {
+              "kind": "literal",
+              "value": 2700000
+            }
+          ],
+          "operator": "sin"
+        },
+        "name": "idy",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "idx"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "il",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "guide",
+              "name": "idx"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ir",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "idy"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "it",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "guide",
+              "name": "idy"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ib",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "flowChartOr",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "ib"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "il"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "ir"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "it"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "literal",
+              "value": 7
+            },
+            {
+              "kind": "literal",
+              "value": 8
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "x2",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "flowChartPredefinedProcess",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "b"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "wd8"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "x2"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "t"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "literal",
+              "value": 4
+            },
+            {
+              "kind": "literal",
+              "value": 5
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "x2",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "flowChartPreparation",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "b"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "wd5"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "x2"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "t"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [],
+    "name": "flowChartProcess",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "b"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "l"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "r"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "t"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [],
+    "name": "flowChartPunchedCard",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "b"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "l"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "r"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "hd5"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "h"
+            },
+            {
+              "kind": "literal",
+              "value": 4
+            },
+            {
+              "kind": "literal",
+              "value": 5
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "ib",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "flowChartPunchedTape",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "ib"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "l"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "r"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "hd5"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "literal",
+              "value": 3
+            },
+            {
+              "kind": "literal",
+              "value": 4
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "ir",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "h"
+            },
+            {
+              "kind": "literal",
+              "value": 3
+            },
+            {
+              "kind": "literal",
+              "value": 4
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "ib",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "flowChartSort",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "ib"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "wd4"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "ir"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "hd4"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "wd2"
+            },
+            {
+              "kind": "literal",
+              "value": 2700000
+            }
+          ],
+          "operator": "cos"
+        },
+        "name": "idx",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hd2"
+            },
+            {
+              "kind": "literal",
+              "value": 2700000
+            }
+          ],
+          "operator": "sin"
+        },
+        "name": "idy",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "idx"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "il",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "guide",
+              "name": "idx"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ir",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "idy"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "it",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "guide",
+              "name": "idy"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ib",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "flowChartSummingJunction",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "ib"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "il"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "ir"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "it"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "literal",
+              "value": 1018
+            },
+            {
+              "kind": "literal",
+              "value": 21600
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "il",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "literal",
+              "value": 20582
+            },
+            {
+              "kind": "literal",
+              "value": 21600
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "ir",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "h"
+            },
+            {
+              "kind": "literal",
+              "value": 3163
+            },
+            {
+              "kind": "literal",
+              "value": 21600
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "it",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "h"
+            },
+            {
+              "kind": "literal",
+              "value": 18437
+            },
+            {
+              "kind": "literal",
+              "value": 21600
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "ib",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "flowChartTerminator",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "ib"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "il"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "ir"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "it"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 16667
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj"
+            },
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "guide",
+              "name": "a"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "dy2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "b"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dy2"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "y2",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "foldedCorner",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "y2"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "l"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "r"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "t"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 12500
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj1",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj1"
+            },
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "guide",
+              "name": "a1"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "x1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "r"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "x1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "x4",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "b"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "x1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "y4",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "frame",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "y4"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "x1"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "x4"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "x1"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [],
+    "name": "funnel",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "b"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "l"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "r"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "t"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 15000
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 3526
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj2",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj1"
+            },
+            {
+              "kind": "literal",
+              "value": 20000
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj2"
+            },
+            {
+              "kind": "literal",
+              "value": 5358
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "guide",
+              "name": "a1"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "th",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "guide",
+              "name": "a2"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "lFD",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "th"
+            },
+            {
+              "kind": "literal",
+              "value": 1
+            },
+            {
+              "kind": "literal",
+              "value": 2
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "th2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "lFD"
+            },
+            {
+              "kind": "literal",
+              "value": 1
+            },
+            {
+              "kind": "literal",
+              "value": 2
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "l2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "th2"
+            },
+            {
+              "kind": "guide",
+              "name": "l2"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "l3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hd2"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "th"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "rh",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "wd2"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "th"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "rw",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "rw"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "rh"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "dr",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "dr"
+            },
+            {
+              "kind": "guide",
+              "name": "rh"
+            },
+            {
+              "kind": "guide",
+              "name": "rw"
+            }
+          ],
+          "operator": "?:"
+        },
+        "name": "maxr",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "maxr"
+            },
+            {
+              "kind": "guide",
+              "name": "l3"
+            }
+          ],
+          "operator": "at2"
+        },
+        "name": "ha",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 19800000
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "ha"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "aA1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "rw"
+            },
+            {
+              "kind": "guide",
+              "name": "aA1"
+            }
+          ],
+          "operator": "cos"
+        },
+        "name": "ta11",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "rh"
+            },
+            {
+              "kind": "guide",
+              "name": "aA1"
+            }
+          ],
+          "operator": "sin"
+        },
+        "name": "ta12",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ta11"
+            },
+            {
+              "kind": "guide",
+              "name": "ta12"
+            }
+          ],
+          "operator": "at2"
+        },
+        "name": "bA1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "rh"
+            },
+            {
+              "kind": "guide",
+              "name": "bA1"
+            }
+          ],
+          "operator": "cos"
+        },
+        "name": "cta1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "rw"
+            },
+            {
+              "kind": "guide",
+              "name": "bA1"
+            }
+          ],
+          "operator": "sin"
+        },
+        "name": "sta1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "cta1"
+            },
+            {
+              "kind": "guide",
+              "name": "sta1"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "mod"
+        },
+        "name": "ma1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "rw"
+            },
+            {
+              "kind": "guide",
+              "name": "rh"
+            },
+            {
+              "kind": "guide",
+              "name": "ma1"
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "na1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "na1"
+            },
+            {
+              "kind": "guide",
+              "name": "bA1"
+            }
+          ],
+          "operator": "cos"
+        },
+        "name": "dxa1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "na1"
+            },
+            {
+              "kind": "guide",
+              "name": "bA1"
+            }
+          ],
+          "operator": "sin"
+        },
+        "name": "dya1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "guide",
+              "name": "dxa1"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "xA1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "guide",
+              "name": "dya1"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "yA1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "h"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "yA1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "yD2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "xA1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "xD5",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "gear6",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "yD2"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "xD5"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "xA1"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "yA1"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 10000
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 1763
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj2",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj1"
+            },
+            {
+              "kind": "literal",
+              "value": 20000
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj2"
+            },
+            {
+              "kind": "literal",
+              "value": 2679
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "guide",
+              "name": "a1"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "th",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "guide",
+              "name": "a2"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "lFD",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "th"
+            },
+            {
+              "kind": "literal",
+              "value": 1
+            },
+            {
+              "kind": "literal",
+              "value": 2
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "th2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "lFD"
+            },
+            {
+              "kind": "literal",
+              "value": 1
+            },
+            {
+              "kind": "literal",
+              "value": 2
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "l2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "th2"
+            },
+            {
+              "kind": "guide",
+              "name": "l2"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "l3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hd2"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "th"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "rh",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "wd2"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "th"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "rw",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "rw"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "rh"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "dr",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "dr"
+            },
+            {
+              "kind": "guide",
+              "name": "rh"
+            },
+            {
+              "kind": "guide",
+              "name": "rw"
+            }
+          ],
+          "operator": "?:"
+        },
+        "name": "maxr",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "maxr"
+            },
+            {
+              "kind": "guide",
+              "name": "l3"
+            }
+          ],
+          "operator": "at2"
+        },
+        "name": "ha",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 18600000
+            },
+            {
+              "kind": "guide",
+              "name": "ha"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "aD1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "rw"
+            },
+            {
+              "kind": "guide",
+              "name": "aD1"
+            }
+          ],
+          "operator": "cos"
+        },
+        "name": "td11",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "rh"
+            },
+            {
+              "kind": "guide",
+              "name": "aD1"
+            }
+          ],
+          "operator": "sin"
+        },
+        "name": "td12",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "td11"
+            },
+            {
+              "kind": "guide",
+              "name": "td12"
+            }
+          ],
+          "operator": "at2"
+        },
+        "name": "bD1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "rh"
+            },
+            {
+              "kind": "guide",
+              "name": "bD1"
+            }
+          ],
+          "operator": "cos"
+        },
+        "name": "ctd1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "rw"
+            },
+            {
+              "kind": "guide",
+              "name": "bD1"
+            }
+          ],
+          "operator": "sin"
+        },
+        "name": "std1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ctd1"
+            },
+            {
+              "kind": "guide",
+              "name": "std1"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "mod"
+        },
+        "name": "md1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "rw"
+            },
+            {
+              "kind": "guide",
+              "name": "rh"
+            },
+            {
+              "kind": "guide",
+              "name": "md1"
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "nd1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "nd1"
+            },
+            {
+              "kind": "guide",
+              "name": "bD1"
+            }
+          ],
+          "operator": "cos"
+        },
+        "name": "dxd1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "nd1"
+            },
+            {
+              "kind": "guide",
+              "name": "bD1"
+            }
+          ],
+          "operator": "sin"
+        },
+        "name": "dyd1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "guide",
+              "name": "dxd1"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "xD1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "guide",
+              "name": "dyd1"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "yD1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 1800000
+            },
+            {
+              "kind": "guide",
+              "name": "ha"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "aD3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "rw"
+            },
+            {
+              "kind": "guide",
+              "name": "aD3"
+            }
+          ],
+          "operator": "cos"
+        },
+        "name": "td31",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "rh"
+            },
+            {
+              "kind": "guide",
+              "name": "aD3"
+            }
+          ],
+          "operator": "sin"
+        },
+        "name": "td32",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "td31"
+            },
+            {
+              "kind": "guide",
+              "name": "td32"
+            }
+          ],
+          "operator": "at2"
+        },
+        "name": "bD3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "rh"
+            },
+            {
+              "kind": "guide",
+              "name": "bD3"
+            }
+          ],
+          "operator": "cos"
+        },
+        "name": "ctd3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "rw"
+            },
+            {
+              "kind": "guide",
+              "name": "bD3"
+            }
+          ],
+          "operator": "sin"
+        },
+        "name": "std3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ctd3"
+            },
+            {
+              "kind": "guide",
+              "name": "std3"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "mod"
+        },
+        "name": "md3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "rw"
+            },
+            {
+              "kind": "guide",
+              "name": "rh"
+            },
+            {
+              "kind": "guide",
+              "name": "md3"
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "nd3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "nd3"
+            },
+            {
+              "kind": "guide",
+              "name": "bD3"
+            }
+          ],
+          "operator": "sin"
+        },
+        "name": "dyd3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "guide",
+              "name": "dyd3"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "yD3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "xD1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "xA8",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "gear9",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "yD3"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "xA8"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "xD1"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "yD1"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [],
+    "name": "halfFrame",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "b"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "l"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "r"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "t"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "literal",
+              "value": 1
+            },
+            {
+              "kind": "literal",
+              "value": 6
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "il",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "literal",
+              "value": 5
+            },
+            {
+              "kind": "literal",
+              "value": 6
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "ir",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "h"
+            },
+            {
+              "kind": "literal",
+              "value": 2
+            },
+            {
+              "kind": "literal",
+              "value": 3
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "ib",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "heart",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "ib"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "il"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "ir"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "hd4"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 102572
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "hf",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 105210
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "vf",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "wd2"
+            },
+            {
+              "kind": "guide",
+              "name": "hf"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "swd2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hd2"
+            },
+            {
+              "kind": "guide",
+              "name": "vf"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "shd2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "guide",
+              "name": "vf"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "svc",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "swd2"
+            },
+            {
+              "kind": "literal",
+              "value": 78183
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "dx2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "shd2"
+            },
+            {
+              "kind": "literal",
+              "value": 62349
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "dy1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dx2"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "x2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "guide",
+              "name": "dx2"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "x5",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "svc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dy1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "y1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "b"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "y1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ib",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "heptagon",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "ib"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "x2"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "x5"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "y1"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 25000
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 50000
+            },
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "guide",
+              "name": "ss"
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "maxAdj",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj"
+            },
+            {
+              "kind": "guide",
+              "name": "maxAdj"
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "maxAdj"
+            },
+            {
+              "kind": "literal",
+              "value": -1
+            },
+            {
+              "kind": "literal",
+              "value": 2
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "q1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "a"
+            },
+            {
+              "kind": "guide",
+              "name": "q1"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "q2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "q2"
+            },
+            {
+              "kind": "literal",
+              "value": 4
+            },
+            {
+              "kind": "literal",
+              "value": 2
+            }
+          ],
+          "operator": "?:"
+        },
+        "name": "q3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "q2"
+            },
+            {
+              "kind": "literal",
+              "value": 3
+            },
+            {
+              "kind": "literal",
+              "value": 2
+            }
+          ],
+          "operator": "?:"
+        },
+        "name": "q4",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "q2"
+            },
+            {
+              "kind": "guide",
+              "name": "q1"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "?:"
+        },
+        "name": "q5",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "a"
+            },
+            {
+              "kind": "guide",
+              "name": "q5"
+            },
+            {
+              "kind": "guide",
+              "name": "q1"
+            }
+          ],
+          "operator": "+/"
+        },
+        "name": "q6",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "q6"
+            },
+            {
+              "kind": "guide",
+              "name": "q4"
+            },
+            {
+              "kind": "literal",
+              "value": -1
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "q7",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "q3"
+            },
+            {
+              "kind": "guide",
+              "name": "q7"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "q8",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "guide",
+              "name": "q8"
+            },
+            {
+              "kind": "literal",
+              "value": 24
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "il",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "h"
+            },
+            {
+              "kind": "guide",
+              "name": "q8"
+            },
+            {
+              "kind": "literal",
+              "value": 24
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "it",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "r"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "il"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ir",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "b"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "it"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ib",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "hexagon",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "ib"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "il"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "ir"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "it"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 100000
+            },
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "guide",
+              "name": "ss"
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "maxAdj",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj"
+            },
+            {
+              "kind": "guide",
+              "name": "maxAdj"
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "guide",
+              "name": "a"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "dx1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "r"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dx1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "x1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "x1"
+            },
+            {
+              "kind": "guide",
+              "name": "r"
+            },
+            {
+              "kind": "literal",
+              "value": 2
+            }
+          ],
+          "operator": "+/"
+        },
+        "name": "ir",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "homePlate",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "b"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "l"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "ir"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "t"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 12500
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj"
+            },
+            {
+              "kind": "literal",
+              "value": 25000
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "guide",
+              "name": "a"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "ch",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ch"
+            },
+            {
+              "kind": "literal",
+              "value": 1
+            },
+            {
+              "kind": "literal",
+              "value": 2
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "ch2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "b"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "ch"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "y6",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "r"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "ch2"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "x4",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "horizontalScroll",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "y6"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "ch"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "x4"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "ch"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "literal",
+              "value": 4627
+            },
+            {
+              "kind": "literal",
+              "value": 21600
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "x5",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "literal",
+              "value": 16702
+            },
+            {
+              "kind": "literal",
+              "value": 21600
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "x21",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "h"
+            },
+            {
+              "kind": "literal",
+              "value": 6320
+            },
+            {
+              "kind": "literal",
+              "value": 21600
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "y3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "h"
+            },
+            {
+              "kind": "literal",
+              "value": 13937
+            },
+            {
+              "kind": "literal",
+              "value": 21600
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "y9",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "irregularSeal1",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "y9"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "x5"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "x21"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "y3"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "literal",
+              "value": 5372
+            },
+            {
+              "kind": "literal",
+              "value": 21600
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "x5",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "literal",
+              "value": 14640
+            },
+            {
+              "kind": "literal",
+              "value": 21600
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "x19",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "h"
+            },
+            {
+              "kind": "literal",
+              "value": 6382
+            },
+            {
+              "kind": "literal",
+              "value": 21600
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "y3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "h"
+            },
+            {
+              "kind": "literal",
+              "value": 15935
+            },
+            {
+              "kind": "literal",
+              "value": 21600
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "y17",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "irregularSeal2",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "y17"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "x5"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "x19"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "y3"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj2",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 100000
+            },
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "guide",
+              "name": "ss"
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "maxAdj2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj1"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj2"
+            },
+            {
+              "kind": "guide",
+              "name": "maxAdj2"
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "guide",
+              "name": "a2"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "dx2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "l"
+            },
+            {
+              "kind": "guide",
+              "name": "dx2"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "x2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "h"
+            },
+            {
+              "kind": "guide",
+              "name": "a1"
+            },
+            {
+              "kind": "literal",
+              "value": 200000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "dy1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dy1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "y1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "guide",
+              "name": "dy1"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "y2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "y1"
+            },
+            {
+              "kind": "guide",
+              "name": "dx2"
+            },
+            {
+              "kind": "guide",
+              "name": "hd2"
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "dx1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "x2"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dx1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "x1",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "leftArrow",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "y2"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "x1"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "r"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "y1"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 25000
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 64977
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj4",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 100000
+            },
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "guide",
+              "name": "ss"
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "maxAdj3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj3"
+            },
+            {
+              "kind": "guide",
+              "name": "maxAdj3"
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "a3"
+            },
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "guide",
+              "name": "w"
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "q2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 100000
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "q2"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "maxAdj4",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj4"
+            },
+            {
+              "kind": "guide",
+              "name": "maxAdj4"
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a4",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "guide",
+              "name": "a4"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "dx2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "r"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dx2"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "x2",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "leftArrowCallout",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "b"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "x2"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "r"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "t"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 8333
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj2",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj2"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 100000
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "a2"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "q1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "q1"
+            },
+            {
+              "kind": "guide",
+              "name": "a2"
+            }
+          ],
+          "operator": "min"
+        },
+        "name": "q2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "q2"
+            },
+            {
+              "kind": "literal",
+              "value": 1
+            },
+            {
+              "kind": "literal",
+              "value": 2
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "q3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "q3"
+            },
+            {
+              "kind": "guide",
+              "name": "h"
+            },
+            {
+              "kind": "guide",
+              "name": "ss"
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "maxAdj1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj1"
+            },
+            {
+              "kind": "guide",
+              "name": "maxAdj1"
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "guide",
+              "name": "a1"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "y1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "wd2"
+            },
+            {
+              "kind": "literal",
+              "value": 2700000
+            }
+          ],
+          "operator": "cos"
+        },
+        "name": "dx1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "y1"
+            },
+            {
+              "kind": "literal",
+              "value": 2700000
+            }
+          ],
+          "operator": "sin"
+        },
+        "name": "dy1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "r"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dx1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "il",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "y1"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dy1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "it",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "b"
+            },
+            {
+              "kind": "guide",
+              "name": "dy1"
+            },
+            {
+              "kind": "guide",
+              "name": "y1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ib",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "leftBrace",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "ib"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "il"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "r"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "it"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 8333
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 50000
+            },
+            {
+              "kind": "guide",
+              "name": "h"
+            },
+            {
+              "kind": "guide",
+              "name": "ss"
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "maxAdj",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj"
+            },
+            {
+              "kind": "guide",
+              "name": "maxAdj"
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "guide",
+              "name": "a"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "y1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "literal",
+              "value": 2700000
+            }
+          ],
+          "operator": "cos"
+        },
+        "name": "dx1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "y1"
+            },
+            {
+              "kind": "literal",
+              "value": 2700000
+            }
+          ],
+          "operator": "sin"
+        },
+        "name": "dy1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "r"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dx1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "il",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "y1"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dy1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "it",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "b"
+            },
+            {
+              "kind": "guide",
+              "name": "dy1"
+            },
+            {
+              "kind": "guide",
+              "name": "y1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ib",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "leftBracket",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "ib"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "il"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "r"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "it"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 12500
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 12500
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj5",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj5"
+            },
+            {
+              "kind": "literal",
+              "value": 25000
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a5",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "a5"
+            },
+            {
+              "kind": "literal",
+              "value": 2
+            },
+            {
+              "kind": "literal",
+              "value": 1
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "maxAdj1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj1"
+            },
+            {
+              "kind": "guide",
+              "name": "maxAdj1"
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "guide",
+              "name": "a1"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "th",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "guide",
+              "name": "a5"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "thh",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "th"
+            },
+            {
+              "kind": "literal",
+              "value": 1
+            },
+            {
+              "kind": "literal",
+              "value": 2
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "th2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "wd2"
+            },
+            {
+              "kind": "guide",
+              "name": "th2"
+            },
+            {
+              "kind": "guide",
+              "name": "thh"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "rw1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hd2"
+            },
+            {
+              "kind": "guide",
+              "name": "th2"
+            },
+            {
+              "kind": "guide",
+              "name": "thh"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "rh1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "rw1"
+            },
+            {
+              "kind": "literal",
+              "value": 2700000
+            }
+          ],
+          "operator": "cos"
+        },
+        "name": "idx",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "rh1"
+            },
+            {
+              "kind": "literal",
+              "value": 2700000
+            }
+          ],
+          "operator": "sin"
+        },
+        "name": "idy",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "idx"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "il",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "guide",
+              "name": "idx"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ir",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "idy"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "it",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "guide",
+              "name": "idy"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ib",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "leftCircularArrow",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "ib"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "il"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "ir"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "it"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj2",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 50000
+            },
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "guide",
+              "name": "ss"
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "maxAdj2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj1"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj2"
+            },
+            {
+              "kind": "guide",
+              "name": "maxAdj2"
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "guide",
+              "name": "a2"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "x2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "r"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "x2"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "x3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "h"
+            },
+            {
+              "kind": "guide",
+              "name": "a1"
+            },
+            {
+              "kind": "literal",
+              "value": 200000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "dy",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dy"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "y1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "guide",
+              "name": "dy"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "y2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "y1"
+            },
+            {
+              "kind": "guide",
+              "name": "x2"
+            },
+            {
+              "kind": "guide",
+              "name": "hd2"
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "dx1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "x2"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dx1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "x1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "x3"
+            },
+            {
+              "kind": "guide",
+              "name": "dx1"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "x4",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "leftRightArrow",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "y2"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "x1"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "x4"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "y1"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 25000
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 48123
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj4",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 50000
+            },
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "guide",
+              "name": "ss"
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "maxAdj3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj3"
+            },
+            {
+              "kind": "guide",
+              "name": "maxAdj3"
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "a3"
+            },
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "guide",
+              "name": "wd2"
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "q2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 100000
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "q2"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "maxAdj4",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj4"
+            },
+            {
+              "kind": "guide",
+              "name": "maxAdj4"
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a4",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "guide",
+              "name": "a4"
+            },
+            {
+              "kind": "literal",
+              "value": 200000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "dx2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dx2"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "x2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "guide",
+              "name": "dx2"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "x3",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "leftRightArrowCallout",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "b"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "x2"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "x3"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "t"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 12500
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 12500
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj5",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj5"
+            },
+            {
+              "kind": "literal",
+              "value": 25000
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a5",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "a5"
+            },
+            {
+              "kind": "literal",
+              "value": 2
+            },
+            {
+              "kind": "literal",
+              "value": 1
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "maxAdj1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj1"
+            },
+            {
+              "kind": "guide",
+              "name": "maxAdj1"
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "guide",
+              "name": "a1"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "th",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "guide",
+              "name": "a5"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "thh",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "th"
+            },
+            {
+              "kind": "literal",
+              "value": 1
+            },
+            {
+              "kind": "literal",
+              "value": 2
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "th2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "wd2"
+            },
+            {
+              "kind": "guide",
+              "name": "th2"
+            },
+            {
+              "kind": "guide",
+              "name": "thh"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "rw1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hd2"
+            },
+            {
+              "kind": "guide",
+              "name": "th2"
+            },
+            {
+              "kind": "guide",
+              "name": "thh"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "rh1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "rw1"
+            },
+            {
+              "kind": "literal",
+              "value": 2700000
+            }
+          ],
+          "operator": "cos"
+        },
+        "name": "idx",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "rh1"
+            },
+            {
+              "kind": "literal",
+              "value": 2700000
+            }
+          ],
+          "operator": "sin"
+        },
+        "name": "idy",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "idx"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "il",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "guide",
+              "name": "idx"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ir",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "idy"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "it",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "guide",
+              "name": "idy"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ib",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "leftRightCircularArrow",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "ib"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "il"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "ir"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "it"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 16667
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj3",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj3"
+            },
+            {
+              "kind": "literal",
+              "value": 33333
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 100000
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "a3"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "maxAdj1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj1"
+            },
+            {
+              "kind": "guide",
+              "name": "maxAdj1"
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "wd2"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "wd32"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "w1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 100000
+            },
+            {
+              "kind": "guide",
+              "name": "w1"
+            },
+            {
+              "kind": "guide",
+              "name": "ss"
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "maxAdj2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj2"
+            },
+            {
+              "kind": "guide",
+              "name": "maxAdj2"
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "guide",
+              "name": "a2"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "x1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "r"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "x1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "x4",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "h"
+            },
+            {
+              "kind": "guide",
+              "name": "a1"
+            },
+            {
+              "kind": "literal",
+              "value": 200000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "dy1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "h"
+            },
+            {
+              "kind": "guide",
+              "name": "a3"
+            },
+            {
+              "kind": "literal",
+              "value": -200000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "dy2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "guide",
+              "name": "dy2"
+            },
+            {
+              "kind": "guide",
+              "name": "dy1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ly1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "guide",
+              "name": "dy1"
+            },
+            {
+              "kind": "guide",
+              "name": "dy2"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ry4",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "leftRightRibbon",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "ry4"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "x1"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "x4"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "ly1"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 25000
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 25000
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 25000
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj3",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj2"
+            },
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "a2"
+            },
+            {
+              "kind": "literal",
+              "value": 2
+            },
+            {
+              "kind": "literal",
+              "value": 1
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "maxAdj1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj1"
+            },
+            {
+              "kind": "guide",
+              "name": "maxAdj1"
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 100000
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "maxAdj1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "q1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "q1"
+            },
+            {
+              "kind": "literal",
+              "value": 1
+            },
+            {
+              "kind": "literal",
+              "value": 2
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "maxAdj3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj3"
+            },
+            {
+              "kind": "guide",
+              "name": "maxAdj3"
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "guide",
+              "name": "a3"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "x1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "guide",
+              "name": "a2"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "dx2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "guide",
+              "name": "a1"
+            },
+            {
+              "kind": "literal",
+              "value": 200000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "dx3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "b"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dx2"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "y4",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "y4"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dx3"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "y3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "y4"
+            },
+            {
+              "kind": "guide",
+              "name": "dx3"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "y5",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "dx3"
+            },
+            {
+              "kind": "guide",
+              "name": "x1"
+            },
+            {
+              "kind": "guide",
+              "name": "dx2"
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "il",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "r"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "il"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ir",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "leftRightUpArrow",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "y5"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "il"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "ir"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "y3"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 25000
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 25000
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 25000
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj3",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj2"
+            },
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "a2"
+            },
+            {
+              "kind": "literal",
+              "value": 2
+            },
+            {
+              "kind": "literal",
+              "value": 1
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "maxAdj1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj1"
+            },
+            {
+              "kind": "guide",
+              "name": "maxAdj1"
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 100000
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "maxAdj1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "maxAdj3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj3"
+            },
+            {
+              "kind": "guide",
+              "name": "maxAdj3"
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "guide",
+              "name": "a3"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "x1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "guide",
+              "name": "a2"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "dx4",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "r"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dx4"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "x4",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "b"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dx4"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "y4",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "guide",
+              "name": "a1"
+            },
+            {
+              "kind": "literal",
+              "value": 200000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "dx3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "y4"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dx3"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "y3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "y4"
+            },
+            {
+              "kind": "guide",
+              "name": "dx3"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "y5",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "dx3"
+            },
+            {
+              "kind": "guide",
+              "name": "x1"
+            },
+            {
+              "kind": "guide",
+              "name": "dx4"
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "il",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "leftUpArrow",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "y5"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "il"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "x4"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "y3"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "literal",
+              "value": 8757
+            },
+            {
+              "kind": "literal",
+              "value": 21600
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "x4",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "literal",
+              "value": 13917
+            },
+            {
+              "kind": "literal",
+              "value": 21600
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "x9",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "h"
+            },
+            {
+              "kind": "literal",
+              "value": 7437
+            },
+            {
+              "kind": "literal",
+              "value": 21600
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "y4",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "h"
+            },
+            {
+              "kind": "literal",
+              "value": 14277
+            },
+            {
+              "kind": "literal",
+              "value": 21600
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "y10",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "lightningBolt",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "y10"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "x4"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "x9"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "y4"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 23520
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj1",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 1000
+            },
+            {
+              "kind": "guide",
+              "name": "adj1"
+            },
+            {
+              "kind": "literal",
+              "value": 36745
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "h"
+            },
+            {
+              "kind": "guide",
+              "name": "a1"
+            },
+            {
+              "kind": "literal",
+              "value": 200000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "dy1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "literal",
+              "value": 73490
+            },
+            {
+              "kind": "literal",
+              "value": 200000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "dx1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dy1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "y3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "guide",
+              "name": "dy1"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "y4",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dx1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "x1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "guide",
+              "name": "dx1"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "x3",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "mathDivide",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "y4"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "x1"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "x3"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "y3"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 23520
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 11760
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj2",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj1"
+            },
+            {
+              "kind": "literal",
+              "value": 36745
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "a1"
+            },
+            {
+              "kind": "literal",
+              "value": 2
+            },
+            {
+              "kind": "literal",
+              "value": 1
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "2a1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 100000
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "2a1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "mAdj2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj2"
+            },
+            {
+              "kind": "guide",
+              "name": "mAdj2"
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "h"
+            },
+            {
+              "kind": "guide",
+              "name": "a1"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "dy1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "h"
+            },
+            {
+              "kind": "guide",
+              "name": "a2"
+            },
+            {
+              "kind": "literal",
+              "value": 200000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "dy2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "literal",
+              "value": 73490
+            },
+            {
+              "kind": "literal",
+              "value": 200000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "dx1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dy2"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "y2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "guide",
+              "name": "dy2"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "y3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "y2"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dy1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "y1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "y3"
+            },
+            {
+              "kind": "guide",
+              "name": "dy1"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "y4",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dx1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "x1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "guide",
+              "name": "dx1"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "x2",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "mathEqual",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "y4"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "x1"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "x2"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "y1"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 23520
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj1",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj1"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "h"
+            },
+            {
+              "kind": "guide",
+              "name": "a1"
+            },
+            {
+              "kind": "literal",
+              "value": 200000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "dy1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "literal",
+              "value": 73490
+            },
+            {
+              "kind": "literal",
+              "value": 200000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "dx1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dy1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "y1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "guide",
+              "name": "dy1"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "y2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dx1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "x1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "guide",
+              "name": "dx1"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "x2",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "mathMinus",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "y2"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "x1"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "x2"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "y1"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 23520
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj1",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj1"
+            },
+            {
+              "kind": "literal",
+              "value": 51965
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "guide",
+              "name": "a1"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "th",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "guide",
+              "name": "h"
+            }
+          ],
+          "operator": "at2"
+        },
+        "name": "a",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 1
+            },
+            {
+              "kind": "guide",
+              "name": "a"
+            }
+          ],
+          "operator": "sin"
+        },
+        "name": "sa",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 1
+            },
+            {
+              "kind": "guide",
+              "name": "a"
+            }
+          ],
+          "operator": "cos"
+        },
+        "name": "ca",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "guide",
+              "name": "h"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "mod"
+        },
+        "name": "dl",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "dl"
+            },
+            {
+              "kind": "literal",
+              "value": 51965
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "rw",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "dl"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "rw"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "lM",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ca"
+            },
+            {
+              "kind": "guide",
+              "name": "lM"
+            },
+            {
+              "kind": "literal",
+              "value": 2
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "xM",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "sa"
+            },
+            {
+              "kind": "guide",
+              "name": "lM"
+            },
+            {
+              "kind": "literal",
+              "value": 2
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "yM",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "sa"
+            },
+            {
+              "kind": "guide",
+              "name": "th"
+            },
+            {
+              "kind": "literal",
+              "value": 2
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "dxAM",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ca"
+            },
+            {
+              "kind": "guide",
+              "name": "th"
+            },
+            {
+              "kind": "literal",
+              "value": 2
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "dyAM",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "xM"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dxAM"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "xA",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "yM"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dyAM"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "yB",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "r"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "xA"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "xE",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "b"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "yB"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "yH",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "mathMultiply",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "yH"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "xA"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "xE"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "yB"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 23520
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 11760
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj3",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj1"
+            },
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "a1"
+            },
+            {
+              "kind": "literal",
+              "value": 2
+            },
+            {
+              "kind": "literal",
+              "value": 1
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "2a1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 100000
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "2a1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "maxAdj3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj3"
+            },
+            {
+              "kind": "guide",
+              "name": "maxAdj3"
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "h"
+            },
+            {
+              "kind": "guide",
+              "name": "a1"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "dy1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "h"
+            },
+            {
+              "kind": "guide",
+              "name": "a3"
+            },
+            {
+              "kind": "literal",
+              "value": 200000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "dy2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "literal",
+              "value": 73490
+            },
+            {
+              "kind": "literal",
+              "value": 200000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "dx1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dx1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "x1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "guide",
+              "name": "dx1"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "x8",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dy2"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "y2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "guide",
+              "name": "dy2"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "y3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "y2"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dy1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "y1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "y3"
+            },
+            {
+              "kind": "guide",
+              "name": "dy1"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "y4",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "mathNotEqual",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "y4"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "x1"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "x8"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "y1"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 23520
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj1",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj1"
+            },
+            {
+              "kind": "literal",
+              "value": 73490
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "literal",
+              "value": 73490
+            },
+            {
+              "kind": "literal",
+              "value": 200000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "dx1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "guide",
+              "name": "a1"
+            },
+            {
+              "kind": "literal",
+              "value": 200000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "dx2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dx1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "x1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "guide",
+              "name": "dx1"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "x4",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dx2"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "y2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "guide",
+              "name": "dx2"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "y3",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "mathPlus",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "y3"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "x1"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "x4"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "y2"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj"
+            },
+            {
+              "kind": "literal",
+              "value": 87500
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "guide",
+              "name": "a"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "g0",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "g0"
+            },
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "guide",
+              "name": "ss"
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "g0w",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "g0"
+            },
+            {
+              "kind": "literal",
+              "value": 9598
+            },
+            {
+              "kind": "literal",
+              "value": 32768
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "g12",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "g12"
+            },
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "guide",
+              "name": "ss"
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "g12w",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "g12"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "g13",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "literal",
+              "value": 1
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "q1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "g13"
+            },
+            {
+              "kind": "guide",
+              "name": "g13"
+            },
+            {
+              "kind": "literal",
+              "value": 1
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "q2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "q1"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "q2"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "q3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "q3"
+            }
+          ],
+          "operator": "sqrt"
+        },
+        "name": "q4",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "q4"
+            },
+            {
+              "kind": "guide",
+              "name": "hd2"
+            },
+            {
+              "kind": "guide",
+              "name": "ss"
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "dy4",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dy4"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "g15h",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "guide",
+              "name": "dy4"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "g16h",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "moon",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "g16h"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "g12w"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "g0w"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "g15h"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 25000
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 25000
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj2",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 50000
+            },
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "guide",
+              "name": "ss"
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "maxAdj",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj1"
+            },
+            {
+              "kind": "guide",
+              "name": "maxAdj"
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj2"
+            },
+            {
+              "kind": "guide",
+              "name": "maxAdj"
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "wd3"
+            },
+            {
+              "kind": "guide",
+              "name": "a1"
+            },
+            {
+              "kind": "guide",
+              "name": "maxAdj"
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "il",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "a1"
+            },
+            {
+              "kind": "guide",
+              "name": "a2"
+            }
+          ],
+          "operator": "max"
+        },
+        "name": "adjm",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hd3"
+            },
+            {
+              "kind": "guide",
+              "name": "adjm"
+            },
+            {
+              "kind": "guide",
+              "name": "maxAdj"
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "it",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "wd3"
+            },
+            {
+              "kind": "guide",
+              "name": "a2"
+            },
+            {
+              "kind": "guide",
+              "name": "maxAdj"
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "irt",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "r"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "irt"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ir",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "nonIsoscelesTrapezoid",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "b"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "il"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "ir"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "it"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "wd2"
+            },
+            {
+              "kind": "literal",
+              "value": 2700000
+            }
+          ],
+          "operator": "cos"
+        },
+        "name": "idx",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hd2"
+            },
+            {
+              "kind": "literal",
+              "value": 2700000
+            }
+          ],
+          "operator": "sin"
+        },
+        "name": "idy",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "idx"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "il",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "guide",
+              "name": "idx"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ir",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "idy"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "it",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "guide",
+              "name": "idy"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ib",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "noSmoking",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "ib"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "il"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "ir"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "it"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj2",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 100000
+            },
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "guide",
+              "name": "ss"
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "maxAdj2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj1"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj2"
+            },
+            {
+              "kind": "guide",
+              "name": "maxAdj2"
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "guide",
+              "name": "a2"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "dx2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "h"
+            },
+            {
+              "kind": "guide",
+              "name": "a1"
+            },
+            {
+              "kind": "literal",
+              "value": 200000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "dy1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dy1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "y1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "guide",
+              "name": "dy1"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "y2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "dy1"
+            },
+            {
+              "kind": "guide",
+              "name": "dx2"
+            },
+            {
+              "kind": "guide",
+              "name": "hd2"
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "x1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "r"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "x1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "x3",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "notchedRightArrow",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "y2"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "x1"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "x3"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "y1"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 29289
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj"
+            },
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "guide",
+              "name": "a"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "x1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "x1"
+            },
+            {
+              "kind": "literal",
+              "value": 1
+            },
+            {
+              "kind": "literal",
+              "value": 2
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "il",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "r"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "il"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ir",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "b"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "il"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ib",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "octagon",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "ib"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "il"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "ir"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "il"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 25000
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 100000
+            },
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "guide",
+              "name": "ss"
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "maxAdj",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj"
+            },
+            {
+              "kind": "guide",
+              "name": "maxAdj"
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 5
+            },
+            {
+              "kind": "guide",
+              "name": "a"
+            },
+            {
+              "kind": "guide",
+              "name": "maxAdj"
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "q1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 1
+            },
+            {
+              "kind": "guide",
+              "name": "q1"
+            },
+            {
+              "kind": "literal",
+              "value": 12
+            }
+          ],
+          "operator": "+/"
+        },
+        "name": "q2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "q2"
+            },
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "literal",
+              "value": 1
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "il",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "q2"
+            },
+            {
+              "kind": "guide",
+              "name": "h"
+            },
+            {
+              "kind": "literal",
+              "value": 1
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "it",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "r"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "il"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ir",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "b"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "it"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ib",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "parallelogram",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "ib"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "il"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "ir"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "it"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 105146
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "hf",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 110557
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "vf",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "wd2"
+            },
+            {
+              "kind": "guide",
+              "name": "hf"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "swd2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hd2"
+            },
+            {
+              "kind": "guide",
+              "name": "vf"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "shd2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "guide",
+              "name": "vf"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "svc",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "swd2"
+            },
+            {
+              "kind": "literal",
+              "value": 1080000
+            }
+          ],
+          "operator": "cos"
+        },
+        "name": "dx1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "swd2"
+            },
+            {
+              "kind": "literal",
+              "value": 18360000
+            }
+          ],
+          "operator": "cos"
+        },
+        "name": "dx2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "shd2"
+            },
+            {
+              "kind": "literal",
+              "value": 1080000
+            }
+          ],
+          "operator": "sin"
+        },
+        "name": "dy1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "shd2"
+            },
+            {
+              "kind": "literal",
+              "value": 18360000
+            }
+          ],
+          "operator": "sin"
+        },
+        "name": "dy2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dx2"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "x2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "guide",
+              "name": "dx2"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "x3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "svc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dy1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "y1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "svc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dy2"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "y2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "y1"
+            },
+            {
+              "kind": "guide",
+              "name": "dx2"
+            },
+            {
+              "kind": "guide",
+              "name": "dx1"
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "it",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "pentagon",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "y2"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "x2"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "x3"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "it"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "wd2"
+            },
+            {
+              "kind": "literal",
+              "value": 2700000
+            }
+          ],
+          "operator": "cos"
+        },
+        "name": "idx",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hd2"
+            },
+            {
+              "kind": "literal",
+              "value": 2700000
+            }
+          ],
+          "operator": "sin"
+        },
+        "name": "idy",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "idx"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "il",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "guide",
+              "name": "idx"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ir",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "idy"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "it",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "guide",
+              "name": "idy"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ib",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "pie",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "ib"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "il"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "it"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "ir"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "literal",
+              "value": 13500000
+            }
+          ],
+          "operator": "cos"
+        },
+        "name": "g1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "h"
+            },
+            {
+              "kind": "literal",
+              "value": 13500000
+            }
+          ],
+          "operator": "sin"
+        },
+        "name": "g2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "r"
+            },
+            {
+              "kind": "guide",
+              "name": "g1"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "x1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "b"
+            },
+            {
+              "kind": "guide",
+              "name": "g2"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "y1",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "pieWedge",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "b"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "x1"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "r"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "y1"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 16667
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj"
+            },
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "guide",
+              "name": "a"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "x1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "x1"
+            },
+            {
+              "kind": "literal",
+              "value": 70711
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "il",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "r"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "il"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ir",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "b"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "il"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ib",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "plaque",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "ib"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "il"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "ir"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "il"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "guide",
+              "name": "h"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "mod"
+        },
+        "name": "md",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 1
+            },
+            {
+              "kind": "guide",
+              "name": "md"
+            },
+            {
+              "kind": "literal",
+              "value": 20
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "dx",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "b"
+            },
+            {
+              "kind": "guide",
+              "name": "dx"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "y1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "r"
+            },
+            {
+              "kind": "guide",
+              "name": "dx"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "x1",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "plaqueTabs",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "y1"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "dx"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "x1"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "dx"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 25000
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj"
+            },
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "guide",
+              "name": "a"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "x1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "r"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "x1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "x2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "b"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "x1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "y2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "h"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "d",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "d"
+            },
+            {
+              "kind": "guide",
+              "name": "l"
+            },
+            {
+              "kind": "guide",
+              "name": "x1"
+            }
+          ],
+          "operator": "?:"
+        },
+        "name": "il",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "d"
+            },
+            {
+              "kind": "guide",
+              "name": "r"
+            },
+            {
+              "kind": "guide",
+              "name": "x2"
+            }
+          ],
+          "operator": "?:"
+        },
+        "name": "ir",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "d"
+            },
+            {
+              "kind": "guide",
+              "name": "x1"
+            },
+            {
+              "kind": "guide",
+              "name": "t"
+            }
+          ],
+          "operator": "?:"
+        },
+        "name": "it",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "d"
+            },
+            {
+              "kind": "guide",
+              "name": "y2"
+            },
+            {
+              "kind": "guide",
+              "name": "b"
+            }
+          ],
+          "operator": "?:"
+        },
+        "name": "ib",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "plus",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "ib"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "il"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "ir"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "it"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 22500
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 22500
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 22500
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj3",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj2"
+            },
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "a2"
+            },
+            {
+              "kind": "literal",
+              "value": 2
+            },
+            {
+              "kind": "literal",
+              "value": 1
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "maxAdj1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj1"
+            },
+            {
+              "kind": "guide",
+              "name": "maxAdj1"
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 100000
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "maxAdj1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "q1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "q1"
+            },
+            {
+              "kind": "literal",
+              "value": 1
+            },
+            {
+              "kind": "literal",
+              "value": 2
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "maxAdj3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj3"
+            },
+            {
+              "kind": "guide",
+              "name": "maxAdj3"
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "guide",
+              "name": "a3"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "x1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "guide",
+              "name": "a2"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "dx2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "guide",
+              "name": "a1"
+            },
+            {
+              "kind": "literal",
+              "value": 200000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "dx3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dx3"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "y3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "guide",
+              "name": "dx3"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "y4",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "dx3"
+            },
+            {
+              "kind": "guide",
+              "name": "x1"
+            },
+            {
+              "kind": "guide",
+              "name": "dx2"
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "il",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "r"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "il"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ir",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "quadArrow",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "y4"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "il"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "ir"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "y3"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 18515
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 18515
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 18515
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 48123
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj4",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj2"
+            },
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "a2"
+            },
+            {
+              "kind": "literal",
+              "value": 2
+            },
+            {
+              "kind": "literal",
+              "value": 1
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "maxAdj1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj1"
+            },
+            {
+              "kind": "guide",
+              "name": "maxAdj1"
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 50000
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "a2"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "maxAdj3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj3"
+            },
+            {
+              "kind": "guide",
+              "name": "maxAdj3"
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "a3"
+            },
+            {
+              "kind": "literal",
+              "value": 2
+            },
+            {
+              "kind": "literal",
+              "value": 1
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "q2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 100000
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "q2"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "maxAdj4",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "a1"
+            },
+            {
+              "kind": "guide",
+              "name": "adj4"
+            },
+            {
+              "kind": "guide",
+              "name": "maxAdj4"
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a4",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "guide",
+              "name": "a4"
+            },
+            {
+              "kind": "literal",
+              "value": 200000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "dx1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "h"
+            },
+            {
+              "kind": "guide",
+              "name": "a4"
+            },
+            {
+              "kind": "literal",
+              "value": 200000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "dy1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dx1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "x2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "guide",
+              "name": "dx1"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "x7",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dy1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "y2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "guide",
+              "name": "dy1"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "y7",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "quadArrowCallout",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "y7"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "x2"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "x7"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "y2"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [],
+    "name": "rect",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "b"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "l"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "r"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "t"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 16667
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj2",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj1"
+            },
+            {
+              "kind": "literal",
+              "value": 33333
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 25000
+            },
+            {
+              "kind": "guide",
+              "name": "adj2"
+            },
+            {
+              "kind": "literal",
+              "value": 75000
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "guide",
+              "name": "a2"
+            },
+            {
+              "kind": "literal",
+              "value": 200000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "dx2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dx2"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "x2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "guide",
+              "name": "dx2"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "x9",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "h"
+            },
+            {
+              "kind": "guide",
+              "name": "a1"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "y2",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "ribbon",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "b"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "x2"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "x9"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "y2"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 16667
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj2",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj1"
+            },
+            {
+              "kind": "literal",
+              "value": 33333
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 25000
+            },
+            {
+              "kind": "guide",
+              "name": "adj2"
+            },
+            {
+              "kind": "literal",
+              "value": 75000
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "guide",
+              "name": "a2"
+            },
+            {
+              "kind": "literal",
+              "value": 200000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "dx2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dx2"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "x2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "guide",
+              "name": "dx2"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "x9",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "h"
+            },
+            {
+              "kind": "guide",
+              "name": "a1"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "dy2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "b"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dy2"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "y2",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "ribbon2",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "y2"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "x2"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "x9"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "t"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj2",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 100000
+            },
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "guide",
+              "name": "ss"
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "maxAdj2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj1"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj2"
+            },
+            {
+              "kind": "guide",
+              "name": "maxAdj2"
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "guide",
+              "name": "a2"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "dx1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "r"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dx1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "x1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "h"
+            },
+            {
+              "kind": "guide",
+              "name": "a1"
+            },
+            {
+              "kind": "literal",
+              "value": 200000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "dy1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dy1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "y1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "guide",
+              "name": "dy1"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "y2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "y1"
+            },
+            {
+              "kind": "guide",
+              "name": "dx1"
+            },
+            {
+              "kind": "guide",
+              "name": "hd2"
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "dx2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "x1"
+            },
+            {
+              "kind": "guide",
+              "name": "dx2"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "x2",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "rightArrow",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "y2"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "l"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "x2"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "y1"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 25000
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 64977
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj4",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 100000
+            },
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "guide",
+              "name": "ss"
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "maxAdj3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj3"
+            },
+            {
+              "kind": "guide",
+              "name": "maxAdj3"
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "a3"
+            },
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "guide",
+              "name": "w"
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "q2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 100000
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "q2"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "maxAdj4",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj4"
+            },
+            {
+              "kind": "guide",
+              "name": "maxAdj4"
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a4",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "guide",
+              "name": "a4"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "x2",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "rightArrowCallout",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "b"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "l"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "x2"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "t"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 8333
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj2",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj2"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 100000
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "a2"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "q1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "q1"
+            },
+            {
+              "kind": "guide",
+              "name": "a2"
+            }
+          ],
+          "operator": "min"
+        },
+        "name": "q2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "q2"
+            },
+            {
+              "kind": "literal",
+              "value": 1
+            },
+            {
+              "kind": "literal",
+              "value": 2
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "q3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "q3"
+            },
+            {
+              "kind": "guide",
+              "name": "h"
+            },
+            {
+              "kind": "guide",
+              "name": "ss"
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "maxAdj1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj1"
+            },
+            {
+              "kind": "guide",
+              "name": "maxAdj1"
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "guide",
+              "name": "a1"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "y1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "wd2"
+            },
+            {
+              "kind": "literal",
+              "value": 2700000
+            }
+          ],
+          "operator": "cos"
+        },
+        "name": "dx1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "y1"
+            },
+            {
+              "kind": "literal",
+              "value": 2700000
+            }
+          ],
+          "operator": "sin"
+        },
+        "name": "dy1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "l"
+            },
+            {
+              "kind": "guide",
+              "name": "dx1"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ir",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "y1"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dy1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "it",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "b"
+            },
+            {
+              "kind": "guide",
+              "name": "dy1"
+            },
+            {
+              "kind": "guide",
+              "name": "y1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ib",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "rightBrace",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "ib"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "l"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "ir"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "it"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 8333
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 50000
+            },
+            {
+              "kind": "guide",
+              "name": "h"
+            },
+            {
+              "kind": "guide",
+              "name": "ss"
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "maxAdj",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj"
+            },
+            {
+              "kind": "guide",
+              "name": "maxAdj"
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "guide",
+              "name": "a"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "y1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "literal",
+              "value": 2700000
+            }
+          ],
+          "operator": "cos"
+        },
+        "name": "dx1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "y1"
+            },
+            {
+              "kind": "literal",
+              "value": 2700000
+            }
+          ],
+          "operator": "sin"
+        },
+        "name": "dy1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "l"
+            },
+            {
+              "kind": "guide",
+              "name": "dx1"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ir",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "y1"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dy1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "it",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "b"
+            },
+            {
+              "kind": "guide",
+              "name": "dy1"
+            },
+            {
+              "kind": "guide",
+              "name": "y1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ib",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "rightBracket",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "ib"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "l"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "ir"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "it"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 16667
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj"
+            },
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "guide",
+              "name": "a"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "dx1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "dx1"
+            },
+            {
+              "kind": "literal",
+              "value": 29289
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "idx",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "r"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "idx"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ir",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "round1Rect",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "b"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "l"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "ir"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "t"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 16667
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj2",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj1"
+            },
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj2"
+            },
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "guide",
+              "name": "a1"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "x1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "guide",
+              "name": "a2"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "a",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "x1"
+            },
+            {
+              "kind": "literal",
+              "value": 29289
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "dx1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "a"
+            },
+            {
+              "kind": "literal",
+              "value": 29289
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "dx2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "dx1"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dx2"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "d",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "d"
+            },
+            {
+              "kind": "guide",
+              "name": "dx1"
+            },
+            {
+              "kind": "guide",
+              "name": "dx2"
+            }
+          ],
+          "operator": "?:"
+        },
+        "name": "dx",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "r"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dx"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ir",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "b"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dx"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ib",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "round2DiagRect",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "ib"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "dx"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "ir"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "dx"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 16667
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj2",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj1"
+            },
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj2"
+            },
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "guide",
+              "name": "a1"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "tx1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "guide",
+              "name": "a2"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "bx1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "tx1"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "bx1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "d",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "tx1"
+            },
+            {
+              "kind": "literal",
+              "value": 29289
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "tdx",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "bx1"
+            },
+            {
+              "kind": "literal",
+              "value": 29289
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "bdx",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "d"
+            },
+            {
+              "kind": "guide",
+              "name": "tdx"
+            },
+            {
+              "kind": "guide",
+              "name": "bdx"
+            }
+          ],
+          "operator": "?:"
+        },
+        "name": "il",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "r"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "il"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ir",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "b"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "bdx"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ib",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "round2SameRect",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "ib"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "il"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "ir"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "tdx"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 16667
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj"
+            },
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "guide",
+              "name": "a"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "x1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "x1"
+            },
+            {
+              "kind": "literal",
+              "value": 29289
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "il",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "r"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "il"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ir",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "b"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "il"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ib",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "roundRect",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "ib"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "il"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "ir"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "il"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "h"
+            },
+            {
+              "kind": "literal",
+              "value": 7
+            },
+            {
+              "kind": "literal",
+              "value": 12
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "it",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "literal",
+              "value": 7
+            },
+            {
+              "kind": "literal",
+              "value": 12
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "ir",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "h"
+            },
+            {
+              "kind": "literal",
+              "value": 11
+            },
+            {
+              "kind": "literal",
+              "value": 12
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "ib",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "rtTriangle",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "ib"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "wd12"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "ir"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "it"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "wd2"
+            },
+            {
+              "kind": "literal",
+              "value": 2700000
+            }
+          ],
+          "operator": "cos"
+        },
+        "name": "idx",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hd2"
+            },
+            {
+              "kind": "literal",
+              "value": 2700000
+            }
+          ],
+          "operator": "sin"
+        },
+        "name": "idy",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "idx"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "il",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "guide",
+              "name": "idx"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ir",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "idy"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "it",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "guide",
+              "name": "idy"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ib",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "smileyFace",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "ib"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "il"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "ir"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "it"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 16667
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj"
+            },
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "guide",
+              "name": "a"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "dx1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "r"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dx1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "x1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "dx1"
+            },
+            {
+              "kind": "literal",
+              "value": 1
+            },
+            {
+              "kind": "literal",
+              "value": 2
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "it",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "x1"
+            },
+            {
+              "kind": "guide",
+              "name": "r"
+            },
+            {
+              "kind": "literal",
+              "value": 2
+            }
+          ],
+          "operator": "+/"
+        },
+        "name": "ir",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "snip1Rect",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "b"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "l"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "ir"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "it"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 16667
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj2",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj1"
+            },
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj2"
+            },
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "guide",
+              "name": "a1"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "lx1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "guide",
+              "name": "a2"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "rx1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "lx1"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "rx1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "d",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "d"
+            },
+            {
+              "kind": "guide",
+              "name": "lx1"
+            },
+            {
+              "kind": "guide",
+              "name": "rx1"
+            }
+          ],
+          "operator": "?:"
+        },
+        "name": "dx",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "dx"
+            },
+            {
+              "kind": "literal",
+              "value": 1
+            },
+            {
+              "kind": "literal",
+              "value": 2
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "il",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "r"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "il"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ir",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "b"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "il"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ib",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "snip2DiagRect",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "ib"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "il"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "ir"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "il"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 16667
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj2",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj1"
+            },
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj2"
+            },
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "guide",
+              "name": "a1"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "tx1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "guide",
+              "name": "a2"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "bx1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "b"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "bx1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "by1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "tx1"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "bx1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "d",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "d"
+            },
+            {
+              "kind": "guide",
+              "name": "tx1"
+            },
+            {
+              "kind": "guide",
+              "name": "bx1"
+            }
+          ],
+          "operator": "?:"
+        },
+        "name": "dx",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "dx"
+            },
+            {
+              "kind": "literal",
+              "value": 1
+            },
+            {
+              "kind": "literal",
+              "value": 2
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "il",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "r"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "il"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ir",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "tx1"
+            },
+            {
+              "kind": "literal",
+              "value": 1
+            },
+            {
+              "kind": "literal",
+              "value": 2
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "it",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "by1"
+            },
+            {
+              "kind": "guide",
+              "name": "b"
+            },
+            {
+              "kind": "literal",
+              "value": 2
+            }
+          ],
+          "operator": "+/"
+        },
+        "name": "ib",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "snip2SameRect",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "ib"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "il"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "ir"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "it"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 16667
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 16667
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj2",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj1"
+            },
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj2"
+            },
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "guide",
+              "name": "a1"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "x1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "guide",
+              "name": "a2"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "dx2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "r"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dx2"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "x2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "x1"
+            },
+            {
+              "kind": "literal",
+              "value": 29289
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "il",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "x2"
+            },
+            {
+              "kind": "guide",
+              "name": "r"
+            },
+            {
+              "kind": "literal",
+              "value": 2
+            }
+          ],
+          "operator": "+/"
+        },
+        "name": "ir",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "snipRoundRect",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "b"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "il"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "ir"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "il"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "guide",
+              "name": "h"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "mod"
+        },
+        "name": "md",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 1
+            },
+            {
+              "kind": "guide",
+              "name": "md"
+            },
+            {
+              "kind": "literal",
+              "value": 20
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "dx",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "b"
+            },
+            {
+              "kind": "guide",
+              "name": "dx"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "y1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "r"
+            },
+            {
+              "kind": "guide",
+              "name": "dx"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "x1",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "squareTabs",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "y1"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "dx"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "x1"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "dx"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 42533
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 105146
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "hf",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj"
+            },
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "wd2"
+            },
+            {
+              "kind": "guide",
+              "name": "hf"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "swd2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "swd2"
+            },
+            {
+              "kind": "guide",
+              "name": "a"
+            },
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "iwd2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hd2"
+            },
+            {
+              "kind": "guide",
+              "name": "a"
+            },
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "ihd2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "iwd2"
+            },
+            {
+              "kind": "literal",
+              "value": 80902
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "sdx1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ihd2"
+            },
+            {
+              "kind": "literal",
+              "value": 58779
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "sdy2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "sdx1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "sx2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "guide",
+              "name": "sdx1"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "sx5",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "sdy2"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "sy2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "guide",
+              "name": "sdy2"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "sy3",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "star10",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "sy3"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "sx2"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "sx5"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "sy2"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 37500
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj"
+            },
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "wd2"
+            },
+            {
+              "kind": "guide",
+              "name": "a"
+            },
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "iwd2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hd2"
+            },
+            {
+              "kind": "guide",
+              "name": "a"
+            },
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "ihd2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "iwd2"
+            },
+            {
+              "kind": "literal",
+              "value": 2700000
+            }
+          ],
+          "operator": "cos"
+        },
+        "name": "sdx2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ihd2"
+            },
+            {
+              "kind": "literal",
+              "value": 2700000
+            }
+          ],
+          "operator": "sin"
+        },
+        "name": "sdy2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "sdx2"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "sx2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "guide",
+              "name": "sdx2"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "sx5",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "sdy2"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "sy2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "guide",
+              "name": "sdy2"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "sy5",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "star12",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "sy5"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "sx2"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "sx5"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "sy2"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 37500
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj"
+            },
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "wd2"
+            },
+            {
+              "kind": "guide",
+              "name": "a"
+            },
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "iwd2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hd2"
+            },
+            {
+              "kind": "guide",
+              "name": "a"
+            },
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "ihd2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "iwd2"
+            },
+            {
+              "kind": "literal",
+              "value": 2700000
+            }
+          ],
+          "operator": "cos"
+        },
+        "name": "idx",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ihd2"
+            },
+            {
+              "kind": "literal",
+              "value": 2700000
+            }
+          ],
+          "operator": "sin"
+        },
+        "name": "idy",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "idx"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "il",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "idy"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "it",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "guide",
+              "name": "idx"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ir",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "guide",
+              "name": "idy"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ib",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "star16",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "ib"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "il"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "ir"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "it"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 37500
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj"
+            },
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "wd2"
+            },
+            {
+              "kind": "guide",
+              "name": "a"
+            },
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "iwd2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hd2"
+            },
+            {
+              "kind": "guide",
+              "name": "a"
+            },
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "ihd2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "iwd2"
+            },
+            {
+              "kind": "literal",
+              "value": 2700000
+            }
+          ],
+          "operator": "cos"
+        },
+        "name": "idx",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ihd2"
+            },
+            {
+              "kind": "literal",
+              "value": 2700000
+            }
+          ],
+          "operator": "sin"
+        },
+        "name": "idy",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "idx"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "il",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "idy"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "it",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "guide",
+              "name": "idx"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ir",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "guide",
+              "name": "idy"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ib",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "star24",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "ib"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "il"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "ir"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "it"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 37500
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj"
+            },
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "wd2"
+            },
+            {
+              "kind": "guide",
+              "name": "a"
+            },
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "iwd2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hd2"
+            },
+            {
+              "kind": "guide",
+              "name": "a"
+            },
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "ihd2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "iwd2"
+            },
+            {
+              "kind": "literal",
+              "value": 2700000
+            }
+          ],
+          "operator": "cos"
+        },
+        "name": "idx",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ihd2"
+            },
+            {
+              "kind": "literal",
+              "value": 2700000
+            }
+          ],
+          "operator": "sin"
+        },
+        "name": "idy",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "idx"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "il",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "idy"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "it",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "guide",
+              "name": "idx"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ir",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "guide",
+              "name": "idy"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ib",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "star32",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "ib"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "il"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "ir"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "it"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 12500
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj"
+            },
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "wd2"
+            },
+            {
+              "kind": "guide",
+              "name": "a"
+            },
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "iwd2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hd2"
+            },
+            {
+              "kind": "guide",
+              "name": "a"
+            },
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "ihd2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "iwd2"
+            },
+            {
+              "kind": "literal",
+              "value": 2700000
+            }
+          ],
+          "operator": "cos"
+        },
+        "name": "sdx",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ihd2"
+            },
+            {
+              "kind": "literal",
+              "value": 2700000
+            }
+          ],
+          "operator": "sin"
+        },
+        "name": "sdy",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "sdx"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "sx1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "guide",
+              "name": "sdx"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "sx2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "sdy"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "sy1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "guide",
+              "name": "sdy"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "sy2",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "star4",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "sy2"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "sx1"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "sx2"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "sy1"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 19098
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 105146
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "hf",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 110557
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "vf",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj"
+            },
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "wd2"
+            },
+            {
+              "kind": "guide",
+              "name": "hf"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "swd2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hd2"
+            },
+            {
+              "kind": "guide",
+              "name": "vf"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "shd2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "guide",
+              "name": "vf"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "svc",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "swd2"
+            },
+            {
+              "kind": "guide",
+              "name": "a"
+            },
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "iwd2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "shd2"
+            },
+            {
+              "kind": "guide",
+              "name": "a"
+            },
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "ihd2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "iwd2"
+            },
+            {
+              "kind": "literal",
+              "value": 20520000
+            }
+          ],
+          "operator": "cos"
+        },
+        "name": "sdx1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ihd2"
+            },
+            {
+              "kind": "literal",
+              "value": 3240000
+            }
+          ],
+          "operator": "sin"
+        },
+        "name": "sdy1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "sdx1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "sx1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "guide",
+              "name": "sdx1"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "sx4",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "svc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "sdy1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "sy1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "svc"
+            },
+            {
+              "kind": "guide",
+              "name": "ihd2"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "sy3",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "star5",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "sy3"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "sx1"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "sx4"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "sy1"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 28868
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 115470
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "hf",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj"
+            },
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "wd2"
+            },
+            {
+              "kind": "guide",
+              "name": "hf"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "swd2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "swd2"
+            },
+            {
+              "kind": "guide",
+              "name": "a"
+            },
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "iwd2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hd2"
+            },
+            {
+              "kind": "guide",
+              "name": "a"
+            },
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "ihd2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "iwd2"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "sx1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "guide",
+              "name": "iwd2"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "sx4",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ihd2"
+            },
+            {
+              "kind": "literal",
+              "value": 3600000
+            }
+          ],
+          "operator": "sin"
+        },
+        "name": "sdy1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "sdy1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "sy1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "guide",
+              "name": "sdy1"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "sy2",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "star6",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "sy2"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "sx1"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "sx4"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "sy1"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 34601
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 102572
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "hf",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 105210
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "vf",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj"
+            },
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "wd2"
+            },
+            {
+              "kind": "guide",
+              "name": "hf"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "swd2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hd2"
+            },
+            {
+              "kind": "guide",
+              "name": "vf"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "shd2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "guide",
+              "name": "vf"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "svc",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "swd2"
+            },
+            {
+              "kind": "guide",
+              "name": "a"
+            },
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "iwd2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "shd2"
+            },
+            {
+              "kind": "guide",
+              "name": "a"
+            },
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "ihd2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "iwd2"
+            },
+            {
+              "kind": "literal",
+              "value": 78183
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "sdx2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "sdx2"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "sx2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "guide",
+              "name": "sdx2"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "sx5",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ihd2"
+            },
+            {
+              "kind": "literal",
+              "value": 90097
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "sdy1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ihd2"
+            },
+            {
+              "kind": "literal",
+              "value": 62349
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "sdy3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "svc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "sdy1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "sy1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "svc"
+            },
+            {
+              "kind": "guide",
+              "name": "sdy3"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "sy3",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "star7",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "sy3"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "sx2"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "sx5"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "sy1"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 37500
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj"
+            },
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "wd2"
+            },
+            {
+              "kind": "guide",
+              "name": "a"
+            },
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "iwd2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hd2"
+            },
+            {
+              "kind": "guide",
+              "name": "a"
+            },
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "ihd2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "iwd2"
+            },
+            {
+              "kind": "literal",
+              "value": 92388
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "sdx1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ihd2"
+            },
+            {
+              "kind": "literal",
+              "value": 92388
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "sdy1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "sdx1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "sx1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "guide",
+              "name": "sdx1"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "sx4",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "sdy1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "sy1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "guide",
+              "name": "sdy1"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "sy4",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "star8",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "sy4"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "sx1"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "sx4"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "sy1"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [],
+    "name": "straightConnector1",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "b"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "l"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "r"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "t"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj2",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 84375
+            },
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "guide",
+              "name": "ss"
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "maxAdj2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj1"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj2"
+            },
+            {
+              "kind": "guide",
+              "name": "maxAdj2"
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "literal",
+              "value": 5
+            },
+            {
+              "kind": "literal",
+              "value": 32
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "x4",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "guide",
+              "name": "a2"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "dx5",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "h"
+            },
+            {
+              "kind": "guide",
+              "name": "a1"
+            },
+            {
+              "kind": "literal",
+              "value": 200000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "dy1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dy1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "y1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "guide",
+              "name": "dy1"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "y2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "dy1"
+            },
+            {
+              "kind": "guide",
+              "name": "dx5"
+            },
+            {
+              "kind": "guide",
+              "name": "hd2"
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "dx6",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "r"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dx6"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "x6",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "stripedRightArrow",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "y2"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "x4"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "x6"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "y1"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 25000
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 12500
+            },
+            {
+              "kind": "guide",
+              "name": "adj"
+            },
+            {
+              "kind": "literal",
+              "value": 46875
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 50000
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "a"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "g0",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "g0"
+            },
+            {
+              "kind": "literal",
+              "value": 23170
+            },
+            {
+              "kind": "literal",
+              "value": 32768
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "g7",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 50000
+            },
+            {
+              "kind": "guide",
+              "name": "g7"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "g8",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 50000
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "g7"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "g9",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "guide",
+              "name": "g8"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "x8",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "guide",
+              "name": "g9"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "x9",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "h"
+            },
+            {
+              "kind": "guide",
+              "name": "g8"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "y8",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "h"
+            },
+            {
+              "kind": "guide",
+              "name": "g9"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "y9",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "sun",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "y8"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "x9"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "x8"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "y9"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [],
+    "name": "swooshArrow",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "b"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "l"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "r"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "t"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "wd2"
+            },
+            {
+              "kind": "literal",
+              "value": 2700000
+            }
+          ],
+          "operator": "cos"
+        },
+        "name": "idx",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hd2"
+            },
+            {
+              "kind": "literal",
+              "value": 2700000
+            }
+          ],
+          "operator": "sin"
+        },
+        "name": "idy",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "idx"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "il",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "guide",
+              "name": "idx"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ir",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "idy"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "it",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "guide",
+              "name": "idy"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ib",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "teardrop",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "ib"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "il"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "ir"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "it"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 25000
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 50000
+            },
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "guide",
+              "name": "ss"
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "maxAdj",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj"
+            },
+            {
+              "kind": "guide",
+              "name": "maxAdj"
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "wd3"
+            },
+            {
+              "kind": "guide",
+              "name": "a"
+            },
+            {
+              "kind": "guide",
+              "name": "maxAdj"
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "il",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hd3"
+            },
+            {
+              "kind": "guide",
+              "name": "a"
+            },
+            {
+              "kind": "guide",
+              "name": "maxAdj"
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "it",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "r"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "il"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ir",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "trapezoid",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "b"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "il"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "ir"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "it"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "guide",
+              "name": "a"
+            },
+            {
+              "kind": "literal",
+              "value": 200000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "x1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "x1"
+            },
+            {
+              "kind": "guide",
+              "name": "wd2"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "x3",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "triangle",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "b"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "x1"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "x3"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "vc"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 25000
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 64977
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj4",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 100000
+            },
+            {
+              "kind": "guide",
+              "name": "h"
+            },
+            {
+              "kind": "guide",
+              "name": "ss"
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "maxAdj3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj3"
+            },
+            {
+              "kind": "guide",
+              "name": "maxAdj3"
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "a3"
+            },
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "guide",
+              "name": "h"
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "q2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 100000
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "q2"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "maxAdj4",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj4"
+            },
+            {
+              "kind": "guide",
+              "name": "maxAdj4"
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a4",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "h"
+            },
+            {
+              "kind": "guide",
+              "name": "a4"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "dy2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "b"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dy2"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "y2",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "upArrowCallout",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "b"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "l"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "r"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "y2"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj2",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 50000
+            },
+            {
+              "kind": "guide",
+              "name": "h"
+            },
+            {
+              "kind": "guide",
+              "name": "ss"
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "maxAdj2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj1"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj2"
+            },
+            {
+              "kind": "guide",
+              "name": "maxAdj2"
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "guide",
+              "name": "a2"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "y2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "b"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "y2"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "y3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "guide",
+              "name": "a1"
+            },
+            {
+              "kind": "literal",
+              "value": 200000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "dx1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dx1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "x1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "guide",
+              "name": "dx1"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "x2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "x1"
+            },
+            {
+              "kind": "guide",
+              "name": "y2"
+            },
+            {
+              "kind": "guide",
+              "name": "wd2"
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "dy1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "y2"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dy1"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "y1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "y3"
+            },
+            {
+              "kind": "guide",
+              "name": "dy1"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "y4",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "upDownArrow",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "y4"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "x1"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "x2"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "y1"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 25000
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 48123
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj4",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 50000
+            },
+            {
+              "kind": "guide",
+              "name": "h"
+            },
+            {
+              "kind": "guide",
+              "name": "ss"
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "maxAdj3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj3"
+            },
+            {
+              "kind": "guide",
+              "name": "maxAdj3"
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a3",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "a3"
+            },
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "guide",
+              "name": "hd2"
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "q2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 100000
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "q2"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "maxAdj4",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj4"
+            },
+            {
+              "kind": "guide",
+              "name": "maxAdj4"
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a4",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "h"
+            },
+            {
+              "kind": "guide",
+              "name": "a4"
+            },
+            {
+              "kind": "literal",
+              "value": 200000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "dy2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dy2"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "y2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "guide",
+              "name": "dy2"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "y3",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "upDownArrowCallout",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "y3"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "l"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "r"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "y2"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [],
+    "name": "uturnArrow",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "b"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "l"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "r"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "t"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 12500
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj"
+            },
+            {
+              "kind": "literal",
+              "value": 25000
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "guide",
+              "name": "a"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "ch",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ch"
+            },
+            {
+              "kind": "literal",
+              "value": 1
+            },
+            {
+              "kind": "literal",
+              "value": 2
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "ch2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "r"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "ch"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "x6",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "b"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "ch2"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "y4",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "verticalScroll",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "y4"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "ch"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "x6"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "ch"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 12500
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj2",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "adj1"
+            },
+            {
+              "kind": "literal",
+              "value": 20000
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": -10000
+            },
+            {
+              "kind": "guide",
+              "name": "adj2"
+            },
+            {
+              "kind": "literal",
+              "value": 10000
+            }
+          ],
+          "operator": "pin"
+        },
+        "name": "a2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "w"
+            },
+            {
+              "kind": "guide",
+              "name": "a2"
+            },
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "of2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "of2"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "of2"
+            }
+          ],
+          "operator": "?:"
+        },
+        "name": "dx2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "l"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dx2"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "x2",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "of2"
+            },
+            {
+              "kind": "guide",
+              "name": "of2"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "?:"
+        },
+        "name": "dx5",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "r"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "dx5"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "x5",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "l"
+            },
+            {
+              "kind": "guide",
+              "name": "dx5"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "x6",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "r"
+            },
+            {
+              "kind": "guide",
+              "name": "dx2"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "x10",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "x2"
+            },
+            {
+              "kind": "guide",
+              "name": "x6"
+            }
+          ],
+          "operator": "max"
+        },
+        "name": "il",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "x5"
+            },
+            {
+              "kind": "guide",
+              "name": "x10"
+            }
+          ],
+          "operator": "min"
+        },
+        "name": "ir",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "h"
+            },
+            {
+              "kind": "guide",
+              "name": "a1"
+            },
+            {
+              "kind": "literal",
+              "value": 50000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "it",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "b"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "it"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ib",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "wave",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "ib"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "il"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "ir"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "it"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "wd2"
+            },
+            {
+              "kind": "literal",
+              "value": 2700000
+            }
+          ],
+          "operator": "cos"
+        },
+        "name": "idx",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hd2"
+            },
+            {
+              "kind": "literal",
+              "value": 2700000
+            }
+          ],
+          "operator": "sin"
+        },
+        "name": "idy",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "idx"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "il",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "hc"
+            },
+            {
+              "kind": "guide",
+              "name": "idx"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ir",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "idy"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "it",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "vc"
+            },
+            {
+              "kind": "guide",
+              "name": "idy"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ib",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "wedgeEllipseCallout",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "ib"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "il"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "ir"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "it"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [],
+    "calculatedGuides": [],
+    "name": "wedgeRectCallout",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "b"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "l"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "r"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "t"
+      }
+    }
+  },
+  {
+    "adjustmentGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "literal",
+              "value": 16667
+            }
+          ],
+          "operator": "val"
+        },
+        "name": "adj3",
+        "normalizedFrom": null
+      }
+    ],
+    "calculatedGuides": [
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "ss"
+            },
+            {
+              "kind": "guide",
+              "name": "adj3"
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "u1",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "u1"
+            },
+            {
+              "kind": "literal",
+              "value": 29289
+            },
+            {
+              "kind": "literal",
+              "value": 100000
+            }
+          ],
+          "operator": "*/"
+        },
+        "name": "il",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "r"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "il"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ir",
+        "normalizedFrom": null
+      },
+      {
+        "formula": {
+          "operands": [
+            {
+              "kind": "guide",
+              "name": "b"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            },
+            {
+              "kind": "guide",
+              "name": "il"
+            }
+          ],
+          "operator": "+-"
+        },
+        "name": "ib",
+        "normalizedFrom": null
+      }
+    ],
+    "name": "wedgeRoundRectCallout",
+    "textRectangle": {
+      "bottom": {
+        "kind": "guide",
+        "name": "ib"
+      },
+      "left": {
+        "kind": "guide",
+        "name": "il"
+      },
+      "right": {
+        "kind": "guide",
+        "name": "ir"
+      },
+      "top": {
+        "kind": "guide",
+        "name": "il"
+      }
+    }
+  }
+] as const;

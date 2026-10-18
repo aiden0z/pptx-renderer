@@ -130,6 +130,14 @@ are rounded to six decimal places only when serialized.
 and 180x400. It rejects empty or non-finite output and fingerprints each complete profile. These
 gates prove deterministic emission, not visual equivalence with PowerPoint.
 
+## Preset text rectangles
+
+The same generated runtime module also carries all 181 standard text rectangles with only their
+required adjustment/calculated guides. This projection is independent of the geometry path rollout.
+Guide dependency pruning preserves source order and rebinding when a guide name is assigned twice.
+`getOoxmlPresetTextRectangle()` evaluates those bounds in the current shape's pixel space; the shape
+renderer uses them for text layout while preserving explicit `txXfrm` precedence and full-box defaults.
+
 ## Production subset
 
 The runtime subset contains 20 native-validated single-path flowcharts and eight multi-path

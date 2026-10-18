@@ -132,7 +132,10 @@ import {
   getMultiPathPreset,
   PresetSubPath,
 } from '../shapes/presets';
-import { ooxmlPresetRuntimeMultiPathShapeNames } from '../shapes/ooxmlGeometryRuntime';
+import {
+  getOoxmlPresetTextRectangle,
+  ooxmlPresetRuntimeMultiPathShapeNames,
+} from '../shapes/ooxmlGeometryRuntime';
 import { emuToPx } from '../parser/units';
 import { applyTint, hexToRgb, rgbToHex } from '../utils/color';
 import { SafeXmlNode } from '../parser/XmlParser';
@@ -2918,11 +2921,27 @@ export function renderShape(node: ShapeNodeData, ctx: RenderContext): HTMLElemen
     } else {
       const textContainer = document.createElement('div');
       textContainer.style.position = 'absolute';
-      if (node.textBoxBounds) {
-        textContainer.style.left = `${node.textBoxBounds.x}px`;
-        textContainer.style.top = `${node.textBoxBounds.y}px`;
-        textContainer.style.width = `${node.textBoxBounds.w}px`;
-        textContainer.style.height = `${node.textBoxBounds.h}px`;
+      const presetTextBounds =
+        !node.textBoxBounds && !node.customGeometry?.exists()
+          ? getOoxmlPresetTextRectangle(node.presetGeometry ?? '', w, h, node.adjustments)
+          : null;
+      // Keep the full-shape percentage layout and independent txXfrm semantics intact.
+      const textBounds =
+        node.textBoxBounds ??
+        (presetTextBounds &&
+        !(
+          presetTextBounds.x === 0 &&
+          presetTextBounds.y === 0 &&
+          presetTextBounds.w === w &&
+          presetTextBounds.h === h
+        )
+          ? presetTextBounds
+          : undefined);
+      if (textBounds) {
+        textContainer.style.left = `${textBounds.x}px`;
+        textContainer.style.top = `${textBounds.y}px`;
+        textContainer.style.width = `${textBounds.w}px`;
+        textContainer.style.height = `${textBounds.h}px`;
       } else {
         textContainer.style.left = '0';
         textContainer.style.top = '0';
@@ -3114,7 +3133,7 @@ export function renderShape(node: ShapeNodeData, ctx: RenderContext): HTMLElemen
         const topPad = tIns !== undefined ? emuToPx(tIns) : emuToPx(45720);
         const rightPad = rIns !== undefined ? emuToPx(rIns) : emuToPx(91440);
         const bottomPad = bIns !== undefined ? emuToPx(bIns) : emuToPx(45720);
-        const textBoxHeight = node.textBoxBounds?.h ?? node.size.h;
+        const textBoxHeight = textBounds?.h ?? node.size.h;
         const collapseVerticalInsets =
           usesImplicitSingleLineFit &&
           !vert &&
