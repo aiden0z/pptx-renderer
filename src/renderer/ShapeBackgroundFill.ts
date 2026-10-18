@@ -47,7 +47,18 @@ export function applyShapeBackgroundFill(
   surface.style.height = `${ctx.presentation.height}px`;
   // Share gradient, image, relationship, lazy-loading and external-media policy behavior.
   // A missing background becomes white; authored alpha retains the background renderer's semantics.
-  renderBackground({ ...ctx, slide: ctx.backgroundSlide ?? ctx.slide }, surface);
+  // Template shapes sample their own part's background chain: master, or layout → master.
+  // A slide-local background must not override paint authored on those ancestor parts.
+  const backgroundCtx =
+    ctx.nodeOrigin === 'layout' || ctx.nodeOrigin === 'master'
+      ? {
+          ...ctx,
+          slide: { ...ctx.slide, background: undefined },
+          layout:
+            ctx.nodeOrigin === 'master' ? { ...ctx.layout, background: undefined } : ctx.layout,
+        }
+      : ctx;
+  renderBackground(backgroundCtx, surface);
   viewport.appendChild(surface);
   paint.appendChild(viewport);
   svg.insertBefore(paint, defs.nextSibling);

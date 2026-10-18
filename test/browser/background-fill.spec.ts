@@ -37,7 +37,8 @@ for (const options of cases)
       ref.id = 'reference';
       ref.style.cssText = 'position:relative;width:600px;height:300px;background:white;';
       document.body.append(ref);
-      const ctx = createRenderContext(p, p.slides[0]);
+      const referencePresentation = backgroundFillPresentation({ ...options, origin: 'slide' });
+      const ctx = createRenderContext(referencePresentation, referencePresentation.slides[0]);
       ctx.asyncTasks = [];
       renderBackground(ctx, ref);
       await Promise.all(ctx.asyncTasks);
@@ -132,4 +133,41 @@ test('background clipping preserves an ellipse boundary and a donut hole', async
   expect(pixel(ellipse, 200, 140)).toEqual([255, 255, 255]);
   expect(pixel(donut, 200, 140)).toEqual([0, 255, 0]);
   expect(pixel(donut, 115, 140)).toEqual([255, 255, 255]);
+});
+
+test('template background fills use their owner background before slide overrides', async ({
+  page,
+}) => {
+  await page.goto('/test/browser/blank.html');
+  const colors = await page.evaluate(async () => {
+    const { backgroundFillPresentation } = await import('/test/fixtures/background-fill.ts');
+    const { renderSlide } = await import('/src/renderer/SlideRenderer.ts');
+    const { parseXml } = await import('/src/parser/XmlParser.ts');
+    const bg = (hex: string) =>
+      parseXml(
+        `<p:bg xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><p:bgPr><a:solidFill><a:srgbClr val="${hex}"/></a:solidFill></p:bgPr></p:bg>`,
+      );
+    const result = [];
+    // Native PowerPoint owner-background probe: master=pink, layout=blue, slide=yellow.
+    for (const origin of ['master', 'layout'] as const)
+      for (const hasLayout of [false, true]) {
+        const p = backgroundFillPresentation({ kind: 'solid', origin });
+        p.slides[0].background = bg('FFFF00');
+        p.masters.get('master')!.background = bg('FFCCAA');
+        p.layouts.get('layout')!.background = hasLayout ? bg('0088FF') : undefined;
+        const h = renderSlide(p, p.slides[0]);
+        document.body.append(h.element);
+        await h.ready;
+        const surface = h.element.querySelector<HTMLElement>('[data-pptx-shape-background]')!;
+        result.push(surface.style.backgroundColor);
+        h.dispose();
+      }
+    return result;
+  });
+  expect(colors).toEqual([
+    'rgb(255, 204, 170)',
+    'rgb(255, 204, 170)',
+    'rgb(255, 204, 170)',
+    'rgb(0, 136, 255)',
+  ]);
 });

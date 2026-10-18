@@ -7,6 +7,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-10-18
+
 ### Added
 
 - Added `externalMedia: 'allow' | 'block'` to viewer and standalone rendering options so hosts can
@@ -34,7 +36,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   least 5/6 of the maximum, following Office's automatic axis scaling.
 - Fixed `useBgFill` shapes to sample the effective slide background in slide coordinates,
   including rotated/flipped/grouped geometry, lazy image backgrounds, template relationships,
-  and implicit-white occlusion. Explicit local fills retain priority (#34).
+  and implicit-white occlusion. Template shapes retain their master/layout background ownership;
+  explicit local fills retain priority (#34).
 
 ## [1.3.0] - 2026-09-14
 

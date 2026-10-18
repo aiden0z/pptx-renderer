@@ -91,12 +91,13 @@ export function backgroundFillPresentation(options: BackgroundFillCase = {}) {
     .allChildren()
     .flatMap((child) => parseRenderableChildren(child, { rels }));
   if (options.origin && options.origin !== 'slide') {
-    // Template backgrounds retain the original slide relationship owner even when the shape
-    // context uses template relationships with the same rId pointing elsewhere.
+    // Native PowerPoint samples the template owner background, including its relationships.
+    // The slide uses the same rId for a different target to catch accidental descendant lookup.
     p.slides[0].nodes = [];
     p.slideToLayout.set(0, 'layout');
     p.layoutToMaster.set('layout', 'master');
-    const templateRels = new Map([
+    const templateRels = new Map(rels);
+    p.slides[0].rels = new Map([
       [
         'bg',
         {
@@ -108,17 +109,20 @@ export function backgroundFillPresentation(options: BackgroundFillCase = {}) {
     ]);
     p.layouts.set('layout', {
       placeholders: [],
+      background: options.origin === 'layout' ? p.slides[0].background : undefined,
       spTree: tree(options.origin === 'layout' ? green + cutout : ''),
       rels: templateRels,
       showMasterSp: true,
     });
     p.masters.set('master', {
       placeholders: [],
+      background: options.origin === 'master' ? p.slides[0].background : undefined,
       spTree: tree(options.origin === 'master' ? green + cutout : ''),
       rels: templateRels,
       colorMap: new Map(),
       textStyles: {},
     });
+    p.slides[0].background = parseXml(`<p:bg ${ns}><p:bgPr>${solid('FFFF00')}</p:bgPr></p:bg>`);
   }
   return p;
 }
