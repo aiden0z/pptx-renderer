@@ -79,7 +79,8 @@ export interface SlideHandle {
  * Dispatch a typed node to its appropriate renderer.
  * This function is also passed into GroupRenderer for recursive child rendering.
  */
-function renderNode(node: BaseNodeData, ctx: RenderContext): HTMLElement {
+function renderNode(node: BaseNodeData, ctx: RenderContext): HTMLElement | null {
+  if (node.hidden) return null;
   switch (node.nodeType) {
     case 'shape':
       return renderShape(node as ShapeNodeData, ctx);
@@ -288,7 +289,7 @@ export function renderSlide(
       for (const node of masterShapes) {
         try {
           const el = renderNode(node, masterCtx);
-          container.appendChild(el);
+          if (el) container.appendChild(el);
         } catch {
           // Master shape errors are non-fatal
         }
@@ -313,7 +314,7 @@ export function renderSlide(
       for (const node of layoutShapes) {
         try {
           const el = renderNode(node, layoutCtx);
-          container.appendChild(el);
+          if (el) container.appendChild(el);
         } catch {
           // Layout shape errors are non-fatal
         }
@@ -324,7 +325,7 @@ export function renderSlide(
     for (const node of slide.nodes) {
       try {
         const el = renderNode(node, ctx);
-        container.appendChild(el);
+        if (el) container.appendChild(el);
       } catch (e) {
         options?.onNodeError?.(node.id, e);
         container.appendChild(createErrorPlaceholder(node));

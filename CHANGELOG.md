@@ -18,6 +18,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Fixed
 
+- Honor `cNvPr@hidden` on slide, layout, and master nodes, including hidden group subtrees,
+  while retaining visibility metadata in the parsed and serialized model (#36).
 - Fixed explicit text tabs, terminal hanging punctuation, all DrawingML vertical text flows,
   stacked WordArt spacing, CJK/Korean font fallback, stretched picture-filled runs including lazy
   package media, placeholder style inheritance when layouts reuse an unlinked placeholder
