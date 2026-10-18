@@ -424,7 +424,7 @@ function resolveShapeBlipUrl(blipFill: SafeXmlNode, ctx: RenderContext): string 
   const rel = ctx.slide.rels.get(relId);
   if (!rel) return null;
   if (isExternalTargetMode(rel.targetMode)) {
-    return isAllowedExternalMediaUrl(rel.target) ? rel.target : null;
+    return isAllowedExternalMediaUrl(rel.target, ctx.externalMedia) ? rel.target : null;
   }
   const resolved = findMediaByTarget(rel.target, ctx.presentation.media);
   if (!resolved) return null;
@@ -444,7 +444,7 @@ async function resolveShapeBlipUrlAsync(
   const rel = ctx.slide.rels.get(relId);
   if (!rel) return null;
   if (isExternalTargetMode(rel.targetMode)) {
-    return isAllowedExternalMediaUrl(rel.target) ? rel.target : null;
+    return isAllowedExternalMediaUrl(rel.target, ctx.externalMedia) ? rel.target : null;
   }
   const resolved = await findMediaByTargetAsync(
     rel.target,

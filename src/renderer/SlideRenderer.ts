@@ -26,12 +26,15 @@ import type { EmbeddedFontLimits } from './EmbeddedFontLoader';
 import type { PdfjsConfig } from '../utils/pdfRenderer';
 import { useConfiguredFonts } from './ConfiguredFontLoader';
 import type { FontFaceConfig } from './ConfiguredFontLoader';
+import type { ExternalMediaPolicy } from '../utils/urlSafety';
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
 export interface SlideRendererOptions {
+  /** Allow or block external media relationships. Default `allow`; embedded media is unaffected. */
+  externalMedia?: ExternalMediaPolicy;
   /** Called when a single node fails to render. */
   onNodeError?: (nodeId: string, error: unknown) => void;
   /**
@@ -240,6 +243,7 @@ export function renderSlide(
     abortController.signal,
   );
   ctx.asyncTasks = asyncTasks;
+  ctx.externalMedia = options?.externalMedia ?? 'allow';
   if (options?.onNavigate) {
     ctx.onNavigate = options.onNavigate;
   }

@@ -411,6 +411,12 @@ Renderer-level guards also apply after ZIP parsing:
 - Chart caches do not allocate from oversized `c:ptCount`; chart point indexes are capped at `10,000` per cache.
 - EMF bitmap previews are rejected when decoded size exceeds `16,777,216` pixels, dimensions exceed `8192x8192`, or pixel payload is shorter than the declared bitmap.
 - External audio/video relationships only render for safe `http`/`https` URLs with `TargetMode="External"` and are created with `preload="none"`.
+- External images and picture fills can request their HTTP(S) targets during rendering. For untrusted
+  decks, set `externalMedia: 'block'` on `PptxViewer` / `PptxViewer.open()`, legacy `PptxRenderer`, or
+  standalone `renderSlide()` to skip all external media relationships, including images, background,
+  shape/text picture fills, audio/video, and posters. Embedded package media remains available.
+  The default is `'allow'` for compatibility. The policy also applies to list, single-slide, external
+  container and thumbnail rendering; click-driven hyperlinks retain their existing behavior.
 
 #### Events (`PptxViewerEventMap`)
 

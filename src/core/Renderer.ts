@@ -5,11 +5,14 @@ import { PptxViewer, normalizePreviewInput } from './Viewer';
 import type { FitMode, PreviewInput, ListRenderOptions } from './Viewer';
 import type { PdfjsConfig } from '../utils/pdfRenderer';
 import type { EmbeddedFontLimits } from '../renderer/EmbeddedFontLoader';
+import type { ExternalMediaPolicy } from '../utils/urlSafety';
 
 export type { PreviewInput, FitMode } from './Viewer';
 export type { SlideHandle } from '../renderer/SlideRenderer';
 
 export interface RendererOptions {
+  /** Allow or block external media relationships. Default `allow`; embedded media is unaffected. */
+  externalMedia?: ExternalMediaPolicy;
   width?: number;
   mode?: 'list' | 'slide';
   /** Scaling mode. contain = fit container width, none = use intrinsic slide size. */
@@ -76,6 +79,7 @@ export class PptxRenderer extends PptxViewer {
       lazyMedia: options.lazyMedia,
       lazySlides: options.lazySlides,
       pdfjs: options.pdfjs,
+      externalMedia: options.externalMedia,
       embeddedFontLimits: options.embeddedFontLimits,
       onSlideChange: options.onSlideChange,
       onSlideRendered: options.onSlideRendered,

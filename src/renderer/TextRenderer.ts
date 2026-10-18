@@ -816,7 +816,7 @@ function resolveTextPictureUrl(blipFill: SafeXmlNode, ctx: RenderContext): strin
   const rel = ctx.slide.rels.get(relId);
   if (!rel) return undefined;
   if (isExternalTargetMode(rel.targetMode)) {
-    return isAllowedExternalMediaUrl(rel.target) ? rel.target : undefined;
+    return isAllowedExternalMediaUrl(rel.target, ctx.externalMedia) ? rel.target : undefined;
   }
   const resolved = findMediaByTarget(rel.target, ctx.presentation.media);
   if (!resolved) return undefined;
@@ -834,7 +834,7 @@ async function resolveTextPictureUrlAsync(
   const rel = ctx.slide.rels.get(relId);
   if (!rel) return undefined;
   if (isExternalTargetMode(rel.targetMode)) {
-    return isAllowedExternalMediaUrl(rel.target) ? rel.target : undefined;
+    return isAllowedExternalMediaUrl(rel.target, ctx.externalMedia) ? rel.target : undefined;
   }
   const resolved = await findMediaByTargetAsync(
     rel.target,

@@ -9,6 +9,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
+- Added `externalMedia: 'allow' | 'block'` to viewer and standalone rendering options so hosts can
+  disable external media relationships, including picture fills and audio/video posters (#32).
 - `serializePresentation()` now reports slide layout and slide master template shapes as typed
   nodes in `layouts` and `masters`, with each slide naming its own through `layoutPath`,
   `masterPath` and `showMasterSp`. Consumers that need the structure of a deck rather than its
