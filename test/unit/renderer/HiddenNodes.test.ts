@@ -44,6 +44,34 @@ function fixture(origin: 'slide' | 'layout' | 'master', content: string, lazy = 
 }
 
 describe('hidden nodes (issue #36)', () => {
+  it.each([
+    [undefined, '1', true],
+    ['0', 'true', true],
+    ['false', '1', true],
+    ['1', '0', true],
+    ['true', undefined, true],
+    [undefined, '0', false],
+    ['0', undefined, false],
+    [undefined, undefined, false],
+  ] as const)(
+    'combines OLE frame hidden=%s and preview hidden=%s',
+    async (frameHidden, previewHidden, expectedHidden) => {
+      const preview =
+        previewHidden === undefined
+          ? picture.replace(' hidden="1"', '')
+          : picture.replace('hidden="1"', `hidden="${previewHidden}"`);
+      const frame = `<p:graphicFrame><p:nvGraphicFramePr><p:cNvPr id="20" name="OLE frame"${flag(frameHidden)}/><p:cNvGraphicFramePr/><p:nvPr/></p:nvGraphicFramePr>${xfrm}<a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/presentationml/2006/ole"><p:oleObj>${preview}</p:oleObj></a:graphicData></a:graphic></p:graphicFrame>`;
+      const p = fixture('slide', frame);
+      p.media.set('ppt/media/poster.png', new Uint8Array([1]));
+      expect(p.slides[0].nodes[0].hidden ?? false).toBe(expectedHidden);
+      expect(serializePresentation(p).slides[0].nodes[0].hidden ?? false).toBe(expectedHidden);
+      const h = renderSlide(p, p.slides[0], { pdfjs: false });
+      await h.ready;
+      expect(h.element.querySelectorAll('img')).toHaveLength(expectedHidden ? 0 : 1);
+      h.dispose();
+    },
+  );
+
   for (const origin of ['slide', 'layout', 'master'] as const) {
     it.each([false, true])(
       `skips hidden ${origin} shapes and nested groups, lazySlides=%s`,
