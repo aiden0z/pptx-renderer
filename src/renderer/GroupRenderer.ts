@@ -2,6 +2,7 @@
  * Group renderer — renders grouped shapes with coordinate space remapping.
  */
 
+import { composeTransforms, nodeTransform } from './coordinateTransform';
 import { GroupNodeData } from '../model/nodes/GroupNode';
 import { RenderContext } from './RenderContext';
 import { BaseNodeData } from '../model/nodes/BaseNode';
@@ -244,6 +245,8 @@ export function renderGroup(
   const childCtx: RenderContext = {
     ...ctx,
     groupDepth: (ctx.groupDepth ?? 0) + 1,
+    // Child positions/flips are already remapped below; the wrapper adds only translation/rotation.
+    parentToSlide: composeTransforms(ctx.parentToSlide, nodeTransform(node, false)),
     groupTransformHasRotationOrFlip: Boolean(
       ctx.groupTransformHasRotationOrFlip || node.rotation !== 0 || node.flipH || node.flipV,
     ),

@@ -124,7 +124,7 @@ import {
   resolveThemeFillReference,
   getFocusedGradientStops,
 } from './StyleResolver';
-import { resolveBackgroundShapeFill } from './BackgroundRenderer';
+import { applyShapeBackgroundFill } from './ShapeBackgroundFill';
 import { renderTextBody, resolveTextFields, type DrawingMLVerticalTextMode } from './TextRenderer';
 import { renderCustomGeometry } from '../shapes/customGeometry';
 import {
@@ -1891,27 +1891,13 @@ export function renderShape(node: ShapeNodeData, ctx: RenderContext): HTMLElemen
 
   // ---- Resolve fill and line styles ----
   const spPr = node.source.child('spPr');
-  const useBackgroundFill = node.useBackgroundFill === true;
-  const backgroundFill = useBackgroundFill ? resolveBackgroundShapeFill(ctx) : undefined;
-  const backgroundBlipFill = useBackgroundFill ? backgroundFill?.blipFill : undefined;
-  const hasBackgroundBlipFill = (backgroundBlipFill?.exists() ?? false) && !isLineLike;
-  const backgroundBlipUrl =
-    useBackgroundFill && hasBackgroundBlipFill && backgroundBlipFill && backgroundFill
-      ? resolveShapeBlipUrl(backgroundBlipFill, {
-          ...ctx,
-          slide: { ...ctx.slide, rels: backgroundFill.rels },
-        })
-      : null;
+  // Explicit local fill wins, matching native PowerPoint. The background flag is the
+  // fallback paint source, ahead of the style reference.
+  const useBackgroundFill = node.useBackgroundFill === true && !node.fill?.exists() && !isLineLike;
   let fillCss = '';
-  // Resolve structured gradient fill data (for SVG gradient elements).
-  // A background fill replaces the shape's own fill, so skip the local probe
-  // and take the resolved background gradient unconditionally.
-  let gradientFillData = !useBackgroundFill && node.fill ? resolveGradientFill(spPr, ctx) : null;
-  if (useBackgroundFill && backgroundFill?.hasBackground) {
-    fillCss = backgroundFill.fillCss;
-    gradientFillData = backgroundFill.gradientFillData;
-  }
-  if (!useBackgroundFill && node.fill && node.fill.exists()) {
+  // Resolve structured gradient fill data (for SVG gradient elements)
+  let gradientFillData = node.fill ? resolveGradientFill(spPr, ctx) : null;
+  if (node.fill && node.fill.exists()) {
     if (node.fill.localName === 'solidFill') {
       const colorChild = node.fill.child('srgbClr').exists()
         ? node.fill.child('srgbClr')
@@ -1927,7 +1913,7 @@ export function renderShape(node: ShapeNodeData, ctx: RenderContext): HTMLElemen
     if (!fillCss) fillCss = resolveFill(spPr, ctx);
   }
   // Diagram/SmartArt: read fill directly from source when still missing (spPr > solidFill > color)
-  if (!useBackgroundFill && !fillCss) {
+  if (!fillCss) {
     const solidFill = spPr.child('solidFill');
     if (solidFill.exists()) {
       const colorChild = solidFill.child('srgbClr').exists()
@@ -1943,16 +1929,16 @@ export function renderShape(node: ShapeNodeData, ctx: RenderContext): HTMLElemen
     }
   }
   // fillRef fallback: when no explicit fill but fillRef idx > 0, use fillRef color
-  if (
-    !useBackgroundFill &&
-    !fillCss &&
-    fillRef &&
-    fillRef.exists() &&
-    (fillRef.numAttr('idx') ?? 0) > 0
-  ) {
+  if (!fillCss && fillRef && fillRef.exists() && (fillRef.numAttr('idx') ?? 0) > 0) {
     const resolvedThemeFill = resolveThemeFillReference(fillRef, ctx);
     fillCss = resolvedThemeFill.fillCss;
     if (!gradientFillData) gradientFillData = resolvedThemeFill.gradientFillData;
+  }
+  if (useBackgroundFill) {
+    // A temporary opaque silhouette lets the shared geometry path select filled contours.
+    // applyShapeBackgroundFill replaces it with slide-space paint below.
+    fillCss = '#FFFFFF';
+    gradientFillData = null;
   }
   // Connectors and other line-like presets are stroke-only in OOXML. They may still
   // carry style fillRefs, but those must not become filled ribbons in SVG.
@@ -2054,15 +2040,8 @@ export function renderShape(node: ShapeNodeData, ctx: RenderContext): HTMLElemen
     svg.style.overflow = 'visible';
     mainSvg = svg;
 
-    const blipFill = useBackgroundFill
-      ? (backgroundBlipFill ?? new SafeXmlNode(null))
-      : spPr.child('blipFill');
-    const blipUrl =
-      useBackgroundFill && backgroundBlipUrl
-        ? backgroundBlipUrl
-        : blipFill.exists()
-          ? resolveShapeBlipUrl(blipFill, ctx)
-          : null;
+    const blipFill = spPr.child('blipFill');
+    const blipUrl = blipFill.exists() ? resolveShapeBlipUrl(blipFill, ctx) : null;
 
     // When shape has image fill (blipFill), render image clipped to path so complex graphics (e.g. slide 23 process) show
     if (blipUrl) {
@@ -2172,11 +2151,9 @@ export function renderShape(node: ShapeNodeData, ctx: RenderContext): HTMLElemen
         path.setAttribute('fill-rule', 'evenodd');
       }
 
+      // Fill
       if (fillCss) {
-        const backgroundPattFill = useBackgroundFill ? backgroundFill?.pattFill : undefined;
-        const pattFill = useBackgroundFill
-          ? (backgroundPattFill ?? new SafeXmlNode(null))
-          : spPr.child('pattFill');
+        const pattFill = spPr.child('pattFill');
         const patternFillId = pattFill.exists()
           ? appendSvgPatternFill(svgNs, defs, pattFill, ctx)
           : null;
@@ -2533,12 +2510,8 @@ export function renderShape(node: ShapeNodeData, ctx: RenderContext): HTMLElemen
 
       svg.appendChild(path);
 
-      const lazyBlipCtx =
-        useBackgroundFill && backgroundFill
-          ? { ...ctx, slide: { ...ctx.slide, rels: backgroundFill.rels } }
-          : ctx;
       if (blipFill.exists() && ctx.presentation.mediaResolver) {
-        const task = resolveShapeBlipUrlAsync(blipFill, lazyBlipCtx)
+        const task = resolveShapeBlipUrlAsync(blipFill, ctx)
           .then((lazyBlipUrl) => {
             if (!lazyBlipUrl) return;
             appendShapeBlipImage(
@@ -2806,24 +2779,23 @@ export function renderShape(node: ShapeNodeData, ctx: RenderContext): HTMLElemen
       }
 
       const hasResolvedSolidShapeFill = !gradientFillData && /^#[0-9a-f]{6}$/i.test(fillCss);
-      const shape3dPaintKind =
-        useBackgroundFill && backgroundFill?.hasBackground
-          ? backgroundFill.paintKind
-          : blipFill.exists()
-            ? 'picture'
-            : spPr.child('gradFill').exists() || gradientFillData
-              ? 'gradient'
-              : spPr.child('pattFill').exists()
-                ? 'pattern'
-                : spPr.child('grpFill').exists()
-                  ? 'group'
-                  : spPr.child('noFill').exists()
-                    ? 'none'
-                    : spPr.child('solidFill').exists() ||
-                        node.fill?.localName === 'solidFill' ||
-                        hasResolvedSolidShapeFill
-                      ? 'solid'
-                      : 'unknown';
+      const shape3dPaintKind = useBackgroundFill
+        ? 'unknown'
+        : blipFill.exists()
+          ? 'picture'
+          : spPr.child('gradFill').exists() || gradientFillData
+            ? 'gradient'
+            : spPr.child('pattFill').exists()
+              ? 'pattern'
+              : spPr.child('grpFill').exists()
+                ? 'group'
+                : spPr.child('noFill').exists()
+                  ? 'none'
+                  : spPr.child('solidFill').exists() ||
+                      node.fill?.localName === 'solidFill' ||
+                      hasResolvedSolidShapeFill
+                    ? 'solid'
+                    : 'unknown';
       const shape3dSourceTextBody = node.textBody;
       const ownShape3dBodyPr = shape3dSourceTextBody?.bodyProperties;
       const shape3dAutofit = (['spAutoFit', 'normAutofit', 'noAutofit'] as const).find((mode) =>
@@ -2947,6 +2919,10 @@ export function renderShape(node: ShapeNodeData, ctx: RenderContext): HTMLElemen
     } else {
       wrapper.style.backgroundColor = fillCss;
     }
+  }
+
+  if (useBackgroundFill && mainSvg) {
+    applyShapeBackgroundFill(mainSvg, node, ctx);
   }
 
   // ---- Render text overlay (only when there is visible text; skip for decorative shapes with empty txBody) ----
@@ -3657,15 +3633,10 @@ export function renderShape(node: ShapeNodeData, ctx: RenderContext): HTMLElemen
           sy > 0 &&
           Math.abs(sx - sy) <= 0.000001 &&
           BOUNDED_OUTER_SHADOW_SCALES.has(sx));
-      const backgroundPaintKind = useBackgroundFill ? backgroundFill?.paintKind : undefined;
       const hasOpaqueDirectSolidFill =
-        (backgroundPaintKind
-          ? backgroundPaintKind === 'solid'
-          : spPr.child('solidFill').exists()) && isOpaqueCssColor(fillCss);
+        spPr.child('solidFill').exists() && isOpaqueCssColor(fillCss);
       const hasOpaqueDirectLinearGradient =
-        (backgroundPaintKind
-          ? backgroundPaintKind === 'gradient'
-          : spPr.child('gradFill').exists()) &&
+        spPr.child('gradFill').exists() &&
         gradientFillData?.type === 'linear' &&
         gradientFillData.stops.length === 2 &&
         gradientFillData.stops.every((stop) => isOpaqueCssColor(stop.color));

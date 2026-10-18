@@ -13,7 +13,6 @@ function useBgFillShapeXml(): string {
       <p:spPr>
         <a:xfrm><a:off x="0" y="0"/><a:ext cx="2000000" cy="800000"/></a:xfrm>
         <a:prstGeom prst="rect"><a:avLst/></a:prstGeom>
-        <a:solidFill><a:srgbClr val="FF0000"/></a:solidFill>
       </p:spPr>
     </p:sp>
   `;
@@ -47,7 +46,9 @@ describe('renderShape useBgFill', () => {
 
     const el = renderShape(node, ctx);
 
-    expect(el.querySelector('svg > path')?.getAttribute('fill')).toBe('#112233');
+    expect(
+      el.querySelector<HTMLElement>('[data-pptx-shape-background]')?.style.backgroundColor,
+    ).toBe('rgb(17, 34, 51)');
   });
 
   it('occludes content behind it when the slide background is semi-transparent', () => {
@@ -63,7 +64,8 @@ describe('renderShape useBgFill', () => {
     });
 
     const el = renderShape(node, ctx);
-    const fill = el.querySelector('svg > path')?.getAttribute('fill') ?? '';
+    const fill =
+      el.querySelector<HTMLElement>('[data-pptx-shape-background]')?.style.backgroundColor ?? '';
 
     expect(fill).not.toBe('');
     expect(fill).not.toBe('transparent');
@@ -85,11 +87,19 @@ describe('renderShape useBgFill', () => {
 
     const el = renderShape(node, ctx);
 
-    expect(el.querySelector('svg > path')?.getAttribute('fill')).toBe('#112233');
+    expect(
+      el.querySelector<HTMLElement>('[data-pptx-shape-background]')?.style.backgroundColor,
+    ).toBe('rgb(17, 34, 51)');
   });
 
   it('keeps the shape style fill when the flag is absent', () => {
-    const node = parseShapeNode(parseXml(useBgFillShapeXml().replace(' useBgFill="1"', '')));
+    const node = parseShapeNode(
+      parseXml(
+        useBgFillShapeXml()
+          .replace(' useBgFill="1"', '')
+          .replace('</p:spPr>', '<a:solidFill><a:srgbClr val="FF0000"/></a:solidFill></p:spPr>'),
+      ),
+    );
     const ctx = createMockRenderContext({
       slide: { rels: new Map(), background: parseXml(slideBackgroundXml()) } as never,
     });
@@ -99,14 +109,14 @@ describe('renderShape useBgFill', () => {
     expect(el.querySelector('svg > path')?.getAttribute('fill')).toBe('#FF0000');
   });
 
-  it('ignores the shape local gradient when the background is solid', () => {
+  it('keeps the explicit local gradient ahead of the background fallback', () => {
     const node = parseShapeNode(
       parseXml(
         useBgFillShapeXml().replace(
-          '<a:solidFill><a:srgbClr val="FF0000"/></a:solidFill>',
+          '</p:spPr>',
           `<a:gradFill><a:gsLst><a:gs pos="0"><a:srgbClr val="FF0000"/></a:gs>` +
             `<a:gs pos="100000"><a:srgbClr val="0000FF"/></a:gs></a:gsLst>` +
-            `<a:lin ang="5400000"/></a:gradFill>`,
+            `<a:lin ang="5400000"/></a:gradFill></p:spPr>`,
         ),
       ),
     );
@@ -116,7 +126,7 @@ describe('renderShape useBgFill', () => {
 
     const el = renderShape(node, ctx);
 
-    expect(el.querySelector('svg > path')?.getAttribute('fill')).toBe('#112233');
-    expect(el.querySelector('svg defs linearGradient')).toBeNull();
+    expect(el.querySelector('[data-pptx-shape-background]')).toBeNull();
+    expect(el.querySelector('svg defs linearGradient')).not.toBeNull();
   });
 });

@@ -10,11 +10,16 @@ import { LayoutData } from '../model/Layout';
 import { SafeXmlNode } from '../parser/XmlParser';
 import type { EChartsType } from 'echarts/core';
 import type { PdfjsConfig } from '../utils/pdfRenderer';
+import type { AffineMatrix } from './coordinateTransform';
 import type { ExternalMediaPolicy } from '../utils/urlSafety';
 
 export interface RenderContext {
   presentation: PresentationData;
   slide: SlideData;
+  /** Original slide retains background relationship ownership in template contexts. */
+  backgroundSlide?: SlideData;
+  /** Current parent DOM coordinates mapped into slide coordinates (2D groups). */
+  parentToSlide?: AffineMatrix;
   theme: ThemeData;
   master: MasterData;
   layout: LayoutData;
@@ -104,6 +109,7 @@ export function createRenderContext(
   return {
     presentation,
     slide,
+    backgroundSlide: slide,
     theme,
     master,
     layout,
