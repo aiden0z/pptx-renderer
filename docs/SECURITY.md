@@ -33,12 +33,27 @@ Maintainers will acknowledge as soon as possible on GitHub.
 
 - Treat all PPTX files as untrusted input.
 - Configure `zipLimits` in production; `RECOMMENDED_ZIP_LIMITS` is the package-provided starting point.
+- Set `externalMedia: 'block'` when untrusted decks must not request external media. The default
+  is `allow` for compatibility; ZIP limits do not block network requests.
 - Run rendering in constrained browser/container contexts when possible.
 - Keep dependencies and runtime updated.
 - Disable or limit external navigation integration if your application does not need it.
 - Pin exact standalone and PDF.js asset versions; do not use mutable CDN URLs in production.
 - If EMF-PDF fallback is enabled, permit only the required module origin and `blob:` in
   `worker-src`; self-host the assets when a tighter CSP is required.
+
+## External Media Policy
+
+`externalMedia: 'allow' | 'block'` is available on `PptxViewer`, `PptxViewer.open()`, deprecated
+`PptxRenderer`, and standalone `renderSlide()`. Viewer thumbnails inherit the same policy.
+With `block`, external picture, shape/background/text-fill, audio/video, and poster relationships
+are skipped, including lazy media paths. Embedded package media remains available.
+
+This policy does not block host-initiated presentation downloads, user-activated hyperlinks,
+host-configured font URLs, or an optional PDF.js runtime. Use the host application's CSP and
+network controls for broader restrictions; the renderer option is not a general network sandbox.
+Nodes marked `cNvPr@hidden` and descendants of hidden groups do not render or start their media
+requests, but hidden content remains in the parsed and serialized model and is not redacted.
 
 ## Resource Limits
 

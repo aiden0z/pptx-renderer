@@ -2,7 +2,7 @@
 
 ## Core
 
-- [Architecture](ARCHITECTURE.md) — Three-layer pipeline (Parse -> Model -> Render), search/highlight API boundaries, DOM construction strategy
+- [Architecture](ARCHITECTURE.md) — Three-layer pipeline (Parse -> Model -> Render), template export, visibility/background ownership, search/highlight API boundaries, DOM construction strategy
 - [Testing](TESTING.md) — Unit tests (vitest), E2E visual comparison, dev-page model search and thumbnail navigation, two-layer metric system
 - [OOXML geometry source contract](../scripts/ooxml-geometry/README.md) — Pinned ECMA source, formula/IR compiler, SVG emitter, deterministic catalog, and migration gates
 - [Performance](PERFORMANCE.md) — Windowed mounting, lazy slide parsing, lazy media decoding, batch tuning, scaled preview guidance, large-deck optimization
@@ -10,7 +10,7 @@
 ## Quality & Process
 
 - [Contributing](CONTRIBUTING.md) — PR checklist, code style, test requirements
-- [Security](SECURITY.md) — ZIP parse limits, URL filtering, vulnerability reporting
+- [Security](SECURITY.md) — ZIP parse limits, external-media controls and boundaries, URL filtering, vulnerability reporting
 - [Releasing](RELEASING.md) — Release checklist and versioning
 - [v1.4.0 Release Notes](releases/v1.4.0.md) — External media controls, template export, hidden shapes, text and chart fixes
 - [v1.3.0 Release Notes](releases/v1.3.0.md) — Equations, bounded static 3D and effects, CJK text, tables, charts, and standards-based geometry
@@ -33,7 +33,7 @@ The baseline-driven E2E testing system is documented across:
 
 - [Testing Guide](TESTING.md) — Metric system, evaluation commands, shape fix protocol
 - [Baseline Pipeline](../test/e2e/oracle/README.md) — Case format, VBA macro, ground truth generation
-- [CLAUDE.md](../CLAUDE.md) — Shape/SmartArt fix workflow quick reference (for AI-assisted development)
+- [AGENTS.md](../AGENTS.md) — Repo-local skills, current validation rules, and Shape/SmartArt fix workflow (for AI-assisted development)
 
 ## GitHub Templates
 

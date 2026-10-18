@@ -6,6 +6,9 @@ A high-fidelity, browser-native PPTX renderer that parses Office Open XML (`.ppt
 
 Supports shapes, text, images, tables, charts, SmartArt, bounded OMML equations, groups, backgrounds, gradients, pattern fills, bounded ordinary-shape outer shadows and reflections, bounded static DrawingML 3D, and OOXML color inheritance. Rendering fidelity depends on the source features and available preview data; see the support boundaries below.
 
+See the [v1.4.0 release notes](docs/releases/v1.4.0.md) for external-media controls, template
+serialization, rendering fixes, migration guidance, and verified support boundaries.
+
 ## Rendering Example
 
 A complex slide with charts, text styles, shapes, and SmartArt — PowerPoint ground truth vs browser-rendered output:
@@ -226,6 +229,7 @@ const viewer = await PptxViewer.open(buffer, container, {
 | `zoomPercent`        | `number`                    | `100`         | Zoom level (10–400)                                                                                               |
 | `scrollContainer`    | `HTMLElement`               | --            | Scroll container for IntersectionObserver root                                                                    |
 | `zipLimits`          | `ZipParseLimits`            | --            | Security limits for ZIP parsing (used by `.open()`). Use `RECOMMENDED_ZIP_LIMITS` for untrusted input.            |
+| `externalMedia`      | `'allow' \| 'block'`        | `'allow'`     | Allow or block external media relationships; embedded media remains available. Also applies to thumbnails.        |
 | `lazyMedia`          | `boolean`                   | `false`       | Decode embedded media on demand instead of during ZIP parsing. Best for large decks with windowed list rendering. |
 | `lazySlides`         | `boolean`                   | `false`       | Parse slide shape/table/chart nodes on demand. Best for large decks with windowed list rendering.                 |
 | `pdfjs`              | `PdfjsConfig`               | --            | Optional PDF.js URLs for EMF-embedded PDF fallback rendering, or `false` to disable it.                           |
@@ -460,9 +464,9 @@ const renderer = new PptxRenderer(container, { mode: 'list', listMountStrategy: 
 await renderer.preview(buffer); // deprecated — use PptxViewer.open() instead
 ```
 
-`PptxRenderer` accepts the same optional `lazyMedia`, `lazySlides`, and `pdfjs`
-configuration as `PptxViewer`, so legacy users can enable performance options or
-EMF-PDF fallback rendering without changing APIs.
+`PptxRenderer` accepts the same optional `externalMedia`, `lazyMedia`, `lazySlides`, and `pdfjs`
+configuration as `PptxViewer`, so legacy users can control external media, enable performance
+options, or configure EMF-PDF fallback rendering without changing APIs.
 
 ### Utility Exports
 
@@ -488,11 +492,13 @@ const json = serializePresentation(presentation); // SerializedPresentation (JSO
 // json.layouts / json.masters carry each template's non-placeholder shapes as typed
 // nodes; a slide names its own via layoutPath / masterPath. Draw order is master,
 // then layout, then the slide's own nodes, composed as the renderer does:
-//   - slide nodes: always
+//   - slide nodes: independent of showMasterSp
 //   - layout nodes: only when slide.showMasterSp is not false
 //   - master nodes: only when slide.showMasterSp and layout.showMasterSp are both not false
 // So slide.showMasterSp === false hides both layout and master shapes, while
 // layout.showMasterSp === false hides only the master's.
+// These arrays retain authored node.hidden metadata. For visible composition, skip
+// hidden nodes and the descendants of hidden groups on every contributing layer.
 const index = buildTextIndex(presentation); // TextIndexEntry[]
 const matches = searchText(index, '算力'); // TextSearchResult[]
 const directMatches = searchPresentation(presentation, /GPU|CPU/i); // TextSearchResult[]
@@ -507,6 +513,7 @@ import { renderSlide } from '@aiden0z/pptx-renderer';
 import type { SlideHandle } from '@aiden0z/pptx-renderer';
 
 const handle = renderSlide(presentation, presentation.slides[0], {
+  externalMedia: 'block', // opt in to blocking external media relationships
   onNodeError: (nodeId, err) => console.warn(nodeId, err),
   mediaUrlCache: new Map(), // optional shared cache for blob URLs
   pdfjs, // optional, only for EMF-embedded PDF fallback rendering
@@ -581,6 +588,10 @@ The spec-compiled runtime currently contains 29 definitions: all 28 zero-adjustm
 presets continue to use their handwritten implementations. Arbitrary symbolic guides in custom
 geometry are not yet supported.
 
+Preset text uses the evaluated DrawingML text rectangle, including supported adjustments and
+group transforms. Explicit diagram text transforms take priority. Shapes with `cNvPr@hidden="1"`
+and descendants of hidden groups are omitted from rendering while their model data is retained.
+
 ### Text
 
 Text rendering follows the master, layout, placeholder, shape, paragraph, and run cascade. It
@@ -588,7 +599,10 @@ supports theme fonts, CJK text, bullets, hyperlinks, vertical text, superscript/
 percentage spacing, explicit left/center/right/decimal tab stops in horizontal left-to-right text,
 and explicit left tab stops in vertical East Asian text,
 solid/gradient/pattern/stretched-picture run fills, common wrap/overflow combinations, and selected
-`spAutoFit` growth. Font availability remains part of visual-test provenance.
+`spAutoFit` growth. Wrapped text is measured after wrapping for autofit. Font availability remains
+part of visual-test provenance: a system fallback can change line breaks and alignment even when
+the shape's text rectangle is correct. Supply matching licensed fonts through `fontFaces` when
+the presentation does not embed them.
 
 ### Tables
 
@@ -619,7 +633,8 @@ required.
 
 Ordinary-shape outer shadows and reflections have native-validated lanes for the combinations in
 the tracked effect matrices. Other effect combinations use the existing approximation or flat
-fallback.
+fallback. Theme-inherited text shadows remain a known visual difference; ordinary-shape shadow
+support does not establish text-shadow parity.
 
 The static DrawingML 3D path parses scene, camera, lighting, bevel, contour, and material properties.
 Native-validated rendering covers selected top-bevel silhouettes, zero-depth camera planes, cropped
@@ -636,6 +651,12 @@ models are not supported.
 - **Groups**: recursively remaps child coordinates and preserves supported transforms.
 - **Compatible content**: selects one supported `mc:Choice`, otherwise its `mc:Fallback`, while preserving branch order.
 - **Backgrounds and color**: resolves slide/layout/master backgrounds, theme colors, color maps, and common modifiers.
+
+For `useBgFill`, shape paint samples the owning part's background chain in slide coordinates,
+then clips to the shape: slide → layout → master for slide shapes, layout → master for layout
+shapes, and master only for master shapes. A missing background resolves to white; explicit local
+fills take priority. This includes supported 2D rotations, flips, and group transforms. Background
+gradient interpolation can still differ from native PowerPoint.
 
 ## Architecture
 

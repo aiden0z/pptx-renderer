@@ -282,8 +282,8 @@ This generates/reuses ground truth for all SmartArt layouts available on the loc
 
 For text, shape-adjustment, zero-adjustment flowchart, ordinary-shape and text effects, bounded
 static DrawingML 3D, table, composite, and chart interaction cases, use the python-pptx generator.
-It currently defines 205 cases: 63 text, 31 shape-adjustment, 28 flowchart, 2 shape-effect, 1
-text-effect, 20 static 3D, 8 table, 8 formula, 20 composite, and 24 chart cases. Chart cases 23–24
+It currently defines 207 cases: 64 text, 31 shape-adjustment, 28 flowchart, 2 shape-effect, 1
+text-effect, 20 static 3D, 8 table, 8 formula, 21 composite, and 24 chart cases. Chart cases 23–24
 exercise readable two-dimensional fallbacks for native 3D column and pie charts; they do not claim
 three-dimensional parity.
 
@@ -379,6 +379,18 @@ ID 0062 is a nine-slide native vertical-text matrix covering `eaVert`, `mongolia
 character advance, and mixed CJK/Hangul fallback behavior.
 ID 0063 reproduces duplicate unlinked placeholder indices and verifies that body geometry and text
 styles resolve by placeholder type instead of layout order.
+ID 0064 covers preset text rectangles across top/center/bottom anchors and grouped shapes.
+Composite ID 0021 covers hidden slide/layout/master nodes, visible controls, and hidden group
+subtrees. Browser coverage additionally verifies that hidden content does not request media.
+
+The v1.4.0 regression specs are `external-media-policy.spec.ts`, `hidden-nodes.spec.ts`,
+`preset-text-rectangles.spec.ts`, and `background-fill.spec.ts` under `test/browser/`. They cover
+default/allow/block with eager/lazy media, hidden-node controls, preset text placement, and
+background sampling with template ownership, transforms, explicit fills, and media policy.
+For release acceptance, also rerun available issue attachments against native PowerPoint and
+record whether each input is the original attachment, an exact public generator, or a derived
+reproduction. An unavailable private deck is not verified by a synthetic replacement. Compare
+font-matched captures and retain known visual differences rather than lowering thresholds.
 
 ```bash
 cd test/e2e

@@ -92,6 +92,12 @@ index. A missing `idx`, or the unlinked sentinel `4294967295`, instead matches b
 placeholder type so duplicate sentinel values cannot select an unrelated layout style. Layout to
 master inheritance remains type based.
 
+`serializePresentation()` includes non-placeholder layout/master shapes in `layouts` and
+`masters` arrays, identified by part `path`; each slide references them through `layoutPath` and
+`masterPath`. Template placeholders are filtered recursively, including those inside groups.
+The JSON keeps authored node `hidden` flags, including hidden group subtrees, for model consumers.
+Serialization is structural export, not a list of only visible objects.
+
 ## 3) Render Layer
 
 Core modules:
@@ -114,6 +120,26 @@ Responsibilities:
 - Expose external slide rendering, scaled thumbnail preview, and search highlight helpers.
 - Render common EMF fallback previews when the file contains embedded bitmap data or,
   with optional `pdfjs` URLs, an embedded PDF preview.
+
+### Visibility, External Media, and Background Ownership
+
+Slide composition paints master, layout, and slide-owned nodes in that order. A slide's
+`showMasterSp: false` suppresses both template layers; a layout's `showMasterSp: false` suppresses
+only the master. On every layer, a true `cNvPr@hidden` flag suppresses a node and its grouped descendants
+before rendering or loading their media, without removing the model's visibility metadata.
+
+`externalMedia` travels from viewer options to each slide, group, and thumbnail render context.
+The default is `allow`; `block` skips external media relationships across image, fill, and
+audio/video paths, including lazy loading. It does not control host presentation downloads,
+hyperlink navigation, configured fonts, or PDF.js assets; see the [security guide](SECURITY.md).
+
+`ShapeBackgroundFill.ts` reuses `BackgroundRenderer` for `useBgFill` paint and its relationship,
+media-policy, and asynchronous lifecycle handling. It paints a slide-sized surface, maps it through
+the inverse 2D shape/group transform, then clips it to the shape's fill contours. Slide shapes use
+slide → layout → master background inheritance; layout shapes use layout → master; master shapes
+use only the master. Missing backgrounds paint white, and explicit local fills retain priority.
+This preserves background ownership without restarting a gradient or image within each shape.
+Global gradient interpolation and arbitrary 3D/effect combinations remain outside native parity.
 
 ### Async Resource Lifecycle
 
@@ -225,6 +251,12 @@ formula/IR parity, SVG structure, parent renderer, picture clip, browser, packag
 native PowerPoint oracle evidence for the selected shape family.
 
 ### Text wrapping and shape autofit
+
+Preset text placement evaluates the DrawingML text rectangle with the shape's dimensions and
+adjustments, before applying text insets and anchors. Explicit diagram text transforms retain
+priority; invalid or degenerate guide results use the bounded fallback. Browser and native cases
+cover top/center/bottom anchors and grouped shapes. Matching fonts remain necessary for comparable
+text metrics, and theme-inherited text shadows retain a known difference from PowerPoint.
 
 `ShapeRenderer` resolves `a:bodyPr` through the existing shape/layout/master inheritance chain
 before it chooses CSS wrapping, overflow, and autofit behavior. `wrap="square"` uses browser line
