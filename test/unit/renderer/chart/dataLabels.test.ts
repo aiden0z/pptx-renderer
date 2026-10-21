@@ -33,7 +33,7 @@ describe('chart data label helpers', () => {
       showPercent: false,
       position: 'outEnd',
       color: '#112233',
-      fontSize: 11,
+      fontSize: 15,
       bold: true,
     });
   });
