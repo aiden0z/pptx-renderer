@@ -7,6 +7,11 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Fixed
+
+- Convert explicit chart text sizes from points to pixels consistently with chart-space defaults,
+  including legends, titles, axis labels, and data labels (#40).
+
 ### Documentation
 
 - Complete v1.4.0 API, security, visibility/background ownership, and validation guidance;

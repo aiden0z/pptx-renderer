@@ -1,6 +1,6 @@
 import { SafeXmlNode } from '../../parser/XmlParser';
 import { parseOoxmlBool } from '../../parser/booleans';
-import { emuToPx } from '../../parser/units';
+import { emuToPx, hundredthPtToPt, ptToPx } from '../../parser/units';
 import { cssFontFamilyStack, resolveThemeFontStack } from '../fontResolver';
 import { RenderContext } from '../RenderContext';
 import { resolveColor } from '../StyleResolver';
@@ -155,7 +155,8 @@ function extractDefRPrStyle(defRPr: SafeXmlNode, ctx: RenderContext): ChartTextS
   }
   const sz = defRPr.numAttr('sz');
   if (sz !== undefined && sz > 0) {
-    style.fontSize = Math.round(sz / 100);
+    // Chart element sizes use hundredths of a point, like chartSpace defaults.
+    style.fontSize = Math.round(ptToPx(hundredthPtToPt(sz)));
     style[EXPLICIT_FONT_SIZE] = true;
   }
   const b = defRPr.attr('b');

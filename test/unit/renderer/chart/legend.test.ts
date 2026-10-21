@@ -32,7 +32,7 @@ describe('chart legend helpers', () => {
       width: '30%',
       height: '40%',
     });
-    expect(legend?.textStyle?.fontSize).toBe(9);
+    expect(legend?.textStyle?.fontSize).toBe(12);
     expect(getLegendPlacement(legend)).toBe('right');
     expect((legend?.option as { right?: string }).right).toBe('2%');
   });
