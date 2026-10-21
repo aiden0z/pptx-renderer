@@ -474,7 +474,7 @@ describe('ChartRenderer', () => {
       const xml = buildChartSpaceXml({ hasLegend: true, legendPos: 'b', legendTxPr });
       const { option } = parseChartOption(xml);
       const legend = option.legend as any;
-      expect(legend?.textStyle?.fontSize).toBe(12);
+      expect(legend?.textStyle?.fontSize).toBe(16);
     });
 
     it('should apply legend text outer shadow from legend txPr defRPr effectLst', () => {
@@ -784,7 +784,7 @@ describe('ChartRenderer', () => {
       const { option } = parseChartOption(xml);
 
       const xAxis = option.xAxis as any;
-      expect(xAxis?.axisLabel?.fontSize).toBe(14);
+      expect(xAxis?.axisLabel?.fontSize).toBe(19);
     });
 
     it('should not override axis label color when no txPr exists', () => {
@@ -852,7 +852,7 @@ describe('ChartRenderer', () => {
       expect(yAxis.nameRotate).toBe(-90);
       expect(yAxis.nameTextStyle).toMatchObject({
         color: '#222222',
-        fontSize: 12,
+        fontSize: 16,
       });
       expect(yAxis.nameTextStyle.fontFamily).toContain('Calibri');
       expect(yAxis.nameTextStyle.fontFamily).not.toContain('+mn-lt');
@@ -1075,7 +1075,7 @@ describe('ChartRenderer', () => {
       </c:chartSpace>`;
       const { option } = parseChartOption(xml);
       const series = (option.series as any[])?.[0];
-      expect(series?.label?.fontSize).toBe(16);
+      expect(series?.label?.fontSize).toBe(21);
     });
 
     it('should apply data label bold from dLbls txPr defRPr b=1', () => {
@@ -1249,7 +1249,7 @@ describe('ChartRenderer', () => {
       });
       const { option } = parseChartOption(xml);
       const title = option.title as any;
-      expect(title?.textStyle?.fontSize).toBe(18);
+      expect(title?.textStyle?.fontSize).toBe(24);
       expect(title?.textStyle?.color).toMatch(/[1]{1}[2]{1}[3]{1}[4]{1}[5]{1}[6]{1}|#123456/i);
     });
 
@@ -1311,7 +1311,7 @@ describe('ChartRenderer', () => {
 
       expect(title?.text).toBe('{r0|1.2X }{r1|模型微调速度提升}');
       expect(title.textStyle.rich.r0).toMatchObject({ color: '#4D62D7', fontWeight: 'bold' });
-      expect(title.textStyle.rich.r1).toMatchObject({ fontSize: 16, fontWeight: 'normal' });
+      expect(title.textStyle.rich.r1).toMatchObject({ fontSize: 21, fontWeight: 'normal' });
     });
 
     it('should apply title rich text style when title txPr is omitted', () => {
@@ -1324,7 +1324,7 @@ describe('ChartRenderer', () => {
       });
       const { option } = parseChartOption(xml);
       const title = option.title as any;
-      expect(title?.textStyle?.fontSize).toBe(16);
+      expect(title?.textStyle?.fontSize).toBe(21);
       expect(title?.textStyle?.color).toBe('#654321');
     });
 
@@ -2751,7 +2751,7 @@ describe('ChartRenderer', () => {
       expect(series[1].symbolSize).toBe(0);
       expect(series[1].endLabel.show).toBe(false);
       expect(series[1].label.show).toBe(true);
-      expect(series[1].label.fontSize).toBe(6);
+      expect(series[1].label.fontSize).toBe(8);
       expect(series[1].label.backgroundColor).toBe('#FFFFFF');
       expect(series[1].label.borderColor).toBe('#BFBFBF');
       expect(series[1].label.borderWidth).toBeGreaterThan(0);
@@ -2760,9 +2760,9 @@ describe('ChartRenderer', () => {
       expect(yAxis[1].axisLabel.formatter(0.24)).toBe('24%');
       expect(yAxis[0].max).toBeGreaterThan(600);
       expect(yAxis[1].max).toBeLessThanOrEqual(1);
-      expect(tooltip.textStyle.fontSize).toBe(9);
-      expect(tooltip.extraCssText).toContain('font-size: 9px');
-      expect(legend.textStyle.fontSize).toBe(9);
+      expect(tooltip.textStyle.fontSize).toBe(12);
+      expect(tooltip.extraCssText).toContain('font-size: 12px');
+      expect(legend.textStyle.fontSize).toBe(12);
     });
 
     it('keeps repeated same-type combo chart nodes on their secondary axes', () => {
@@ -3427,7 +3427,7 @@ describe('ChartRenderer', () => {
       expect(legend.style.left).toBe('50%');
       expect(legend.style.transform).toBe('translateX(-50%)');
       expect(labels.map((label) => label.textContent)).toEqual(['算力', '增速']);
-      expect(labels.every((label) => label.style.fontSize === '9px')).toBe(true);
+      expect(labels.every((label) => label.style.fontSize === '12px')).toBe(true);
     });
 
     it('renders right legends vertically centered (oracle-full-chart-0001-clustered-bar)', () => {
@@ -7369,7 +7369,7 @@ describe('ChartRenderer', () => {
       expect(series.labelLine.show).toBe(true);
       expect(point.label.position).toBe('inside');
       expect(point.label.color).toBe('#FF0000');
-      expect(point.label.fontSize).toBe(14);
+      expect(point.label.fontSize).toBe(19);
       expect(point.label.formatter({ name: 'B', value: 75, percent: 75 })).toBe('B 75%');
       expect(
         series.labelLayout({ dataIndex: 1, rect: { x: 0, y: 0, width: 400, height: 300 } }),
