@@ -430,7 +430,7 @@ function resolveShapeBlipUrl(blipFill: SafeXmlNode, ctx: RenderContext): string 
   if (isExternalTargetMode(rel.targetMode)) {
     return isAllowedExternalMediaUrl(rel.target, ctx.externalMedia) ? rel.target : null;
   }
-  const resolved = findMediaByTarget(rel.target, ctx.presentation.media);
+  const resolved = findMediaByTarget(rel.target, ctx.presentation.media, ctx.partPath);
   if (!resolved) return null;
   const { mediaPath, data } = resolved;
   return getOrCreateBlobUrl(mediaPath, data, ctx.mediaUrlCache);
@@ -454,6 +454,7 @@ async function resolveShapeBlipUrlAsync(
     rel.target,
     ctx.presentation.media,
     ctx.presentation.mediaResolver,
+    ctx.partPath,
   );
   if (!resolved) return null;
   const { mediaPath, data } = resolved;

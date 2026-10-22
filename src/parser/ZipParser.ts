@@ -39,7 +39,7 @@ export interface ZipParseLimits {
   maxEntryUncompressedBytes?: number;
   /** Maximum total uncompressed size across all entries (bytes). */
   maxTotalUncompressedBytes?: number;
-  /** Maximum uncompressed size across media entries under `ppt/media/` (bytes). */
+  /** Maximum uncompressed size across media directories under `ppt/` (bytes). */
   maxMediaBytes?: number;
   /** Maximum concurrent zip entry reads during parsing. */
   maxConcurrency?: number;
@@ -58,7 +58,7 @@ function throwZipLimitExceeded(reason: string): never {
 }
 
 function isMediaPath(path: string): boolean {
-  return path.startsWith('ppt/media/');
+  return /^ppt\/(?:[^/]+\/)*media\//.test(path);
 }
 
 function decodeZipPath(path: string): string {
@@ -132,18 +132,14 @@ class ZipLazyMediaResolver implements MediaResolver {
     return this.loadedPaths.size;
   }
 
-  async resolve(target: string): Promise<ResolvedMedia | undefined> {
-    for (const mediaPath of resolveMediaPathCandidates(target)) {
+  async resolve(target: string, sourcePart?: string): Promise<ResolvedMedia | undefined> {
+    for (const mediaPath of resolveMediaPathCandidates(target, sourcePart)) {
       const data = this.media.get(mediaPath);
       if (data) return { mediaPath, data };
-    }
-
-    for (const mediaPath of resolveMediaPathCandidates(target)) {
       const entry = this.entries.get(mediaPath);
       if (!entry) continue;
 
-      const data = await this.readEntry(entry);
-      return { mediaPath, data };
+      return { mediaPath, data: await this.readEntry(entry) };
     }
 
     return undefined;

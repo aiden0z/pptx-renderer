@@ -749,6 +749,51 @@ describe('parseZip limits', () => {
   });
 });
 
+describe.each([
+  ['eager', parseZip],
+  ['lazy', parseZipLazyMedia],
+] as const)('%s nested media', (_mode, parse) => {
+  it.each(['slides', 'slideLayouts', 'slideMasters'])(
+    'loads media beside %s parts',
+    async (folder) => {
+      const path = `ppt/${folder}/media/image1.jpeg`;
+      const data = new Uint8Array([1, 2, 3]);
+      const buffer = await buildZip([
+        ...SKELETON,
+        { path, data },
+        { path: 'ppt/media/image1.jpeg', data: new Uint8Array([9]) },
+      ]);
+      const files = await parse(buffer);
+      if (files.mediaResolver) {
+        expect(files.media.size).toBe(0);
+        expect(files.mediaResolver.totalCount).toBe(2);
+        expect(await files.mediaResolver.resolve(path)).toEqual({ mediaPath: path, data });
+      }
+      expect(files.media.get(path)).toEqual(data);
+    },
+  );
+
+  it('includes nested media in the aggregate media limit', async () => {
+    const buffer = await buildZip([
+      ...SKELETON,
+      { path: 'ppt/media/image1.jpeg', data: new Uint8Array(600) },
+      { path: 'ppt/slides/media/image1.jpeg', data: new Uint8Array(600) },
+    ]);
+    await expect(parse(buffer, { maxMediaBytes: 1000 })).rejects.toThrow(/maxMediaBytes/);
+  });
+
+  it('checks nested media limits when ZIP sizes are unavailable', async () => {
+    mockLoadedZipWithoutPrivateSizes({
+      'ppt/slides/media/image1.jpeg': new Uint8Array(600),
+    });
+    const read = async () => {
+      const files = await parse(new ArrayBuffer(0), { maxMediaBytes: 500 });
+      await files.mediaResolver?.resolve('ppt/slides/media/image1.jpeg');
+    };
+    await expect(read()).rejects.toThrow(/maxMediaBytes/);
+  });
+});
+
 // ---------------------------------------------------------------------------
 // Full round-trip: a realistic minimal PPTX-like zip
 // ---------------------------------------------------------------------------

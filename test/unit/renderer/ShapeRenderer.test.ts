@@ -5046,7 +5046,10 @@ describe('ShapeRenderer', () => {
     await Promise.all(ctx.asyncTasks);
 
     const image = el.querySelector('svg image');
-    expect(ctx.presentation.mediaResolver.resolve).toHaveBeenCalledWith('../media/lazy-shape.png');
+    expect(ctx.presentation.mediaResolver.resolve).toHaveBeenCalledWith(
+      '../media/lazy-shape.png',
+      undefined,
+    );
     expect(ctx.mediaUrlCache.has('ppt/media/lazy-shape.png')).toBe(true);
     expect(image).not.toBeNull();
     expect(image!.getAttribute('preserveAspectRatio')).toBe('none');

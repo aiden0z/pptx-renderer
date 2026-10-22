@@ -328,7 +328,10 @@ describe('renderBackground', () => {
 
     await Promise.all(ctx.asyncTasks);
 
-    expect(ctx.presentation.mediaResolver.resolve).toHaveBeenCalledWith('../media/lazy-bg.png');
+    expect(ctx.presentation.mediaResolver.resolve).toHaveBeenCalledWith(
+      '../media/lazy-bg.png',
+      undefined,
+    );
     expect(ctx.mediaUrlCache.has('ppt/media/lazy-bg.png')).toBe(true);
     expect(container.style.backgroundImage).toMatch(/^url\(/);
     expect(container.style.backgroundSize).toBe('100% 100%');
