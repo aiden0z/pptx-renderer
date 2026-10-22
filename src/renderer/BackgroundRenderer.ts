@@ -259,6 +259,7 @@ export function renderBackground(ctx: RenderContext, container: HTMLElement): vo
   // and track which rels map to use for resolving image references
   let bgNode: SafeXmlNode | undefined;
   let bgRels: Map<string, RelEntry> = ctx.slide.rels;
+  let bgPartPath = ctx.partPath;
 
   if (ctx.slide.background) {
     bgNode = ctx.slide.background;
@@ -266,9 +267,11 @@ export function renderBackground(ctx: RenderContext, container: HTMLElement): vo
   } else if (ctx.layout.background) {
     bgNode = ctx.layout.background;
     bgRels = ctx.layout.rels;
+    bgPartPath = ctx.layoutPath;
   } else if (ctx.master.background) {
     bgNode = ctx.master.background;
     bgRels = ctx.master.rels;
+    bgPartPath = ctx.masterPath;
   }
 
   if (!bgNode) {
@@ -279,7 +282,7 @@ export function renderBackground(ctx: RenderContext, container: HTMLElement): vo
   // Parse p:bg > p:bgPr
   const bgPr = bgNode.child('bgPr');
   if (bgPr.exists()) {
-    renderBgPr(bgPr, ctx, container, bgRels);
+    renderBgPr(bgPr, { ...ctx, partPath: bgPartPath }, container, bgRels);
     return;
   }
 
@@ -417,13 +420,14 @@ function renderBlipBackground(
     if (!isAllowedExternalMediaUrl(rel.target, ctx.externalMedia)) return;
     url = rel.target;
   } else {
-    const resolved = findMediaByTarget(rel.target, ctx.presentation.media);
+    const resolved = findMediaByTarget(rel.target, ctx.presentation.media, ctx.partPath);
     if (!resolved) {
       if (ctx.presentation.mediaResolver) {
         const task = findMediaByTargetAsync(
           rel.target,
           ctx.presentation.media,
           ctx.presentation.mediaResolver,
+          ctx.partPath,
         )
           .then((lazyResolved) => {
             if (ctx.signal?.aborted || !lazyResolved) return;

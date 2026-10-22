@@ -818,7 +818,7 @@ function resolveTextPictureUrl(blipFill: SafeXmlNode, ctx: RenderContext): strin
   if (isExternalTargetMode(rel.targetMode)) {
     return isAllowedExternalMediaUrl(rel.target, ctx.externalMedia) ? rel.target : undefined;
   }
-  const resolved = findMediaByTarget(rel.target, ctx.presentation.media);
+  const resolved = findMediaByTarget(rel.target, ctx.presentation.media, ctx.partPath);
   if (!resolved) return undefined;
   return getOrCreateBlobUrl(resolved.mediaPath, resolved.data, ctx.mediaUrlCache);
 }
@@ -840,6 +840,7 @@ async function resolveTextPictureUrlAsync(
     rel.target,
     ctx.presentation.media,
     ctx.presentation.mediaResolver,
+    ctx.partPath,
   );
   if (!resolved) return undefined;
   return getOrCreateBlobUrl(resolved.mediaPath, resolved.data, ctx.mediaUrlCache);

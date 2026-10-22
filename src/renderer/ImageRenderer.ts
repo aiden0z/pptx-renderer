@@ -55,13 +55,14 @@ function resolveImageRelUrl(
     return isAllowedExternalMediaUrl(rel.target, ctx.externalMedia) ? rel.target : undefined;
   }
 
-  const resolved = findMediaByTarget(rel.target, ctx.presentation.media);
+  const resolved = findMediaByTarget(rel.target, ctx.presentation.media, ctx.partPath);
   if (!resolved) {
     if (!ctx.presentation.mediaResolver) return undefined;
     return findMediaByTargetAsync(
       rel.target,
       ctx.presentation.media,
       ctx.presentation.mediaResolver,
+      ctx.partPath,
     )
       .then((value) => {
         if (ctx.signal?.aborted || !value || isUnsupportedFormat(value.mediaPath)) return undefined;
@@ -153,13 +154,14 @@ export function renderImage(node: PicNodeData, ctx: RenderContext): HTMLElement 
         return wrapper;
       }
 
-      const resolved = findMediaByTarget(rel.target, ctx.presentation.media);
+      const resolved = findMediaByTarget(rel.target, ctx.presentation.media, ctx.partPath);
       if (!resolved) {
         if (ctx.presentation.mediaResolver) {
           const task = findMediaByTargetAsync(
             rel.target,
             ctx.presentation.media,
             ctx.presentation.mediaResolver,
+            ctx.partPath,
           )
             .then((lazyResolved) => {
               if (ctx.signal?.aborted) return;

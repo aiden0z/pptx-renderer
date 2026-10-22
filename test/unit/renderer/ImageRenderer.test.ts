@@ -323,7 +323,10 @@ describe('renderImage', () => {
       await Promise.all(ctx.asyncTasks);
 
       expect(el.querySelector('img')).not.toBeNull();
-      expect(ctx.presentation.mediaResolver.resolve).toHaveBeenCalledWith('../media/image1.png');
+      expect(ctx.presentation.mediaResolver.resolve).toHaveBeenCalledWith(
+        '../media/image1.png',
+        undefined,
+      );
       expect(ctx.mediaUrlCache.has('ppt/media/image1.png')).toBe(true);
     });
   });

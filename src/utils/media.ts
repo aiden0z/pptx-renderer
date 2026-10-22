@@ -8,7 +8,7 @@ export interface ResolvedMedia {
 }
 
 export interface MediaResolver {
-  resolve(target: string): Promise<ResolvedMedia | undefined>;
+  resolve(target: string, sourcePart?: string): Promise<ResolvedMedia | undefined>;
   readonly loadedBytes?: number;
   readonly loadedCount?: number;
   readonly totalBytes?: number;
@@ -99,18 +99,28 @@ export function resolveMediaPath(target: string): string {
  * percent-encoded bytes in the ZIP entry name. Prefer the decoded OPC form but
  * keep the raw basename as a compatibility fallback.
  */
-export function resolveMediaPathCandidates(target: string): string[] {
-  const rawRelativePath = mediaRelativePath(target);
-  const decodedPath = resolveMediaPath(target);
-  const rawPath = `ppt/media/${rawRelativePath}`;
+export function resolveMediaPathCandidates(target: string, sourcePart?: string): string[] {
+  const targetPath = stripUriSuffix(target).replace(/\\/g, '/');
+  let rawPath: string;
+  if (targetPath.startsWith('/') || (!sourcePart && targetPath.startsWith('ppt/'))) {
+    rawPath = normalizePathSegments(targetPath).join('/');
+  } else if (sourcePart) {
+    const base = sourcePart.replace(/\\/g, '/').split('/').slice(0, -1).join('/');
+    rawPath = normalizePathSegments(`${base}/${targetPath}`).join('/');
+  } else {
+    // Preserve legacy lookup for callers without an owning package part.
+    rawPath = `ppt/media/${mediaRelativePath(target)}`;
+  }
+  const decodedPath = rawPath.split('/').map(decodeUriPathSegment).join('/');
   return decodedPath === rawPath ? [decodedPath] : [decodedPath, rawPath];
 }
 
 export function findMediaByTarget(
   target: string,
   media: Map<string, Uint8Array>,
+  sourcePart?: string,
 ): ResolvedMedia | undefined {
-  for (const mediaPath of resolveMediaPathCandidates(target)) {
+  for (const mediaPath of resolveMediaPathCandidates(target, sourcePart)) {
     const data = media.get(mediaPath);
     if (data) return { mediaPath, data };
   }
@@ -121,10 +131,11 @@ export async function findMediaByTargetAsync(
   target: string,
   media: Map<string, Uint8Array>,
   resolver?: MediaResolver,
+  sourcePart?: string,
 ): Promise<ResolvedMedia | undefined> {
-  const eager = findMediaByTarget(target, media);
+  const eager = findMediaByTarget(target, media, sourcePart);
   if (eager) return eager;
-  return resolver?.resolve(target);
+  return resolver?.resolve(target, sourcePart);
 }
 
 /**

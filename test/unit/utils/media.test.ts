@@ -55,6 +55,41 @@ describe('getMimeType', () => {
 });
 
 describe('resolveMediaPath', () => {
+  it.each([
+    ['media/image1.png', 'ppt/slides/slide1.xml', 'ppt/slides/media/image1.png'],
+    ['media/image1.png', 'ppt/slideMasters/master.xml', 'ppt/slideMasters/media/image1.png'],
+    ['../media/image1.png', 'ppt/slides/slide1.xml', 'ppt/media/image1.png'],
+    ['/ppt/slides/media/image1.png', 'ppt/slideLayouts/layout.xml', 'ppt/slides/media/image1.png'],
+  ])(
+    'resolves %s relative to %s without mixing same-named images',
+    (target, partPath, expected) => {
+      const media = new Map([
+        ['ppt/media/image1.png', new Uint8Array([1])],
+        ['ppt/slides/media/image1.png', new Uint8Array([2])],
+        ['ppt/slideMasters/media/image1.png', new Uint8Array([3])],
+      ]);
+      expect(findMediaByTarget(target, media, partPath)?.mediaPath).toBe(expected);
+    },
+  );
+
+  it('preserves qualified package paths for lazy resolution', () => {
+    expect(resolveMediaPathCandidates('ppt/slides/media/photo%20one.png')).toEqual([
+      'ppt/slides/media/photo one.png',
+      'ppt/slides/media/photo%20one.png',
+    ]);
+  });
+
+  it('keeps URI decoding and raw fallback when resolving against a source part', () => {
+    expect(
+      resolveMediaPathCandidates('media/photo%20one.png#preview', 'ppt/slides/slide1.xml'),
+    ).toEqual(['ppt/slides/media/photo one.png', 'ppt/slides/media/photo%20one.png']);
+  });
+
+  it('does not substitute a same-named image when the part-relative image is missing', () => {
+    const media = new Map([['ppt/media/image1.png', new Uint8Array([1])]]);
+    expect(findMediaByTarget('media/image1.png', media, 'ppt/slides/slide1.xml')).toBeUndefined();
+  });
+
   it('extracts filename and prepends ppt/media/', () => {
     expect(resolveMediaPath('../media/image1.png')).toBe('ppt/media/image1.png');
   });
@@ -140,7 +175,7 @@ describe('resolveMediaPath', () => {
     const resolved = await findMediaByTargetAsync('../media/image1.png', new Map(), resolver);
 
     expect(resolved).toEqual({ mediaPath: 'ppt/media/image1.png', data });
-    expect(resolver.resolve).toHaveBeenCalledWith('../media/image1.png');
+    expect(resolver.resolve).toHaveBeenCalledWith('../media/image1.png', undefined);
   });
 });
 
