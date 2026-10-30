@@ -7,6 +7,16 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Fixed
+
+- Place bar data labels by bar direction and value sign: `outEnd`, `inEnd` and `inBase` follow the
+  end and base of horizontal bars and of negative bars instead of always assuming an upward
+  column (#50).
+- Keep `c:scaling` min/max on deleted value axes, so a hidden axis still sizes the series (#51).
+- Hide axis lines whose `c:spPr/a:ln` is `noFill` instead of drawing the default axis line (#52).
+- Draw the plot-area outline from `c:plotArea/c:spPr/a:ln` instead of ECharts' default grid
+  border when the plot area has a fill (#53).
+
 ### Documentation
 
 - Complete v1.4.0 API, security, visibility/background ownership, and validation guidance;

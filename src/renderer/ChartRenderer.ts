@@ -10,7 +10,7 @@ import { SafeXmlNode } from '../parser/XmlParser';
 import { hexToRgb, hslToRgb, rgbToHex, rgbToHsl } from '../utils/color';
 import { applyAxisInfo, getChartAxisIds, parseAxes, parseScatterAxes } from './chart/axes';
 import { formatValue } from './chart/format';
-import { markerSizeToPx } from './chart/style';
+import { extractChartLineStyle, markerSizeToPx } from './chart/style';
 import {
   chartTextStyleToEChartsTextStyle,
   extractTitleRichText,
@@ -347,20 +347,30 @@ function scaledChartMargin(
 // ---------------------------------------------------------------------------
 
 /**
- * Convert OOXML data label position to ECharts bar label position.
+ * Convert OOXML data label position to ECharts bar label position. OOXML positions are relative
+ * to the bar (its end and its base), so they depend on the bar direction and on the value sign:
+ * a horizontal bar ends on the right, and a negative bar ends on the opposite side.
  */
-function mapBarLabelPosition(pos: string | undefined, isStacked: boolean): string {
+function mapBarLabelPosition(
+  pos: string | undefined,
+  isStacked: boolean,
+  isHorizontal = false,
+  isNegative = false,
+): string {
+  const end = isHorizontal ? (isNegative ? 'left' : 'right') : isNegative ? 'bottom' : 'top';
+  const base = isHorizontal ? (isNegative ? 'right' : 'left') : isNegative ? 'top' : 'bottom';
+  const inside = (side: string) => `inside${side[0].toUpperCase()}${side.slice(1)}`;
   switch (pos) {
     case 'outEnd':
-      return 'top';
+      return end;
     case 'inEnd':
-      return 'insideTop';
+      return inside(end);
     case 'ctr':
       return 'inside';
     case 'inBase':
-      return 'insideBottom';
+      return inside(base);
     default:
-      return isStacked ? 'inside' : 'top';
+      return isStacked ? 'inside' : end;
   }
 }
 
@@ -735,12 +745,13 @@ function buildBarChartOption(
 
     const buildLabel = (
       cfg: DataLabelConfig | Partial<DataLabelConfig> | undefined,
+      isNegative = false,
     ): EChartsTypes.BarSeriesOption['label'] => {
       if (!cfg?.showVal) return undefined;
       const label = {
         show: true,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        position: mapBarLabelPosition(cfg.position, isStacked) as any,
+        position: mapBarLabelPosition(cfg.position, isStacked, isHorizontal, isNegative) as any,
         fontSize: cfg.fontSize ?? 9,
         ...(cfg.color ? { color: cfg.color } : {}),
         ...(cfg.bold === true ? { fontWeight: 'bold' as const } : {}),
@@ -803,7 +814,10 @@ function buildBarChartOption(
           padding: perSeriesLabels?.padding,
           ...ov,
         };
-        pointLabel = buildLabel(merged);
+        pointLabel = buildLabel(merged, rawValue < 0);
+      } else if (rawValue < 0 && label) {
+        // The series label sits at the positive end; a negative bar ends on the other side.
+        pointLabel = buildLabel(perSeriesLabels, true);
       }
 
       if (!itemStyle && !pointLabel) return displayValue;
@@ -2497,6 +2511,17 @@ export function parseChartXml(
         (option.grid as any).backgroundColor = plotAreaBg;
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (option.grid as any).show = true;
+        // A shown grid draws a 1px #ccc border by default; the plot area outline comes from its spPr.
+        const plotAreaLine = extractChartLineStyle(
+          chart.child('plotArea').child('spPr').child('ln'),
+          chartCtx,
+        );
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        Object.assign(option.grid as any, {
+          borderWidth: plotAreaLine?.width ?? 0,
+          ...(plotAreaLine?.color ? { borderColor: plotAreaLine.color } : {}),
+          ...(plotAreaLine?.type ? { borderType: plotAreaLine.type } : {}),
+        });
       } else {
         const graphic = buildPlotAreaBackgroundGraphic(chart, plotAreaBg, chartSize);
         if (graphic) prependGraphicOption(option, graphic);

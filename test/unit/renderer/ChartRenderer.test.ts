@@ -8040,6 +8040,48 @@ describe('ChartRenderer', () => {
     });
 
     it.each([
+      ['outEnd', 'right'],
+      ['inEnd', 'insideRight'],
+      ['ctr', 'inside'],
+      ['inBase', 'insideLeft'],
+      [undefined, 'right'],
+    ])('maps horizontal bar data label position %s', (pos, expected) => {
+      const dLblPos = pos ? `<c:dLblPos val="${pos}"/>` : '';
+      const xml = buildChartSpaceXml({})
+        .replace('<c:barDir val="col"/>', '<c:barDir val="bar"/>')
+        .replace(
+          '<c:gapWidth val="219"/>',
+          `<c:dLbls><c:showVal val="1"/>${dLblPos}</c:dLbls><c:gapWidth val="219"/>`,
+        );
+
+      const { option } = parseChartOption(xml);
+      const series = (option.series as any[])[0];
+
+      expect(series.label.position).toBe(expected);
+    });
+
+    it.each([
+      ['col', 'outEnd', 'bottom'],
+      ['col', 'inBase', 'insideTop'],
+      ['bar', 'outEnd', 'left'],
+      ['bar', 'inEnd', 'insideLeft'],
+    ])('places %s %s labels of negative bars at their own end', (barDir, pos, expected) => {
+      const xml = buildChartSpaceXml({ values: [5, -3] })
+        .replace('<c:barDir val="col"/>', `<c:barDir val="${barDir}"/>`)
+        .replace(
+          '<c:gapWidth val="219"/>',
+          `<c:dLbls><c:showVal val="1"/><c:dLblPos val="${pos}"/></c:dLbls><c:gapWidth val="219"/>`,
+        );
+
+      const { option } = parseChartOption(xml);
+      const series = (option.series as any[])[0];
+
+      expect(series.label.position).not.toBe(expected);
+      expect(series.data[0]).toBe(5);
+      expect(series.data[1].label.position).toBe(expected);
+    });
+
+    it.each([
       ['l', 'left'],
       ['r', 'right'],
       ['b', 'bottom'],
@@ -8398,7 +8440,24 @@ describe('ChartRenderer', () => {
       expect(option.backgroundColor).toBe('#ffffff');
       expect((option.grid as any).backgroundColor).toBe('#EFEFEF');
       expect((option.grid as any).show).toBe(true);
+      expect((option.grid as any).borderWidth).toBe(0);
       expect((option.grid as any).left).toBe('10%');
+    });
+
+    it('draws the plot-area outline only from the plot area line', () => {
+      const xml = buildChartSpaceXml({}).replace(
+        '<c:plotArea>',
+        `<c:plotArea>
+          <c:spPr>
+            <a:solidFill><a:srgbClr val="EFEFEF"/></a:solidFill>
+            <a:ln w="12700"><a:solidFill><a:srgbClr val="336699"/></a:solidFill></a:ln>
+          </c:spPr>`,
+      );
+
+      const { option } = parseChartOption(xml);
+
+      // 12700 EMU is 1 pt, 4/3 px at 96 dpi.
+      expect(option.grid).toMatchObject({ show: true, borderWidth: 4 / 3, borderColor: '#336699' });
     });
 
     it('selects exploded pie slices from series and point-level explosion settings', () => {
