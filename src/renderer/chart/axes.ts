@@ -135,6 +135,7 @@ function parseAxisNode(ax: SafeXmlNode, ctx: RenderContext): AxisInfo {
     labelColor,
     labelFontSize,
     lineColor,
+    lineHidden: ax.child('spPr').child('ln').child('noFill').exists(),
     majorGridlineStyle,
   };
 }
@@ -215,7 +216,12 @@ export function applyAxisInfo(
     axisDef.axisLabel = { ...((axisDef.axisLabel as object) || {}), show: false };
     axisDef.axisLine = { show: false };
     axisDef.axisTick = { show: false };
-    if (kind === 'value') axisDef.splitLine = { show: false };
+    if (kind === 'value') {
+      axisDef.splitLine = { show: false };
+      // A deleted axis is only hidden: its scaling still sizes the plotted series.
+      if (info.min !== undefined) axisDef.min = info.min;
+      if (info.max !== undefined) axisDef.max = info.max;
+    }
     return;
   }
 
@@ -328,7 +334,9 @@ export function applyAxisInfo(
     axisDef.axisLabel = { ...existingLabel, fontSize: info.labelFontSize };
   }
 
-  if (info.lineColor || !info.deleted) {
+  if (info.lineHidden) {
+    axisDef.axisLine = { ...((axisDef.axisLine as object) || {}), show: false };
+  } else if (info.lineColor || !info.deleted) {
     const existingLine = (axisDef.axisLine as Record<string, unknown>) || {};
     const existingLineStyle = (existingLine.lineStyle as Record<string, unknown>) || {};
     const color =

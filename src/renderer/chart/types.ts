@@ -70,6 +70,8 @@ export interface AxisInfo {
   labelColor?: string;
   labelFontSize?: number;
   lineColor?: string;
+  /** `c:spPr/a:ln/a:noFill`: the axis line is explicitly hidden. */
+  lineHidden?: boolean;
   majorGridlineStyle?: ChartLineStyle;
 }
 
