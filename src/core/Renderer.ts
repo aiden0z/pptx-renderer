@@ -6,6 +6,7 @@ import type { FitMode, PreviewInput, ListRenderOptions } from './Viewer';
 import type { PdfjsConfig } from '../utils/pdfRenderer';
 import type { EmbeddedFontLimits } from '../renderer/EmbeddedFontLoader';
 import type { ExternalMediaPolicy } from '../utils/urlSafety';
+import type { ChartRendererType } from '../renderer/RenderContext';
 
 export type { PreviewInput, FitMode } from './Viewer';
 export type { SlideHandle } from '../renderer/SlideRenderer';
@@ -13,6 +14,8 @@ export type { SlideHandle } from '../renderer/SlideRenderer';
 export interface RendererOptions {
   /** Allow or block external media relationships. Default `allow`; embedded media is unaffected. */
   externalMedia?: ExternalMediaPolicy;
+  /** ECharts renderer for charts. Default `canvas`; use `svg` inside a sandboxed iframe without `allow-scripts`. */
+  chartRenderer?: ChartRendererType;
   width?: number;
   mode?: 'list' | 'slide';
   /** Scaling mode. contain = fit container width, none = use intrinsic slide size. */
@@ -80,6 +83,7 @@ export class PptxRenderer extends PptxViewer {
       lazySlides: options.lazySlides,
       pdfjs: options.pdfjs,
       externalMedia: options.externalMedia,
+      chartRenderer: options.chartRenderer,
       embeddedFontLimits: options.embeddedFontLimits,
       onSlideChange: options.onSlideChange,
       onSlideRendered: options.onSlideRendered,

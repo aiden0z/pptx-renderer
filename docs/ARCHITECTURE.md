@@ -128,7 +128,7 @@ Slide composition paints master, layout, and slide-owned nodes in that order. A 
 only the master. On every layer, a true `cNvPr@hidden` flag suppresses a node and its grouped descendants
 before rendering or loading their media, without removing the model's visibility metadata.
 
-`externalMedia` travels from viewer options to each slide, group, and thumbnail render context.
+`externalMedia` and `chartRenderer` travel from viewer options to each slide, group, and thumbnail render context.
 The default is `allow`; `block` skips external media relationships across image, fill, and
 audio/video paths, including lazy loading. It does not control host presentation downloads,
 hyperlink navigation, configured fonts, or PDF.js assets; see the [security guide](SECURITY.md).

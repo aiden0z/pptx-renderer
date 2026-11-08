@@ -224,6 +224,38 @@ describe('ChartRenderer chartInstances lifecycle', () => {
     document.body.removeChild(wrapper);
   });
 
+  it.each([
+    [undefined, 'canvas'],
+    ['canvas', 'canvas'],
+    ['svg', 'svg'],
+  ] as const)(
+    'initializes ECharts with chartRenderer %s as the %s renderer',
+    (chartRenderer, expected) => {
+      const ctx = createMockRenderContext({
+        chartInstances: new Set<EChartsType>(),
+        chartRenderer,
+      });
+      ctx.presentation.charts = new Map([
+        ['ppt/charts/chart1.xml', parseXml(buildSimpleChartXml())],
+      ]);
+
+      const wrapper = renderChart(makeChartNode(), ctx);
+      document.body.appendChild(wrapper);
+
+      const chartDiv = wrapper.querySelector('div') as HTMLElement;
+      Object.defineProperty(chartDiv, 'offsetWidth', { value: 400, configurable: true });
+      Object.defineProperty(chartDiv, 'offsetHeight', { value: 300, configurable: true });
+
+      for (const cb of rafCallbacks) cb();
+
+      expect(echarts.init).toHaveBeenCalledWith(expect.any(HTMLElement), undefined, {
+        renderer: expected,
+      });
+
+      document.body.removeChild(wrapper);
+    },
+  );
+
   it('initializes chart when ResizeObserver is unavailable', () => {
     const originalResizeObserver = window.ResizeObserver;
     const chartInstances = new Set<EChartsType>();

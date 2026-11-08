@@ -18,7 +18,7 @@ import {
   TooltipComponent,
 } from 'echarts/components';
 import { LabelLayout } from 'echarts/features';
-import { CanvasRenderer } from 'echarts/renderers';
+import { CanvasRenderer, SVGRenderer } from 'echarts/renderers';
 
 echarts.use([
   BarChart,
@@ -37,6 +37,7 @@ echarts.use([
   TooltipComponent,
   LabelLayout,
   CanvasRenderer,
+  SVGRenderer,
 ]);
 
 export { echarts };

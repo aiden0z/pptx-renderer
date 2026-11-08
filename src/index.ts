@@ -19,6 +19,7 @@ export { parseZip, parseZipLazyMedia, RECOMMENDED_ZIP_LIMITS } from './parser/Zi
 export type { ZipParseLimits } from './parser/ZipParser';
 export type { MediaResolver, ResolvedMedia } from './utils/media';
 export type { ExternalMediaPolicy } from './utils/urlSafety';
+export type { ChartRendererType } from './renderer/RenderContext';
 
 export {
   buildPresentation,

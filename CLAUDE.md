@@ -104,7 +104,7 @@ All parsed nodes keep `source: SafeXmlNode` reference to original XML for render
 - **Shapes:** `<div>` wrapper (absolute positioned) + inline `<svg>` with `<path>` for geometry + overlaid `<div>` for text
 - **Images:** `<div>` wrapper + `<img src="blob:...">` with crop via margin/scale
 - **Tables:** `<div>` wrapper + HTML `<table>` with `<colgroup>`, `border-collapse`
-- **Charts:** `<div>` wrapper + ECharts `<canvas>` (initialized via `echarts.init()`)
+- **Charts:** `<div>` wrapper + ECharts `<canvas>`, or inline SVG with `chartRenderer: 'svg'` (initialized via `echarts.init()`)
 - **Groups:** `<div>` wrapper + recursively rendered children with coordinate remapping
 
 ### Color Resolution

@@ -13,6 +13,14 @@ import type { PdfjsConfig } from '../utils/pdfRenderer';
 import type { AffineMatrix } from './coordinateTransform';
 import type { ExternalMediaPolicy } from '../utils/urlSafety';
 
+/**
+ * How charts are drawn. `canvas` (the default) draws into a `<canvas>`; `svg`
+ * draws inline SVG, which also displays where scripting is disabled for the
+ * document (a sandboxed iframe without `allow-scripts`), where a canvas shows
+ * only its fallback content.
+ */
+export type ChartRendererType = 'canvas' | 'svg';
+
 export interface RenderContext {
   presentation: PresentationData;
   slide: SlideData;
@@ -39,6 +47,8 @@ export interface RenderContext {
   pdfjs?: PdfjsConfig;
   /** External media relationship policy; omitted means allow. */
   externalMedia?: ExternalMediaPolicy;
+  /** ECharts renderer for charts; omitted means canvas. */
+  chartRenderer?: ChartRendererType;
   /** Shared set of live ECharts instances for explicit disposal. */
   chartInstances?: Set<EChartsType>;
   /** Fill node from parent group's grpSpPr, used to resolve `a:grpFill` in children. */
