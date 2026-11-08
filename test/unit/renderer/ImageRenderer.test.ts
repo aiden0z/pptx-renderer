@@ -182,6 +182,40 @@ describe('renderImage', () => {
       expect(el.querySelector('svg image')).toBeTruthy();
     });
 
+    it('takes the clip shape of the layout placeholder a picture placeholder fills', () => {
+      const pic = (geometry: string, ph: string) =>
+        xmlNode(
+          `<pic xmlns="http://schemas.openxmlformats.org/drawingml/2006/main"
+                xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+            <nvPicPr><cNvPr id="1" name="Picture Placeholder"/><cNvPicPr/><nvPr>${ph}</nvPr></nvPicPr>
+            <blipFill><blip r:embed="rId1"/><stretch><fillRect/></stretch></blipFill>
+            <spPr><xfrm><off x="0" y="0"/><ext cx="1905000" cy="952500"/></xfrm>${geometry}</spPr>
+          </pic>`,
+        );
+      const ellipse = '<prstGeom prst="ellipse"><avLst/></prstGeom>';
+      const ctx = createCtxWithMedia();
+      ctx.layout.placeholders = [
+        {
+          node: xmlNode(
+            `<sp xmlns="http://schemas.openxmlformats.org/drawingml/2006/main">
+              <nvSpPr><cNvPr id="9" name="Picture Placeholder 9"/><cNvSpPr/><nvPr><ph type="pic" idx="17"/></nvPr></nvSpPr>
+              <spPr><xfrm><off x="0" y="0"/><ext cx="1905000" cy="952500"/></xfrm>${ellipse}</spPr>
+            </sp>`,
+          ),
+        },
+      ];
+      const ownEllipse = renderImage(parsePicNode(pic(ellipse, '')), ctx)
+        .querySelector('clipPath path')
+        ?.getAttribute('d');
+
+      const inherited = renderImage(parsePicNode(pic('', '<ph type="pic" idx="17"/>')), ctx);
+      const unrelated = renderImage(parsePicNode(pic('', '<ph type="pic" idx="99"/>')), ctx);
+
+      expect(ownEllipse).toBeTruthy();
+      expect(inherited.querySelector('clipPath path')?.getAttribute('d')).toBe(ownEllipse);
+      expect(unrelated.querySelector('clipPath')).toBeNull();
+    });
+
     it('clips a picture with generated cubic flowchart document geometry', () => {
       const ctx = createCtxWithMedia();
       const source = xmlNode(
