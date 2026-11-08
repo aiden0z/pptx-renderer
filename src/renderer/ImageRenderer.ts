@@ -16,6 +16,11 @@ import { hexToRgb } from '../utils/color';
 import { parseEmfContent } from '../utils/emfParser';
 import { renderPdfToImage } from '../utils/pdfRenderer';
 import { emuToPx } from '../parser/units';
+import {
+  findMatchingLayoutPlaceholder,
+  findMatchingMasterPlaceholder,
+  getPlaceholderInfo,
+} from '../model/placeholderMatching';
 import { SafeXmlNode } from '../parser/XmlParser';
 import { isAllowedExternalMediaUrl, isAllowedExternalUrl } from '../utils/urlSafety';
 import { resolveSlideNavigationIndex, slideJumpTitle } from './navigation';
@@ -98,7 +103,7 @@ export function renderImage(node: PicNodeData, ctx: RenderContext): HTMLElement 
   wrapper.style.width = `${node.size.w}px`;
   wrapper.style.height = `${node.size.h}px`;
   wrapper.style.overflow = 'hidden';
-  const geometryClipPath = getPictureGeometryClipPath(node);
+  const geometryClipPath = getPictureGeometryClipPath(node, ctx);
 
   // Apply transforms
   const transforms: string[] = [];
@@ -284,7 +289,7 @@ function renderImageUrl(
   }
 
   const fillRectBox = fillRect.exists() ? getFillRectBox(fillRect) : undefined;
-  const geometryClipPath = getPictureGeometryClipPath(node);
+  const geometryClipPath = getPictureGeometryClipPath(node, ctx);
   const shape3dClipPath =
     shape3dPlan.mode === 'orthographic-top-bevel'
       ? (geometryClipPath ??
@@ -457,12 +462,44 @@ function applyImageFillRect(img: HTMLImageElement, fillRect: FillRectBox): void 
   img.style.height = `${fillRect.height}%`;
 }
 
-function getPictureGeometryClipPath(node: PicNodeData): string | undefined {
-  const sourceCustomGeometry = node.source.child('spPr').child('custGeom');
+/**
+ * The spPr a picture's geometry comes from: its own when it has one, else the
+ * layout placeholder it fills, else the master's. A picture placeholder with no
+ * geometry of its own takes the placeholder's shape (an arch, a circle).
+ */
+function pictureGeometrySource(
+  node: PicNodeData,
+  ctx: RenderContext | undefined,
+): { spPr: SafeXmlNode; inherited: boolean } {
+  const own = node.source.child('spPr');
+  const hasGeometry = (spPr: SafeXmlNode | undefined): spPr is SafeXmlNode =>
+    spPr !== undefined && (spPr.child('custGeom').exists() || spPr.child('prstGeom').exists());
+  if (hasGeometry(own) || !node.placeholder || !ctx) return { spPr: own, inherited: false };
+  const layoutPh = findMatchingLayoutPlaceholder(
+    ctx.layout.placeholders.map((entry) => entry.node),
+    node.placeholder,
+    getPlaceholderInfo,
+  );
+  const layoutSpPr = layoutPh?.child('spPr');
+  if (hasGeometry(layoutSpPr)) return { spPr: layoutSpPr, inherited: true };
+  const masterPh = findMatchingMasterPlaceholder(
+    ctx.master.placeholders,
+    layoutPh ? getPlaceholderInfo(layoutPh).type : node.placeholder.type,
+    getPlaceholderInfo,
+  );
+  const masterSpPr = masterPh?.child('spPr');
+  if (hasGeometry(masterSpPr)) return { spPr: masterSpPr, inherited: true };
+  return { spPr: own, inherited: false };
+}
+
+function getPictureGeometryClipPath(node: PicNodeData, ctx?: RenderContext): string | undefined {
+  const { spPr, inherited } = pictureGeometrySource(node, ctx);
+  const sourceCustomGeometry = spPr.child('custGeom');
   const customGeometry =
-    node.customGeometry ?? (sourceCustomGeometry.exists() ? sourceCustomGeometry : undefined);
+    (inherited ? undefined : node.customGeometry) ??
+    (sourceCustomGeometry.exists() ? sourceCustomGeometry : undefined);
   if (customGeometry?.exists()) {
-    const extNode = node.source.child('spPr').child('xfrm').child('ext');
+    const extNode = spPr.child('xfrm').child('ext');
     const sourceExtentEmu = {
       w: extNode.numAttr('cx') ?? 0,
       h: extNode.numAttr('cy') ?? 0,
@@ -471,10 +508,15 @@ function getPictureGeometryClipPath(node: PicNodeData): string | undefined {
     return d || undefined;
   }
 
-  const sourcePreset = node.source.child('spPr').child('prstGeom').attr('prst');
-  const preset = node.presetGeometry ?? sourcePreset;
+  const sourcePreset = spPr.child('prstGeom').attr('prst');
+  const preset = (inherited ? undefined : node.presetGeometry) ?? sourcePreset;
   if (!preset || preset === 'rect') return undefined;
-  const d = getPresetShapeClipPath(preset, node.size.w, node.size.h, node.geometryAdjustments);
+  const d = getPresetShapeClipPath(
+    preset,
+    node.size.w,
+    node.size.h,
+    inherited ? undefined : node.geometryAdjustments,
+  );
   return d || undefined;
 }
 
