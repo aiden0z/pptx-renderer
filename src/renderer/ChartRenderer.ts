@@ -5,7 +5,7 @@
 import type * as EChartsTypes from 'echarts';
 import type { EChartsType } from 'echarts/core';
 import { ChartNodeData } from '../model/nodes/ChartNode';
-import { RenderContext } from './RenderContext';
+import { RenderContext, type ChartRendererType } from './RenderContext';
 import { SafeXmlNode } from '../parser/XmlParser';
 import { hexToRgb, hslToRgb, rgbToHex, rgbToHsl } from '../utils/color';
 import { applyAxisInfo, getChartAxisIds, parseAxes, parseScatterAxes } from './chart/axes';
@@ -2620,7 +2620,7 @@ export function renderChart(node: ChartNodeData, ctx: RenderContext): HTMLElemen
       sizeObserver?.disconnect();
       ctx.signal?.removeEventListener('abort', cancel);
       if (!ctx.signal?.aborted && chartDiv.isConnected) {
-        initChart(chartDiv, option, chartSet, ctx.signal);
+        initChart(chartDiv, option, chartSet, ctx.signal, ctx.chartRenderer);
       }
       resolve();
     };
@@ -2667,9 +2667,10 @@ function initChart(
   option: EChartsTypes.EChartsOption,
   chartInstances?: Set<EChartsType>,
   signal?: AbortSignal,
+  renderer: ChartRendererType = 'canvas',
 ): void {
   try {
-    const chart = echarts.init(container);
+    const chart = echarts.init(container, undefined, { renderer });
     chart.setOption(option);
     chartInstances?.add(chart);
 

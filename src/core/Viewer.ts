@@ -13,6 +13,7 @@ import {
   type TextSearchResult,
 } from '../search/TextSearch';
 import type { EChartsType } from 'echarts/core';
+import type { ChartRendererType } from '../renderer/RenderContext';
 import type { PdfjsConfig } from '../utils/pdfRenderer';
 import type { EmbeddedFontLimits } from '../renderer/EmbeddedFontLoader';
 import type { FontFaceConfig } from '../renderer/ConfiguredFontLoader';
@@ -26,6 +27,8 @@ export type PreviewInput = ArrayBuffer | Uint8Array | Blob;
 export interface ViewerOptions {
   /** Allow or block external media relationships. Default `allow`; embedded media is unaffected. */
   externalMedia?: ExternalMediaPolicy;
+  /** ECharts renderer for charts. Default `canvas`; use `svg` inside a sandboxed iframe without `allow-scripts`. */
+  chartRenderer?: ChartRendererType;
   width?: number;
   /** Scaling mode. contain = fit container width, none = use intrinsic slide size. */
   fitMode?: FitMode;
@@ -495,6 +498,7 @@ export class PptxViewer extends EventTarget {
       onNavigate: (target) => this.handleNavigate(target),
       pdfjs: this.viewerOptions.pdfjs,
       externalMedia: this.viewerOptions.externalMedia,
+      chartRenderer: this.viewerOptions.chartRenderer,
       embeddedFontLimits: this.viewerOptions.embeddedFontLimits,
       fontFaces: this.viewerOptions.fontFaces,
     });
@@ -993,6 +997,7 @@ export class PptxViewer extends EventTarget {
         mediaUrlCache: this.mediaUrlCache,
         pdfjs: this.viewerOptions.pdfjs,
         externalMedia: this.viewerOptions.externalMedia,
+        chartRenderer: this.viewerOptions.chartRenderer,
         embeddedFontLimits: this.viewerOptions.embeddedFontLimits,
         fontFaces: this.viewerOptions.fontFaces,
         chartInstances: this.chartInstances,
@@ -1226,6 +1231,7 @@ export class PptxViewer extends EventTarget {
         mediaUrlCache: this.mediaUrlCache,
         pdfjs: this.viewerOptions.pdfjs,
         externalMedia: this.viewerOptions.externalMedia,
+        chartRenderer: this.viewerOptions.chartRenderer,
         embeddedFontLimits: this.viewerOptions.embeddedFontLimits,
         fontFaces: this.viewerOptions.fontFaces,
         chartInstances: this.chartInstances,

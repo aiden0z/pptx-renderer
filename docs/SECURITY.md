@@ -35,7 +35,9 @@ Maintainers will acknowledge as soon as possible on GitHub.
 - Configure `zipLimits` in production; `RECOMMENDED_ZIP_LIMITS` is the package-provided starting point.
 - Set `externalMedia: 'block'` when untrusted decks must not request external media. The default
   is `allow` for compatibility; ZIP limits do not block network requests.
-- Run rendering in constrained browser/container contexts when possible.
+- Run rendering in constrained browser/container contexts when possible. When the host renders into
+  an iframe sandboxed without `allow-scripts`, set `chartRenderer: 'svg'`: a `<canvas>` in a
+  document with scripting disabled shows only its fallback content, so canvas charts stay blank.
 - Keep dependencies and runtime updated.
 - Disable or limit external navigation integration if your application does not need it.
 - Pin exact standalone and PDF.js asset versions; do not use mutable CDN URLs in production.

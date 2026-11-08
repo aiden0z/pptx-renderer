@@ -27,6 +27,7 @@ import type { PdfjsConfig } from '../utils/pdfRenderer';
 import { useConfiguredFonts } from './ConfiguredFontLoader';
 import type { FontFaceConfig } from './ConfiguredFontLoader';
 import type { ExternalMediaPolicy } from '../utils/urlSafety';
+import type { ChartRendererType } from './RenderContext';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -35,6 +36,8 @@ import type { ExternalMediaPolicy } from '../utils/urlSafety';
 export interface SlideRendererOptions {
   /** Allow or block external media relationships. Default `allow`; embedded media is unaffected. */
   externalMedia?: ExternalMediaPolicy;
+  /** ECharts renderer for charts. Default `canvas`; use `svg` inside a sandboxed iframe without `allow-scripts`. */
+  chartRenderer?: ChartRendererType;
   /** Called when a single node fails to render. */
   onNodeError?: (nodeId: string, error: unknown) => void;
   /**
@@ -245,6 +248,7 @@ export function renderSlide(
   );
   ctx.asyncTasks = asyncTasks;
   ctx.externalMedia = options?.externalMedia ?? 'allow';
+  ctx.chartRenderer = options?.chartRenderer ?? 'canvas';
   if (options?.onNavigate) {
     ctx.onNavigate = options.onNavigate;
   }

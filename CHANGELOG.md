@@ -7,6 +7,12 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added
+
+- Added `chartRenderer: 'canvas' | 'svg'` to viewer and standalone rendering options. The default
+  stays `canvas`; `svg` lets charts display when the host renders into an iframe sandboxed without
+  `allow-scripts`, where a `<canvas>` shows only its fallback content.
+
 ### Documentation
 
 - Complete v1.4.0 API, security, visibility/background ownership, and validation guidance;

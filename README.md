@@ -233,6 +233,7 @@ const viewer = await PptxViewer.open(buffer, container, {
 | `lazyMedia`          | `boolean`                   | `false`       | Decode embedded media on demand instead of during ZIP parsing. Best for large decks with windowed list rendering. |
 | `lazySlides`         | `boolean`                   | `false`       | Parse slide shape/table/chart nodes on demand. Best for large decks with windowed list rendering.                 |
 | `pdfjs`              | `PdfjsConfig`               | --            | Optional PDF.js URLs for EMF-embedded PDF fallback rendering, or `false` to disable it.                           |
+| `chartRenderer`      | `'canvas' \| 'svg'`         | `'canvas'`    | ECharts renderer. Use `'svg'` in an iframe sandboxed without `allow-scripts` (canvas stays blank).                |
 | `embeddedFontLimits` | `EmbeddedFontLimits`        | safe defaults | Optional embedded-font resource limit overrides. Omitted fields retain the built-in defaults.                     |
 | `fontFaces`          | `readonly FontFaceConfig[]` | --            | Host-provided font faces for typefaces referenced by the PPTX but not embedded in it.                             |
 | `onSlideChange`      | `(index) => void`           | --            | Shorthand for `slidechange` event                                                                                 |

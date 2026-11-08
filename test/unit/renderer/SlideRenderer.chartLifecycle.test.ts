@@ -265,3 +265,26 @@ it('disposed but connected chart never initializes in its pending frame', async 
   raf.mockRestore();
   handle.element.remove();
 });
+
+it('passes the chartRenderer option through to ECharts', async () => {
+  const callbacks: FrameRequestCallback[] = [];
+  const raf = vi.spyOn(window, 'requestAnimationFrame').mockImplementation((cb) => {
+    callbacks.push(cb);
+    return callbacks.length;
+  });
+  const { echarts } = await import('../../../src/renderer/chart/echartsRuntime');
+  vi.mocked(echarts.init).mockClear();
+  const p = makePresentation();
+  p.slides[0].nodes = [makeChartNode()];
+  const handle = renderSlide(p, p.slides[0], { chartRenderer: 'svg' });
+  document.body.append(handle.element);
+  const div = handle.element.firstElementChild!.firstElementChild!;
+  Object.defineProperty(div, 'offsetWidth', { value: 400 });
+  Object.defineProperty(div, 'offsetHeight', { value: 300 });
+  callbacks.forEach((cb) => cb(0));
+  await handle.ready;
+  expect(echarts.init).toHaveBeenCalledWith(div, undefined, { renderer: 'svg' });
+  raf.mockRestore();
+  handle.dispose();
+  handle.element.remove();
+});
